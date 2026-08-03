@@ -64,8 +64,7 @@ final tracearrAuthManagerProvider =
 /// Tracearr used to build a fresh Dio inside each provider that needed one and
 /// close none of them; each carries its own connection pool, so they piled up
 /// for as long as the app ran. There are two here and both are disposed.
-final tracearrDioProvider =
-    FutureProvider.autoDispose.family<Dio, Instance>((
+final tracearrDioProvider = FutureProvider.autoDispose.family<Dio, Instance>((
   Ref ref,
   Instance instance,
 ) async {
@@ -197,88 +196,93 @@ typedef TracearrActivityStatsParams = TracearrStatsFilterParams;
 final tracearrStatsProvider = FutureProvider.family
     .autoDispose<TracearrStats, TracearrStatsFilterParams>(
         (Ref ref, TracearrStatsFilterParams params) async {
-  ref.pollEvery(const Duration(seconds: 10));
-  final Map<String, String> servers =
-      await ref.watch(tracearrServersProvider(params.instance).future);
-  final List<String> serverIds = servers.keys.toList();
+  return ref.polled(const Duration(seconds: 10), () async {
+    final Map<String, String> servers =
+        await ref.watch(tracearrServersProvider(params.instance).future);
+    final List<String> serverIds = servers.keys.toList();
 
-  final TracearrApi api =
-      await ref.watch(tracearrApiProvider(params.instance).future);
-  final String timezone = await _getTimezone();
-  return api.getStats(
-    serverIds,
-    timezone,
-    period: params.period,
-    from: params.from,
-    to: params.to,
-  );
+    final TracearrApi api =
+        await ref.watch(tracearrApiProvider(params.instance).future);
+    final String timezone = await _getTimezone();
+    return api.getStats(
+      serverIds,
+      timezone,
+      period: params.period,
+      from: params.from,
+      to: params.to,
+    );
+  });
 });
 
 final tracearrStorageGrowthProvider = FutureProvider.family.autoDispose<
         Map<String, TracearrStorageResponse>, TracearrStatsFilterParams>(
     (Ref ref, TracearrStatsFilterParams params) async {
-  ref.pollEvery(const Duration(seconds: 10));
-  final Map<String, String> servers =
-      await ref.watch(tracearrServersProvider(params.instance).future);
-  final List<String> serverIds = servers.keys.toList();
+  return ref.polled(const Duration(seconds: 10), () async {
+    final Map<String, String> servers =
+        await ref.watch(tracearrServersProvider(params.instance).future);
+    final List<String> serverIds = servers.keys.toList();
 
-  final TracearrApi api =
-      await ref.watch(tracearrApiProvider(params.instance).future);
-  final String timezone = await _getTimezone();
+    final TracearrApi api =
+        await ref.watch(tracearrApiProvider(params.instance).future);
+    final String timezone = await _getTimezone();
 
-  String periodParam = params.period;
-  if (periodParam == 'month' || periodParam == '30d') {
-    periodParam = '30d';
-  } else if (periodParam == 'week' || periodParam == '7d') {
-    periodParam = '7d';
-  } else if (periodParam == 'year' ||
-      periodParam == '1yr' ||
-      periodParam == '1y') {
-    periodParam = '1y';
-  } else if (periodParam.toLowerCase() == 'all') {
-    periodParam = 'all';
-  } else if (periodParam == 'custom') {
-    periodParam = '30d';
-  }
+    String periodParam = params.period;
+    if (periodParam == 'month' || periodParam == '30d') {
+      periodParam = '30d';
+    } else if (periodParam == 'week' || periodParam == '7d') {
+      periodParam = '7d';
+    } else if (periodParam == 'year' ||
+        periodParam == '1yr' ||
+        periodParam == '1y') {
+      periodParam = '1y';
+    } else if (periodParam.toLowerCase() == 'all') {
+      periodParam = 'all';
+    } else if (periodParam == 'custom') {
+      periodParam = '30d';
+    }
 
-  return api.getMultiServerLibraryStorage(
-    serverIds,
-    periodParam,
-    timezone,
-  );
+    return api.getMultiServerLibraryStorage(
+      serverIds,
+      periodParam,
+      timezone,
+    );
+  });
 });
 
 final tracearrActivityStatsProvider = FutureProvider.family
     .autoDispose<TracearrActivityStats, TracearrActivityStatsParams>(
         (Ref ref, TracearrActivityStatsParams params) async {
-  ref.pollEvery(const Duration(seconds: 10));
-  final Map<String, String> servers =
-      await ref.watch(tracearrServersProvider(params.instance).future);
-  final List<String> serverIds = servers.keys.toList();
+  return ref.polled(const Duration(seconds: 10), () async {
+    final Map<String, String> servers =
+        await ref.watch(tracearrServersProvider(params.instance).future);
+    final List<String> serverIds = servers.keys.toList();
 
-  final TracearrApi api =
-      await ref.watch(tracearrApiProvider(params.instance).future);
-  final String timezone = await _getTimezone();
-  return api.getActivityStats(
-    serverIds,
-    timezone,
-    period: params.period,
-    from: params.from,
-    to: params.to,
-  );
+    final TracearrApi api =
+        await ref.watch(tracearrApiProvider(params.instance).future);
+    final String timezone = await _getTimezone();
+    return api.getActivityStats(
+      serverIds,
+      timezone,
+      period: params.period,
+      from: params.from,
+      to: params.to,
+    );
+  });
 });
 
 final tracearrActivityLocationsProvider = FutureProvider.family
     .autoDispose<TracearrActivityLocationsResponse, Instance>(
         (Ref ref, Instance instance) async {
-  ref.pollEvery(const Duration(seconds: 10));
-  final Map<String, String> servers =
-      await ref.watch(tracearrServersProvider(instance).future);
-  final List<String> serverIds = servers.keys.toList();
+  return ref.polled(const Duration(seconds: 10), () async {
+    final Map<String, String> servers =
+        await ref.watch(tracearrServersProvider(instance).future);
+    final List<String> serverIds = servers.keys.toList();
 
-  final TracearrApi api = await ref.watch(tracearrApiProvider(instance).future);
-  final String timezone = await _getTimezone();
-  return api.getLocations(serverIds, timezone);
+    final TracearrApi api =
+        await ref.watch(tracearrApiProvider(instance).future);
+    final String timezone = await _getTimezone();
+    return api.getLocations(serverIds, timezone);
+  });
 });
 
 final tracearrDashboardStatsProvider = FutureProvider.family
@@ -523,13 +527,14 @@ final tracearrTopMoviesProvider = FutureProvider.family.autoDispose<
   Ref ref,
   ({Instance instance, String period}) params,
 ) async {
-  ref.pollEvery(const Duration(seconds: 10));
-  final Map<String, String> servers =
-      await ref.watch(tracearrServersProvider(params.instance).future);
-  final List<String> serverIds = servers.keys.toList();
-  final TracearrApi api =
-      await ref.watch(tracearrApiProvider(params.instance).future);
-  return api.getTopMovies(serverIds: serverIds, period: params.period);
+  return ref.polled(const Duration(seconds: 10), () async {
+    final Map<String, String> servers =
+        await ref.watch(tracearrServersProvider(params.instance).future);
+    final List<String> serverIds = servers.keys.toList();
+    final TracearrApi api =
+        await ref.watch(tracearrApiProvider(params.instance).future);
+    return api.getTopMovies(serverIds: serverIds, period: params.period);
+  });
 });
 
 final tracearrTopShowsProvider = FutureProvider.family.autoDispose<
@@ -537,13 +542,14 @@ final tracearrTopShowsProvider = FutureProvider.family.autoDispose<
   Ref ref,
   ({Instance instance, String period}) params,
 ) async {
-  ref.pollEvery(const Duration(seconds: 10));
-  final Map<String, String> servers =
-      await ref.watch(tracearrServersProvider(params.instance).future);
-  final List<String> serverIds = servers.keys.toList();
-  final TracearrApi api =
-      await ref.watch(tracearrApiProvider(params.instance).future);
-  return api.getTopShows(serverIds: serverIds, period: params.period);
+  return ref.polled(const Duration(seconds: 10), () async {
+    final Map<String, String> servers =
+        await ref.watch(tracearrServersProvider(params.instance).future);
+    final List<String> serverIds = servers.keys.toList();
+    final TracearrApi api =
+        await ref.watch(tracearrApiProvider(params.instance).future);
+    return api.getTopShows(serverIds: serverIds, period: params.period);
+  });
 });
 
 final tracearrCompletionSummaryProvider =
@@ -551,12 +557,14 @@ final tracearrCompletionSummaryProvider =
   Ref ref,
   Instance instance,
 ) async {
-  ref.pollEvery(const Duration(seconds: 10));
-  final Map<String, String> servers =
-      await ref.watch(tracearrServersProvider(instance).future);
-  final List<String> serverIds = servers.keys.toList();
-  final TracearrApi api = await ref.watch(tracearrApiProvider(instance).future);
-  return api.getAggregatedLibraryCompletion(serverIds);
+  return ref.polled(const Duration(seconds: 10), () async {
+    final Map<String, String> servers =
+        await ref.watch(tracearrServersProvider(instance).future);
+    final List<String> serverIds = servers.keys.toList();
+    final TracearrApi api =
+        await ref.watch(tracearrApiProvider(instance).future);
+    return api.getAggregatedLibraryCompletion(serverIds);
+  });
 });
 
 final tracearrPatternsProvider =
@@ -564,13 +572,15 @@ final tracearrPatternsProvider =
   Ref ref,
   Instance instance,
 ) async {
-  ref.pollEvery(const Duration(seconds: 10));
-  final Map<String, String> servers =
-      await ref.watch(tracearrServersProvider(instance).future);
-  final List<String> serverIds = servers.keys.toList();
-  final TracearrApi api = await ref.watch(tracearrApiProvider(instance).future);
-  final String timezone = await _getTimezone();
-  return api.getLibraryPatterns(serverIds: serverIds, timezone: timezone);
+  return ref.polled(const Duration(seconds: 10), () async {
+    final Map<String, String> servers =
+        await ref.watch(tracearrServersProvider(instance).future);
+    final List<String> serverIds = servers.keys.toList();
+    final TracearrApi api =
+        await ref.watch(tracearrApiProvider(instance).future);
+    final String timezone = await _getTimezone();
+    return api.getLibraryPatterns(serverIds: serverIds, timezone: timezone);
+  });
 });
 
 class TracearrLibraryWatchNotifier extends ChangeNotifier {
