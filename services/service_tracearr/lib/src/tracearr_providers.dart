@@ -25,40 +25,76 @@ import 'models/tracearr_top_movies.dart';
 import 'models/tracearr_top_shows.dart';
 import 'tracearr_api.dart';
 
-final tracearrAuthManagerProvider =
-    FutureProvider.family<TracearrAuthManager, Instance>((
+/// A plain client with no interceptors.
+///
+/// Logging in has to happen off the intercepted client. TracearrAuthInterceptor
+/// is a QueuedInterceptor whose onRequest awaits a token, so if the login went
+/// out on that same client it would need a queue slot held by the very request
+/// waiting for it, and every call would deadlock. This client is also what a
+/// request is replayed on after a token refresh, for the same reason.
+final _tracearrLoginDioProvider =
+    FutureProvider.autoDispose.family<Dio, Instance>((
   Ref ref,
   Instance instance,
 ) async {
-  final ConnectionResolver resolver = ref.watch(connectionResolverProvider);
-  final Uri baseUrl = await resolver.resolve(instance);
+  final Map<String, String> global = ref.watch(globalHeadersProvider);
+  final Dio dio = await ref
+      .watch(dioFactoryProvider)
+      .create(instance, globalHeaders: global);
+  ref.onDispose(() => dio.close(force: true));
+  return dio;
+});
 
-  final Dio dio = await ref.watch(dioFactoryProvider).create(instance);
-
+final tracearrAuthManagerProvider =
+    FutureProvider.autoDispose.family<TracearrAuthManager, Instance>((
+  Ref ref,
+  Instance instance,
+) async {
+  final Dio dio = await ref.watch(_tracearrLoginDioProvider(instance).future);
   return TracearrAuthManager(
-    baseUrl: baseUrl,
+    baseUrl: Uri.parse(dio.options.baseUrl),
     auth: instance.auth,
     dio: dio,
   );
 });
 
-final tracearrApiProvider = FutureProvider.family<TracearrApi, Instance>((
+/// The client every Tracearr API call goes through, with its auth interceptor
+/// attached once.
+///
+/// Tracearr used to build a fresh Dio inside each provider that needed one and
+/// close none of them; each carries its own connection pool, so they piled up
+/// for as long as the app ran. There are two here and both are disposed.
+final tracearrDioProvider =
+    FutureProvider.autoDispose.family<Dio, Instance>((
   Ref ref,
   Instance instance,
 ) async {
-  final Dio dio = await ref.watch(dioFactoryProvider).create(instance);
+  final Map<String, String> global = ref.watch(globalHeadersProvider);
+  final Dio dio = await ref
+      .watch(dioFactoryProvider)
+      .create(instance, globalHeaders: global);
+  ref.onDispose(() => dio.close(force: true));
 
-  final TracearrAuthManager manager = await ref.watch(
-    tracearrAuthManagerProvider(instance).future,
-  );
-
+  final TracearrAuthManager manager =
+      await ref.watch(tracearrAuthManagerProvider(instance).future);
+  final Dio loginDio =
+      await ref.watch(_tracearrLoginDioProvider(instance).future);
   dio.interceptors.add(
-    TracearrAuthInterceptor(
-      manager: manager,
-      dio: dio,
-    ),
+    TracearrAuthInterceptor(manager: manager, dio: loginDio),
   );
+  return dio;
+});
 
+final tracearrApiProvider =
+    FutureProvider.autoDispose.family<TracearrApi, Instance>((
+  Ref ref,
+  Instance instance,
+) async {
+  final Dio dio = await ref.watch(tracearrDioProvider(instance).future);
+  final TracearrAuthManager manager =
+      await ref.watch(tracearrAuthManagerProvider(instance).future);
+  // Fetched eagerly because image URLs carry the token as a query parameter,
+  // so it has to be a value rather than a header added later.
   final String token = await manager.ensureToken();
   return TracearrApi(dio, token: token);
 });
@@ -66,10 +102,7 @@ final tracearrApiProvider = FutureProvider.family<TracearrApi, Instance>((
 final tracearrServersProvider = FutureProvider.family
     .autoDispose<Map<String, String>, Instance>(
         (Ref ref, Instance instance) async {
-  final Dio dio = await ref.watch(dioFactoryProvider).create(instance);
-  final TracearrAuthManager manager =
-      await ref.watch(tracearrAuthManagerProvider(instance).future);
-  dio.interceptors.add(TracearrAuthInterceptor(manager: manager, dio: dio));
+  final Dio dio = await ref.watch(tracearrDioProvider(instance).future);
 
   final Response<dynamic> res = await dio.get<dynamic>('api/v1/servers');
   final Map<String, String> serverMap = <String, String>{};

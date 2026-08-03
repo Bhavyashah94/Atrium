@@ -11,6 +11,11 @@ class TracearrAuthInterceptor extends QueuedInterceptor {
   });
 
   final TracearrAuthManager manager;
+
+  /// Used only to replay a request after refreshing the token. It must NOT be
+  /// the client this interceptor is installed on: this is a QueuedInterceptor,
+  /// so re-entering that client from inside onError waits for a queue slot
+  /// that only this handler can release.
   final Dio dio;
 
   @override
