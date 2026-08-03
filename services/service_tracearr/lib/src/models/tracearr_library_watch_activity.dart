@@ -10,14 +10,29 @@ class TracearrLibraryWatchResponse {
   });
 
   factory TracearrLibraryWatchResponse.fromJson(Map<String, dynamic> json) {
-    final List<dynamic> itemsJson = json['items'] is List ? json['items'] as List<dynamic> : <dynamic>[];
+    final List<dynamic> itemsJson =
+        json['items'] is List ? json['items'] as List<dynamic> : <dynamic>[];
 
     return TracearrLibraryWatchResponse(
       items: itemsJson
-          .map((dynamic item) => TracearrLibraryWatchItem.fromJson(item is Map ? Map<String, dynamic>.from(item) : <String, dynamic>{}))
+          .map(
+            (dynamic item) => TracearrLibraryWatchItem.fromJson(
+              item is Map
+                  ? Map<String, dynamic>.from(item)
+                  : <String, dynamic>{},
+            ),
+          )
           .toList(),
-      summary: TracearrWatchSummary.fromJson(json['summary'] is Map ? Map<String, dynamic>.from(json['summary'] as Map) : <String, dynamic>{}),
-      pagination: TracearrWatchPagination.fromJson(json['pagination'] is Map ? Map<String, dynamic>.from(json['pagination'] as Map) : <String, dynamic>{}),
+      summary: TracearrWatchSummary.fromJson(
+        json['summary'] is Map
+            ? Map<String, dynamic>.from(json['summary'] as Map)
+            : <String, dynamic>{},
+      ),
+      pagination: TracearrWatchPagination.fromJson(
+        json['pagination'] is Map
+            ? Map<String, dynamic>.from(json['pagination'] as Map)
+            : <String, dynamic>{},
+      ),
     );
   }
 }

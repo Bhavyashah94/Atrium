@@ -73,8 +73,14 @@ abstract class TracearrSession with _$TracearrSession {
     @JsonKey(name: 'seasonNumber', fromJson: _parseInt) int? seasonNumber,
     @JsonKey(name: 'episodeNumber', fromJson: _parseInt) int? episodeNumber,
     @JsonKey(name: 'thumbPath') String? thumbPath,
-    @JsonKey(name: 'progressMs', defaultValue: 0, fromJson: _parseIntDefault) required int progressMs,
-    @JsonKey(name: 'totalDurationMs', defaultValue: 0, fromJson: _parseIntDefault) required int totalDurationMs,
+    @JsonKey(name: 'progressMs', defaultValue: 0, fromJson: _parseIntDefault)
+    required int progressMs,
+    @JsonKey(
+      name: 'totalDurationMs',
+      defaultValue: 0,
+      fromJson: _parseIntDefault,
+    )
+    required int totalDurationMs,
     @JsonKey(name: 'ipAddress', defaultValue: '') required String ipAddress,
     @JsonKey(name: 'geoCity') String? geoCity,
     @JsonKey(name: 'geoRegion') String? geoRegion,
@@ -87,7 +93,8 @@ abstract class TracearrSession with _$TracearrSession {
     @JsonKey(name: 'device', defaultValue: '') required String device,
     @JsonKey(name: 'platform', defaultValue: '') required String platform,
     @JsonKey(name: 'quality', defaultValue: '') required String quality,
-    @JsonKey(name: 'isTranscode', defaultValue: false) required bool isTranscode,
+    @JsonKey(name: 'isTranscode', defaultValue: false)
+    required bool isTranscode,
     @JsonKey(name: 'videoDecision') String? videoDecision,
     @JsonKey(name: 'audioDecision') String? audioDecision,
     @JsonKey(name: 'startedAt') DateTime? startedAt,
@@ -97,7 +104,8 @@ abstract class TracearrSession with _$TracearrSession {
     @JsonKey(name: 'userName', fromJson: _parseString) String? userName,
     @JsonKey(name: 'userThumb', fromJson: _parseString) String? userThumb,
     @JsonKey(name: 'userThumbUrl', fromJson: _parseString) String? userThumbUrl,
-    @JsonKey(name: 'userThumbPath', fromJson: _parseString) String? userThumbPath,
+    @JsonKey(name: 'userThumbPath', fromJson: _parseString)
+    String? userThumbPath,
     @JsonKey(name: 'avatarUrl', fromJson: _parseString) String? avatarUrl,
     @JsonKey(name: 'userId', fromJson: _parseString) String? userId,
     @JsonKey(name: 'serverUserId', fromJson: _parseString) String? serverUserId,

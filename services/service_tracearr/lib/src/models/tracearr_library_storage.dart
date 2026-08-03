@@ -9,19 +9,28 @@ class TracearrStorageResponse {
   });
 
   factory TracearrStorageResponse.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic> currentJson =
-        json['current'] is Map ? Map<String, dynamic>.from(json['current'] as Map) : <String, dynamic>{};
-    final List<dynamic> historyList = json['history'] is List ? json['history'] as List<dynamic> : <dynamic>[];
-    final Map<String, dynamic> growthJson =
-        json['growthRate'] is Map ? Map<String, dynamic>.from(json['growthRate'] as Map) : <String, dynamic>{};
-    final Map<String, dynamic> predJson =
-        json['predictions'] is Map ? Map<String, dynamic>.from(json['predictions'] as Map) : <String, dynamic>{};
+    final Map<String, dynamic> currentJson = json['current'] is Map
+        ? Map<String, dynamic>.from(json['current'] as Map)
+        : <String, dynamic>{};
+    final List<dynamic> historyList = json['history'] is List
+        ? json['history'] as List<dynamic>
+        : <dynamic>[];
+    final Map<String, dynamic> growthJson = json['growthRate'] is Map
+        ? Map<String, dynamic>.from(json['growthRate'] as Map)
+        : <String, dynamic>{};
+    final Map<String, dynamic> predJson = json['predictions'] is Map
+        ? Map<String, dynamic>.from(json['predictions'] as Map)
+        : <String, dynamic>{};
 
     return TracearrStorageResponse(
       current: TracearrStorageCurrent.fromJson(currentJson),
       history: historyList
           .whereType<Map<dynamic, dynamic>>()
-          .map((Map<dynamic, dynamic> item) => TracearrStorageHistoryItem.fromJson(Map<String, dynamic>.from(item)))
+          .map(
+            (Map<dynamic, dynamic> item) => TracearrStorageHistoryItem.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
           .toList(),
       growthRate: TracearrStorageGrowthRate.fromJson(growthJson),
       predictions: TracearrStoragePredictions.fromJson(predJson),
@@ -33,12 +42,22 @@ class TracearrStorageResponse {
   final TracearrStorageGrowthRate growthRate;
   final TracearrStoragePredictions predictions;
 
-  static TracearrStorageResponse aggregate(List<TracearrStorageResponse> responses) {
+  static TracearrStorageResponse aggregate(
+    List<TracearrStorageResponse> responses,
+  ) {
     if (responses.isEmpty) {
       return const TracearrStorageResponse(
-        current: TracearrStorageCurrent(totalSizeBytes: 0, totalItems: 0, lastUpdated: ''),
+        current: TracearrStorageCurrent(
+          totalSizeBytes: 0,
+          totalItems: 0,
+          lastUpdated: '',
+        ),
         history: <TracearrStorageHistoryItem>[],
-        growthRate: TracearrStorageGrowthRate(bytesPerDay: 0, bytesPerWeek: 0, bytesPerMonth: 0),
+        growthRate: TracearrStorageGrowthRate(
+          bytesPerDay: 0,
+          bytesPerWeek: 0,
+          bytesPerMonth: 0,
+        ),
         predictions: TracearrStoragePredictions(
           day30: TracearrStoragePredictionPoint(predicted: 0, min: 0, max: 0),
           day90: TracearrStoragePredictionPoint(predicted: 0, min: 0, max: 0),
@@ -109,13 +128,19 @@ class TracearrStorageResponse {
       }
 
       for (final TracearrStorageHistoryItem item in res.history) {
-        historyMap[item.day] = (historyMap[item.day] ?? 0) + item.totalSizeBytes;
+        historyMap[item.day] =
+            (historyMap[item.day] ?? 0) + item.totalSizeBytes;
       }
     }
 
     final List<String> sortedDays = historyMap.keys.toList()..sort();
     final List<TracearrStorageHistoryItem> aggregatedHistory = sortedDays
-        .map((String d) => TracearrStorageHistoryItem(day: d, totalSizeBytes: historyMap[d]!))
+        .map(
+          (String d) => TracearrStorageHistoryItem(
+            day: d,
+            totalSizeBytes: historyMap[d]!,
+          ),
+        )
         .toList();
 
     return TracearrStorageResponse(
@@ -131,9 +156,21 @@ class TracearrStorageResponse {
         bytesPerMonth: totalMonthBytes,
       ),
       predictions: TracearrStoragePredictions(
-        day30: TracearrStoragePredictionPoint(predicted: pred30, min: min30, max: max30),
-        day90: TracearrStoragePredictionPoint(predicted: pred90, min: min90, max: max90),
-        day365: TracearrStoragePredictionPoint(predicted: pred365, min: min365, max: max365),
+        day30: TracearrStoragePredictionPoint(
+          predicted: pred30,
+          min: min30,
+          max: max30,
+        ),
+        day90: TracearrStoragePredictionPoint(
+          predicted: pred90,
+          min: min90,
+          max: max90,
+        ),
+        day365: TracearrStoragePredictionPoint(
+          predicted: pred365,
+          min: min365,
+          max: max365,
+        ),
         confidence: confidence ?? 'low',
         minDataDays: minDays,
         currentDataDays: currentDays,
@@ -210,12 +247,15 @@ class TracearrStoragePredictions {
   });
 
   factory TracearrStoragePredictions.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic> d30 =
-        json['day30'] is Map ? Map<String, dynamic>.from(json['day30'] as Map) : <String, dynamic>{};
-    final Map<String, dynamic> d90 =
-        json['day90'] is Map ? Map<String, dynamic>.from(json['day90'] as Map) : <String, dynamic>{};
-    final Map<String, dynamic> d365 =
-        json['day365'] is Map ? Map<String, dynamic>.from(json['day365'] as Map) : <String, dynamic>{};
+    final Map<String, dynamic> d30 = json['day30'] is Map
+        ? Map<String, dynamic>.from(json['day30'] as Map)
+        : <String, dynamic>{};
+    final Map<String, dynamic> d90 = json['day90'] is Map
+        ? Map<String, dynamic>.from(json['day90'] as Map)
+        : <String, dynamic>{};
+    final Map<String, dynamic> d365 = json['day365'] is Map
+        ? Map<String, dynamic>.from(json['day365'] as Map)
+        : <String, dynamic>{};
 
     return TracearrStoragePredictions(
       day30: TracearrStoragePredictionPoint.fromJson(d30),

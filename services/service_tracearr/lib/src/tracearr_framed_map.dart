@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -44,19 +45,21 @@ class _TracearrFramedMapState extends State<TracearrFramedMap> {
     if (widget.isFullscreen) {
       Navigator.of(context).pop();
     } else {
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          fullscreenDialog: true,
-          builder: (BuildContext context) => Scaffold(
-            body: TracearrFramedMap(
-              initialCenter: _mapController.camera.center,
-              initialZoom: _mapController.camera.zoom,
-              markers: widget.markers,
-              borderRadius: 0.0,
-              isFullscreen: true,
-            ),
+      // pushScreen, not Navigator.push: the app shell gives each tab its own
+      // branch navigator, and a page pushed there is swept away on the next
+      // shell rebuild.
+      pushScreen<void>(
+        context,
+        Scaffold(
+          body: TracearrFramedMap(
+            initialCenter: _mapController.camera.center,
+            initialZoom: _mapController.camera.zoom,
+            markers: widget.markers,
+            borderRadius: 0,
+            isFullscreen: true,
           ),
         ),
+        fullscreenDialog: true,
       );
     }
   }
@@ -95,9 +98,16 @@ class _TracearrFramedMapState extends State<TracearrFramedMap> {
               children: <Widget>[
                 TileLayer(
                   urlTemplate: tileUrl,
-                  userAgentPackageName: 'com.atrium.app',
+                  userAgentPackageName: 'app.atrium',
                 ),
                 MarkerLayer(markers: widget.markers),
+                // Required, not decoration. The tiles are CARTO's rendering of
+                // OpenStreetMap data, and both OSM's ODbL licence and CARTO's
+                // terms of use oblige us to credit them wherever the map is
+                // shown.
+                const SimpleAttributionWidget(
+                  source: Text('OpenStreetMap contributors, CARTO'),
+                ),
               ],
             ),
             // Subtle edge vignette overlay

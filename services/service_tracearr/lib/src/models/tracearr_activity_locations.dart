@@ -22,7 +22,8 @@ abstract class TracearrActivityLocation with _$TracearrActivityLocation {
     @JsonKey(fromJson: _parseDouble) double? lat,
     @JsonKey(fromJson: _parseDouble) double? lon,
     @JsonKey(defaultValue: 0) required int count,
-    @JsonKey(defaultValue: <TracearrActivityLocationUser>[]) required List<TracearrActivityLocationUser> users,
+    @JsonKey(defaultValue: <TracearrActivityLocationUser>[])
+    required List<TracearrActivityLocationUser> users,
   }) = _TracearrActivityLocation;
 
   factory TracearrActivityLocation.fromJson(Map<String, dynamic> json) =>
@@ -30,7 +31,8 @@ abstract class TracearrActivityLocation with _$TracearrActivityLocation {
 }
 
 @freezed
-abstract class TracearrActivityLocationUser with _$TracearrActivityLocationUser {
+abstract class TracearrActivityLocationUser
+    with _$TracearrActivityLocationUser {
   const factory TracearrActivityLocationUser({
     required String id,
     String? thumbUrl,
@@ -43,11 +45,15 @@ abstract class TracearrActivityLocationUser with _$TracearrActivityLocationUser 
 }
 
 @freezed
-abstract class TracearrActivityLocationsResponse with _$TracearrActivityLocationsResponse {
+abstract class TracearrActivityLocationsResponse
+    with _$TracearrActivityLocationsResponse {
   const factory TracearrActivityLocationsResponse({
-    @JsonKey(defaultValue: <TracearrActivityLocation>[]) required List<TracearrActivityLocation> data,
+    @JsonKey(defaultValue: <TracearrActivityLocation>[])
+    required List<TracearrActivityLocation> data,
   }) = _TracearrActivityLocationsResponse;
 
-  factory TracearrActivityLocationsResponse.fromJson(Map<String, dynamic> json) =>
+  factory TracearrActivityLocationsResponse.fromJson(
+    Map<String, dynamic> json,
+  ) =>
       _$TracearrActivityLocationsResponseFromJson(json);
 }

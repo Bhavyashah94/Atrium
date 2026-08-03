@@ -12,14 +12,34 @@ class TracearrPatternsResponse {
   final TracearrPatternsSummary summary;
 
   factory TracearrPatternsResponse.fromJson(Map<String, dynamic> json) {
-    final List<dynamic> bingeJson = json['bingeShows'] is List ? json['bingeShows'] as List<dynamic> : <dynamic>[];
+    final List<dynamic> bingeJson = json['bingeShows'] is List
+        ? json['bingeShows'] as List<dynamic>
+        : <dynamic>[];
     return TracearrPatternsResponse(
       bingeShows: bingeJson
-          .map((dynamic item) => TracearrBingeShow.fromJson(item is Map ? Map<String, dynamic>.from(item) : <String, dynamic>{}))
+          .map(
+            (dynamic item) => TracearrBingeShow.fromJson(
+              item is Map
+                  ? Map<String, dynamic>.from(item)
+                  : <String, dynamic>{},
+            ),
+          )
           .toList(),
-      peakTimes: TracearrPeakTimes.fromJson(json['peakTimes'] is Map ? Map<String, dynamic>.from(json['peakTimes'] as Map) : <String, dynamic>{}),
-      seasonalTrends: TracearrSeasonalTrends.fromJson(json['seasonalTrends'] is Map ? Map<String, dynamic>.from(json['seasonalTrends'] as Map) : <String, dynamic>{}),
-      summary: TracearrPatternsSummary.fromJson(json['summary'] is Map ? Map<String, dynamic>.from(json['summary'] as Map) : <String, dynamic>{}),
+      peakTimes: TracearrPeakTimes.fromJson(
+        json['peakTimes'] is Map
+            ? Map<String, dynamic>.from(json['peakTimes'] as Map)
+            : <String, dynamic>{},
+      ),
+      seasonalTrends: TracearrSeasonalTrends.fromJson(
+        json['seasonalTrends'] is Map
+            ? Map<String, dynamic>.from(json['seasonalTrends'] as Map)
+            : <String, dynamic>{},
+      ),
+      summary: TracearrPatternsSummary.fromJson(
+        json['summary'] is Map
+            ? Map<String, dynamic>.from(json['summary'] as Map)
+            : <String, dynamic>{},
+      ),
     );
   }
 }
@@ -101,10 +121,18 @@ class TracearrPeakTimes {
       return 0;
     }
 
-    final List<dynamic> hourlyJson = json['hourlyDistribution'] is List ? json['hourlyDistribution'] as List<dynamic> : <dynamic>[];
+    final List<dynamic> hourlyJson = json['hourlyDistribution'] is List
+        ? json['hourlyDistribution'] as List<dynamic>
+        : <dynamic>[];
     return TracearrPeakTimes(
       hourlyDistribution: hourlyJson
-          .map((dynamic item) => TracearrHourlyDistribution.fromJson(item is Map ? Map<String, dynamic>.from(item) : <String, dynamic>{}))
+          .map(
+            (dynamic item) => TracearrHourlyDistribution.fromJson(
+              item is Map
+                  ? Map<String, dynamic>.from(item)
+                  : <String, dynamic>{},
+            ),
+          )
           .toList(),
       peakHour: parseInt(json['peakHour']),
       peakDayOfWeek: parseInt(json['peakDayOfWeek']),
@@ -161,10 +189,18 @@ class TracearrSeasonalTrends {
   final String? quietestMonth;
 
   factory TracearrSeasonalTrends.fromJson(Map<String, dynamic> json) {
-    final List<dynamic> monthsJson = json['monthlyTrends'] is List ? json['monthlyTrends'] as List<dynamic> : <dynamic>[];
+    final List<dynamic> monthsJson = json['monthlyTrends'] is List
+        ? json['monthlyTrends'] as List<dynamic>
+        : <dynamic>[];
     return TracearrSeasonalTrends(
       monthlyTrends: monthsJson
-          .map((dynamic item) => TracearrMonthlyTrend.fromJson(item is Map ? Map<String, dynamic>.from(item) : <String, dynamic>{}))
+          .map(
+            (dynamic item) => TracearrMonthlyTrend.fromJson(
+              item is Map
+                  ? Map<String, dynamic>.from(item)
+                  : <String, dynamic>{},
+            ),
+          )
           .toList(),
       busiestMonth: json['busiestMonth']?.toString(),
       quietestMonth: json['quietestMonth']?.toString(),

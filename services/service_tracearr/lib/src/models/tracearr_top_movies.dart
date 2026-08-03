@@ -10,13 +10,28 @@ class TracearrTopMoviesResponse {
   final TracearrTopMoviesPagination pagination;
 
   factory TracearrTopMoviesResponse.fromJson(Map<String, dynamic> json) {
-    final List<dynamic> itemsJson = json['items'] is List ? json['items'] as List<dynamic> : <dynamic>[];
+    final List<dynamic> itemsJson =
+        json['items'] is List ? json['items'] as List<dynamic> : <dynamic>[];
     return TracearrTopMoviesResponse(
       items: itemsJson
-          .map((dynamic item) => TracearrTopMovieItem.fromJson(item is Map ? Map<String, dynamic>.from(item) : <String, dynamic>{}))
+          .map(
+            (dynamic item) => TracearrTopMovieItem.fromJson(
+              item is Map
+                  ? Map<String, dynamic>.from(item)
+                  : <String, dynamic>{},
+            ),
+          )
           .toList(),
-      summary: TracearrTopMoviesSummary.fromJson(json['summary'] is Map ? Map<String, dynamic>.from(json['summary'] as Map) : <String, dynamic>{}),
-      pagination: TracearrTopMoviesPagination.fromJson(json['pagination'] is Map ? Map<String, dynamic>.from(json['pagination'] as Map) : <String, dynamic>{}),
+      summary: TracearrTopMoviesSummary.fromJson(
+        json['summary'] is Map
+            ? Map<String, dynamic>.from(json['summary'] as Map)
+            : <String, dynamic>{},
+      ),
+      pagination: TracearrTopMoviesPagination.fromJson(
+        json['pagination'] is Map
+            ? Map<String, dynamic>.from(json['pagination'] as Map)
+            : <String, dynamic>{},
+      ),
     );
   }
 }

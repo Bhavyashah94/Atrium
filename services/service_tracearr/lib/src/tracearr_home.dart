@@ -457,13 +457,17 @@ class _PlaysLineChartState extends State<_PlaysLineChart> {
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                      color: color, borderRadius: BorderRadius.circular(2)),
+                    color: color,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   serverName,
                   style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.bold),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -473,7 +477,11 @@ class _PlaysLineChartState extends State<_PlaysLineChart> {
             aspectRatio: 1.70,
             child: Padding(
               padding: const EdgeInsets.only(
-                  right: 18, left: 12, top: 16, bottom: 12),
+                right: 18,
+                left: 12,
+                top: 16,
+                bottom: 12,
+              ),
               child: LineChart(
                 LineChartData(
                   lineTouchData: LineTouchData(
@@ -494,7 +502,9 @@ class _PlaysLineChartState extends State<_PlaysLineChart> {
                           return LineTooltipItem(
                             '${barSpot.y.toInt()} plays\n',
                             TextStyle(
-                                color: color, fontWeight: FontWeight.bold),
+                              color: color,
+                              fontWeight: FontWeight.bold,
+                            ),
                             children: <TextSpan>[
                               TextSpan(
                                 text: '$serverName\n$dateStr',
@@ -518,19 +528,21 @@ class _PlaysLineChartState extends State<_PlaysLineChart> {
                     verticalInterval: 1,
                     getDrawingHorizontalLine: (double value) {
                       return FlLine(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .outline
-                              .withValues(alpha: 0.2),
-                          strokeWidth: 1);
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withValues(alpha: 0.2),
+                        strokeWidth: 1,
+                      );
                     },
                     getDrawingVerticalLine: (double value) {
                       return FlLine(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .outline
-                              .withValues(alpha: 0.2),
-                          strokeWidth: 1);
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withValues(alpha: 0.2),
+                        strokeWidth: 1,
+                      );
                     },
                   ),
                   titlesData: FlTitlesData(
@@ -543,19 +555,25 @@ class _PlaysLineChartState extends State<_PlaysLineChart> {
                         interval: 1,
                         getTitlesWidget: (double value, TitleMeta meta) {
                           final int index = value.toInt();
-                          if (index < 0 || index >= dates.length)
+                          if (index < 0 || index >= dates.length) {
                             return const SizedBox.shrink();
-                          if (index % max(1, dates.length ~/ 5) != 0)
+                          }
+                          if (index % max(1, dates.length ~/ 5) != 0) {
                             return const SizedBox.shrink();
+                          }
                           final String text = dates[index]
                               .split(' ')
                               .first
                               .substring(5); // MM-DD
                           return SideTitleWidget(
                             meta: meta,
-                            child: Text(text,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 10)),
+                            child: Text(
+                              text,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
                           );
                         },
                       ),
@@ -567,10 +585,14 @@ class _PlaysLineChartState extends State<_PlaysLineChart> {
                         reservedSize: 42,
                         getTitlesWidget: (double value, TitleMeta meta) {
                           if (value % 1 != 0) return const SizedBox.shrink();
-                          return Text(value.toInt().toString(),
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 12),
-                              textAlign: TextAlign.left);
+                          return Text(
+                            value.toInt().toString(),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.left,
+                          );
                         },
                       ),
                     ),
@@ -578,10 +600,11 @@ class _PlaysLineChartState extends State<_PlaysLineChart> {
                   borderData: FlBorderData(
                     show: true,
                     border: Border.all(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .outline
-                            .withValues(alpha: 0.2)),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: 0.2),
+                    ),
                   ),
                   minX: 0,
                   maxX: max(0, dates.length - 1).toDouble(),
@@ -684,21 +707,27 @@ class _PlaysDowBarChartState extends State<_PlaysDowBarChart> {
                     .withValues(alpha: 0.9),
                 tooltipHorizontalAlignment: FLHorizontalAlignment.center,
                 tooltipMargin: 8,
-                getTooltipItem: (BarChartGroupData group, int groupIndex,
-                    BarChartRodData rod, int rodIndex) {
+                getTooltipItem: (
+                  BarChartGroupData group,
+                  int groupIndex,
+                  BarChartRodData rod,
+                  int rodIndex,
+                ) {
                   return BarTooltipItem(
                     '${widget.plays[groupIndex].name}\n',
                     const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                     children: <TextSpan>[
                       TextSpan(
                         text: widget.plays[groupIndex].count.toString(),
                         style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500),
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   );
@@ -726,17 +755,19 @@ class _PlaysDowBarChartState extends State<_PlaysDowBarChart> {
                   reservedSize: 38,
                   getTitlesWidget: (double value, TitleMeta meta) {
                     final int index = value.toInt();
-                    if (index < 0 || index >= widget.plays.length)
+                    if (index < 0 || index >= widget.plays.length) {
                       return const SizedBox.shrink();
+                    }
                     return SideTitleWidget(
                       meta: meta,
                       space: 16,
                       child: Text(
-                          widget.plays[index].name
-                              .substring(0, 3)
-                              .toUpperCase(),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 12)),
+                        widget.plays[index].name.substring(0, 3).toUpperCase(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -758,7 +789,8 @@ class _PlaysDowBarChartState extends State<_PlaysDowBarChart> {
                     width: 22,
                     borderSide: isTouched
                         ? BorderSide(
-                            color: touchedBarColor.withValues(alpha: 0.8))
+                            color: touchedBarColor.withValues(alpha: 0.8),
+                          )
                         : const BorderSide(color: Colors.white, width: 0),
                     backDrawRodData: BackgroundBarChartRodData(
                       show: true,
@@ -831,12 +863,18 @@ class _PlaysHodBarChartState extends State<_PlaysHodBarChart> {
                     .withValues(alpha: 0.9),
                 tooltipHorizontalAlignment: FLHorizontalAlignment.center,
                 tooltipMargin: 8,
-                getTooltipItem: (BarChartGroupData group, int groupIndex,
-                    BarChartRodData rod, int rodIndex) {
+                getTooltipItem: (
+                  BarChartGroupData group,
+                  int groupIndex,
+                  BarChartRodData rod,
+                  int rodIndex,
+                ) {
                   return BarTooltipItem(
                     '${_formatHour(group.x.toInt())}\n${rod.toY.toInt()} plays',
                     const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   );
                 },
               ),
@@ -866,11 +904,17 @@ class _PlaysHodBarChartState extends State<_PlaysHodBarChart> {
 
                     return SideTitleWidget(
                       meta: meta,
-                      fitInside: SideTitleFitInsideData.fromTitleMeta(meta,
-                          distanceFromEdge: 0),
-                      child: Text(_formatHour(hour),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 10)),
+                      fitInside: SideTitleFitInsideData.fromTitleMeta(
+                        meta,
+                        distanceFromEdge: 0,
+                      ),
+                      child: Text(
+                        _formatHour(hour),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -898,7 +942,8 @@ class _PlaysHodBarChartState extends State<_PlaysHodBarChart> {
                     width: 8,
                     borderSide: isTouched
                         ? BorderSide(
-                            color: touchedBarColor.withValues(alpha: 0.8))
+                            color: touchedBarColor.withValues(alpha: 0.8),
+                          )
                         : const BorderSide(color: Colors.white, width: 0),
                     backDrawRodData: BackgroundBarChartRodData(
                       show: true,
@@ -1019,8 +1064,10 @@ class _PlatformsPieChartState extends State<_PlatformsPieChart> {
               child: PieChart(
                 PieChartData(
                   pieTouchData: PieTouchData(
-                    touchCallback: (FlTouchEvent event,
-                        PieTouchResponse? pieTouchResponse) {
+                    touchCallback: (
+                      FlTouchEvent event,
+                      PieTouchResponse? pieTouchResponse,
+                    ) {
                       setState(() {
                         if (!event.isInterestedForInteractions ||
                             pieTouchResponse == null ||
@@ -1052,7 +1099,8 @@ class _PlatformsPieChartState extends State<_PlatformsPieChart> {
                       borderSide: isTouched
                           ? const BorderSide(color: Colors.white, width: 6)
                           : BorderSide(
-                              color: Colors.white.withValues(alpha: 0)),
+                              color: Colors.white.withValues(alpha: 0),
+                            ),
                     );
                   }).toList(),
                 ),
@@ -1084,17 +1132,17 @@ class _QualityPieChartState extends State<_QualityPieChart> {
     final List<Color> colors = <Color>[
       scheme.primary,
       scheme.secondary,
-      scheme.tertiary
+      scheme.tertiary,
     ];
     final List<String> labels = <String>[
       'Direct Play',
       'Direct Stream',
-      'Transcode'
+      'Transcode',
     ];
     final List<int> counts = <int>[
       widget.quality.directPlay,
       widget.quality.directStream,
-      widget.quality.transcode
+      widget.quality.transcode,
     ];
     final List<double> radiusValues = <double>[80, 65, 60];
 
@@ -1130,8 +1178,10 @@ class _QualityPieChartState extends State<_QualityPieChart> {
               child: PieChart(
                 PieChartData(
                   pieTouchData: PieTouchData(
-                    touchCallback: (FlTouchEvent event,
-                        PieTouchResponse? pieTouchResponse) {
+                    touchCallback: (
+                      FlTouchEvent event,
+                      PieTouchResponse? pieTouchResponse,
+                    ) {
                       setState(() {
                         if (!event.isInterestedForInteractions ||
                             pieTouchResponse == null ||
@@ -1159,7 +1209,8 @@ class _QualityPieChartState extends State<_QualityPieChart> {
                       borderSide: isTouched
                           ? const BorderSide(color: Colors.white, width: 6)
                           : BorderSide(
-                              color: Colors.white.withValues(alpha: 0)),
+                              color: Colors.white.withValues(alpha: 0),
+                            ),
                     );
                   }),
                 ),
@@ -1205,12 +1256,15 @@ class _ConcurrentLineChartState extends State<_ConcurrentLineChart> {
             width: 12,
             height: 12,
             decoration: BoxDecoration(
-                color: color, borderRadius: BorderRadius.circular(2)),
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           const SizedBox(width: 4),
-          Text(text,
-              style:
-                  const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          Text(
+            text,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          ),
         ],
       );
     }
@@ -1235,8 +1289,10 @@ class _ConcurrentLineChartState extends State<_ConcurrentLineChart> {
                     getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                       return touchedBarSpots.map((LineBarSpot barSpot) {
                         final int index = barSpot.x.toInt();
-                        if (index < 0 || index >= widget.concurrentPlays.length)
+                        if (index < 0 ||
+                            index >= widget.concurrentPlays.length) {
                           return null;
+                        }
                         final TracearrActivityConcurrent p =
                             widget.concurrentPlays[index];
                         final String dateStr = p.hour.split('+').first;
@@ -1259,20 +1315,22 @@ class _ConcurrentLineChartState extends State<_ConcurrentLineChart> {
                         return LineTooltipItem(
                           '${barSpot.y.toInt()} $label${isLast ? '\n' : ''}',
                           TextStyle(
-                              color: color,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12),
+                            color: color,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                           children: isLast
                               ? <TextSpan>[
                                   TextSpan(
                                     text: dateStr,
                                     style: TextStyle(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withValues(alpha: 0.7),
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.normal),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.7),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.normal,
+                                    ),
                                   ),
                                 ]
                               : null,
@@ -1286,19 +1344,21 @@ class _ConcurrentLineChartState extends State<_ConcurrentLineChart> {
                   verticalInterval: 1,
                   getDrawingHorizontalLine: (double value) {
                     return FlLine(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .outline
-                            .withValues(alpha: 0.2),
-                        strokeWidth: 1);
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: 0.2),
+                      strokeWidth: 1,
+                    );
                   },
                   getDrawingVerticalLine: (double value) {
                     return FlLine(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .outline
-                            .withValues(alpha: 0.2),
-                        strokeWidth: 1);
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: 0.2),
+                      strokeWidth: 1,
+                    );
                   },
                 ),
                 titlesData: FlTitlesData(
@@ -1311,20 +1371,28 @@ class _ConcurrentLineChartState extends State<_ConcurrentLineChart> {
                       interval: 1,
                       getTitlesWidget: (double value, TitleMeta meta) {
                         final int index = value.toInt();
-                        if (index < 0 || index >= widget.concurrentPlays.length)
+                        if (index < 0 ||
+                            index >= widget.concurrentPlays.length) {
                           return const SizedBox.shrink();
+                        }
                         if (index %
                                 max(1, widget.concurrentPlays.length ~/ 5) !=
-                            0) return const SizedBox.shrink();
+                            0) {
+                          return const SizedBox.shrink();
+                        }
                         final String text = widget.concurrentPlays[index].hour
                             .split(' ')
                             .first
                             .substring(5); // MM-DD
                         return SideTitleWidget(
                           meta: meta,
-                          child: Text(text,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 10)),
+                          child: Text(
+                            text,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
                         );
                       },
                     ),
@@ -1336,10 +1404,14 @@ class _ConcurrentLineChartState extends State<_ConcurrentLineChart> {
                       reservedSize: 42,
                       getTitlesWidget: (double value, TitleMeta meta) {
                         if (value % 1 != 0) return const SizedBox.shrink();
-                        return Text(value.toInt().toString(),
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 12),
-                            textAlign: TextAlign.left);
+                        return Text(
+                          value.toInt().toString(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.left,
+                        );
                       },
                     ),
                   ),
@@ -1347,10 +1419,11 @@ class _ConcurrentLineChartState extends State<_ConcurrentLineChart> {
                 borderData: FlBorderData(
                   show: true,
                   border: Border.all(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .outline
-                          .withValues(alpha: 0.2)),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withValues(alpha: 0.2),
+                  ),
                 ),
                 minX: 0,
                 maxX: max(0, widget.concurrentPlays.length - 1).toDouble(),
@@ -1363,7 +1436,9 @@ class _ConcurrentLineChartState extends State<_ConcurrentLineChart> {
                         .entries
                         .map((MapEntry<int, TracearrActivityConcurrent> e) {
                       return FlSpot(
-                          e.key.toDouble(), e.value.direct.toDouble());
+                        e.key.toDouble(),
+                        e.value.direct.toDouble(),
+                      );
                     }).toList(),
                     isCurved: true,
                     preventCurveOverShooting: true,
@@ -1382,7 +1457,9 @@ class _ConcurrentLineChartState extends State<_ConcurrentLineChart> {
                         .entries
                         .map((MapEntry<int, TracearrActivityConcurrent> e) {
                       return FlSpot(
-                          e.key.toDouble(), e.value.directStream.toDouble());
+                        e.key.toDouble(),
+                        e.value.directStream.toDouble(),
+                      );
                     }).toList(),
                     isCurved: true,
                     preventCurveOverShooting: true,
@@ -1401,7 +1478,9 @@ class _ConcurrentLineChartState extends State<_ConcurrentLineChart> {
                         .entries
                         .map((MapEntry<int, TracearrActivityConcurrent> e) {
                       return FlSpot(
-                          e.key.toDouble(), e.value.transcode.toDouble());
+                        e.key.toDouble(),
+                        e.value.transcode.toDouble(),
+                      );
                     }).toList(),
                     isCurved: true,
                     preventCurveOverShooting: true,
@@ -1437,8 +1516,11 @@ class _ConcurrentLineChartState extends State<_ConcurrentLineChart> {
 }
 
 class _EngagementSummary extends StatelessWidget {
-  const _EngagementSummary(
-      {required this.engagement, required this.servers, this.api});
+  const _EngagementSummary({
+    required this.engagement,
+    required this.servers,
+    this.api,
+  });
   final TracearrActivityEngagement engagement;
   final Map<String, String> servers;
   final TracearrApi? api;
@@ -1457,8 +1539,9 @@ class _EngagementSummary extends StatelessWidget {
           alignment: WrapAlignment.center,
           children: <Widget>[
             _StatCard(
-                title: 'Total Plays',
-                value: engagement.summary.totalPlays.toString()),
+              title: 'Total Plays',
+              value: engagement.summary.totalPlays.toString(),
+            ),
             _StatCard(
               title: 'Avg Completion',
               value: '${engagement.summary.avgCompletionRate}%',
@@ -1483,11 +1566,13 @@ class _EngagementSummary extends StatelessWidget {
 
         // 2. Engagement Breakdown
         if (engagement.engagementBreakdown.isNotEmpty) ...<Widget>[
-          Text('Engagement Breakdown',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            'Engagement Breakdown',
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: Insets.md),
           _EngagementPieChart(breakdown: engagement.engagementBreakdown),
           const SizedBox(height: Insets.xl),
@@ -1495,25 +1580,32 @@ class _EngagementSummary extends StatelessWidget {
 
         // 3. Audience Personas
         if (engagement.userProfiles.isNotEmpty) ...<Widget>[
-          Text('Audience Personas',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            'Audience Personas',
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: Insets.md),
           _AudiencePersonaTable(
-              profiles: engagement.userProfiles, servers: servers, api: api),
+            profiles: engagement.userProfiles,
+            servers: servers,
+            api: api,
+          ),
           const SizedBox(height: Insets.xl),
         ],
 
         // 4. Top Performers
         if (engagement.topContent.isNotEmpty ||
             engagement.topShows.isNotEmpty) ...<Widget>[
-          Text('Top Performers',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            'Top Performers',
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: Insets.md),
           _TopPerformersView(
             topShows: engagement.topShows,
@@ -1546,17 +1638,23 @@ class _StatCard extends StatelessWidget {
         children: <Widget>[
           Column(
             children: <Widget>[
-              Text(title,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              Text(
+                title,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       color: Theme.of(context)
                           .colorScheme
                           .onPrimaryContainer
-                          .withValues(alpha: 0.7))),
+                          .withValues(alpha: 0.7),
+                    ),
+              ),
               const SizedBox(height: 4),
-              Text(value,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              Text(
+                value,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer)),
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+              ),
             ],
           ),
           if (trailing != null) ...<Widget>[
@@ -1634,8 +1732,10 @@ class _EngagementPieChartState extends State<_EngagementPieChart> {
               child: PieChart(
                 PieChartData(
                   pieTouchData: PieTouchData(
-                    touchCallback: (FlTouchEvent event,
-                        PieTouchResponse? pieTouchResponse) {
+                    touchCallback: (
+                      FlTouchEvent event,
+                      PieTouchResponse? pieTouchResponse,
+                    ) {
                       setState(() {
                         if (!event.isInterestedForInteractions ||
                             pieTouchResponse == null ||
@@ -1679,7 +1779,8 @@ class _EngagementPieChartState extends State<_EngagementPieChart> {
                       borderSide: isTouched
                           ? const BorderSide(color: Colors.white, width: 6)
                           : BorderSide(
-                              color: Colors.white.withValues(alpha: 0)),
+                              color: Colors.white.withValues(alpha: 0),
+                            ),
                     );
                   }).toList(),
                 ),
@@ -1693,8 +1794,11 @@ class _EngagementPieChartState extends State<_EngagementPieChart> {
 }
 
 class _AudiencePersonaTable extends StatelessWidget {
-  const _AudiencePersonaTable(
-      {required this.profiles, required this.servers, this.api});
+  const _AudiencePersonaTable({
+    required this.profiles,
+    required this.servers,
+    this.api,
+  });
   final List<TracearrUserProfile> profiles;
   final Map<String, String> servers;
   final TracearrApi? api;
@@ -1719,12 +1823,13 @@ class _AudiencePersonaTable extends StatelessWidget {
           String? imageUrl;
           if (profile.thumbUrl != null && api != null) {
             imageUrl = api!.proxyImageUrl(
-                serverId: profile.serverId ??
-                    (servers.isNotEmpty ? servers.keys.first : null),
-                path: profile.thumbUrl,
-                width: 32,
-                height: 32,
-                fallback: 'avatar');
+              serverId: profile.serverId ??
+                  (servers.isNotEmpty ? servers.keys.first : null),
+              path: profile.thumbUrl,
+              width: 32,
+              height: 32,
+              fallback: 'avatar',
+            );
           }
 
           return DataRow(
@@ -1784,24 +1889,28 @@ class _TracearrListPoster extends StatelessWidget {
   const _TracearrListPoster({
     this.imageUrl,
     this.fallbackIcon = Icons.movie_outlined,
-    this.aspectRatio = 2 / 3,
-    this.maxWidth = 80,
-    this.maxHeight = 120,
   });
 
   final String? imageUrl;
   final IconData fallbackIcon;
-  final double aspectRatio;
-  final double maxWidth;
-  final double maxHeight;
+
+  // Fixed rather than constructor parameters: the single caller always wants
+  // a poster at these dimensions, and configurability nothing passes is just
+  // surface to keep working.
+  static const double _aspectRatio = 2 / 3;
+  static const double _maxWidth = 80;
+  static const double _maxHeight = 120;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
+      constraints: const BoxConstraints(
+        maxWidth: _maxWidth,
+        maxHeight: _maxHeight,
+      ),
       child: AspectRatio(
-        aspectRatio: aspectRatio,
+        aspectRatio: _aspectRatio,
         child: Container(
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest,
@@ -1859,13 +1968,10 @@ class _TracearrStatItemRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           _TracearrListPoster(
             imageUrl: imageUrl,
             fallbackIcon: fallbackIcon,
-            maxWidth: 80,
-            maxHeight: 120,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -1972,7 +2078,6 @@ class _TopPerformersView extends StatelessWidget {
                       }
                       return _TracearrStatItemRow(
                         imageUrl: imageUrl,
-                        fallbackIcon: Icons.movie_outlined,
                         title: Text(content.title),
                         subtitle: Text(
                           '${content.showTitle ?? 'Movie'} • ${content.totalWatchHours} hrs',
@@ -2235,8 +2340,16 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
       onRefresh: () async {
         ref.invalidate(tracearrCompletionSummaryProvider(widget.instance));
         ref.invalidate(tracearrPatternsProvider(widget.instance));
-        ref.invalidate(tracearrTopMoviesProvider((instance: widget.instance, period: _selectedPeriod)));
-        ref.invalidate(tracearrTopShowsProvider((instance: widget.instance, period: _selectedPeriod)));
+        ref.invalidate(
+          tracearrTopMoviesProvider(
+            (instance: widget.instance, period: _selectedPeriod),
+          ),
+        );
+        ref.invalidate(
+          tracearrTopShowsProvider(
+            (instance: widget.instance, period: _selectedPeriod),
+          ),
+        );
         await watchNotifier.refresh();
       },
       child: ListView(
@@ -2250,12 +2363,22 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
                   elevation: 0,
                   margin: EdgeInsets.zero,
                   color: Theme.of(context).colorScheme.primaryContainer,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 20,
+                      horizontal: 16,
+                    ),
                     child: Column(
                       children: <Widget>[
-                        Icon(Icons.check_circle_outline, size: 28, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 28,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
                         const SizedBox(height: 8),
                         FittedBox(
                           fit: BoxFit.scaleDown,
@@ -2263,17 +2386,25 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
                             watchNotifier.state.value != null
                                 ? '${watchNotifier.state.value!.summary.watchedCount}/${watchNotifier.state.value!.summary.totalItems} (${watchNotifier.state.value!.summary.watchedPct.toStringAsFixed(1)}%)'
                                 : '0/0 (0%)',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer,
                                 ),
                           ),
                         ),
                         Text(
                           'Watched Ratio',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer,
+                                  ),
                         ),
                       ],
                     ),
@@ -2286,30 +2417,51 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
                   elevation: 0,
                   margin: EdgeInsets.zero,
                   color: Theme.of(context).colorScheme.tertiaryContainer,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 20,
+                      horizontal: 16,
+                    ),
                     child: Column(
                       children: <Widget>[
-                        Icon(Icons.schedule, size: 28, color: Theme.of(context).colorScheme.onTertiaryContainer),
+                        Icon(
+                          Icons.schedule,
+                          size: 28,
+                          color:
+                              Theme.of(context).colorScheme.onTertiaryContainer,
+                        ),
                         const SizedBox(height: 8),
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
                             watchNotifier.state.value != null
-                                ? _formatWatchMs(watchNotifier.state.value!.summary.totalWatchMs)
+                                ? _formatWatchMs(
+                                    watchNotifier
+                                        .state.value!.summary.totalWatchMs,
+                                  )
                                 : '0 hrs',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.onTertiaryContainer,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onTertiaryContainer,
                                 ),
                           ),
                         ),
                         Text(
                           'Total Watch Time',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onTertiaryContainer,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onTertiaryContainer,
+                                  ),
                         ),
                       ],
                     ),
@@ -2326,12 +2478,23 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
                   elevation: 0,
                   margin: EdgeInsets.zero,
                   color: Theme.of(context).colorScheme.secondaryContainer,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 20,
+                      horizontal: 16,
+                    ),
                     child: Column(
                       children: <Widget>[
-                        Icon(Icons.task_alt, size: 28, color: Theme.of(context).colorScheme.onSecondaryContainer),
+                        Icon(
+                          Icons.task_alt,
+                          size: 28,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSecondaryContainer,
+                        ),
                         const SizedBox(height: 8),
                         FittedBox(
                           fit: BoxFit.scaleDown,
@@ -2339,17 +2502,25 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
                             completionVal.value != null
                                 ? completionVal.value!.completedCount.toString()
                                 : '0',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.onSecondaryContainer,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSecondaryContainer,
                                 ),
                           ),
                         ),
                         Text(
                           'Completed Items',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSecondaryContainer,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSecondaryContainer,
+                                  ),
                         ),
                       ],
                     ),
@@ -2362,12 +2533,21 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
                   elevation: 0,
                   margin: EdgeInsets.zero,
                   color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 20,
+                      horizontal: 16,
+                    ),
                     child: Column(
                       children: <Widget>[
-                        Icon(Icons.trending_up, size: 28, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        Icon(
+                          Icons.trending_up,
+                          size: 28,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                         const SizedBox(height: 8),
                         FittedBox(
                           fit: BoxFit.scaleDown,
@@ -2375,17 +2555,25 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
                             patternsVal.value != null
                                 ? '${patternsVal.value!.peakTimes.peakHour.toString().padLeft(2, '0')}:00'
                                 : '--:--',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                           ),
                         ),
                         Text(
                           'Peak Hour',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                         ),
                       ],
                     ),
@@ -2400,9 +2588,22 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
           _ChartCard(
             title: 'Library Completion',
             child: completionVal.when(
-              data: (TracearrCompletionSummary data) => _CompletionPieChart(summary: data),
-              loading: () => const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())),
-              error: (Object err, StackTrace st) => Center(child: Text('Error: $err', style: TextStyle(color: Theme.of(context).colorScheme.error))),
+              data: (TracearrCompletionSummary data) =>
+                  _CompletionPieChart(summary: data),
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (Object err, StackTrace st) => Center(
+                child: Text(
+                  'Error: $err',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: Insets.lg),
@@ -2413,13 +2614,23 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
             children: <Widget>[
               Text(
                 'Top Content Period',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               DropdownButton<String>(
                 value: _selectedPeriod,
                 borderRadius: BorderRadius.circular(12),
                 underline: const SizedBox.shrink(),
-                items: _periods.map((String p) => DropdownMenuItem<String>(value: p, child: Text(p.toUpperCase()))).toList(),
+                items: _periods
+                    .map(
+                      (String p) => DropdownMenuItem<String>(
+                        value: p,
+                        child: Text(p.toUpperCase()),
+                      ),
+                    )
+                    .toList(),
                 onChanged: (String? val) {
                   if (val != null) {
                     setState(() => _selectedPeriod = val);
@@ -2433,14 +2644,20 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
           // Top Movies
           _ChartCard(
             title: 'Top Movies (${_selectedPeriod.toUpperCase()})',
-            child: _TopMoviesSection(instance: widget.instance, period: _selectedPeriod),
+            child: _TopMoviesSection(
+              instance: widget.instance,
+              period: _selectedPeriod,
+            ),
           ),
           const SizedBox(height: Insets.lg),
 
           // Top Shows
           _ChartCard(
             title: 'Top TV Shows (${_selectedPeriod.toUpperCase()})',
-            child: _TopShowsSection(instance: widget.instance, period: _selectedPeriod),
+            child: _TopShowsSection(
+              instance: widget.instance,
+              period: _selectedPeriod,
+            ),
           ),
           const SizedBox(height: Insets.lg),
 
@@ -2448,9 +2665,24 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
           _ChartCard(
             title: 'Binge Highlights',
             child: patternsVal.when(
-              data: (TracearrPatternsResponse data) => _BingeHighlightsSection(instance: widget.instance, shows: data.bingeShows),
-              loading: () => const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())),
-              error: (Object err, StackTrace st) => Center(child: Text('Error: $err', style: TextStyle(color: Theme.of(context).colorScheme.error))),
+              data: (TracearrPatternsResponse data) => _BingeHighlightsSection(
+                instance: widget.instance,
+                shows: data.bingeShows,
+              ),
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (Object err, StackTrace st) => Center(
+                child: Text(
+                  'Error: $err',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: Insets.lg),
@@ -2459,9 +2691,23 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
           _ChartCard(
             title: 'Viewing Hours Distribution',
             child: patternsVal.when(
-              data: (TracearrPatternsResponse data) => _ViewingHoursBarChart(hourly: data.peakTimes.hourlyDistribution),
-              loading: () => const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())),
-              error: (Object err, StackTrace st) => Center(child: Text('Error: $err', style: TextStyle(color: Theme.of(context).colorScheme.error))),
+              data: (TracearrPatternsResponse data) => _ViewingHoursBarChart(
+                hourly: data.peakTimes.hourlyDistribution,
+              ),
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (Object err, StackTrace st) => Center(
+                child: Text(
+                  'Error: $err',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: Insets.lg),
@@ -2470,9 +2716,23 @@ class _WatchStatsViewState extends ConsumerState<_WatchStatsView> {
           _ChartCard(
             title: 'Monthly Watch Trends',
             child: patternsVal.when(
-              data: (TracearrPatternsResponse data) => _MonthlyTrendsChart(trends: data.seasonalTrends.monthlyTrends),
-              loading: () => const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())),
-              error: (Object err, StackTrace st) => Center(child: Text('Error: $err', style: TextStyle(color: Theme.of(context).colorScheme.error))),
+              data: (TracearrPatternsResponse data) => _MonthlyTrendsChart(
+                trends: data.seasonalTrends.monthlyTrends,
+              ),
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (Object err, StackTrace st) => Center(
+                child: Text(
+                  'Error: $err',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: Insets.lg),
@@ -2583,8 +2843,7 @@ class _CompletionPieChartState extends State<_CompletionPieChart> {
                           return;
                         }
                         touchedIndex = pieTouchResponse
-                            .touchedSection!
-                            .touchedSectionIndex;
+                            .touchedSection!.touchedSectionIndex;
                       });
                     },
                   ),
@@ -2628,15 +2887,30 @@ class _TopMoviesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<TracearrTopMoviesResponse> val = ref.watch(tracearrTopMoviesProvider((instance: instance, period: period)));
-    final AsyncValue<TracearrApi> apiVal = ref.watch(tracearrApiProvider(instance));
+    final AsyncValue<TracearrTopMoviesResponse> val = ref
+        .watch(tracearrTopMoviesProvider((instance: instance, period: period)));
+    final AsyncValue<TracearrApi> apiVal =
+        ref.watch(tracearrApiProvider(instance));
 
     return val.when(
-      loading: () => const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())),
-      error: (Object err, StackTrace st) => Center(child: Text('Error: $err', style: TextStyle(color: Theme.of(context).colorScheme.error))),
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (Object err, StackTrace st) => Center(
+        child: Text(
+          'Error: $err',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+      ),
       data: (TracearrTopMoviesResponse data) {
         if (data.items.isEmpty) {
-          return const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('No movies watched in this period.')));
+          return const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: Text('No movies watched in this period.')),
+          );
         }
         return ListView.separated(
           shrinkWrap: true,
@@ -2657,7 +2931,6 @@ class _TopMoviesSection extends ConsumerWidget {
             }
             return _TracearrStatItemRow(
               imageUrl: posterUrl,
-              fallbackIcon: Icons.movie_outlined,
               title: Text(
                 '${index + 1}. ${movie.title} (${movie.year})',
                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -2688,8 +2961,8 @@ class _TopShowsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<TracearrTopShowsResponse> val =
-        ref.watch(tracearrTopShowsProvider((instance: instance, period: period)));
+    final AsyncValue<TracearrTopShowsResponse> val = ref
+        .watch(tracearrTopShowsProvider((instance: instance, period: period)));
     final AsyncValue<TracearrApi> apiVal =
         ref.watch(tracearrApiProvider(instance));
 
@@ -2845,7 +3118,10 @@ class _ViewingHoursBarChartState extends State<_ViewingHoursBarChart> {
   @override
   Widget build(BuildContext context) {
     if (widget.hourly.isEmpty) {
-      return const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('No hourly viewing data found.')));
+      return const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(child: Text('No hourly viewing data found.')),
+      );
     }
 
     double maxVal = 0;
@@ -2854,12 +3130,14 @@ class _ViewingHoursBarChartState extends State<_ViewingHoursBarChart> {
     }
     if (maxVal == 0) maxVal = 1;
 
-    final Color barBackgroundColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1);
+    final Color barBackgroundColor =
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1);
     final Color barColor = Theme.of(context).colorScheme.primary;
     final Color touchedBarColor = Theme.of(context).colorScheme.secondary;
 
     final Map<int, int> playsMap = <int, int>{
-      for (final TracearrHourlyDistribution p in widget.hourly) p.hour: p.watchCount,
+      for (final TracearrHourlyDistribution p in widget.hourly)
+        p.hour: p.watchCount,
     };
 
     return AspectRatio(
@@ -2873,17 +3151,31 @@ class _ViewingHoursBarChartState extends State<_ViewingHoursBarChart> {
               touchTooltipData: BarTouchTooltipData(
                 fitInsideHorizontally: true,
                 fitInsideVertically: true,
-                getTooltipColor: (_) => Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.9),
-                getTooltipItem: (BarChartGroupData group, int groupIndex, BarChartRodData rod, int rodIndex) {
+                getTooltipColor: (_) => Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest
+                    .withValues(alpha: 0.9),
+                getTooltipItem: (
+                  BarChartGroupData group,
+                  int groupIndex,
+                  BarChartRodData rod,
+                  int rodIndex,
+                ) {
                   return BarTooltipItem(
                     '${_formatHour(group.x.toInt())}\n${rod.toY.toInt()} watches',
-                    const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   );
                 },
               ),
-              touchCallback: (FlTouchEvent event, BarTouchResponse? barTouchResponse) {
+              touchCallback:
+                  (FlTouchEvent event, BarTouchResponse? barTouchResponse) {
                 setState(() {
-                  if (!event.isInterestedForInteractions || barTouchResponse == null || barTouchResponse.spot == null) {
+                  if (!event.isInterestedForInteractions ||
+                      barTouchResponse == null ||
+                      barTouchResponse.spot == null) {
                     touchedIndex = -1;
                     return;
                   }
@@ -2905,8 +3197,17 @@ class _ViewingHoursBarChartState extends State<_ViewingHoursBarChart> {
                     return SideTitleWidget(
                       meta: meta,
                       space: 6,
-                      fitInside: SideTitleFitInsideData.fromTitleMeta(meta, distanceFromEdge: 0),
-                      child: Text(_formatHour(hour), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10)),
+                      fitInside: SideTitleFitInsideData.fromTitleMeta(
+                        meta,
+                        distanceFromEdge: 0,
+                      ),
+                      child: Text(
+                        _formatHour(hour),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -2925,8 +3226,16 @@ class _ViewingHoursBarChartState extends State<_ViewingHoursBarChart> {
                     toY: count.toDouble(),
                     color: isTouched ? touchedBarColor : barColor,
                     width: 8,
-                    borderSide: isTouched ? BorderSide(color: touchedBarColor.withValues(alpha: 0.8)) : const BorderSide(color: Colors.white, width: 0),
-                    backDrawRodData: BackgroundBarChartRodData(show: true, toY: maxVal * 1.2, color: barBackgroundColor),
+                    borderSide: isTouched
+                        ? BorderSide(
+                            color: touchedBarColor.withValues(alpha: 0.8),
+                          )
+                        : const BorderSide(color: Colors.white, width: 0),
+                    backDrawRodData: BackgroundBarChartRodData(
+                      show: true,
+                      toY: maxVal * 1.2,
+                      color: barBackgroundColor,
+                    ),
                   ),
                 ],
               );
@@ -2945,7 +3254,10 @@ class _MonthlyTrendsChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (trends.isEmpty) {
-      return const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('No monthly trend statistics found.')));
+      return const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(child: Text('No monthly trend statistics found.')),
+      );
     }
 
     double maxVal = 0;
@@ -2959,14 +3271,18 @@ class _MonthlyTrendsChart extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 1.6,
       child: Padding(
-        padding: const EdgeInsets.only(right: 18, left: 12, top: 24, bottom: 12),
+        padding:
+            const EdgeInsets.only(right: 18, left: 12, top: 24, bottom: 12),
         child: LineChart(
           LineChartData(
             lineTouchData: LineTouchData(
               touchTooltipData: LineTouchTooltipData(
                 fitInsideHorizontally: true,
                 fitInsideVertically: true,
-                getTooltipColor: (_) => Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.9),
+                getTooltipColor: (_) => Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest
+                    .withValues(alpha: 0.9),
                 getTooltipItems: (List<LineBarSpot> touchedSpots) {
                   return touchedSpots.map((LineBarSpot spot) {
                     final int index = spot.x.toInt();
@@ -2974,7 +3290,11 @@ class _MonthlyTrendsChart extends StatelessWidget {
                     final TracearrMonthlyTrend t = trends[index];
                     return LineTooltipItem(
                       '${t.month}\n${t.watchCount} watches\n(${((t.totalWatchMs) / (1000 * 3600)).toStringAsFixed(1)} hrs)',
-                      TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+                      TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     );
                   }).toList();
                 },
@@ -2982,8 +3302,20 @@ class _MonthlyTrendsChart extends StatelessWidget {
             ),
             gridData: FlGridData(
               horizontalInterval: max(1, maxVal ~/ 4).toDouble(),
-              getDrawingHorizontalLine: (double val) => FlLine(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2), strokeWidth: 1),
-              getDrawingVerticalLine: (_) => FlLine(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2), strokeWidth: 1),
+              getDrawingHorizontalLine: (double val) => FlLine(
+                color: Theme.of(context)
+                    .colorScheme
+                    .outline
+                    .withValues(alpha: 0.2),
+                strokeWidth: 1,
+              ),
+              getDrawingVerticalLine: (_) => FlLine(
+                color: Theme.of(context)
+                    .colorScheme
+                    .outline
+                    .withValues(alpha: 0.2),
+                strokeWidth: 1,
+              ),
             ),
             titlesData: FlTitlesData(
               rightTitles: const AxisTitles(),
@@ -2993,7 +3325,15 @@ class _MonthlyTrendsChart extends StatelessWidget {
                   showTitles: true,
                   reservedSize: 36,
                   interval: max(1, maxVal ~/ 4).toDouble(),
-                  getTitlesWidget: (double val, TitleMeta meta) => SideTitleWidget(meta: meta, space: 6, child: Text(val.toInt().toString(), style: const TextStyle(fontSize: 10))),
+                  getTitlesWidget: (double val, TitleMeta meta) =>
+                      SideTitleWidget(
+                    meta: meta,
+                    space: 6,
+                    child: Text(
+                      val.toInt().toString(),
+                      style: const TextStyle(fontSize: 10),
+                    ),
+                  ),
                 ),
               ),
               bottomTitles: AxisTitles(
@@ -3002,25 +3342,53 @@ class _MonthlyTrendsChart extends StatelessWidget {
                   reservedSize: 28,
                   getTitlesWidget: (double val, TitleMeta meta) {
                     final int idx = val.toInt();
-                    if (idx < 0 || idx >= trends.length) return const SizedBox.shrink();
-                    return SideTitleWidget(meta: meta, space: 6, child: Text(trends[idx].month, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)));
+                    if (idx < 0 || idx >= trends.length) {
+                      return const SizedBox.shrink();
+                    }
+                    return SideTitleWidget(
+                      meta: meta,
+                      space: 6,
+                      child: Text(
+                        trends[idx].month,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
                   },
                 ),
               ),
             ),
-            borderData: FlBorderData(border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline), left: BorderSide(color: Theme.of(context).colorScheme.outline))),
+            borderData: FlBorderData(
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+                left: BorderSide(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+              ),
+            ),
             maxX: (trends.length - 1).toDouble().clamp(0, double.infinity),
             minX: 0,
             maxY: maxVal * 1.15,
             minY: 0,
             lineBarsData: <LineChartBarData>[
               LineChartBarData(
-                spots: List<FlSpot>.generate(trends.length, (int i) => FlSpot(i.toDouble(), trends[i].watchCount.toDouble())),
+                spots: List<FlSpot>.generate(
+                  trends.length,
+                  (int i) =>
+                      FlSpot(i.toDouble(), trends[i].watchCount.toDouble()),
+                ),
                 isCurved: true,
                 color: color,
                 barWidth: 3,
                 isStrokeCapRound: true,
-                belowBarData: BarAreaData(show: true, color: color.withValues(alpha: 0.15)),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: color.withValues(alpha: 0.15),
+                ),
               ),
             ],
           ),
@@ -3035,11 +3403,17 @@ class _LibraryWatchListSection extends ConsumerStatefulWidget {
   final Instance instance;
 
   @override
-  ConsumerState<_LibraryWatchListSection> createState() => _LibraryWatchListSectionState();
+  ConsumerState<_LibraryWatchListSection> createState() =>
+      _LibraryWatchListSectionState();
 }
 
-class _LibraryWatchListSectionState extends ConsumerState<_LibraryWatchListSection> {
-  void _showWatchPageDialog(BuildContext context, TracearrLibraryWatchNotifier notifier, int totalPages) {
+class _LibraryWatchListSectionState
+    extends ConsumerState<_LibraryWatchListSection> {
+  void _showWatchPageDialog(
+    BuildContext context,
+    TracearrLibraryWatchNotifier notifier,
+    int totalPages,
+  ) {
     showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -3070,7 +3444,9 @@ class _LibraryWatchListSectionState extends ConsumerState<_LibraryWatchListSecti
                     decoration: BoxDecoration(
                       color: isCurrent
                           ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                          : Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -3079,7 +3455,8 @@ class _LibraryWatchListSectionState extends ConsumerState<_LibraryWatchListSecti
                         color: isCurrent
                             ? Theme.of(context).colorScheme.onPrimary
                             : Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            isCurrent ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -3113,27 +3490,45 @@ class _LibraryWatchListSectionState extends ConsumerState<_LibraryWatchListSecti
 
   @override
   Widget build(BuildContext context) {
-    final TracearrLibraryWatchNotifier notifier = ref.watch(tracearrLibraryWatchProvider(widget.instance));
+    final TracearrLibraryWatchNotifier notifier =
+        ref.watch(tracearrLibraryWatchProvider(widget.instance));
 
     return notifier.state.when(
-      loading: () => const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())),
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: CircularProgressIndicator(),
+        ),
+      ),
       error: (Object error, StackTrace stack) => Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: <Widget>[
-              Text('Failed to load library watch items: $error', style: TextStyle(color: Theme.of(context).colorScheme.error), textAlign: TextAlign.center),
+              Text(
+                'Failed to load library watch items: $error',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 8),
-              OutlinedButton(onPressed: notifier.refresh, child: const Text('Retry')),
+              OutlinedButton(
+                onPressed: notifier.refresh,
+                child: const Text('Retry'),
+              ),
             ],
           ),
         ),
       ),
       data: (TracearrLibraryWatchResponse data) {
         if (data.items.isEmpty) {
-          return const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('No library watch history items found.')));
+          return const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: Text('No library watch history items found.')),
+          );
         }
-        final int totalPages = (data.pagination.total + notifier.pageSize - 1) ~/ notifier.pageSize;
+        final int totalPages =
+            (data.pagination.total + notifier.pageSize - 1) ~/
+                notifier.pageSize;
 
         return Column(
           children: <Widget>[
@@ -3146,12 +3541,28 @@ class _LibraryWatchListSectionState extends ConsumerState<_LibraryWatchListSecti
                 final TracearrLibraryWatchItem item = data.items[index];
                 return ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    child: Icon(_getMediaIcon(item.mediaType), color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    backgroundColor:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    child: Icon(
+                      _getMediaIcon(item.mediaType),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                  title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${item.serverName} • Watched ${item.watchCount}x • ${((item.totalWatchMs) / (1000 * 60)).toStringAsFixed(0)} mins total'),
-                  trailing: Text(item.mediaType.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+                  title: Text(
+                    item.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    '${item.serverName} • Watched ${item.watchCount}x • ${((item.totalWatchMs) / (1000 * 60)).toStringAsFixed(0)} mins total',
+                  ),
+                  trailing: Text(
+                    item.mediaType.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                 );
               },
             ),
@@ -3176,12 +3587,18 @@ class _LibraryWatchListSectionState extends ConsumerState<_LibraryWatchListSecti
                       ],
                     ],
                   ),
-                  onPressed: totalPages > 1 ? () => _showWatchPageDialog(context, notifier, totalPages) : null,
+                  onPressed: totalPages > 1
+                      ? () =>
+                          _showWatchPageDialog(context, notifier, totalPages)
+                      : null,
                 ),
                 const SizedBox(width: Insets.md),
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
-                  onPressed: (notifier.page * notifier.pageSize) < data.pagination.total ? notifier.nextPage : null,
+                  onPressed: (notifier.page * notifier.pageSize) <
+                          data.pagination.total
+                      ? notifier.nextPage
+                      : null,
                 ),
               ],
             ),
@@ -3225,13 +3642,13 @@ class _LibraryCompositionPieChartState
     final List<Color> colors = <Color>[
       scheme.primary,
       scheme.secondary,
-      scheme.tertiary
+      scheme.tertiary,
     ];
     final List<String> labels = <String>['Movies', 'Shows', 'Episodes'];
     final List<int> counts = <int>[
       widget.movieCount,
       widget.showCount,
-      widget.episodeCount
+      widget.episodeCount,
     ];
     final List<double> radiusValues = <double>[80, 65, 60];
 
@@ -3279,8 +3696,10 @@ class _LibraryCompositionPieChartState
               child: PieChart(
                 PieChartData(
                   pieTouchData: PieTouchData(
-                    touchCallback: (FlTouchEvent event,
-                        PieTouchResponse? pieTouchResponse) {
+                    touchCallback: (
+                      FlTouchEvent event,
+                      PieTouchResponse? pieTouchResponse,
+                    ) {
                       setState(() {
                         if (!event.isInterestedForInteractions ||
                             pieTouchResponse == null ||
@@ -3308,7 +3727,8 @@ class _LibraryCompositionPieChartState
                       borderSide: isTouched
                           ? const BorderSide(color: Colors.white, width: 6)
                           : BorderSide(
-                              color: Colors.white.withValues(alpha: 0)),
+                              color: Colors.white.withValues(alpha: 0),
+                            ),
                     );
                   }),
                 ),
@@ -3345,14 +3765,18 @@ class _StorageQualityBarChartState extends State<_StorageQualityBarChart> {
   @override
   Widget build(BuildContext context) {
     final List<MapEntry<String, int>> items = <MapEntry<String, int>>[];
-    if (widget.count4k > 0)
+    if (widget.count4k > 0) {
       items.add(MapEntry<String, int>('4K', widget.count4k));
-    if (widget.count1080p > 0)
+    }
+    if (widget.count1080p > 0) {
       items.add(MapEntry<String, int>('1080p', widget.count1080p));
-    if (widget.count720p > 0)
+    }
+    if (widget.count720p > 0) {
       items.add(MapEntry<String, int>('720p', widget.count720p));
-    if (widget.countSd > 0)
+    }
+    if (widget.countSd > 0) {
       items.add(MapEntry<String, int>('SD', widget.countSd));
+    }
 
     if (items.isEmpty) return const SizedBox.shrink();
 
@@ -3384,21 +3808,27 @@ class _StorageQualityBarChartState extends State<_StorageQualityBarChart> {
                     .withValues(alpha: 0.9),
                 tooltipHorizontalAlignment: FLHorizontalAlignment.center,
                 tooltipMargin: 8,
-                getTooltipItem: (BarChartGroupData group, int groupIndex,
-                    BarChartRodData rod, int rodIndex) {
+                getTooltipItem: (
+                  BarChartGroupData group,
+                  int groupIndex,
+                  BarChartRodData rod,
+                  int rodIndex,
+                ) {
                   return BarTooltipItem(
                     '${items[groupIndex].key}\n',
                     const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                     children: <TextSpan>[
                       TextSpan(
                         text: items[groupIndex].value.toString(),
                         style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500),
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   );
@@ -3426,14 +3856,19 @@ class _StorageQualityBarChartState extends State<_StorageQualityBarChart> {
                   reservedSize: 38,
                   getTitlesWidget: (double value, TitleMeta meta) {
                     final int index = value.toInt();
-                    if (index < 0 || index >= items.length)
+                    if (index < 0 || index >= items.length) {
                       return const SizedBox.shrink();
+                    }
                     return SideTitleWidget(
                       meta: meta,
                       space: 16,
-                      child: Text(items[index].key,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 12)),
+                      child: Text(
+                        items[index].key,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -3455,7 +3890,8 @@ class _StorageQualityBarChartState extends State<_StorageQualityBarChart> {
                     width: 22,
                     borderSide: isTouched
                         ? BorderSide(
-                            color: touchedBarColor.withValues(alpha: 0.8))
+                            color: touchedBarColor.withValues(alpha: 0.8),
+                          )
                         : const BorderSide(color: Colors.white, width: 0),
                     backDrawRodData: BackgroundBarChartRodData(
                       show: true,
@@ -3643,14 +4079,18 @@ class _StorageStatsViewState extends ConsumerState<_StorageStatsView> {
                             ),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 24, horizontal: 16),
+                                vertical: 24,
+                                horizontal: 16,
+                              ),
                               child: Column(
                                 children: <Widget>[
-                                  Icon(Icons.storage_outlined,
-                                      size: 32,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onPrimaryContainer),
+                                  Icon(
+                                    Icons.storage_outlined,
+                                    size: 32,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer,
+                                  ),
                                   const SizedBox(height: 8),
                                   Text(
                                     data.totalItems.toString(),
@@ -3692,14 +4132,18 @@ class _StorageStatsViewState extends ConsumerState<_StorageStatsView> {
                             ),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 24, horizontal: 8),
+                                vertical: 24,
+                                horizontal: 8,
+                              ),
                               child: Column(
                                 children: <Widget>[
-                                  Icon(Icons.sd_storage_outlined,
-                                      size: 32,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onTertiaryContainer),
+                                  Icon(
+                                    Icons.sd_storage_outlined,
+                                    size: 32,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onTertiaryContainer,
+                                  ),
                                   const SizedBox(height: 8),
                                   FittedBox(
                                     fit: BoxFit.scaleDown,
@@ -3920,13 +4364,17 @@ class _StorageGrowthChartsState extends State<_StorageGrowthCharts> {
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                      color: color, borderRadius: BorderRadius.circular(2)),
+                    color: color,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   serverName,
                   style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.bold),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -3938,25 +4386,33 @@ class _StorageGrowthChartsState extends State<_StorageGrowthCharts> {
             runSpacing: 8,
             children: <Widget>[
               Chip(
-                avatar: Icon(Icons.psychology_outlined,
-                    size: 16, color: Theme.of(context).colorScheme.primary),
+                avatar: Icon(
+                  Icons.psychology_outlined,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 label: Text(
                   '${data.predictions.confidence.toUpperCase()} CONFIDENCE (${data.predictions.currentDataDays}d sample)',
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 11),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
                 ),
               ),
               Chip(
                 label: Text(
-                    '30-Day Est: ${widget.formatNumBytes(data.predictions.day30.predicted)}'),
+                  '30-Day Est: ${widget.formatNumBytes(data.predictions.day30.predicted)}',
+                ),
               ),
               Chip(
                 label: Text(
-                    '90-Day Est: ${widget.formatNumBytes(data.predictions.day90.predicted)}'),
+                  '90-Day Est: ${widget.formatNumBytes(data.predictions.day90.predicted)}',
+                ),
               ),
               Chip(
                 label: Text(
-                    '1-Year Est: ${widget.formatNumBytes(data.predictions.day365.predicted)}'),
+                  '1-Year Est: ${widget.formatNumBytes(data.predictions.day365.predicted)}',
+                ),
               ),
             ],
           ),
@@ -3967,16 +4423,19 @@ class _StorageGrowthChartsState extends State<_StorageGrowthCharts> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               _StorageGrowthLegendItem(
-                  color: Theme.of(context).colorScheme.primary,
-                  label: 'Historical'),
+                color: Theme.of(context).colorScheme.primary,
+                label: 'Historical',
+              ),
               const SizedBox(width: 16),
               _StorageGrowthLegendItem(
-                  color: Theme.of(context).colorScheme.secondary,
-                  label: 'Predicted (Dotted)'),
+                color: Theme.of(context).colorScheme.secondary,
+                label: 'Predicted (Dotted)',
+              ),
               const SizedBox(width: 16),
               _StorageGrowthLegendItem(
-                  color: Theme.of(context).colorScheme.tertiary,
-                  label: 'Min/Max Range'),
+                color: Theme.of(context).colorScheme.tertiary,
+                label: 'Min/Max Range',
+              ),
             ],
           ),
         ],
@@ -4083,9 +4542,10 @@ class _StorageGrowthLegendItem extends StatelessWidget {
       children: <Widget>[
         Container(width: 12, height: 4, color: color),
         const SizedBox(width: 6),
-        Text(label,
-            style:
-                Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11)),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+        ),
       ],
     );
   }
@@ -4137,40 +4597,49 @@ class _StorageGrowthLineChart extends StatelessWidget {
     final double pred30Y = response.predictions.day30.predicted / gbDivisor;
     predSpots.add(FlSpot(idx30.toDouble(), pred30Y));
     minSpots.add(
-        FlSpot(idx30.toDouble(), response.predictions.day30.min / gbDivisor));
+      FlSpot(idx30.toDouble(), response.predictions.day30.min / gbDivisor),
+    );
     maxSpots.add(
-        FlSpot(idx30.toDouble(), response.predictions.day30.max / gbDivisor));
+      FlSpot(idx30.toDouble(), response.predictions.day30.max / gbDivisor),
+    );
     labelsMap[idx30] = '+30 Days';
     if (pred30Y < minY) minY = pred30Y;
     if (pred30Y > maxY) maxY = pred30Y;
-    if (response.predictions.day30.max / gbDivisor > maxY)
+    if (response.predictions.day30.max / gbDivisor > maxY) {
       maxY = response.predictions.day30.max / gbDivisor;
+    }
 
     final int idx90 = lastIdx + 90;
     final double pred90Y = response.predictions.day90.predicted / gbDivisor;
     predSpots.add(FlSpot(idx90.toDouble(), pred90Y));
     minSpots.add(
-        FlSpot(idx90.toDouble(), response.predictions.day90.min / gbDivisor));
+      FlSpot(idx90.toDouble(), response.predictions.day90.min / gbDivisor),
+    );
     maxSpots.add(
-        FlSpot(idx90.toDouble(), response.predictions.day90.max / gbDivisor));
+      FlSpot(idx90.toDouble(), response.predictions.day90.max / gbDivisor),
+    );
     labelsMap[idx90] = '+90 Days';
     if (pred90Y < minY) minY = pred90Y;
     if (pred90Y > maxY) maxY = pred90Y;
-    if (response.predictions.day90.max / gbDivisor > maxY)
+    if (response.predictions.day90.max / gbDivisor > maxY) {
       maxY = response.predictions.day90.max / gbDivisor;
+    }
 
     final int idx365 = lastIdx + 365;
     final double pred365Y = response.predictions.day365.predicted / gbDivisor;
     predSpots.add(FlSpot(idx365.toDouble(), pred365Y));
     minSpots.add(
-        FlSpot(idx365.toDouble(), response.predictions.day365.min / gbDivisor));
+      FlSpot(idx365.toDouble(), response.predictions.day365.min / gbDivisor),
+    );
     maxSpots.add(
-        FlSpot(idx365.toDouble(), response.predictions.day365.max / gbDivisor));
+      FlSpot(idx365.toDouble(), response.predictions.day365.max / gbDivisor),
+    );
     labelsMap[idx365] = '+1 Year';
     if (pred365Y < minY) minY = pred365Y;
     if (pred365Y > maxY) maxY = pred365Y;
-    if (response.predictions.day365.max / gbDivisor > maxY)
+    if (response.predictions.day365.max / gbDivisor > maxY) {
       maxY = response.predictions.day365.max / gbDivisor;
+    }
 
     if (minY == double.infinity || minY > maxY) {
       minY = 0.0;
@@ -4225,9 +4694,10 @@ class _StorageGrowthLineChart extends StatelessWidget {
                     return LineTooltipItem(
                       '${isFirst ? '$title\n' : ''}$lineName: $gbVal',
                       TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12),
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     );
                   }).toList();
                 },
@@ -4238,19 +4708,21 @@ class _StorageGrowthLineChart extends StatelessWidget {
               verticalInterval: intervalX,
               getDrawingHorizontalLine: (double value) {
                 return FlLine(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .outline
-                        .withValues(alpha: 0.2),
-                    strokeWidth: 1);
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outline
+                      .withValues(alpha: 0.2),
+                  strokeWidth: 1,
+                );
               },
               getDrawingVerticalLine: (double value) {
                 return FlLine(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .outline
-                        .withValues(alpha: 0.2),
-                    strokeWidth: 1);
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outline
+                      .withValues(alpha: 0.2),
+                  strokeWidth: 1,
+                );
               },
             ),
             titlesData: FlTitlesData(
@@ -4272,9 +4744,13 @@ class _StorageGrowthLineChart extends StatelessWidget {
                     }
                     return SideTitleWidget(
                       meta: meta,
-                      child: Text(label.length > 7 ? label.substring(5) : label,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 10)),
+                      child: Text(
+                        label.length > 7 ? label.substring(5) : label,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -4285,10 +4761,14 @@ class _StorageGrowthLineChart extends StatelessWidget {
                   interval: intervalY,
                   reservedSize: 45,
                   getTitlesWidget: (double value, TitleMeta meta) {
-                    return Text('${value.toInt()} G',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 11),
-                        textAlign: TextAlign.left);
+                    return Text(
+                      '${value.toInt()} G',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                      textAlign: TextAlign.left,
+                    );
                   },
                 ),
               ),
@@ -4296,10 +4776,11 @@ class _StorageGrowthLineChart extends StatelessWidget {
             borderData: FlBorderData(
               show: true,
               border: Border.all(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .outline
-                      .withValues(alpha: 0.2)),
+                color: Theme.of(context)
+                    .colorScheme
+                    .outline
+                    .withValues(alpha: 0.2),
+              ),
             ),
             lineBarsData: <LineChartBarData>[
               LineChartBarData(
@@ -4413,7 +4894,10 @@ class _StorageRoiSection extends ConsumerWidget {
   }
 
   void _showPageDialog(
-      BuildContext context, TracearrRoiNotifier notifier, int totalPages) {
+    BuildContext context,
+    TracearrRoiNotifier notifier,
+    int totalPages,
+  ) {
     showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -4521,13 +5005,17 @@ class _StorageRoiSection extends ConsumerWidget {
                             ),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 16, horizontal: 12),
+                                vertical: 16,
+                                horizontal: 12,
+                              ),
                               child: Column(
                                 children: <Widget>[
-                                  Icon(Icons.auto_delete_outlined,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSecondaryContainer),
+                                  Icon(
+                                    Icons.auto_delete_outlined,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSecondaryContainer,
+                                  ),
                                   const SizedBox(height: 4),
                                   Text(
                                     '${summary.potentialSavingsGb.toStringAsFixed(1)} GB',
@@ -4571,13 +5059,17 @@ class _StorageRoiSection extends ConsumerWidget {
                             ),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 16, horizontal: 12),
+                                vertical: 16,
+                                horizontal: 12,
+                              ),
                               child: Column(
                                 children: <Widget>[
-                                  Icon(Icons.speed_outlined,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant),
+                                  Icon(
+                                    Icons.speed_outlined,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                                   const SizedBox(height: 4),
                                   Text(
                                     '${summary.avgWatchHoursPerGb.toStringAsFixed(2)} hrs/GB',
@@ -4619,13 +5111,17 @@ class _StorageRoiSection extends ConsumerWidget {
                             ),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 16, horizontal: 12),
+                                vertical: 16,
+                                horizontal: 12,
+                              ),
                               child: Column(
                                 children: <Widget>[
-                                  Icon(Icons.warning_amber_outlined,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onErrorContainer),
+                                  Icon(
+                                    Icons.warning_amber_outlined,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onErrorContainer,
+                                  ),
                                   const SizedBox(height: 4),
                                   Text(
                                     '${summary.lowValueItems}',
@@ -4801,13 +5297,16 @@ class _StorageRoiSection extends ConsumerWidget {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: _getValueColor(item.valueCategory,
-                                            Theme.of(context).colorScheme)
-                                        .withValues(alpha: 0.15),
+                                    color: _getValueColor(
+                                      item.valueCategory,
+                                      Theme.of(context).colorScheme,
+                                    ).withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: _getValueColor(item.valueCategory,
-                                          Theme.of(context).colorScheme),
+                                      color: _getValueColor(
+                                        item.valueCategory,
+                                        Theme.of(context).colorScheme,
+                                      ),
                                     ),
                                   ),
                                   child: Text(
@@ -4817,8 +5316,9 @@ class _StorageRoiSection extends ConsumerWidget {
                                         .labelSmall
                                         ?.copyWith(
                                           color: _getValueColor(
-                                              item.valueCategory,
-                                              Theme.of(context).colorScheme),
+                                            item.valueCategory,
+                                            Theme.of(context).colorScheme,
+                                          ),
                                           fontWeight: FontWeight.bold,
                                         ),
                                   ),
@@ -4878,7 +5378,10 @@ class _StorageRoiSection extends ConsumerWidget {
                             ),
                             onPressed: totalPages > 1
                                 ? () => _showPageDialog(
-                                    context, notifier, totalPages)
+                                      context,
+                                      notifier,
+                                      totalPages,
+                                    )
                                 : null,
                           ),
                           const SizedBox(width: Insets.md),
@@ -4909,7 +5412,8 @@ class _StorageRoiSection extends ConsumerWidget {
                       Text(
                         'Failed to load Storage ROI stats: $error',
                         style: TextStyle(
-                            color: Theme.of(context).colorScheme.error),
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
@@ -4938,7 +5442,9 @@ class _DashboardStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          vertical: Insets.lg, horizontal: Insets.sm),
+        vertical: Insets.lg,
+        horizontal: Insets.sm,
+      ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
@@ -4986,50 +5492,65 @@ class _DashboardStatsHeader extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('Today\'s Overview',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                'Today\'s Overview',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: Insets.md),
               Row(
                 children: <Widget>[
                   Expanded(
-                      child: _DashboardStatCard(
-                          title: 'Active Streams',
-                          value: '${data.activeStreams}')),
+                    child: _DashboardStatCard(
+                      title: 'Active Streams',
+                      value: '${data.activeStreams}',
+                    ),
+                  ),
                   const SizedBox(width: Insets.md),
                   Expanded(
-                      child: _DashboardStatCard(
-                          title: 'Watch Hours',
-                          value: data.watchTimeHours.toStringAsFixed(1))),
+                    child: _DashboardStatCard(
+                      title: 'Watch Hours',
+                      value: data.watchTimeHours.toStringAsFixed(1),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: Insets.md),
               Row(
                 children: <Widget>[
                   Expanded(
-                      child: _DashboardStatCard(
-                          title: 'Plays Today', value: '${data.todayPlays}')),
+                    child: _DashboardStatCard(
+                      title: 'Plays Today',
+                      value: '${data.todayPlays}',
+                    ),
+                  ),
                   const SizedBox(width: Insets.md),
                   Expanded(
-                      child: _DashboardStatCard(
-                          title: 'Sessions Today',
-                          value: '${data.todaySessions}')),
+                    child: _DashboardStatCard(
+                      title: 'Sessions Today',
+                      value: '${data.todaySessions}',
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: Insets.md),
               Row(
                 children: <Widget>[
                   Expanded(
-                      child: _DashboardStatCard(
-                          title: 'Active Users',
-                          value: '${data.activeUsersToday}')),
+                    child: _DashboardStatCard(
+                      title: 'Active Users',
+                      value: '${data.activeUsersToday}',
+                    ),
+                  ),
                   const SizedBox(width: Insets.md),
                   Expanded(
-                      child: _DashboardStatCard(
-                          title: 'Recent Alerts',
-                          value: '${data.alertsLast24h}')),
+                    child: _DashboardStatCard(
+                      title: 'Recent Alerts',
+                      value: '${data.alertsLast24h}',
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -5037,11 +5558,13 @@ class _DashboardStatsHeader extends ConsumerWidget {
         );
       },
       loading: () => const Padding(
-          padding: EdgeInsets.all(Insets.lg),
-          child: Center(child: CircularProgressIndicator())),
+        padding: EdgeInsets.all(Insets.lg),
+        child: Center(child: CircularProgressIndicator()),
+      ),
       error: (Object e, StackTrace st) => Padding(
-          padding: const EdgeInsets.all(Insets.lg),
-          child: Text('Failed to load stats: $e')),
+        padding: const EdgeInsets.all(Insets.lg),
+        child: Text('Failed to load stats: $e'),
+      ),
     );
   }
 }
@@ -5256,7 +5779,13 @@ class _SessionCardState extends State<_SessionCard> {
   String? get imageUrl {
     if (widget.api != null && widget.session.thumbPath != null) {
       final String type = widget.session.mediaType.toLowerCase();
-      final bool isAudio = type == 'track' || type == 'album' || type == 'audio' || type == 'music' || type == 'song' || type == 'podcast' || type == 'audiobook';
+      final bool isAudio = type == 'track' ||
+          type == 'album' ||
+          type == 'audio' ||
+          type == 'music' ||
+          type == 'song' ||
+          type == 'podcast' ||
+          type == 'audiobook';
       return widget.api!.proxyImageUrl(
         serverId: widget.session.serverId,
         path: widget.session.thumbPath,
@@ -5431,17 +5960,27 @@ class _SessionCardState extends State<_SessionCard> {
                         constraints:
                             const BoxConstraints(maxWidth: 120, maxHeight: 126),
                         child: AspectRatio(
-                          aspectRatio: session.mediaType.toLowerCase() == 'track' ||
-                                  session.mediaType.toLowerCase() == 'album' ||
-                                  session.mediaType.toLowerCase() == 'audio' ||
-                                  session.mediaType.toLowerCase() == 'music' ||
-                                  session.mediaType.toLowerCase() == 'song' ||
-                                  session.mediaType.toLowerCase() == 'podcast' ||
-                                  session.mediaType.toLowerCase() == 'audiobook' ||
-                                  session.mediaType.toLowerCase() == 'musicalbum' ||
-                                  session.mediaType.toLowerCase() == 'musicartist'
-                              ? 1.0
-                              : (2 / 3),
+                          aspectRatio:
+                              session.mediaType.toLowerCase() == 'track' ||
+                                      session.mediaType.toLowerCase() ==
+                                          'album' ||
+                                      session.mediaType.toLowerCase() ==
+                                          'audio' ||
+                                      session.mediaType.toLowerCase() ==
+                                          'music' ||
+                                      session.mediaType.toLowerCase() ==
+                                          'song' ||
+                                      session.mediaType.toLowerCase() ==
+                                          'podcast' ||
+                                      session.mediaType.toLowerCase() ==
+                                          'audiobook' ||
+                                      session.mediaType
+                                              .toLowerCase() ==
+                                          'musicalbum' ||
+                                      session.mediaType.toLowerCase() ==
+                                          'musicartist'
+                                  ? 1.0
+                                  : (2 / 3),
                           child: Container(
                             decoration: BoxDecoration(
                               color: theme.colorScheme.surfaceContainerHighest,
@@ -5709,7 +6248,8 @@ class _CustomDateRangeDialogState extends State<_CustomDateRangeDialog> {
   void initState() {
     super.initState();
     final DateTime now = DateTime.now();
-    _startDate = widget.initialStart ?? DateTime(now.year - 1, now.month, now.day);
+    _startDate =
+        widget.initialStart ?? DateTime(now.year - 1, now.month, now.day);
     _endDate = widget.initialEnd ?? now;
   }
 
@@ -5737,11 +6277,11 @@ class _CustomDateRangeDialogState extends State<_CustomDateRangeDialog> {
       _activePreset = preset;
       switch (preset) {
         case 'This Year':
-          _startDate = DateTime(now.year, 1, 1);
+          _startDate = DateTime(now.year);
           _endDate = now;
           break;
         case 'Last Year':
-          _startDate = DateTime(now.year - 1, 1, 1);
+          _startDate = DateTime(now.year - 1);
           _endDate = DateTime(now.year - 1, 12, 31, 23, 59, 59);
           break;
         case 'Last 2 Years':
@@ -5753,7 +6293,7 @@ class _CustomDateRangeDialogState extends State<_CustomDateRangeDialog> {
           _endDate = now;
           break;
         case 'All Time':
-          _startDate = DateTime(2000, 1, 1);
+          _startDate = DateTime(2000);
           _endDate = now;
           break;
       }
@@ -5971,4 +6511,3 @@ class _CustomDateRangeDialogState extends State<_CustomDateRangeDialog> {
     );
   }
 }
-

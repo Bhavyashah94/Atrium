@@ -25,6 +25,20 @@ import 'models/tracearr_top_movies.dart';
 import 'models/tracearr_top_shows.dart';
 
 /// Thin typed client over the Tracearr API.
+
+/// The `data` array out of a Tracearr response envelope, as maps.
+///
+/// Tracearr wraps list results as `{"data": [...]}`. Reading that through
+/// `dynamic` works until a payload is not the shape expected and it throws
+/// mid-parse, so the shape is checked once here and anything that is not a
+/// JSON object is dropped rather than crashing the screen.
+List<Map<String, dynamic>> _envelopeList(Object? body) {
+  if (body is! Map<String, dynamic>) return const <Map<String, dynamic>>[];
+  final Object? data = body['data'];
+  if (data is! List) return const <Map<String, dynamic>>[];
+  return data.whereType<Map<String, dynamic>>().toList();
+}
+
 class TracearrApi {
   TracearrApi(this._dio, {this.token});
 
@@ -62,7 +76,8 @@ class TracearrApi {
       if (fallback != null && fallback.isNotEmpty) 'fallback': fallback,
       if (token != null && token!.isNotEmpty) 'token': token!,
     };
-    final Uri uri = Uri.parse('$base/api/v1/images/proxy').replace(queryParameters: query);
+    final Uri uri =
+        Uri.parse('$base/api/v1/images/proxy').replace(queryParameters: query);
     return uri.toString();
   }
 
@@ -76,10 +91,16 @@ class TracearrApi {
   /// Retrieves the active sessions from the internal Tracearr API.
   Future<TracearrActiveSessions> getActiveSessions() async {
     try {
-      final Response<dynamic> resp = await _dio.get<dynamic>('api/v1/sessions/active');
+      final Response<dynamic> resp =
+          await _dio.get<dynamic>('api/v1/sessions/active');
       if (resp.data is List) {
         return TracearrActiveSessions(
-          sessions: (resp.data as List).map((dynamic e) => TracearrSession.fromJson(e as Map<String, dynamic>)).toList(),
+          sessions: (resp.data as List)
+              .map(
+                (dynamic e) =>
+                    TracearrSession.fromJson(e as Map<String, dynamic>),
+              )
+              .toList(),
         );
       }
       return TracearrActiveSessions.fromJson(resp.data as Map<String, dynamic>);
@@ -131,59 +152,92 @@ class TracearrApi {
       if (to != null) query['endDate'] = _formatIsoDate(to);
 
       final Options opts = Options(listFormat: ListFormat.multi);
-      final Future<Response<dynamic>> playsReq = _dio.get<dynamic>('api/v1/stats/plays', queryParameters: query, options: opts);
-      final Future<Response<dynamic>> dowReq = _dio.get<dynamic>('api/v1/stats/plays-by-dayofweek', queryParameters: query, options: opts);
-      final Future<Response<dynamic>> hodReq = _dio.get<dynamic>('api/v1/stats/plays-by-hourofday', queryParameters: query, options: opts);
-      final Future<Response<dynamic>> platformsReq = _dio.get<dynamic>('api/v1/stats/platforms', queryParameters: query, options: opts);
-      final Future<Response<dynamic>> qualityReq = _dio.get<dynamic>('api/v1/stats/quality', queryParameters: query, options: opts);
-      final Future<Response<dynamic>> concurrentReq = _dio.get<dynamic>('api/v1/stats/concurrent', queryParameters: query, options: opts);
-      final Future<Response<dynamic>> engagementReq = _dio.get<dynamic>('api/v1/stats/engagement', queryParameters: query, options: opts);
+      final Future<Response<dynamic>> playsReq = _dio.get<dynamic>(
+        'api/v1/stats/plays',
+        queryParameters: query,
+        options: opts,
+      );
+      final Future<Response<dynamic>> dowReq = _dio.get<dynamic>(
+        'api/v1/stats/plays-by-dayofweek',
+        queryParameters: query,
+        options: opts,
+      );
+      final Future<Response<dynamic>> hodReq = _dio.get<dynamic>(
+        'api/v1/stats/plays-by-hourofday',
+        queryParameters: query,
+        options: opts,
+      );
+      final Future<Response<dynamic>> platformsReq = _dio.get<dynamic>(
+        'api/v1/stats/platforms',
+        queryParameters: query,
+        options: opts,
+      );
+      final Future<Response<dynamic>> qualityReq = _dio.get<dynamic>(
+        'api/v1/stats/quality',
+        queryParameters: query,
+        options: opts,
+      );
+      final Future<Response<dynamic>> concurrentReq = _dio.get<dynamic>(
+        'api/v1/stats/concurrent',
+        queryParameters: query,
+        options: opts,
+      );
+      final Future<Response<dynamic>> engagementReq = _dio.get<dynamic>(
+        'api/v1/stats/engagement',
+        queryParameters: query,
+        options: opts,
+      );
 
-      final List<Response<dynamic>> resps = await Future.wait(<Future<Response<dynamic>>>[playsReq, dowReq, hodReq, platformsReq, qualityReq, concurrentReq, engagementReq]);
+      final List<Response<dynamic>> resps =
+          await Future.wait(<Future<Response<dynamic>>>[
+        playsReq,
+        dowReq,
+        hodReq,
+        platformsReq,
+        qualityReq,
+        concurrentReq,
+        engagementReq,
+      ]);
 
-      final List<TracearrActivityPlay> plays = <TracearrActivityPlay>[];
-      if (resps[0].data is Map<String, dynamic> && resps[0].data['data'] is List) {
-        for (final dynamic item in resps[0].data['data'] as List<dynamic>) {
-          plays.add(TracearrActivityPlay.fromJson(item as Map<String, dynamic>));
-        }
+      final List<TracearrActivityPlay> plays = <TracearrActivityPlay>[
+        for (final Map<String, dynamic> item in _envelopeList(resps[0].data))
+          TracearrActivityPlay.fromJson(item),
+      ];
+
+      final List<TracearrActivityPlayDow> playsDow = <TracearrActivityPlayDow>[
+        for (final Map<String, dynamic> item in _envelopeList(resps[1].data))
+          TracearrActivityPlayDow.fromJson(item),
+      ];
+
+      final List<TracearrActivityPlayHod> playsHod = <TracearrActivityPlayHod>[
+        for (final Map<String, dynamic> item in _envelopeList(resps[2].data))
+          TracearrActivityPlayHod.fromJson(item),
+      ];
+
+      final List<TracearrActivityPlatform> platforms =
+          <TracearrActivityPlatform>[
+        for (final Map<String, dynamic> item in _envelopeList(resps[3].data))
+          TracearrActivityPlatform.fromJson(item),
+      ];
+
+      TracearrActivityQuality quality = const TracearrActivityQuality();
+      final Object? qualityBody = resps[4].data;
+      if (qualityBody is Map<String, dynamic>) {
+        quality = TracearrActivityQuality.fromJson(qualityBody);
       }
 
-      final List<TracearrActivityPlayDow> playsDow = <TracearrActivityPlayDow>[];
-      if (resps[1].data is Map<String, dynamic> && resps[1].data['data'] is List) {
-        for (final dynamic item in resps[1].data['data'] as List<dynamic>) {
-          playsDow.add(TracearrActivityPlayDow.fromJson(item as Map<String, dynamic>));
-        }
-      }
+      final List<TracearrActivityConcurrent> concurrent =
+          <TracearrActivityConcurrent>[
+        for (final Map<String, dynamic> item in _envelopeList(resps[5].data))
+          TracearrActivityConcurrent.fromJson(item),
+      ];
 
-      final List<TracearrActivityPlayHod> playsHod = <TracearrActivityPlayHod>[];
-      if (resps[2].data is Map<String, dynamic> && resps[2].data['data'] is List) {
-        for (final dynamic item in resps[2].data['data'] as List<dynamic>) {
-          playsHod.add(TracearrActivityPlayHod.fromJson(item as Map<String, dynamic>));
-        }
-      }
-
-      final List<TracearrActivityPlatform> platforms = <TracearrActivityPlatform>[];
-      if (resps[3].data is Map<String, dynamic> && resps[3].data['data'] is List) {
-        for (final dynamic item in resps[3].data['data'] as List<dynamic>) {
-          platforms.add(TracearrActivityPlatform.fromJson(item as Map<String, dynamic>));
-        }
-      }
-
-      TracearrActivityQuality quality = TracearrActivityQuality();
-      if (resps[4].data is Map<String, dynamic>) {
-        quality = TracearrActivityQuality.fromJson(resps[4].data as Map<String, dynamic>);
-      }
-
-      final List<TracearrActivityConcurrent> concurrent = <TracearrActivityConcurrent>[];
-      if (resps[5].data is Map<String, dynamic> && resps[5].data['data'] is List) {
-        for (final dynamic item in resps[5].data['data'] as List<dynamic>) {
-          concurrent.add(TracearrActivityConcurrent.fromJson(item as Map<String, dynamic>));
-        }
-      }
-
-      TracearrActivityEngagement engagement = TracearrActivityEngagement(summary: TracearrEngagementSummary());
-      if (resps[6].data is Map<String, dynamic>) {
-        engagement = TracearrActivityEngagement.fromJson(resps[6].data as Map<String, dynamic>);
+      TracearrActivityEngagement engagement = const TracearrActivityEngagement(
+        summary: TracearrEngagementSummary(),
+      );
+      final Object? engagementBody = resps[6].data;
+      if (engagementBody is Map<String, dynamic>) {
+        engagement = TracearrActivityEngagement.fromJson(engagementBody);
       }
 
       return TracearrActivityStats(
@@ -199,7 +253,11 @@ class TracearrApi {
       throw NetworkException.fromDio(e);
     }
   }
-  Future<List<TracearrSession>> getHistory(List<String> serverIds, {int page = 1}) async {
+
+  Future<List<TracearrSession>> getHistory(
+    List<String> serverIds, {
+    int page = 1,
+  }) async {
     try {
       final Map<String, dynamic> query = <String, dynamic>{
         'serverIds': serverIds,
@@ -211,16 +269,19 @@ class TracearrApi {
         queryParameters: query,
         options: Options(listFormat: ListFormat.multi),
       );
-      if (resp.data is Map<String, dynamic> && resp.data['data'] is List) {
-        return (resp.data['data'] as List).map((dynamic e) => TracearrSession.fromJson(e as Map<String, dynamic>)).toList();
-      }
-      return <TracearrSession>[];
+      return <TracearrSession>[
+        for (final Map<String, dynamic> item in _envelopeList(resp.data))
+          TracearrSession.fromJson(item),
+      ];
     } on DioException catch (e) {
       throw NetworkException.fromDio(e);
     }
   }
 
-  Future<TracearrActivityLocationsResponse> getLocations(List<String> serverIds, String timezone) async {
+  Future<TracearrActivityLocationsResponse> getLocations(
+    List<String> serverIds,
+    String timezone,
+  ) async {
     try {
       final Map<String, dynamic> query = <String, dynamic>{
         'serverIds': serverIds,
@@ -232,7 +293,9 @@ class TracearrApi {
         queryParameters: query,
         options: Options(listFormat: ListFormat.multi),
       );
-      return TracearrActivityLocationsResponse.fromJson(res.data as Map<String, dynamic>);
+      return TracearrActivityLocationsResponse.fromJson(
+        res.data as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw NetworkException.fromDio(e);
     } catch (e) {
@@ -240,7 +303,10 @@ class TracearrApi {
     }
   }
 
-  Future<TracearrDashboardStats> getDashboardStats(List<String> serverIds, String timezone) async {
+  Future<TracearrDashboardStats> getDashboardStats(
+    List<String> serverIds,
+    String timezone,
+  ) async {
     try {
       final Response<dynamic> res = await _dio.get<dynamic>(
         'api/v1/stats/dashboard',
@@ -250,7 +316,7 @@ class TracearrApi {
         },
         options: Options(listFormat: ListFormat.multi),
       );
-      
+
       dynamic rawData = res.data;
       if (rawData is String) {
         try {
@@ -267,7 +333,7 @@ class TracearrApi {
           data = Map<String, dynamic>.from(first);
         }
       }
-      
+
       if (data.containsKey('data')) {
         if (data['data'] is Map) {
           data = Map<String, dynamic>.from(data['data'] as Map);
@@ -285,7 +351,7 @@ class TracearrApi {
         if (value is String) return double.tryParse(value) ?? 0.0;
         return 0.0;
       }
-      
+
       int parseInt(dynamic value) {
         if (value == null) return 0;
         if (value is num) return value.toInt();
@@ -293,12 +359,18 @@ class TracearrApi {
         return 0;
       }
 
-      int activeStreams = parseInt(data['activeStreams'] ?? data['active_streams']);
-      int todayPlays = parseInt(data['todayPlays'] ?? data['today_plays']);
-      int todaySessions = parseInt(data['todaySessions'] ?? data['today_sessions']);
-      double watchTimeHours = parseDouble(data['watchTimeHours'] ?? data['watch_time_hours']);
-      int alertsLast24h = parseInt(data['alertsLast24h'] ?? data['alerts_last_24h']);
-      int activeUsersToday = parseInt(data['activeUsersToday'] ?? data['active_users_today']);
+      final int activeStreams =
+          parseInt(data['activeStreams'] ?? data['active_streams']);
+      final int todayPlays =
+          parseInt(data['todayPlays'] ?? data['today_plays']);
+      final int todaySessions =
+          parseInt(data['todaySessions'] ?? data['today_sessions']);
+      final double watchTimeHours =
+          parseDouble(data['watchTimeHours'] ?? data['watch_time_hours']);
+      final int alertsLast24h =
+          parseInt(data['alertsLast24h'] ?? data['alerts_last_24h']);
+      final int activeUsersToday =
+          parseInt(data['activeUsersToday'] ?? data['active_users_today']);
 
       final TracearrDashboardStats stats = TracearrDashboardStats(
         activeStreams: activeStreams,
@@ -308,7 +380,7 @@ class TracearrApi {
         alertsLast24h: alertsLast24h,
         activeUsersToday: activeUsersToday,
       );
-      
+
       return stats;
     } on DioException catch (e) {
       throw NetworkException.fromDio(e);
@@ -399,14 +471,20 @@ class TracearrApi {
     }
   }
 
-  Future<TracearrStorageResponse> getLibraryStorage(String serverId, String period, String timezone) async {
+  Future<TracearrStorageResponse> getLibraryStorage(
+    String serverId,
+    String period,
+    String timezone,
+  ) async {
     try {
       String formattedPeriod = period;
       if (formattedPeriod == 'month' || formattedPeriod == '30d') {
         formattedPeriod = '30d';
       } else if (formattedPeriod == 'week' || formattedPeriod == '7d') {
         formattedPeriod = '7d';
-      } else if (formattedPeriod == 'year' || formattedPeriod == '1yr' || formattedPeriod == '1y') {
+      } else if (formattedPeriod == 'year' ||
+          formattedPeriod == '1yr' ||
+          formattedPeriod == '1y') {
         formattedPeriod = '1y';
       } else if (formattedPeriod.toLowerCase() == 'all') {
         formattedPeriod = 'all';
@@ -440,11 +518,17 @@ class TracearrApi {
     } on DioException catch (e) {
       throw NetworkException.fromDio(e);
     } catch (e) {
-      throw Exception('Failed to fetch library storage stats for server $serverId: $e');
+      throw Exception(
+        'Failed to fetch library storage stats for server $serverId: $e',
+      );
     }
   }
 
-  Future<TracearrStorageResponse> getAggregatedLibraryStorage(List<String> serverIds, String period, String timezone) async {
+  Future<TracearrStorageResponse> getAggregatedLibraryStorage(
+    List<String> serverIds,
+    String period,
+    String timezone,
+  ) async {
     if (serverIds.isEmpty) {
       return TracearrStorageResponse.aggregate(<TracearrStorageResponse>[]);
     }
@@ -452,7 +536,8 @@ class TracearrApi {
     await Future.wait(
       serverIds.map((String id) async {
         try {
-          final TracearrStorageResponse res = await getLibraryStorage(id, period, timezone);
+          final TracearrStorageResponse res =
+              await getLibraryStorage(id, period, timezone);
           responses.add(res);
         } catch (_) {
           // Ignore individual server storage failures so indexed servers still render
@@ -462,13 +547,19 @@ class TracearrApi {
     return TracearrStorageResponse.aggregate(responses);
   }
 
-  Future<Map<String, TracearrStorageResponse>> getMultiServerLibraryStorage(List<String> serverIds, String period, String timezone) async {
-    final Map<String, TracearrStorageResponse> result = <String, TracearrStorageResponse>{};
+  Future<Map<String, TracearrStorageResponse>> getMultiServerLibraryStorage(
+    List<String> serverIds,
+    String period,
+    String timezone,
+  ) async {
+    final Map<String, TracearrStorageResponse> result =
+        <String, TracearrStorageResponse>{};
     if (serverIds.isEmpty) return result;
     await Future.wait(
       serverIds.map((String id) async {
         try {
-          final TracearrStorageResponse res = await getLibraryStorage(id, period, timezone);
+          final TracearrStorageResponse res =
+              await getLibraryStorage(id, period, timezone);
           result[id] = res;
         } catch (_) {
           // Ignore failures from inactive/unindexed servers
@@ -504,7 +595,9 @@ class TracearrApi {
 
       dynamic rawData = res.data;
       if (rawData is String) {
-        try { rawData = jsonDecode(rawData); } catch (_) {}
+        try {
+          rawData = jsonDecode(rawData);
+        } catch (_) {}
       }
       Map<String, dynamic> jsonMap = <String, dynamic>{};
       if (rawData is Map) {
@@ -544,7 +637,9 @@ class TracearrApi {
 
       dynamic rawData = res.data;
       if (rawData is String) {
-        try { rawData = jsonDecode(rawData); } catch (_) {}
+        try {
+          rawData = jsonDecode(rawData);
+        } catch (_) {}
       }
       Map<String, dynamic> jsonMap = <String, dynamic>{};
       if (rawData is Map) {
@@ -558,8 +653,11 @@ class TracearrApi {
     }
   }
 
-  Future<TracearrCompletionSummary> getAggregatedLibraryCompletion(List<String> serverIds) async {
-    final List<TracearrCompletionSummary> summaries = <TracearrCompletionSummary>[];
+  Future<TracearrCompletionSummary> getAggregatedLibraryCompletion(
+    List<String> serverIds,
+  ) async {
+    final List<TracearrCompletionSummary> summaries =
+        <TracearrCompletionSummary>[];
     await Future.wait(
       serverIds.map((String serverId) async {
         for (final String mediaType in <String>['movie', 'episode']) {
@@ -578,12 +676,19 @@ class TracearrApi {
             if (res.statusCode == 200 && res.data != null) {
               dynamic rawData = res.data;
               if (rawData is String) {
-                try { rawData = jsonDecode(rawData); } catch (_) {}
+                try {
+                  rawData = jsonDecode(rawData);
+                } catch (_) {}
               }
               if (rawData is Map) {
-                final Map<String, dynamic> jsonMap = Map<String, dynamic>.from(rawData);
+                final Map<String, dynamic> jsonMap =
+                    Map<String, dynamic>.from(rawData);
                 if (jsonMap['summary'] is Map) {
-                  summaries.add(TracearrCompletionSummary.fromJson(Map<String, dynamic>.from(jsonMap['summary'] as Map)));
+                  summaries.add(
+                    TracearrCompletionSummary.fromJson(
+                      Map<String, dynamic>.from(jsonMap['summary'] as Map),
+                    ),
+                  );
                 }
               }
             }
@@ -616,7 +721,9 @@ class TracearrApi {
 
       dynamic rawData = res.data;
       if (rawData is String) {
-        try { rawData = jsonDecode(rawData); } catch (_) {}
+        try {
+          rawData = jsonDecode(rawData);
+        } catch (_) {}
       }
       Map<String, dynamic> jsonMap = <String, dynamic>{};
       if (rawData is Map) {
@@ -630,4 +737,3 @@ class TracearrApi {
     }
   }
 }
-

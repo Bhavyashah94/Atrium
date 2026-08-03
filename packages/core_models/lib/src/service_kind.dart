@@ -70,7 +70,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.deluge => 'Torrent client',
         ServiceKind.transmission => 'Torrent client',
         ServiceKind.rtorrent => 'Torrent client',
-        ServiceKind.tracearr => 'Tracker',
+        ServiceKind.tracearr => 'Stream monitoring',
       };
 
   /// Vendor-default port. Used as a hint when the user is entering a URL
@@ -96,7 +96,7 @@ extension ServiceKindX on ServiceKind {
         // on the web port under /RPC2 instead, so the URL is what really
         // decides; this is only the hint.
         ServiceKind.rtorrent => 8000,
-        ServiceKind.tracearr => 3030,
+        ServiceKind.tracearr => 3000,
       };
 
   /// What auth flow the service uses by default. Some services (Jellyfin) can
@@ -135,11 +135,10 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.sonarr ||
         ServiceKind.radarr ||
         ServiceKind.prowlarr ||
-        ServiceKind.bazarr ||
-        ServiceKind.tracearr =>
+        ServiceKind.bazarr =>
           ServiceRole.automation,
         ServiceKind.seerr => ServiceRole.requests,
-        ServiceKind.tautulli => ServiceRole.analytics,
+        ServiceKind.tautulli || ServiceKind.tracearr => ServiceRole.analytics,
         ServiceKind.jellyfin ||
         ServiceKind.emby ||
         ServiceKind.plex =>

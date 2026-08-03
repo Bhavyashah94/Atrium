@@ -10,13 +10,28 @@ class TracearrCompletionResponse {
   final TracearrCompletionPagination pagination;
 
   factory TracearrCompletionResponse.fromJson(Map<String, dynamic> json) {
-    final List<dynamic> itemsJson = json['items'] is List ? json['items'] as List<dynamic> : <dynamic>[];
+    final List<dynamic> itemsJson =
+        json['items'] is List ? json['items'] as List<dynamic> : <dynamic>[];
     return TracearrCompletionResponse(
       items: itemsJson
-          .map((dynamic item) => TracearrCompletionItem.fromJson(item is Map ? Map<String, dynamic>.from(item) : <String, dynamic>{}))
+          .map(
+            (dynamic item) => TracearrCompletionItem.fromJson(
+              item is Map
+                  ? Map<String, dynamic>.from(item)
+                  : <String, dynamic>{},
+            ),
+          )
           .toList(),
-      summary: TracearrCompletionSummary.fromJson(json['summary'] is Map ? Map<String, dynamic>.from(json['summary'] as Map) : <String, dynamic>{}),
-      pagination: TracearrCompletionPagination.fromJson(json['pagination'] is Map ? Map<String, dynamic>.from(json['pagination'] as Map) : <String, dynamic>{}),
+      summary: TracearrCompletionSummary.fromJson(
+        json['summary'] is Map
+            ? Map<String, dynamic>.from(json['summary'] as Map)
+            : <String, dynamic>{},
+      ),
+      pagination: TracearrCompletionPagination.fromJson(
+        json['pagination'] is Map
+            ? Map<String, dynamic>.from(json['pagination'] as Map)
+            : <String, dynamic>{},
+      ),
     );
   }
 }
@@ -131,7 +146,9 @@ class TracearrCompletionSummary {
     );
   }
 
-  static TracearrCompletionSummary aggregate(Iterable<TracearrCompletionSummary> summaries) {
+  static TracearrCompletionSummary aggregate(
+    Iterable<TracearrCompletionSummary> summaries,
+  ) {
     int total = 0;
     int completed = 0;
     int inProgress = 0;

@@ -12,15 +12,34 @@ class TracearrLibraryRoiResponse {
   });
 
   factory TracearrLibraryRoiResponse.fromJson(Map<String, dynamic> json) {
-    final List<dynamic> itemsJson = json['items'] is List ? json['items'] as List<dynamic> : <dynamic>[];
+    final List<dynamic> itemsJson =
+        json['items'] is List ? json['items'] as List<dynamic> : <dynamic>[];
 
     return TracearrLibraryRoiResponse(
       items: itemsJson
-          .map((dynamic item) => TracearrRoiItem.fromJson(item is Map ? Map<String, dynamic>.from(item) : <String, dynamic>{}))
+          .map(
+            (dynamic item) => TracearrRoiItem.fromJson(
+              item is Map
+                  ? Map<String, dynamic>.from(item)
+                  : <String, dynamic>{},
+            ),
+          )
           .toList(),
-      summary: TracearrRoiSummary.fromJson(json['summary'] is Map ? Map<String, dynamic>.from(json['summary'] as Map) : <String, dynamic>{}),
-      thresholds: TracearrRoiThresholds.fromJson(json['thresholds'] is Map ? Map<String, dynamic>.from(json['thresholds'] as Map) : <String, dynamic>{}),
-      pagination: TracearrRoiPagination.fromJson(json['pagination'] is Map ? Map<String, dynamic>.from(json['pagination'] as Map) : <String, dynamic>{}),
+      summary: TracearrRoiSummary.fromJson(
+        json['summary'] is Map
+            ? Map<String, dynamic>.from(json['summary'] as Map)
+            : <String, dynamic>{},
+      ),
+      thresholds: TracearrRoiThresholds.fromJson(
+        json['thresholds'] is Map
+            ? Map<String, dynamic>.from(json['thresholds'] as Map)
+            : <String, dynamic>{},
+      ),
+      pagination: TracearrRoiPagination.fromJson(
+        json['pagination'] is Map
+            ? Map<String, dynamic>.from(json['pagination'] as Map)
+            : <String, dynamic>{},
+      ),
     );
   }
 }
@@ -167,9 +186,21 @@ class TracearrRoiThresholds {
 
   factory TracearrRoiThresholds.fromJson(Map<String, dynamic> json) {
     return TracearrRoiThresholds(
-      movie: TracearrRoiCategoryThreshold.fromJson(json['movie'] is Map ? Map<String, dynamic>.from(json['movie'] as Map) : <String, dynamic>{}),
-      episode: TracearrRoiCategoryThreshold.fromJson(json['episode'] is Map ? Map<String, dynamic>.from(json['episode'] as Map) : <String, dynamic>{}),
-      show: TracearrRoiCategoryThreshold.fromJson(json['show'] is Map ? Map<String, dynamic>.from(json['show'] as Map) : <String, dynamic>{}),
+      movie: TracearrRoiCategoryThreshold.fromJson(
+        json['movie'] is Map
+            ? Map<String, dynamic>.from(json['movie'] as Map)
+            : <String, dynamic>{},
+      ),
+      episode: TracearrRoiCategoryThreshold.fromJson(
+        json['episode'] is Map
+            ? Map<String, dynamic>.from(json['episode'] as Map)
+            : <String, dynamic>{},
+      ),
+      show: TracearrRoiCategoryThreshold.fromJson(
+        json['show'] is Map
+            ? Map<String, dynamic>.from(json['show'] as Map)
+            : <String, dynamic>{},
+      ),
     );
   }
 }

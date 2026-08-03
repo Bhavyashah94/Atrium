@@ -12,7 +12,6 @@ import 'models/tracearr_session.dart';
 import 'tracearr_api.dart';
 import 'tracearr_framed_map.dart';
 
-
 class TracearrSessionDetailScreen extends ConsumerStatefulWidget {
   const TracearrSessionDetailScreen({
     required this.session,
@@ -186,7 +185,9 @@ class _TracearrSessionDetailScreenState
             SafeArea(
               child: ListView(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: Insets.xl, vertical: Insets.xl,),
+                  horizontal: Insets.xl,
+                  vertical: Insets.xl,
+                ),
                 children: <Widget>[
                   const SizedBox(height: 40),
                   if (posterUrl != null)
@@ -250,7 +251,8 @@ class _TracearrSessionDetailScreenState
                       borderRadius: BorderRadius.circular(8),
                       child: LinearProgressIndicatorM3E(
                         shape: ProgressM3EShape.flat,
-                        value: (session.progressPercent / 100.0).clamp(0.0, 1.0),
+                        value:
+                            (session.progressPercent / 100.0).clamp(0.0, 1.0),
                         trackColor: theme.colorScheme.surfaceContainerHighest,
                         activeColor: session.state.toLowerCase() == 'playing'
                             ? theme.colorScheme.primary
@@ -272,14 +274,20 @@ class _TracearrSessionDetailScreenState
                     if (session.audioDecision != null)
                       _buildDetailRow('Audio', session.audioDecision!, theme),
                   ] else ...<Widget>[
-                    _buildDetailRow('Transcode', 'Direct Play', theme,
-                        isSuccess: true,),
+                    _buildDetailRow(
+                      'Transcode',
+                      'Direct Play',
+                      theme,
+                      isSuccess: true,
+                    ),
                   ],
                   _buildDetailRow('IP Address', session.ipAddress, theme),
                   _buildDetailRow('Location', session.location, theme),
-                  if (session.geoAsnOrganization != null && session.geoAsnOrganization!.isNotEmpty)
+                  if (session.geoAsnOrganization != null &&
+                      session.geoAsnOrganization!.isNotEmpty)
                     _buildDetailRow('ISP', session.geoAsnOrganization!, theme),
-                  if (session.geoLat != null && session.geoLon != null) ...<Widget>[
+                  if (session.geoLat != null &&
+                      session.geoLon != null) ...<Widget>[
                     _buildDetailRow(
                       'Coordinates',
                       '${session.geoLat!.toStringAsFixed(4)}, ${session.geoLon!.toStringAsFixed(4)}',
@@ -300,17 +308,17 @@ class _TracearrSessionDetailScreenState
                                 users: <TracearrMarkerUser>[
                                   TracearrMarkerUser(
                                     username: session.displayUser,
-                                    avatarUrl: session.displayUserThumb !=
-                                                null &&
-                                            widget.api != null
-                                        ? widget.api!.proxyImageUrl(
-                                            serverId: session.serverId,
-                                            path: session.displayUserThumb,
-                                            width: 64,
-                                            height: 64,
-                                            fallback: 'avatar',
-                                          )
-                                        : null,
+                                    avatarUrl:
+                                        session.displayUserThumb != null &&
+                                                widget.api != null
+                                            ? widget.api!.proxyImageUrl(
+                                                serverId: session.serverId,
+                                                path: session.displayUserThumb,
+                                                width: 64,
+                                                height: 64,
+                                                fallback: 'avatar',
+                                              )
+                                            : null,
                                   ),
                                 ],
                               ),
@@ -330,8 +338,13 @@ class _TracearrSessionDetailScreenState
     );
   }
 
-  Widget _buildDetailRow(String label, String value, ThemeData theme,
-      {bool isWarning = false, bool isSuccess = false,}) {
+  Widget _buildDetailRow(
+    String label,
+    String value,
+    ThemeData theme, {
+    bool isWarning = false,
+    bool isSuccess = false,
+  }) {
     if (value.isEmpty) return const SizedBox.shrink();
 
     Color valueColor = theme.colorScheme.onSurface;
