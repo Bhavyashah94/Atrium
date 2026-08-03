@@ -16,6 +16,7 @@ import 'package:service_seerr/service_seerr.dart';
 import 'package:service_sonarr/service_sonarr.dart';
 import 'package:service_speedtest_tracker/service_speedtest_tracker.dart';
 import 'package:service_tautulli/service_tautulli.dart';
+import 'package:service_tracearr/service_tracearr.dart';
 import 'package:service_rtorrent/service_rtorrent.dart';
 import 'package:service_transmission/service_transmission.dart';
 
@@ -70,22 +71,22 @@ class DashboardBoard extends ConsumerWidget {
     }
 
     return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
       onRefresh: () async => _refreshAll(ref, instances),
       child: ListView.separated(
         padding: Insets.page,
         itemCount: visible.length,
         separatorBuilder: (_, __) => const SizedBox(height: Insets.md),
-        itemBuilder: (BuildContext context, int index) =>
-            _KeepAliveWrapper(child: _buildWidget(visible[index].kind, instances)),
+        itemBuilder: (BuildContext context, int index) => _KeepAliveWrapper(
+            child: _buildWidget(visible[index].kind, instances)),
       ),
     );
   }
@@ -121,8 +122,7 @@ class DashboardBoard extends ConsumerWidget {
           sabInstances: _byKind(instances, ServiceKind.sabnzbd),
           nzbgetInstances: _byKind(instances, ServiceKind.nzbget),
           delugeInstances: _byKind(instances, ServiceKind.deluge),
-          transmissionInstances:
-              _byKind(instances, ServiceKind.transmission),
+          transmissionInstances: _byKind(instances, ServiceKind.transmission),
           rtorrentInstances: _byKind(instances, ServiceKind.rtorrent),
         );
       case DashboardWidgetKind.streams:
@@ -198,6 +198,8 @@ class DashboardBoard extends ConsumerWidget {
           ref.invalidate(glancesStatsProvider(i));
         case ServiceKind.speedtestTracker:
           ref.invalidate(speedtestOverviewProvider(i));
+        case ServiceKind.tracearr:
+          ref.invalidate(tracearrSessionsProvider(i));
         default:
           break;
       }

@@ -56,9 +56,9 @@ class AuthInterceptor extends Interceptor {
         // Plex returns XML by default; ask for JSON where supported.
         options.headers['Accept'] = 'application/json';
       case InstanceAuthUserPass(
-          :final String username,
-          :final String password,
-        )
+            :final String username,
+            :final String password,
+          )
           when kind == ServiceKind.nzbget ||
               kind == ServiceKind.transmission ||
               kind == ServiceKind.rtorrent:

@@ -523,8 +523,8 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
         // Transmission's RPC auth is optional and off in a default install, so
         // *neither* field may be required there - demanding credentials would
         // lock users out of a perfectly reachable server.
-        final bool authOptional = _kind == ServiceKind.transmission ||
-            _kind == ServiceKind.rtorrent;
+        final bool authOptional =
+            _kind == ServiceKind.transmission || _kind == ServiceKind.rtorrent;
         // Emby/Jellyfin accounts may legitimately have no password; every other
         // username/password service (e.g. qBittorrent) requires one, where an
         // empty submission guarantees a failed login.
@@ -560,6 +560,7 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
           const SizedBox(height: Insets.md),
           passwordField,
         ];
+
         // Deluge's Web UI has no username at all - only a password - so a
         // username field here would be a dead input that fails validation.
         if (_kind == ServiceKind.deluge) {
@@ -632,7 +633,6 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
     // Kinds with no bundled PNG fall back to the Material icon.
     if (kind == ServiceKind.sabnzbd ||
         kind == ServiceKind.speedtestTracker ||
-        kind == ServiceKind.nzbget ||
         kind == ServiceKind.deluge ||
         kind == ServiceKind.transmission ||
         kind == ServiceKind.rtorrent) {

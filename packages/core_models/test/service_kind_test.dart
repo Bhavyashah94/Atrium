@@ -26,6 +26,7 @@ void main() {
         'deluge',
         'transmission',
         'rtorrent',
+        'tracearr',
       ],
     );
   });
@@ -44,6 +45,16 @@ void main() {
     expect(ServiceKind.rtorrent.role, ServiceRole.downloader);
     expect(ServiceKind.rtorrent.authStyle, AuthStyle.userPass);
     expect(ServiceKind.rtorrent.defaultPort, 8000);
+  });
+
+  // Monitoring, not automation: it watches playback on Plex/Jellyfin/Emby,
+  // which is Tautulli's job rather than the *arr family's.
+  test('Tracearr is registered as a userPass analytics service', () {
+    expect(ServiceKind.tracearr.displayName, 'Tracearr');
+    expect(ServiceKind.tracearr.role, ServiceRole.analytics);
+    expect(ServiceKind.tracearr.authStyle, AuthStyle.userPass);
+    // Upstream's own default; its compose maps ${PORT:-3000}:3000.
+    expect(ServiceKind.tracearr.defaultPort, 3000);
   });
 
   test('existing services retain their default ports', () {

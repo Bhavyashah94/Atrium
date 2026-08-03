@@ -21,6 +21,7 @@ enum ServiceKind {
   deluge,
   transmission,
   rtorrent,
+  tracearr,
 }
 
 /// Static metadata about a [ServiceKind] - display name, default port, the
@@ -47,6 +48,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.deluge => 'Deluge',
         ServiceKind.transmission => 'Transmission',
         ServiceKind.rtorrent => 'rTorrent',
+        ServiceKind.tracearr => 'Tracearr',
       };
 
   /// One-line role description.
@@ -68,6 +70,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.deluge => 'Torrent client',
         ServiceKind.transmission => 'Torrent client',
         ServiceKind.rtorrent => 'Torrent client',
+        ServiceKind.tracearr => 'Stream monitoring',
       };
 
   /// Vendor-default port. Used as a hint when the user is entering a URL
@@ -93,6 +96,7 @@ extension ServiceKindX on ServiceKind {
         // on the web port under /RPC2 instead, so the URL is what really
         // decides; this is only the hint.
         ServiceKind.rtorrent => 8000,
+        ServiceKind.tracearr => 3000,
       };
 
   /// What auth flow the service uses by default. Some services (Jellyfin) can
@@ -114,7 +118,8 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.emby ||
         ServiceKind.nzbget ||
         ServiceKind.transmission ||
-        ServiceKind.rtorrent =>
+        ServiceKind.rtorrent ||
+        ServiceKind.tracearr =>
           AuthStyle.userPass,
         ServiceKind.plex => AuthStyle.plexToken,
         // Deluge's Web UI takes a password with no username; it is still a
@@ -133,7 +138,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.bazarr =>
           ServiceRole.automation,
         ServiceKind.seerr => ServiceRole.requests,
-        ServiceKind.tautulli => ServiceRole.analytics,
+        ServiceKind.tautulli || ServiceKind.tracearr => ServiceRole.analytics,
         ServiceKind.jellyfin ||
         ServiceKind.emby ||
         ServiceKind.plex =>

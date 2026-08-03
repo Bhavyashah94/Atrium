@@ -22,6 +22,7 @@ import 'package:service_speedtest_tracker/service_speedtest_tracker.dart';
 import 'package:service_tautulli/service_tautulli.dart';
 import 'package:service_rtorrent/service_rtorrent.dart';
 import 'package:service_transmission/service_transmission.dart';
+import 'package:service_tracearr/service_tracearr.dart';
 
 import 'dashboard_screen.dart';
 
@@ -246,6 +247,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       ServiceKind.emby => EmbyHome(instance: instance),
       ServiceKind.plex => PlexHome(instance: instance),
       ServiceKind.qbittorrent => QbittorrentHome(instance: instance),
+      ServiceKind.tracearr => TracearrHome(instance: instance),
       ServiceKind.sabnzbd => SabnzbdHome(instance: instance),
       ServiceKind.nzbget => NzbgetHome(instance: instance),
       ServiceKind.deluge => DelugeHome(instance: instance),

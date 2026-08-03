@@ -42,3 +42,4 @@ workspace:
   - services/service_rtorrent
   - services/service_glances
   - services/service_speedtest_tracker
+  - services/service_tracearr

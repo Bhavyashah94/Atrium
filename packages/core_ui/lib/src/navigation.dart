@@ -13,9 +13,21 @@ import 'package:flutter/material.dart';
 /// Use this instead of raw `Navigator.of(context).push(...)`. For sheets and
 /// dialogs, pass `useRootNavigator: true` for the same reason (showDialog
 /// already defaults to it; showModalBottomSheet and showSearch do not).
-Future<T?> pushScreen<T>(BuildContext context, Widget screen) =>
+/// Set [fullscreenDialog] for a screen the user dismisses rather than backs
+/// out of, such as a map opened to fill the display. It only changes the
+/// transition and the close affordance; the route still goes to the root
+/// navigator, which is the part that matters. Having it here means a caller
+/// that wants one never has to reach for `Navigator.push` and lose that.
+Future<T?> pushScreen<T>(
+  BuildContext context,
+  Widget screen, {
+  bool fullscreenDialog = false,
+}) =>
     Navigator.of(context, rootNavigator: true).push<T>(
-      MaterialPageRoute<T>(builder: (_) => screen),
+      MaterialPageRoute<T>(
+        builder: (_) => screen,
+        fullscreenDialog: fullscreenDialog,
+      ),
     );
 
 /// Finds the nearest ancestor ScaffoldState that has a drawer, and opens it.
