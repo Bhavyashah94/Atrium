@@ -72,7 +72,8 @@ abstract final class AtriumTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: resolvedScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        fillColor:
+            resolvedScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(Radii.md),
           borderSide: BorderSide.none,

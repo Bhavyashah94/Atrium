@@ -13,7 +13,11 @@ Supported services:
 * Bazarr - subtitle status, search and download
 * Seerr (Overseerr and Jellyseerr) - discover, request and manage requests
 * Tautulli - active streams, history, statistics and users
-* qBittorrent, SABnzbd and NZBGet - transfers and queue control
+* Tracearr - who is streaming across Plex, Jellyfin and Emby, watch and
+  library statistics, history and a streaming-location map
+* qBittorrent, Deluge, Transmission and rTorrent - torrent lists, transfers
+  and per-torrent files, peers and trackers
+* SABnzbd and NZBGet - usenet queue control and history
 * Jellyfin, Emby and Plex - library browsing, item detail, resume rows and
   now-playing sessions
 * Glances - CPU, memory, GPU and disk usage of the host
@@ -39,9 +43,12 @@ never reports anything back to its developers. Credentials are held in
 encrypted storage on the device.
 
 Artwork is loaded from your own servers, which cache it, rather than from
-sites like TheTVDB or TMDB. The exception is searching for something to add
-that your servers have never seen: there is nothing cached for it yet, so its
-poster comes from the artwork site directly, which then sees your address.
-Everything else goes only to the servers you configure.
+sites like TheTVDB or TMDB. There are two exceptions, and both are worth
+knowing about. Searching for something to add that your servers have never
+seen has nothing cached for it yet, so its poster comes from the artwork site
+directly, which then sees your address. And Tracearr's streaming-location map
+draws its map tiles from CARTO, so opening that map tells CARTO your address
+and roughly which part of the world you are looking at. Everything else goes
+only to the servers you configure.
 
 Free software under the GPL-3.0-or-later.

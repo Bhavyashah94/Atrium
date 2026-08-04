@@ -25,7 +25,8 @@ class EasyRefresh extends material.StatelessWidget {
 
   @override
   material.Widget build(material.BuildContext context) {
-    final isTest = kDebugMode && Platform.environment.containsKey('FLUTTER_TEST');
+    final isTest =
+        kDebugMode && Platform.environment.containsKey('FLUTTER_TEST');
     if (isTest) {
       if (onRefresh == null) return child;
       return material.RefreshIndicator(
@@ -35,7 +36,7 @@ class EasyRefresh extends material.StatelessWidget {
         child: child,
       );
     }
-    
+
     return er.EasyRefresh(
       header: header,
       footer: footer,
@@ -69,20 +70,23 @@ class ClampingERScrollPhysics extends material.ScrollPhysics {
   }
 
   @override
-  double applyPhysicsToUserOffset(material.ScrollMetrics position, double offset) {
+  double applyPhysicsToUserOffset(
+      material.ScrollMetrics position, double offset,) {
     _activeDrags.add(position);
     return _delegate.applyPhysicsToUserOffset(position, offset);
   }
 
   @override
-  double applyBoundaryConditions(material.ScrollMetrics position, double value) {
+  double applyBoundaryConditions(
+      material.ScrollMetrics position, double value,) {
     // If dragging or already out of range, let the delegate handle it.
     if (_activeDrags.contains(position) || position.outOfRange) {
       return _delegate.applyBoundaryConditions(position, value);
     }
 
     // Otherwise, clamp it so that ballistic flings stop exactly at the boundaries.
-    return const material.ClampingScrollPhysics().applyBoundaryConditions(position, value);
+    return const material.ClampingScrollPhysics()
+        .applyBoundaryConditions(position, value);
   }
 
   @override
@@ -123,7 +127,6 @@ class ClampingERScrollPhysics extends material.ScrollPhysics {
       _delegate.toleranceFor(metrics);
 }
 
-
 class HeaderLocator extends material.StatelessWidget {
   final bool _isSliver;
 
@@ -132,14 +135,16 @@ class HeaderLocator extends material.StatelessWidget {
 
   @override
   material.Widget build(material.BuildContext context) {
-    final isTest = kDebugMode && Platform.environment.containsKey('FLUTTER_TEST');
+    final isTest =
+        kDebugMode && Platform.environment.containsKey('FLUTTER_TEST');
     if (isTest) {
       if (_isSliver) {
-        return const material.SliverToBoxAdapter(child: material.SizedBox.shrink());
+        return const material.SliverToBoxAdapter(
+            child: material.SizedBox.shrink(),);
       }
       return const material.SizedBox.shrink();
     }
-    
+
     if (_isSliver) {
       return const er.HeaderLocator.sliver();
     }

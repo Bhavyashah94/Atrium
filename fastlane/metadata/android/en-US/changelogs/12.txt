@@ -1,0 +1,22 @@
+Deluge, Transmission and rTorrent are now services you can add, so every common
+torrent client is covered alongside qBittorrent. Each gives you a live torrent
+list with start, stop, remove, recheck and reannounce, filter chips and sorting,
+global speed limits, and a detail screen with files, peers and trackers. Add a
+torrent by magnet link, .torrent URL or file, and pick where it lands.
+
+Tracearr is here too: who is streaming right now, watch and library statistics,
+history, and a map of where accounts are being used from.
+
+The torrent screens lead with the two live speeds, and a transfer that is
+actually moving gets a wavy progress bar so you can tell at a glance which ones
+are running. A finished torrent shows its share ratio rather than sitting at
+100 percent saying nothing. Detail screens now open over the whole screen
+instead of inside the tab.
+
+Fixed a refresh loop where a screen slower to load than its own refresh interval
+would restart forever and never finish loading, which mostly hit people on slow
+or remote connections. A server that stays unreachable no longer flashes a
+spinner over the error every few seconds.
+
+Atrium also builds for iOS now. There is no download, since the licence rules
+out the App Store, so you build and sideload it yourself.
