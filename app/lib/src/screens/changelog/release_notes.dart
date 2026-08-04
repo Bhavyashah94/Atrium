@@ -27,6 +27,28 @@ class ReleaseNote {
 /// Newest first. Update alongside appVersion and the pubspec at each release.
 const List<ReleaseNote> releaseNotes = <ReleaseNote>[
   ReleaseNote(
+    version: '1.3.0',
+    date: '2026-08-04',
+    groups: <ChangeGroup>[
+      ChangeGroup(ChangeCategory.added, <String>[
+        'Deluge, Transmission and rTorrent are now services you can add, so every common torrent client is covered alongside qBittorrent.',
+        'Each one gives you a live torrent list with start, stop, remove, recheck and reannounce, filter chips, sorting, global speed limits, and a detail screen with files, peers and trackers.',
+        'Add a torrent by magnet link, .torrent URL or file, and pick where it lands.',
+        'Tracearr is now a service you can add: who is streaming right now, watch and library statistics, history, and a map of where accounts are being used from.',
+        'Atrium builds for iOS. There is no download, since the licence rules out the App Store, so you build and sideload it yourself. It has not run on real hardware yet, so expect rough edges.',
+      ]),
+      ChangeGroup(ChangeCategory.improved, <String>[
+        'The torrent screens lead with the two live speeds, and a transfer that is actually moving gets a wavy progress bar so you can tell at a glance which ones are running.',
+        'A finished torrent shows its share ratio in the progress bar instead of sitting at 100 percent saying nothing.',
+        'Detail screens now open over the whole screen rather than inside the tab.',
+      ]),
+      ChangeGroup(ChangeCategory.fixed, <String>[
+        'Screens that took longer to load than their refresh interval could restart forever and never finish loading. They now wait for a refresh to finish before scheduling the next, and back off when a server is not answering.',
+        'A server that stays unreachable no longer flashes a spinner over the error every few seconds.',
+      ]),
+    ],
+  ),
+  ReleaseNote(
     version: '1.2.0',
     date: '2026-07-29',
     groups: <ChangeGroup>[

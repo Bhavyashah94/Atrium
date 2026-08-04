@@ -58,6 +58,18 @@ Atrium is a **controller** app. Video playback was removed by design
   detail sheet (codecs, decisions, bandwidth, terminate with inline
   errors), history, 30-day stats, users - restyled to the expressive
   look 2026-07-10
+- **Tracearr** (live-verified against 1.5.0, contributed by lxBlazarxl in
+  PR #75): monitors playback across Plex, Jellyfin and Emby from one place.
+  Live sessions, an activity dashboard with watch and library statistics and
+  Material 3 charts, history with infinite scroll, a date picker with quick
+  ranges, and a map of where accounts are streaming from with a face pile per
+  location. Deliberately kept out of the shared Activity feed and dashboard
+  widgets: it reports the same Plex session Plex already reports, so including
+  it would count every stream twice. Its token auth logs in on a client
+  without the auth interceptor, because that interceptor is a
+  QueuedInterceptor and a login sharing the client deadlocks against its own
+  queue. The map draws CARTO tiles, which is a call out to a third party on
+  every open and worth revisiting for a self-hosted-first app
 - **Jellyfin / Emby**: auth (incl. passwordless accounts), library
   browse, item detail (backdrop, palette accents, cast, series/episode
   info), season/episode screens, music, in-server search, resume rows,

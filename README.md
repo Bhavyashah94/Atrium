@@ -2,13 +2,13 @@
 
 The central courtyard for your self-hosted media stack.
 One Android app that fronts Sonarr, Radarr, Prowlarr, Bazarr,
-Seerr, Tautulli, Jellyfin, Emby, Plex, qBittorrent, Deluge, Transmission,
-rTorrent, SABnzbd, NZBGet, Glances and Speedtest Tracker - and routes every request through the right URL
+Seerr, Tautulli, Tracearr, Jellyfin, Emby, Plex, qBittorrent, Deluge,
+Transmission, rTorrent, SABnzbd, NZBGet, Glances and Speedtest Tracker - and routes every request through the right URL
 whether you're on the home Wi-Fi or out in the world.
 
 **[Website][site]** - screenshots and a tour, no install needed.
 
-> **Status:** v1.2.0. Install from [F-Droid][fdroid], or grab a signed APK
+> **Status:** v1.3.0. Install from [F-Droid][fdroid], or grab a signed APK
 > from the [releases page][releases].
 
 ## Why
@@ -59,6 +59,7 @@ each one covers:
 | Bazarr                 | series/movies, wanted, manual subtitle search, system                 |
 | Seerr                  | discover, search, requests management                                 |
 | Tautulli               | activity, history, stats, users, terminate                            |
+| Tracearr               | live sessions, watch and library stats, history, streaming-location map |
 | Jellyfin               | libraries, detail, seasons, music, sessions with remote control       |
 | Emby                   | same depth as Jellyfin                                                |
 | Plex                   | libraries, detail, seasons, music, genres, now-playing controller     |
