@@ -27,6 +27,18 @@ class ReleaseNote {
 /// Newest first. Update alongside appVersion and the pubspec at each release.
 const List<ReleaseNote> releaseNotes = <ReleaseNote>[
   ReleaseNote(
+    version: '1.3.1',
+    date: '2026-08-06',
+    groups: <ChangeGroup>[
+      ChangeGroup(ChangeCategory.added, <String>[
+        'Atrium now turns up in the list when you tap a .torrent file or open a magnet link, and in the share sheet when you share either from another app.',
+        'If you have more than one torrent client set up it asks which one to send it to, otherwise it goes straight there.',
+        'Either way the usual add sheet opens with the link or file already filled in, so the save path, category and start-paused choices are still yours.',
+        'Share several in a row and they queue up one after another rather than only the first arriving.',
+      ]),
+    ],
+  ),
+  ReleaseNote(
     version: '1.3.0',
     date: '2026-08-04',
     groups: <ChangeGroup>[

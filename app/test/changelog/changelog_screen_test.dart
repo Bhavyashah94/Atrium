@@ -34,8 +34,8 @@ void main() {
 
     expect(find.byType(AvailableReleaseCard, skipOffstage: false),
         findsOneWidget);
-    expect(find.text('v1.3.0'), findsOneWidget);
-    // appVersion is 1.3.0, so exactly one card is Installed.
+    expect(find.text('v1.3.1'), findsOneWidget);
+    // appVersion is 1.3.1, so exactly one card is Installed.
     expect(find.text('Installed'), findsOneWidget);
     expect(find.text('New'), findsWidgets);
   });
