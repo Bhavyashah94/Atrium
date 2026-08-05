@@ -27,23 +27,45 @@ class AddTorrentSheet extends ConsumerStatefulWidget {
   const AddTorrentSheet({
     required this.instance,
     this.initialMode = AddTorrentMode.link,
+    this.initialLink,
+    this.initialFileBytes,
+    this.initialFileName,
     super.key,
   });
 
   final Instance instance;
   final AddTorrentMode initialMode;
 
+  /// A magnet link or `.torrent` URL to open the sheet with, filled into the
+  /// link field. Set when another app shares a torrent with Atrium.
+  final String? initialLink;
+
+  /// The bytes of a `.torrent` handed over by another app. When set the sheet
+  /// opens in file mode with these bytes already in hand, so there is nothing
+  /// to pick.
+  final Uint8List? initialFileBytes;
+
+  /// Display name for [initialFileBytes], shown so the user can see what they
+  /// are adding.
+  final String? initialFileName;
+
   /// Opens the sheet and returns whether a torrent was added.
   static Future<bool> show(
     BuildContext context,
     Instance instance, {
     AddTorrentMode initialMode = AddTorrentMode.link,
+    String? initialLink,
+    Uint8List? initialFileBytes,
+    String? initialFileName,
   }) async {
     final bool? added = await showDialog<bool>(
       context: context,
       builder: (_) => AddTorrentSheet(
         instance: instance,
         initialMode: initialMode,
+        initialLink: initialLink,
+        initialFileBytes: initialFileBytes,
+        initialFileName: initialFileName,
       ),
     );
     return added ?? false;
@@ -57,13 +79,24 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
   final TextEditingController _links = TextEditingController();
   final TextEditingController _savePath = TextEditingController();
 
-  late final AddTorrentMode _mode = widget.initialMode;
+  // Shared bytes force file mode: there is nothing left to pick.
+  late final AddTorrentMode _mode = widget.initialFileBytes != null
+      ? AddTorrentMode.file
+      : widget.initialMode;
   PlatformFile? _file;
   String? _category;
   bool _paused = false;
   bool _sequential = false;
   bool _busy = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialLink != null) {
+      _links.text = widget.initialLink!;
+    }
+  }
 
   @override
   void dispose() {
@@ -78,7 +111,7 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
     }
     return _mode == AddTorrentMode.link
         ? _links.text.trim().isNotEmpty
-        : _file != null;
+        : _file != null || widget.initialFileBytes != null;
   }
 
   Future<void> _pickFile() async {
@@ -116,11 +149,14 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
           sequential: _sequential,
         );
       } else {
-        final PlatformFile f = _file!;
-        final Uint8List bytes = await f.readAsBytes();
+        // A picked file wins over shared bytes: if the user went and chose one
+        // anyway, that is the more recent intent.
+        final PlatformFile? f = _file;
+        final Uint8List bytes =
+            f != null ? await f.readAsBytes() : widget.initialFileBytes!;
         await client.addTorrentFile(
           bytes,
-          filename: f.name,
+          filename: f?.name ?? widget.initialFileName ?? 'shared.torrent',
           category: _category,
           savePath: savePath,
           paused: _paused,
@@ -168,7 +204,13 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
               OutlinedButton.icon(
                 onPressed: _pickFile,
                 icon: const Icon(Icons.folder_open),
-                label: Text(_file?.name ?? 'Choose a .torrent file'),
+                label: Text(
+                  _file?.name ??
+                      widget.initialFileName ??
+                      (widget.initialFileBytes != null
+                          ? 'Shared torrent'
+                          : 'Choose a .torrent file'),
+                ),
               ),
             const SizedBox(height: Insets.md),
             categories.when(

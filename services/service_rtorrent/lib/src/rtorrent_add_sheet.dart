@@ -10,14 +10,30 @@ import 'rtorrent_api.dart';
 import 'rtorrent_providers.dart';
 
 /// Opens the add-torrent sheet for [instance].
-Future<void> showRtorrentAddSheet(BuildContext context, Instance instance) {
+///
+/// The optional arguments prefill the sheet when another app shares a torrent
+/// with Atrium: [initialLink] for a magnet or `.torrent` URL, or
+/// [initialFileBytes] with [initialFileName] for a `.torrent` handed over as
+/// bytes. The user still picks the directory and whether to start it.
+Future<void> showRtorrentAddSheet(
+  BuildContext context,
+  Instance instance, {
+  String? initialLink,
+  Uint8List? initialFileBytes,
+  String? initialFileName,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     // The sheet is a route too, so it needs the root navigator for the
     // same reason a pushed page does.
     useRootNavigator: true,
     isScrollControlled: true,
-    builder: (BuildContext context) => _RtorrentAddSheet(instance: instance),
+    builder: (BuildContext context) => _RtorrentAddSheet(
+      instance: instance,
+      initialLink: initialLink,
+      initialFileBytes: initialFileBytes,
+      initialFileName: initialFileName,
+    ),
   );
 }
 
@@ -27,9 +43,17 @@ enum _AddMode { link, file }
 /// the list behind it polls every few seconds, and a borrowed ref is pruned on
 /// that rebuild, leaving the sheet's controls dead.
 class _RtorrentAddSheet extends ConsumerStatefulWidget {
-  const _RtorrentAddSheet({required this.instance});
+  const _RtorrentAddSheet({
+    required this.instance,
+    this.initialLink,
+    this.initialFileBytes,
+    this.initialFileName,
+  });
 
   final Instance instance;
+  final String? initialLink;
+  final Uint8List? initialFileBytes;
+  final String? initialFileName;
 
   @override
   ConsumerState<_RtorrentAddSheet> createState() => _RtorrentAddSheetState();
@@ -45,6 +69,18 @@ class _RtorrentAddSheetState extends ConsumerState<_RtorrentAddSheet> {
 
   Uint8List? _fileBytes;
   String? _fileName;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialFileBytes != null) {
+      _mode = _AddMode.file;
+      _fileBytes = widget.initialFileBytes;
+      _fileName = widget.initialFileName;
+    } else if (widget.initialLink != null) {
+      _link.text = widget.initialLink!;
+    }
+  }
 
   @override
   void dispose() {

@@ -1,0 +1,156 @@
+import 'package:flutter/foundation.dart';
+
+/// A torrent another app handed to Atrium through the Android share sheet or
+/// the "open with" chooser.
+///
+/// The platform side stays deliberately dumb: it reports what the intent
+/// carried and leaves interpretation here, where it can be unit tested.
+@immutable
+sealed class TorrentShare {
+  const TorrentShare();
+}
+
+/// A magnet URI, or an http(s) link to a `.torrent`. Every torrent client
+/// Atrium drives accepts both in the same field.
+final class TorrentShareLink extends TorrentShare {
+  const TorrentShareLink(this.uri);
+
+  final String uri;
+
+  bool get isMagnet => uri.toLowerCase().startsWith('magnet:');
+
+  @override
+  bool operator ==(Object other) =>
+      other is TorrentShareLink && other.uri == uri;
+
+  @override
+  int get hashCode => uri.hashCode;
+}
+
+/// The bytes of a `.torrent`, read natively because the `content://` read
+/// grant belongs to the activity and Dart has no ContentResolver.
+final class TorrentShareFile extends TorrentShare {
+  const TorrentShareFile({required this.bytes, this.name});
+
+  final Uint8List bytes;
+
+  /// The file's display name when the provider exposed one. Shown to the user
+  /// so they can see what they are about to add.
+  final String? name;
+}
+
+/// Something arrived but cannot be added. Carries the message to show.
+final class TorrentShareProblem extends TorrentShare {
+  const TorrentShareProblem(this.message);
+
+  final String message;
+
+  @override
+  bool operator ==(Object other) =>
+      other is TorrentShareProblem && other.message == message;
+
+  @override
+  int get hashCode => message.hashCode;
+}
+
+/// Decodes the map delivered over the `app.atrium/share` channel.
+///
+/// Returns null when the intent carried nothing to add - a plain launcher tap
+/// is the common case, and must not raise anything in the UI.
+TorrentShare? decodeTorrentShare(Object? payload) {
+  if (payload is! Map) {
+    return null;
+  }
+  switch (payload['kind']) {
+    case 'magnet':
+      final Object? uri = payload['uri'];
+      if (uri is! String || uri.trim().isEmpty) {
+        return null;
+      }
+      return TorrentShareLink(uri.trim());
+
+    case 'text':
+      final Object? value = payload['value'];
+      if (value is! String) {
+        return null;
+      }
+      final String? found = extractTorrentUri(value);
+      if (found == null) {
+        return const TorrentShareProblem(
+          'That share had no magnet link and no link to a .torrent file, so '
+          'there was nothing to add.',
+        );
+      }
+      return TorrentShareLink(found);
+
+    case 'file':
+      final Object? bytes = payload['bytes'];
+      if (bytes is! Uint8List || bytes.isEmpty) {
+        return null;
+      }
+      final Object? name = payload['name'];
+      return TorrentShareFile(
+        bytes: bytes,
+        name: name is String && name.trim().isNotEmpty ? name.trim() : null,
+      );
+
+    case 'empty':
+      return const TorrentShareProblem(
+        'That file was empty, so there was nothing to add.',
+      );
+
+    case 'unreadable':
+      return const TorrentShareProblem(
+        'Atrium was not allowed to open that file. The app that shared it did '
+        'not pass along permission to read it. Try saving the .torrent first, '
+        'then opening it from your files.',
+      );
+
+    case 'tooLarge':
+      return const TorrentShareProblem(
+        'That file is far too large to be a .torrent, so nothing was added.',
+      );
+
+    default:
+      return null;
+  }
+}
+
+/// Pulls a magnet URI or a link to a `.torrent` out of shared text.
+///
+/// Shared text is rarely just the link: browsers and tracker apps tend to send
+/// a title, a newline and then the URL, so this scans rather than parsing the
+/// whole string. Magnets win when both are present, since a magnet needs no
+/// second request.
+///
+/// Only the first torrent in the text is taken. Sharing a blob holding several
+/// at once is rare, and the alternative - opening a sheet per link off a single
+/// share - is more startling than useful. Sharing them one at a time queues
+/// properly and adds every one.
+String? extractTorrentUri(String text) {
+  final String trimmed = text.trim();
+  if (trimmed.isEmpty) {
+    return null;
+  }
+
+  final int magnetAt = trimmed.toLowerCase().indexOf('magnet:?');
+  if (magnetAt >= 0) {
+    final String rest = trimmed.substring(magnetAt);
+    final int end = rest.indexOf(RegExp(r'\s'));
+    return end < 0 ? rest : rest.substring(0, end);
+  }
+
+  for (final String token in trimmed.split(RegExp(r'\s+'))) {
+    final Uri? uri = Uri.tryParse(token);
+    if (uri == null || !uri.hasScheme) {
+      continue;
+    }
+    if (uri.scheme != 'http' && uri.scheme != 'https') {
+      continue;
+    }
+    if (uri.path.toLowerCase().endsWith('.torrent')) {
+      return token;
+    }
+  }
+  return null;
+}

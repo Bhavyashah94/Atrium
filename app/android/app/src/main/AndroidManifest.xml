@@ -29,9 +29,59 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- Flutter otherwise feeds the launch intent's data URI to the
+                 router as the initial route, so opening a magnet link landed
+                 the app on "no routes for location: magnet:?xt=...". Atrium
+                 receives no deep links of its own - the torrent intents below
+                 are read natively and handed to the share channel - so nothing
+                 needs this. -->
+            <meta-data
+              android:name="flutter_deeplinking_enabled"
+              android:value="false"
+              />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Torrent hand-off from other apps. Without these Atrium cannot
+                 appear in the chooser at all: Android only offers activities
+                 whose filters match the intent being resolved.
+
+                 application/octet-stream is deliberately not matched. Some file
+                 managers do label .torrent that way, but claiming it would put
+                 Atrium in the chooser for every unknown binary, and pathPattern
+                 cannot narrow it because content URIs often carry no filename.
+                 file:// is likewise absent: Android 7+ raises
+                 FileUriExposedException when one app passes another a file URI,
+                 so it cannot arrive. -->
+            <!-- Tapping a downloaded .torrent. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:host="*"
+                    android:mimeType="application/x-bittorrent"
+                    android:scheme="content"/>
+            </intent-filter>
+            <!-- Magnet links opened from a browser. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="magnet"/>
+            </intent-filter>
+            <!-- Sharing a magnet or a link to a .torrent as text. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
+            </intent-filter>
+            <!-- Sharing a .torrent file itself. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="application/x-bittorrent"/>
             </intent-filter>
         </activity>
         <meta-data
