@@ -17,9 +17,7 @@ h1, h2, h3, h4 {
 
 /* Navbar */
 .logo-text {
-  background: linear-gradient(135deg, var(--primary), var(--tertiary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--on-surface);
   margin: 0;
   font-size: 1.5rem;
   font-weight: 800;
@@ -49,6 +47,7 @@ h1, h2, h3, h4 {
 }
 .hero-actions {
   gap: 1rem;
+  margin-top: 2.5rem !important;
 }
 
 /* 3D App Screenshot Effect */
@@ -130,9 +129,6 @@ h1, h2, h3, h4 {
   background-color: var(--surface-container-high) !important;
 }
 
-.gallery-grid article {
-  padding: 0.5rem;
-}
 
 .icon-circle {
   width: 64px;
@@ -198,5 +194,238 @@ h1, h2, h3, h4 {
   }
   .logo-text {
     font-size: 1.25rem;
+  }
+}
+
+/* Service Marquee Interactive Hover & Pointer */
+.services-marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+.marquee-chip {
+  cursor: pointer !important;
+}
+
+/* Service Showcase Picker & Display Card */
+.service-picker-wrapper {
+  padding: 0 1rem;
+}
+.service-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.showcase-picker-chip {
+  cursor: pointer;
+  border: 1px solid var(--outline-variant) !important;
+  background-color: var(--surface-container-low) !important;
+  color: var(--on-surface) !important;
+  font-size: 1rem !important;
+  padding: 0.6rem 1.25rem !important;
+  height: auto !important;
+  border-radius: var(--border-radius-large, 24px) !important;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
+  display: inline-flex;
+  align-items: center;
+}
+.showcase-picker-chip:hover {
+  background-color: var(--surface-container-high) !important;
+  border-color: var(--primary) !important;
+  transform: translateY(-2px);
+}
+.showcase-picker-chip.active {
+  background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+  color: var(--on-primary) !important;
+  border-color: transparent !important;
+  box-shadow: var(--elevation-2);
+  font-weight: 700;
+  transform: scale(1.03);
+}
+.service-icon-small {
+  width: 22px;
+  height: 22px;
+  margin-right: 8px;
+  object-fit: contain;
+}
+.showcase-picker-chip.active .service-icon-small {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+}
+
+.service-display-card {
+  max-width: 1100px;
+  margin: 2rem auto 0 auto;
+  border-radius: var(--border-radius-extra-large, 32px) !important;
+  background: var(--surface-container-low) !important;
+  border: 1px solid var(--outline-variant) !important;
+  box-shadow: var(--elevation-4) !important;
+  overflow: hidden;
+  padding: 2.5rem !important;
+  transition: opacity 0.2s ease-in-out;
+}
+.showcase-details-col {
+  padding: 1rem 2rem 1rem 1rem !important;
+}
+.showcase-active-icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  padding: 8px;
+  background: var(--surface-container-highest);
+  border-radius: 16px;
+  box-shadow: var(--elevation-1);
+}
+.showcase-desc {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--on-surface-variant);
+  margin-top: 0.5rem;
+}
+.showcase-features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.showcase-features-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.05rem;
+}
+.showcase-features-list li i {
+  color: var(--primary);
+  font-size: 22px;
+}
+.showcase-image-col {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem !important;
+  position: relative;
+}
+.showcase-carousel-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.showcase-carousel-track {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 24px;
+  box-shadow: var(--elevation-4);
+  scrollbar-width: none;
+  background: transparent;
+}
+.showcase-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+.carousel-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  scroll-snap-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.carousel-slide img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 24px;
+}
+.carousel-control {
+  position: absolute;
+  top: calc(50% - 16px);
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: var(--surface-container-highest) !important;
+  color: var(--on-surface) !important;
+  border: 1px solid var(--outline-variant) !important;
+  box-shadow: var(--elevation-3) !important;
+  cursor: pointer;
+  transition: all 0.2s ease !important;
+}
+.carousel-control:hover {
+  background-color: var(--primary) !important;
+  color: var(--on-primary) !important;
+  transform: translateY(-50%) scale(1.08);
+}
+.carousel-prev {
+  left: -22px;
+}
+.carousel-next {
+  right: -22px;
+}
+@media (max-width: 600px) {
+  .carousel-prev {
+    left: -8px;
+  }
+  .carousel-next {
+    right: -8px;
+  }
+}
+.carousel-indicators {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 14px;
+  z-index: 10;
+  min-height: 12px;
+}
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--outline-variant);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.carousel-dot.active {
+  width: 24px;
+  border-radius: 12px;
+  background: var(--primary);
+}
+.showcase-placeholder-card {
+  flex: 0 0 100%;
+  width: 100%;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
+  border-radius: 24px;
+  border: 2px dashed var(--outline-variant);
+  box-sizing: border-box;
+}
+@media (max-width: 600px) {
+  .showcase-details-col {
+    padding: 1rem !important;
+  }
+  .service-display-card {
+    padding: 1.5rem !important;
   }
 }

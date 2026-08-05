@@ -106,5 +106,10 @@ openapi.json
 SESSION_CHANGES.md
 
 # site (Vite)
+node_modules/
+**/node_modules/
 site/node_modules/
 site/dist/
+site/.vite/
+site/.cache/
+deno.lock

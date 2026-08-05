@@ -1,0 +1,81 @@
+<section id="service-showcase" class="padding-top padding-bottom">
+  <div class="center-align margin-bottom">
+    <div class="chip primary round margin-bottom" style="background-color: var(--primary) !important; color: var(--on-primary) !important;">Interactive Preview</div>
+    <h2 class="section-title">Explore Native Service Controls</h2>
+    <p class="section-subtitle">Select any service below or directly from the marquee above to inspect Atrium's deep native integration.</p>
+  </div>
+
+  <!-- Service Picker Chips -->
+  <div class="service-picker-wrapper center-align margin-bottom">
+    <div class="service-picker-grid" id="service-picker">
+      <button class="chip responsive-chip showcase-picker-chip active" data-service="sonarr"><img src="/assets/service_icons/sonarr.png" class="service-icon-small" alt="Sonarr">Sonarr</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="radarr"><img src="/assets/service_icons/radarr.png" class="service-icon-small" alt="Radarr">Radarr</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="prowlarr"><img src="/assets/service_icons/prowlarr.png" class="service-icon-small" alt="Prowlarr">Prowlarr</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="bazarr"><img src="/assets/service_icons/bazarr.png" class="service-icon-small" alt="Bazarr">Bazarr</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="seerr"><img src="/assets/service_icons/seerr.png" class="service-icon-small" alt="Seerr">Seerr</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="tautulli"><img src="/assets/service_icons/tautulli.png" class="service-icon-small" alt="Tautulli">Tautulli</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="jellyfin"><img src="/assets/service_icons/jellyfin.png" class="service-icon-small" alt="Jellyfin">Jellyfin</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="emby"><img src="/assets/service_icons/emby.png" class="service-icon-small" alt="Emby">Emby</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="plex"><img src="/assets/service_icons/plex.png" class="service-icon-small" alt="Plex">Plex</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="qbittorrent"><img src="/assets/service_icons/qbittorrent.png" class="service-icon-small" alt="qBittorrent">qBittorrent</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="deluge"><img src="/assets/service_icons/deluge.png" class="service-icon-small" alt="Deluge">Deluge</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="transmission"><img src="/assets/service_icons/transmission.png" class="service-icon-small" alt="Transmission">Transmission</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="rtorrent"><img src="/assets/service_icons/rutorrent.png" class="service-icon-small" alt="rTorrent">rTorrent</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="tracearr"><img src="/assets/service_icons/tracearr.png" class="service-icon-small" alt="Tracearr">Tracearr</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="sabnzbd"><img src="/assets/service_icons/sabnzbd.png" class="service-icon-small" alt="SABnzbd">SABnzbd</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="nzbget"><img src="/assets/service_icons/nzbget.png" class="service-icon-small" alt="NZBGet">NZBGet</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="glances"><img src="/assets/service_icons/glances.png" class="service-icon-small" alt="Glances">Glances</button>
+      <button class="chip responsive-chip showcase-picker-chip" data-service="speedtest-tracker"><img src="/assets/service_icons/speedtest-tracker.png" class="service-icon-small" alt="Speedtest Tracker">Speedtest Tracker</button>
+    </div>
+  </div>
+
+  <!-- Selected Service Display Card -->
+  <article class="card elevate padding service-display-card" id="showcase-card">
+    <div class="grid middle-align">
+      <div class="s12 m6 showcase-details-col">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+          <img src="/assets/service_icons/sonarr.png" class="showcase-active-icon" id="showcase-icon" alt="Sonarr">
+          <div>
+            <div class="chip tertiary-container round small" id="showcase-category">The *arr Stack</div>
+            <h3 id="showcase-title" style="margin: 0.25rem 0 0 0;">Sonarr</h3>
+          </div>
+        </div>
+        <p class="showcase-desc" id="showcase-description">Full control over your automated TV series collections. Inspect library status, edit series configuration, and search for episodes on the fly.</p>
+        
+        <h6 style="margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--primary);">Key Capabilities</h6>
+        <ul class="showcase-features-list" id="showcase-features">
+          <li><i>check_circle</i><span>Interactive Manual Release Search &amp; Grab</span></li>
+          <li><i>check_circle</i><span>Upcoming Airings Calendar Grid</span></li>
+          <li><i>check_circle</i><span>Granular Quality &amp; Root Folder Profiles</span></li>
+          <li><i>check_circle</i><span>Detailed Episode Monitoring &amp; History</span></li>
+        </ul>
+      </div>
+      <div class="s12 m6 showcase-image-col">
+        <div class="showcase-carousel-wrapper" id="carousel-wrapper">
+          <button class="button circle elevate carousel-control carousel-prev" id="showcase-prev" aria-label="Previous image">
+            <i>chevron_left</i>
+          </button>
+          
+          <div class="showcase-carousel-track" id="showcase-carousel-track">
+            <!-- Initial slides for Sonarr rendered by Vite static HTML -->
+            <div class="carousel-slide"><img src="/assets/service_previews/sonarr/sonarr_1.png" alt="Sonarr 1"></div>
+            <div class="carousel-slide"><img src="/assets/service_previews/sonarr/sonarr_2.png" alt="Sonarr 2"></div>
+            <div class="carousel-slide"><img src="/assets/service_previews/sonarr/sonarr_3.png" alt="Sonarr 3"></div>
+            <div class="carousel-slide"><img src="/assets/service_previews/sonarr/sonarr_4.png" alt="Sonarr 4"></div>
+          </div>
+
+          <button class="button circle elevate carousel-control carousel-next" id="showcase-next" aria-label="Next image">
+            <i>chevron_right</i>
+          </button>
+          
+          <div class="carousel-indicators" id="carousel-indicators">
+            <div class="carousel-dot active" data-index="0"></div>
+            <div class="carousel-dot" data-index="1"></div>
+            <div class="carousel-dot" data-index="2"></div>
+            <div class="carousel-dot" data-index="3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+</section>
