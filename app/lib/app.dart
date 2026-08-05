@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'src/custom_theme_providers.dart';
 import 'src/preferences.dart';
 import 'src/router.dart';
+import 'src/share_intake/torrent_share_listener.dart';
 
 /// Root widget of Atrium. Wires the theme (with Android dynamic color), the
 /// persisted theme-mode preference, and the GoRouter.
@@ -77,9 +78,14 @@ class AtriumApp extends ConsumerWidget {
               AtriumTheme.dark(activeDark, fontFamily: fontFamily),
           themeMode: themeMode,
           routerConfig: router,
-          // Overlay the opt-in biometric lock above every route.
+          // Overlay the opt-in biometric lock above every route. The share
+          // listener wraps it so a torrent arriving from another app is
+          // handled wherever the user happens to be, and so its picker stays
+          // underneath the lock when the app is locked.
           builder: (BuildContext context, Widget? child) =>
-              _BiometricLockGate(child: child ?? const SizedBox.shrink()),
+              TorrentShareListener(
+            child: _BiometricLockGate(child: child ?? const SizedBox.shrink()),
+          ),
         );
       },
     );

@@ -153,6 +153,22 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.glances => ServiceRole.analytics,
         ServiceKind.speedtestTracker => ServiceRole.analytics,
       };
+
+  /// Whether this service can be handed a torrent - a magnet URI, a link to a
+  /// `.torrent`, or the file's bytes.
+  ///
+  /// Narrower than [ServiceRole.downloader], which also covers the Usenet
+  /// clients: SABnzbd and NZBGet take `.nzb` and cannot do anything with a
+  /// torrent. Used to pick the targets offered when another app shares a
+  /// torrent with Atrium.
+  bool get acceptsTorrents => switch (this) {
+        ServiceKind.qbittorrent ||
+        ServiceKind.deluge ||
+        ServiceKind.transmission ||
+        ServiceKind.rtorrent =>
+          true,
+        _ => false,
+      };
 }
 
 /// The auth flow a service uses to authenticate a request.

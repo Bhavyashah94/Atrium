@@ -13,8 +13,13 @@ import 'screens/profiles_screen.dart';
 import 'screens/service_detail_screen.dart';
 import 'screens/settings_screen.dart';
 
-final GlobalKey<NavigatorState> _rootNavigatorKey =
+/// The root navigator. Public so code living above the router - the torrent
+/// share intake, which is mounted in `MaterialApp.builder` - can reach a
+/// context that is able to present routes.
+final GlobalKey<NavigatorState> rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
+
+final GlobalKey<NavigatorState> _rootNavigatorKey = rootNavigatorKey;
 
 /// The app [GoRouter]. A stateful shell hosts the four bottom-nav branches;
 /// instance-management and service-detail screens push over the Dashboard
