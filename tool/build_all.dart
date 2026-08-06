@@ -1,9 +1,6 @@
 // ignore_for_file: avoid_print
 import 'dart:convert';
 import 'dart:io';
-
-const int maxDefaultConcurrency = 4;
-
 class BuildResult {
   const BuildResult({
     required this.relativePath,
@@ -25,9 +22,7 @@ class BuildResult {
 void main(List<String> args) async {
   final stopwatch = Stopwatch()..start();
 
-  final processors = Platform.numberOfProcessors;
-  var concurrency =
-      processors < maxDefaultConcurrency ? processors : maxDefaultConcurrency;
+  var concurrency = Platform.numberOfProcessors;
   final buildRunnerArgs = <String>[];
   for (var i = 0; i < args.length; i++) {
     if (args[i] == '-j' || args[i] == '--concurrency') {

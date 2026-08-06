@@ -20,7 +20,8 @@ build/
 *.iml
 *.ipr
 *.iws
-.idea/
+.idea/*
+!.idea/runConfigurations/
 .gradle/
 local.properties
 
@@ -113,3 +114,9 @@ site/dist/
 site/.vite/
 site/.cache/
 deno.lock
+
+# Graphify Knowledge Graph outputs
+graphify-out/
+
+# Agents
+.agents/
