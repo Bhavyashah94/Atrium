@@ -1,5 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_networking/core_networking.dart';
+import 'package:core_storage/core_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -82,9 +83,35 @@ enum SonarrSeriesFilter {
 }
 
 /// Persistent view mode preference for Sonarr series.
-final sonarrViewModeProvider = StateProvider.family<SonarrViewMode, Instance>(
-  (ref, instance) => SonarrViewMode.grid,
+final sonarrViewModeProvider =
+    NotifierProvider.family<SonarrViewModeNotifier, SonarrViewMode, Instance>(
+  SonarrViewModeNotifier.new,
 );
+
+class SonarrViewModeNotifier extends Notifier<SonarrViewMode> {
+  SonarrViewModeNotifier(this.instance);
+
+  final Instance instance;
+
+  static String _keyFor(String instanceId) => 'sonarr.viewMode.$instanceId';
+
+  Box<String>? get _box => Hive.isBoxOpen(AtriumBoxes.settings)
+      ? Hive.box<String>(AtriumBoxes.settings)
+      : null;
+
+  @override
+  SonarrViewMode build() {
+    final String? raw = _box?.get(_keyFor(instance.id));
+    if (raw == 'list') return SonarrViewMode.list;
+    if (raw == 'grid') return SonarrViewMode.grid;
+    return SonarrViewMode.grid;
+  }
+
+  void setViewMode(SonarrViewMode mode) {
+    state = mode;
+    _box?.put(_keyFor(instance.id), mode.name);
+  }
+}
 
 /// Sort field preference for Sonarr series.
 final sonarrSeriesSortFieldProvider =

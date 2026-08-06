@@ -330,14 +330,15 @@ class _SeriesTabState extends ConsumerState<SeriesTab>
                               : 'Switch to grid view',
                           onPressed: () {
                             ref
-                                    .read(
-                                      sonarrViewModeProvider(widget.instance)
-                                          .notifier,
-                                    )
-                                    .state =
-                                viewMode == SonarrViewMode.grid
-                                    ? SonarrViewMode.list
-                                    : SonarrViewMode.grid;
+                                .read(
+                                  sonarrViewModeProvider(widget.instance)
+                                      .notifier,
+                                )
+                                .setViewMode(
+                                  viewMode == SonarrViewMode.grid
+                                      ? SonarrViewMode.list
+                                      : SonarrViewMode.grid,
+                                );
                           },
                         ),
                       ],

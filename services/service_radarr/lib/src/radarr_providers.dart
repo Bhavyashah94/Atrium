@@ -1,5 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_networking/core_networking.dart';
+import 'package:core_storage/core_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -74,9 +75,35 @@ enum RadarrMovieFilter {
 }
 
 /// Persistent view mode preference for Radarr movies.
-final radarrViewModeProvider = StateProvider.family<RadarrViewMode, Instance>(
-  (ref, instance) => RadarrViewMode.grid,
+final radarrViewModeProvider =
+    NotifierProvider.family<RadarrViewModeNotifier, RadarrViewMode, Instance>(
+  RadarrViewModeNotifier.new,
 );
+
+class RadarrViewModeNotifier extends Notifier<RadarrViewMode> {
+  RadarrViewModeNotifier(this.instance);
+
+  final Instance instance;
+
+  static String _keyFor(String instanceId) => 'radarr.viewMode.$instanceId';
+
+  Box<String>? get _box => Hive.isBoxOpen(AtriumBoxes.settings)
+      ? Hive.box<String>(AtriumBoxes.settings)
+      : null;
+
+  @override
+  RadarrViewMode build() {
+    final String? raw = _box?.get(_keyFor(instance.id));
+    if (raw == 'list') return RadarrViewMode.list;
+    if (raw == 'grid') return RadarrViewMode.grid;
+    return RadarrViewMode.grid;
+  }
+
+  void setViewMode(RadarrViewMode mode) {
+    state = mode;
+    _box?.put(_keyFor(instance.id), mode.name);
+  }
+}
 
 /// Sort field preference for Radarr movies.
 final radarrMovieSortFieldProvider =

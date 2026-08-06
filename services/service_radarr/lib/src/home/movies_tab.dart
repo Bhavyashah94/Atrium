@@ -326,14 +326,15 @@ class _MoviesTabState extends ConsumerState<MoviesTab>
                               : 'Switch to grid view',
                           onPressed: () {
                             ref
-                                    .read(
-                                      radarrViewModeProvider(widget.instance)
-                                          .notifier,
-                                    )
-                                    .state =
-                                viewMode == RadarrViewMode.grid
-                                    ? RadarrViewMode.list
-                                    : RadarrViewMode.grid;
+                                .read(
+                                  radarrViewModeProvider(widget.instance)
+                                      .notifier,
+                                )
+                                .setViewMode(
+                                  viewMode == RadarrViewMode.grid
+                                      ? RadarrViewMode.list
+                                      : RadarrViewMode.grid,
+                                );
                           },
                         ),
                       ],
