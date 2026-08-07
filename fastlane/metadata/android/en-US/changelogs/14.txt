@@ -1,0 +1,21 @@
+Tracearr now talks to its public API, which means it asks for an API key rather
+than a username and password. Open Tracearr, go to Settings, API Key, Generate
+Key, and paste that into the instance. If you already had Tracearr set up you
+will need to do this once. It also gained detail screens: tap a title to see its
+statistics and who has been watching it, or tap an account to see what they have
+played. And instances that were answering perfectly no longer claim the server
+could not be reached when you test the connection.
+
+That public API covers less ground than the one Atrium used before, so if there
+is something from Tracearr you want in the app and cannot find, open a feature
+request on GitHub and we will see what we can reach.
+
+Share a whole batch of .torrent files at once and they are added together,
+rather than a share at a time.
+
+Sonarr and Radarr now remember whether you left them in grid or list view.
+
+Fixed: the bottom navigation bar had its icons clipped on phones using
+three-button navigation, Recently Downloaded repeated the same episode or film
+several times, and the Emby search bar sat out of line with the rest of the
+screen. A season that arrived in one go now reads as a single entry there.

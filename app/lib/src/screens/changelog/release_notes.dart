@@ -27,6 +27,27 @@ class ReleaseNote {
 /// Newest first. Update alongside appVersion and the pubspec at each release.
 const List<ReleaseNote> releaseNotes = <ReleaseNote>[
   ReleaseNote(
+    version: '1.3.2',
+    date: '2026-08-07',
+    groups: <ChangeGroup>[
+      ChangeGroup(ChangeCategory.added, <String>[
+        'Share a whole batch of .torrent files at once and Atrium adds them together, rather than one share at a time.',
+        'Tracearr gained detail screens: tap a title to see its statistics and who has been watching it, or tap an account to see what they have played.',
+      ]),
+      ChangeGroup(ChangeCategory.improved, <String>[
+        'Tracearr now talks to its public API and asks for an API key instead of a username and password. Open Tracearr, go to Settings, API Key, Generate Key, and paste that into the instance. If you had Tracearr set up before, you will need to do this once.',
+        'That public API covers less than the one Atrium used before, so if there is something from Tracearr you want here and cannot find, open a feature request on GitHub and we will see what we can reach.',
+        'Sonarr and Radarr remember whether you left them in grid or list view.',
+      ]),
+      ChangeGroup(ChangeCategory.fixed, <String>[
+        'The bottom navigation bar no longer has its icons clipped on phones using three-button navigation.',
+        'Recently Downloaded no longer repeats the same episode or film several times, and a season that arrived in one go now reads as a single entry.',
+        'Tracearr instances that were answering perfectly no longer report that the server could not be reached when you test the connection.',
+        'The Emby search bar lines up with the rest of the screen.',
+      ]),
+    ],
+  ),
+  ReleaseNote(
     version: '1.3.1',
     date: '2026-08-06',
     groups: <ChangeGroup>[
