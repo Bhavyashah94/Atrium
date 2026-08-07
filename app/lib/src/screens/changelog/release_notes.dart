@@ -27,6 +27,21 @@ class ReleaseNote {
 /// Newest first. Update alongside appVersion and the pubspec at each release.
 const List<ReleaseNote> releaseNotes = <ReleaseNote>[
   ReleaseNote(
+    version: '1.3.3',
+    date: '2026-08-07',
+    groups: <ChangeGroup>[
+      ChangeGroup(ChangeCategory.added, <String>[
+        'Delete a film or an episode from disk while keeping it in your library, so you free the space without losing the entry. Tick unmonitor at the same time and it will not simply download again.',
+        'The same thing in bulk: select several films or series, choose Delete files only, and the entries stay behind.',
+        'Radarr can be sorted ascending or descending.',
+      ]),
+      ChangeGroup(ChangeCategory.fixed, <String>[
+        'Lists no longer run underneath the system navigation buttons at the bottom of the screen.',
+        'The buttons on a film or series detail screen no longer wrap onto a second line on narrower phones.',
+      ]),
+    ],
+  ),
+  ReleaseNote(
     version: '1.3.2',
     date: '2026-08-07',
     groups: <ChangeGroup>[

@@ -1,0 +1,10 @@
+You can now delete a film or an episode from disk while keeping it in your
+library, so the space comes back without losing the entry. Tick unmonitor at the
+same time and it will not simply download again. The same works in bulk: select
+several films or series, choose Delete files only, and the entries stay behind.
+
+Radarr can be sorted ascending or descending.
+
+Fixed: lists ran underneath the system navigation buttons at the bottom of the
+screen, and the buttons on a film or series detail screen wrapped onto a second
+line on narrower phones.

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('hasNewer is true only when latestVersion is above appVersion', () {
-    // appVersion is 1.3.2.
+    // appVersion is 1.3.3.
     expect(
       const UpdateCheckState(
         status: UpdateStatus.updateAvailable,
@@ -12,7 +12,7 @@ void main() {
       isTrue,
     );
     expect(
-      const UpdateCheckState(latestVersion: '1.3.2').hasNewer,
+      const UpdateCheckState(latestVersion: '1.3.3').hasNewer,
       isFalse,
     );
     expect(const UpdateCheckState().hasNewer, isFalse);
