@@ -1,5 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_networking/core_networking.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The outcome of testing one URL of an instance before it is saved.
 enum ConnectionOutcome { connected, authFailed, unreachable }
@@ -43,7 +44,24 @@ ConnectionTestResult connectionResultFromHealth(Health health) {
 /// surfaces as [NetworkAuthException]; anything else is treated as a transport
 /// or server problem.
 ConnectionTestResult connectionResultFromError(Object error) {
-  if (error is NetworkAuthException) {
+  Object unwrapped = error;
+  if (unwrapped is AsyncError) {
+    unwrapped = unwrapped.error;
+  }
+  if (unwrapped is NetworkAuthException) {
+    return const ConnectionTestResult(
+      ConnectionOutcome.authFailed,
+      'Reachable, but the credentials were rejected',
+    );
+  }
+  final String errStr = unwrapped.toString().toLowerCase();
+  if (errStr.contains('429') || errStr.contains('rate limit')) {
+    return const ConnectionTestResult(
+      ConnectionOutcome.authFailed,
+      'Reachable, but rate limit exceeded on server',
+    );
+  }
+  if (errStr.contains('401') || errStr.contains('403') || errStr.contains('unauthorized')) {
     return const ConnectionTestResult(
       ConnectionOutcome.authFailed,
       'Reachable, but the credentials were rejected',

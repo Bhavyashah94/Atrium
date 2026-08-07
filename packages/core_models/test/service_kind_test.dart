@@ -49,10 +49,10 @@ void main() {
 
   // Monitoring, not automation: it watches playback on Plex/Jellyfin/Emby,
   // which is Tautulli's job rather than the *arr family's.
-  test('Tracearr is registered as a userPass analytics service', () {
+  test('Tracearr is registered as an apiKey analytics service', () {
     expect(ServiceKind.tracearr.displayName, 'Tracearr');
     expect(ServiceKind.tracearr.role, ServiceRole.analytics);
-    expect(ServiceKind.tracearr.authStyle, AuthStyle.userPass);
+    expect(ServiceKind.tracearr.authStyle, AuthStyle.apiKey);
     // Upstream's own default; its compose maps ${PORT:-3000}:3000.
     expect(ServiceKind.tracearr.defaultPort, 3000);
   });
