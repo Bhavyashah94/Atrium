@@ -176,7 +176,7 @@ class _DashboardRecentlyDownloadedWidgetState
         final List<int> sortedEps = g.episodes.keys.toList()..sort();
         final String minEp = sortedEps.first.toString().padLeft(2, '0');
         final String maxEp = sortedEps.last.toString().padLeft(2, '0');
-        subtitle = 'S${sNum}E$minEp-E$maxEp (${sortedEps.length} episodes)';
+        subtitle = 'S${sNum}E$minEp–E$maxEp (${sortedEps.length} Ep)';
       }
 
       items.add(_RecentDownloadItem(
