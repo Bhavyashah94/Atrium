@@ -6,7 +6,7 @@ import 'sonarr_series.dart';
 part 'sonarr_history_item.freezed.dart';
 part 'sonarr_history_item.g.dart';
 
-@freezed
+@Freezed(when: FreezedWhenOptions.none, map: FreezedMapOptions.none)
 abstract class SonarrHistoryItem with _$SonarrHistoryItem {
   const factory SonarrHistoryItem({
     required int id,
@@ -16,9 +16,14 @@ abstract class SonarrHistoryItem with _$SonarrHistoryItem {
     String? date,
     String? downloadId,
     String? eventType,
-    Map<String, String?>? data,
+    Map<String, dynamic>? data,
     SonarrEpisode? episode,
     SonarrSeries? series,
+    @Default(<SonarrLanguage>[]) List<SonarrLanguage> languages,
+    Map<String, dynamic>? quality,
+    @Default(<Map<String, dynamic>>[]) List<Map<String, dynamic>> customFormats,
+    int? customFormatScore,
+    bool? qualityCutoffNotMet,
   }) = _SonarrHistoryItem;
 
   factory SonarrHistoryItem.fromJson(Map<String, dynamic> json) =>

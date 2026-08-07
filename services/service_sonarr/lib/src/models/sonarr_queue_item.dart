@@ -6,7 +6,7 @@ import 'sonarr_series.dart';
 part 'sonarr_queue_item.freezed.dart';
 part 'sonarr_queue_item.g.dart';
 
-@freezed
+@Freezed(when: FreezedWhenOptions.none, map: FreezedMapOptions.none)
 abstract class SonarrQueueItem with _$SonarrQueueItem {
   const factory SonarrQueueItem({
     required int id,
@@ -29,6 +29,14 @@ abstract class SonarrQueueItem with _$SonarrQueueItem {
     String? outputPath,
     double? sizeleft,
     String? timeleft,
+    @Default(<SonarrLanguage>[]) List<SonarrLanguage> languages,
+    Map<String, dynamic>? quality,
+    @Default(<Map<String, dynamic>>[]) List<Map<String, dynamic>> customFormats,
+    int? customFormatScore,
+    @Default(<Map<String, dynamic>>[]) List<Map<String, dynamic>> statusMessages,
+    String? protocol,
+    bool? downloadClientHasPostImportCategory,
+    bool? episodeHasFile,
   }) = _SonarrQueueItem;
 
   factory SonarrQueueItem.fromJson(Map<String, dynamic> json) =>

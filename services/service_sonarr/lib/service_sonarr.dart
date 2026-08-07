@@ -4,8 +4,10 @@ library;
 import 'package:core_models/core_models.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+export 'src/models/sonarr_blocklist_item.dart';
 export 'src/models/sonarr_episode.dart';
 export 'src/models/sonarr_history_item.dart';
+export 'src/models/sonarr_models.dart';
 export 'src/models/sonarr_queue_item.dart';
 export 'src/models/sonarr_series.dart';
 export 'src/series_detail_screen.dart';

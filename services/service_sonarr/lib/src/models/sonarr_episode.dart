@@ -4,7 +4,7 @@ import 'sonarr_series.dart';
 part 'sonarr_episode.freezed.dart';
 part 'sonarr_episode.g.dart';
 
-@freezed
+@Freezed(when: FreezedWhenOptions.none, map: FreezedMapOptions.none)
 abstract class SonarrEpisode with _$SonarrEpisode {
   const factory SonarrEpisode({
     required int id,
@@ -22,6 +22,16 @@ abstract class SonarrEpisode with _$SonarrEpisode {
     int? episodeFileId,
     SonarrSeries? series,
     Map<String, dynamic>? episodeFile,
+    int? tvdbId,
+    String? lastSearchTime,
+    String? finaleType,
+    int? sceneAbsoluteEpisodeNumber,
+    int? sceneEpisodeNumber,
+    int? sceneSeasonNumber,
+    bool? unverifiedSceneNumbering,
+    String? endTime,
+    String? grabDate,
+    @Default(<SonarrImage>[]) List<SonarrImage> images,
   }) = _SonarrEpisode;
 
   factory SonarrEpisode.fromJson(Map<String, dynamic> json) =>
