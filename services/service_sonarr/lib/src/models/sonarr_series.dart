@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'sonarr_series.freezed.dart';
 part 'sonarr_series.g.dart';
 
-@freezed
+@Freezed(when: FreezedWhenOptions.none, map: FreezedMapOptions.none)
 abstract class SonarrSeries with _$SonarrSeries {
   const factory SonarrSeries({
     @Default(0) int id,
@@ -57,7 +57,7 @@ abstract class SonarrSeries with _$SonarrSeries {
       _$SonarrSeriesFromJson(json);
 }
 
-@freezed
+@Freezed(when: FreezedWhenOptions.none, map: FreezedMapOptions.none)
 abstract class SonarrImage with _$SonarrImage {
   const factory SonarrImage({
     required String coverType,
@@ -69,7 +69,7 @@ abstract class SonarrImage with _$SonarrImage {
       _$SonarrImageFromJson(json);
 }
 
-@freezed
+@Freezed(when: FreezedWhenOptions.none, map: FreezedMapOptions.none)
 abstract class SonarrSeason with _$SonarrSeason {
   const factory SonarrSeason({
     @Default(0) int seasonNumber,
@@ -81,7 +81,7 @@ abstract class SonarrSeason with _$SonarrSeason {
       _$SonarrSeasonFromJson(json);
 }
 
-@freezed
+@Freezed(when: FreezedWhenOptions.none, map: FreezedMapOptions.none)
 abstract class SonarrSeasonStatistics with _$SonarrSeasonStatistics {
   const factory SonarrSeasonStatistics({
     @Default(0) int episodeFileCount,
@@ -94,7 +94,7 @@ abstract class SonarrSeasonStatistics with _$SonarrSeasonStatistics {
       _$SonarrSeasonStatisticsFromJson(json);
 }
 
-@freezed
+@Freezed(when: FreezedWhenOptions.none, map: FreezedMapOptions.none)
 abstract class SonarrSeriesStatistics with _$SonarrSeriesStatistics {
   const factory SonarrSeriesStatistics({
     @Default(0) int seasonCount,
@@ -108,7 +108,7 @@ abstract class SonarrSeriesStatistics with _$SonarrSeriesStatistics {
       _$SonarrSeriesStatisticsFromJson(json);
 }
 
-@freezed
+@Freezed(when: FreezedWhenOptions.none, map: FreezedMapOptions.none)
 abstract class SonarrAlternateTitle with _$SonarrAlternateTitle {
   const factory SonarrAlternateTitle({
     String? title,
@@ -121,7 +121,7 @@ abstract class SonarrAlternateTitle with _$SonarrAlternateTitle {
       _$SonarrAlternateTitleFromJson(json);
 }
 
-@freezed
+@Freezed(when: FreezedWhenOptions.none, map: FreezedMapOptions.none)
 abstract class SonarrRatings with _$SonarrRatings {
   const factory SonarrRatings({
     int? votes,
@@ -132,7 +132,7 @@ abstract class SonarrRatings with _$SonarrRatings {
       _$SonarrRatingsFromJson(json);
 }
 
-@freezed
+@Freezed(when: FreezedWhenOptions.none, map: FreezedMapOptions.none)
 abstract class SonarrAddOptions with _$SonarrAddOptions {
   const factory SonarrAddOptions({
     bool? ignoreEpisodesWithFiles,
@@ -145,7 +145,7 @@ abstract class SonarrAddOptions with _$SonarrAddOptions {
       _$SonarrAddOptionsFromJson(json);
 }
 
-@freezed
+@Freezed(when: FreezedWhenOptions.none, map: FreezedMapOptions.none)
 abstract class SonarrLanguage with _$SonarrLanguage {
   const factory SonarrLanguage({
     int? id,
