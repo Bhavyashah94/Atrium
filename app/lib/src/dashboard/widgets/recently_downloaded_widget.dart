@@ -114,19 +114,30 @@ class _DashboardRecentlyDownloadedWidgetState
         if (date == null || h.series == null) {
           continue;
         }
-        final String key =
-            '${i.id}_sonarr_${h.seriesId}_${h.episodeId ?? h.episode?.id ?? h.id}';
+        final String key = '${i.id}_sonarr_${h.seriesId}';
         if (seenKeys.contains(key)) {
           continue;
         }
         seenKeys.add(key);
+
+        String? epSubtitle;
+        if (h.episode != null) {
+          final String sNum =
+              h.episode!.seasonNumber.toString().padLeft(2, '0');
+          final String eNum =
+              h.episode!.episodeNumber.toString().padLeft(2, '0');
+          final String epCode = 'S${sNum}E${eNum}';
+          final String epTitle = h.episode!.title?.trim() ?? '';
+          epSubtitle = epTitle.isNotEmpty ? '$epCode • $epTitle' : epCode;
+        }
+
         items.add(_RecentDownloadItem(
-          title: h.episode?.title ?? h.series!.title,
+          title: h.series!.title,
           date: date,
           isMovie: false,
           instance: i,
           series: h.series,
-          subtitle: h.episode != null ? h.series!.title : null,
+          subtitle: epSubtitle,
           posterUrl: sonarrPosterUrl(api, h.series!.images),
         ));
       }
