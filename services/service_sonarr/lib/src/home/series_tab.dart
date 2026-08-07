@@ -1154,6 +1154,11 @@ class _BulkEditDialogState extends ConsumerState<_BulkEditDialog> {
   }
 }
 
+enum _DeleteMode {
+  deleteEntry,
+  deleteFilesOnly,
+}
+
 class _BulkDeleteDialog extends ConsumerStatefulWidget {
   const _BulkDeleteDialog({
     required this.instance,
@@ -1168,29 +1173,61 @@ class _BulkDeleteDialog extends ConsumerStatefulWidget {
 }
 
 class _BulkDeleteDialogState extends ConsumerState<_BulkDeleteDialog> {
+  _DeleteMode _mode = _DeleteMode.deleteEntry;
   bool _deleteFiles = false;
+  bool _unmonitor = false;
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('Delete ${widget.selectedIds.length} Series?'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Are you sure you want to delete these series? This action cannot be undone.',
-          ),
-          const SizedBox(height: 16),
-          CheckboxListTile(
-            title: const Text('Delete all files from disk'),
-            value: _deleteFiles,
-            contentPadding: EdgeInsets.zero,
-            onChanged: (val) => setState(() => _deleteFiles = val ?? false),
-          ),
-        ],
+      content: RadioGroup<_DeleteMode>(
+        groupValue: _mode,
+        onChanged: (_DeleteMode? val) => setState(() {
+          if (val != null) _mode = val;
+        }),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const RadioListTile<_DeleteMode>(
+              title: Text('Delete series entry'),
+              subtitle: Text('Remove from Sonarr library'),
+              value: _DeleteMode.deleteEntry,
+              contentPadding: EdgeInsets.zero,
+            ),
+            if (_mode == _DeleteMode.deleteEntry)
+              Padding(
+                padding: const EdgeInsets.only(left: Insets.lg),
+                child: CheckboxListTile(
+                  title: const Text('Also delete files from disk'),
+                  value: _deleteFiles,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setState(() => _deleteFiles = val ?? false),
+                ),
+              ),
+            const RadioListTile<_DeleteMode>(
+              title: Text('Delete files only'),
+              subtitle:
+                  Text('Keep entry in Sonarr library to free disk space'),
+              value: _DeleteMode.deleteFilesOnly,
+              contentPadding: EdgeInsets.zero,
+            ),
+            if (_mode == _DeleteMode.deleteFilesOnly)
+              Padding(
+                padding: const EdgeInsets.only(left: Insets.lg),
+                child: CheckboxListTile(
+                  title: const Text('Unmonitor series'),
+                  subtitle: const Text('Prevent automatic re-downloads'),
+                  value: _unmonitor,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setState(() => _unmonitor = val ?? false),
+                ),
+              ),
+          ],
+        ),
       ),
-      actions: [
+      actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
@@ -1215,13 +1252,39 @@ class _BulkDeleteDialogState extends ConsumerState<_BulkDeleteDialog> {
             );
 
             Object? error;
+            int successCount = 0;
+            int failedCount = 0;
             try {
               final api =
                   await ref.read(sonarrApiProvider(widget.instance).future);
-              await api.bulkDeleteSeries(
-                widget.selectedIds.toList(),
-                deleteFiles: _deleteFiles,
-              );
+              if (_mode == _DeleteMode.deleteEntry) {
+                await api.bulkDeleteSeries(
+                  widget.selectedIds.toList(),
+                  deleteFiles: _deleteFiles,
+                );
+              } else {
+                for (final id in widget.selectedIds) {
+                  try {
+                    final files = await api.getEpisodeFiles(id);
+                    for (final f in files) {
+                      final int? fId = f['id'] as int?;
+                      if (fId != null) {
+                        await api.deleteEpisodeFile(fId);
+                      }
+                    }
+                    if (_unmonitor) {
+                      try {
+                        final raw = await api.getSeriesRaw(id);
+                        raw['monitored'] = false;
+                        await api.updateSeriesRaw(raw);
+                      } catch (_) {}
+                    }
+                    successCount++;
+                  } catch (_) {
+                    failedCount++;
+                  }
+                }
+              }
             } catch (e) {
               error = e;
             } finally {
@@ -1231,18 +1294,29 @@ class _BulkDeleteDialogState extends ConsumerState<_BulkDeleteDialog> {
             if (!context.mounted) return;
             if (error != null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error deleting series: $error')),
+                SnackBar(content: Text('Error: $error')),
               );
               return;
             }
             ref.invalidate(sonarrSeriesProvider(widget.instance));
             ref
                 .read(sonarrSeriesSelectionProvider(widget.instance).notifier)
-                .state = {};
+                .state = <int>{};
             Navigator.pop(context); // pop dialog
 
+            final String msg;
+            if (_mode == _DeleteMode.deleteEntry) {
+              msg = 'Successfully deleted ${widget.selectedIds.length} series';
+            } else if (failedCount == 0) {
+              msg = _unmonitor
+                  ? 'Successfully deleted files and unmonitored $successCount series'
+                  : 'Successfully deleted files for $successCount series';
+            } else {
+              msg = 'Deleted files for $successCount series. Failed for $failedCount series';
+            }
+
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Successfully deleted series')),
+              SnackBar(content: Text(msg)),
             );
           },
           child: const Text('Delete'),

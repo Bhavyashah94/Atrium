@@ -34,16 +34,6 @@ class _ScaffoldWithNavBarState extends State<ScaffoldWithNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    // Material's NavigationBar wraps itself in a SafeArea and *then* sizes to
-    // its height, so what it actually occupies is that height plus the bottom
-    // inset. Pinning it to a bare 80 therefore ate the inset out of the bar
-    // itself: on three-button devices, whose inset is roughly twice a gesture
-    // bar's, that clipped the selection pill and the icons above the labels.
-    // Gesture devices had just enough slack to hide it.
-    //
-    // padding, not viewPadding: it collapses to zero while the keyboard is up,
-    // which is exactly when the bar no longer needs the room.
-    final double barHeight = 80.0 + MediaQuery.paddingOf(context).bottom;
     return PopScope<Object?>(
       canPop: widget.navigationShell.currentIndex == 0,
       onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -91,11 +81,11 @@ class _ScaffoldWithNavBarState extends State<ScaffoldWithNavBar> {
           : null,
       bottomNavigationBar: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: _isNavbarVisible ? barHeight : 0.0,
+        height: _isNavbarVisible ? 80.0 : 0.0,
         child: SingleChildScrollView(
           physics: const NeverScrollableScrollPhysics(),
           child: SizedBox(
-            height: barHeight,
+            height: 80.0,
             child: NavigationBar(
               selectedIndex: widget.navigationShell.currentIndex,
               onDestinationSelected: _onTap,

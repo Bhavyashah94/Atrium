@@ -1348,27 +1348,44 @@ class _SeasonCard extends ConsumerWidget {
     WidgetRef ref,
   ) async {
     final theme = Theme.of(context);
+    bool unmonitor = false;
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete Season $seasonNumber Files'),
-        content: Text(
-          'Are you sure you want to delete all episode files for Season $seasonNumber? This will delete the files from disk and cannot be undone.',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Delete Season $seasonNumber Files'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Are you sure you want to delete all episode files for Season $seasonNumber? This will delete the files from disk and cannot be undone.',
+              ),
+              const SizedBox(height: Insets.sm),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Unmonitor season'),
+                subtitle: const Text('Prevent automatic re-downloads'),
+                value: unmonitor,
+                onChanged: (v) => setState(() => unmonitor = v ?? false),
+              ),
+            ],
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
             ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -1390,6 +1407,9 @@ class _SeasonCard extends ConsumerWidget {
           .map((e) => e.episodeFileId!)
           .toList();
 
+      bool unmonitored = false;
+      Object? unmonitorError;
+
       try {
         final api = await ref.read(sonarrApiProvider(instance).future);
         for (final fileId in fileIds) {
@@ -1398,6 +1418,22 @@ class _SeasonCard extends ConsumerWidget {
             deletedCount++;
           } catch (e) {
             failedCount++;
+          }
+        }
+        if (unmonitor) {
+          try {
+            final Map<String, dynamic> raw = await api.getSeriesRaw(series.id);
+            final List<dynamic> seasons = (raw['seasons'] as List<dynamic>?) ?? <dynamic>[];
+            for (final dynamic s in seasons) {
+              if (s is Map<String, dynamic> && s['seasonNumber'] == seasonNumber) {
+                s['monitored'] = false;
+                break;
+              }
+            }
+            await api.updateSeriesRaw(raw);
+            unmonitored = true;
+          } catch (e) {
+            unmonitorError = e;
           }
         }
       } catch (e) {
@@ -1416,10 +1452,22 @@ class _SeasonCard extends ConsumerWidget {
       onRefreshed();
 
       if (context.mounted) {
-        if (failedCount == 0) {
+        if (unmonitor && !unmonitored) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Successfully deleted $deletedCount file(s).'),
+              content: Text(
+                'Deleted $deletedCount file(s), but failed to unmonitor season: $unmonitorError',
+              ),
+            ),
+          );
+        } else if (failedCount == 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                unmonitored
+                    ? 'Successfully deleted $deletedCount file(s) and unmonitored season.'
+                    : 'Successfully deleted $deletedCount file(s).',
+              ),
             ),
           );
         } else {
@@ -1787,20 +1835,16 @@ void _showEpisodeBottomSheet({
                   const SizedBox(height: Insets.md),
                 ],
 
-                // Action buttons
+                // Action buttons bar (Single row, clean layout)
                 Row(
                   children: <Widget>[
                     // Monitor/Unmonitor Toggle
                     Expanded(
-                      child: OutlinedButton.icon(
-                        icon: Icon(
-                          episode.monitored
-                              ? Icons.bookmark
-                              : Icons.bookmark_border,
-                          size: 18,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          visualDensity: VisualDensity.compact,
                         ),
-                        label:
-                            Text(episode.monitored ? 'Unmonitor' : 'Monitor'),
                         onPressed: () async {
                           Navigator.pop(context);
                           try {
@@ -1820,18 +1864,37 @@ void _showEpisodeBottomSheet({
                             }
                           }
                         },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Icon(
+                              episode.monitored
+                                  ? Icons.bookmark
+                                  : Icons.bookmark_border,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                episode.monitored ? 'Unmonitor' : 'Monitor',
+                                style: const TextStyle(fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: Insets.sm),
-                Row(
-                  children: <Widget>[
+                    const SizedBox(width: 6),
+
                     // Automatic Search
                     Expanded(
-                      child: FilledButton.icon(
-                        icon: const Icon(Icons.search, size: 18),
-                        label: const Text('Auto Search'),
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          visualDensity: VisualDensity.compact,
+                        ),
                         onPressed: () async {
                           Navigator.pop(context);
                           try {
@@ -1858,15 +1921,32 @@ void _showEpisodeBottomSheet({
                             }
                           }
                         },
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Icon(Icons.search, size: 16),
+                            SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'Auto Search',
+                                style: TextStyle(fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(width: Insets.sm),
+                    const SizedBox(width: 6),
 
                     // Interactive Search
                     Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.person_search, size: 18),
-                        label: const Text('Interactive'),
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          visualDensity: VisualDensity.compact,
+                        ),
                         onPressed: () {
                           Navigator.pop(context);
                           pushScreen<void>(
@@ -1877,70 +1957,132 @@ void _showEpisodeBottomSheet({
                             ),
                           );
                         },
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Icon(Icons.person_search, size: 16),
+                            SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'Interactive',
+                                style: TextStyle(fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 
                     // Delete file (if has file)
                     if (episode.hasFile && episode.episodeFileId != null) ...[
-                      const SizedBox(width: Insets.sm),
-                      IconButton.filledTonal(
-                        icon: Icon(Icons.delete_outline, color: cs.error),
-                        onPressed: () async {
-                          Navigator.pop(context);
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Delete Episode File'),
-                              content: const Text(
-                                'Are you sure? This will delete the file from disk and cannot be undone.',
+                      const SizedBox(width: Insets.xs),
+                      Tooltip(
+                        message: 'Delete File',
+                        child: IconButton.filledTonal(
+                          icon: Icon(Icons.delete_outline, color: cs.error),
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            bool unmonitor = false;
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => StatefulBuilder(
+                                builder: (context, setState) => AlertDialog(
+                                  title: const Text('Delete Episode File'),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      const Text(
+                                        'Are you sure? This will delete the file from disk and cannot be undone.',
+                                      ),
+                                      const SizedBox(height: Insets.sm),
+                                      CheckboxListTile(
+                                        contentPadding: EdgeInsets.zero,
+                                        title: const Text('Unmonitor episode'),
+                                        subtitle: const Text('Prevent automatic re-downloads'),
+                                        value: unmonitor,
+                                        onChanged: (v) => setState(() => unmonitor = v ?? false),
+                                      ),
+                                    ],
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    FilledButton(
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: cs.error,
+                                        foregroundColor: cs.onError,
+                                      ),
+                                      onPressed: () => Navigator.pop(context, true),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.pop(context, false),
-                                  child: const Text('Cancel'),
-                                ),
-                                FilledButton(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: cs.error,
-                                    foregroundColor: cs.onError,
-                                  ),
-                                  onPressed: () => Navigator.pop(context, true),
-                                  child: const Text('Delete'),
-                                ),
-                              ],
-                            ),
-                          );
+                            );
 
-                          if (confirm == true) {
-                            try {
-                              final api = await ref
-                                  .read(sonarrApiProvider(instance).future);
-                              await api
-                                  .deleteEpisodeFile(episode.episodeFileId!);
-                              ref.invalidate(
-                                sonarrEpisodesProvider(
-                                  (instance, series.id),
-                                ),
-                              );
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('File deleted.'),
+                            if (confirm == true) {
+                              try {
+                                final api = await ref
+                                    .read(sonarrApiProvider(instance).future);
+                                await api
+                                    .deleteEpisodeFile(episode.episodeFileId!);
+                                bool unmonitored = false;
+                                Object? unmonitorError;
+                                if (unmonitor) {
+                                  try {
+                                    await api.updateEpisodeMonitor(
+                                      episodeIds: <int>[episode.id],
+                                      monitored: false,
+                                    );
+                                    unmonitored = true;
+                                  } catch (e) {
+                                    unmonitorError = e;
+                                  }
+                                }
+                                ref.invalidate(
+                                  sonarrEpisodesProvider(
+                                    (instance, series.id),
                                   ),
                                 );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Failed to delete: $e'),
-                                  ),
-                                );
+                                if (context.mounted) {
+                                  if (unmonitor && !unmonitored) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'File deleted, but failed to unmonitor episode: $unmonitorError',
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          unmonitored
+                                              ? 'File deleted and episode unmonitored.'
+                                              : 'File deleted.',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Failed to delete: $e'),
+                                    ),
+                                  );
+                                }
                               }
                             }
-                          }
-                        },
+                          },
+                        ),
                       ),
                     ],
                   ],
