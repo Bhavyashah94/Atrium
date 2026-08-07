@@ -5,6 +5,7 @@ import 'package:core_storage/core_storage.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -70,22 +71,52 @@ class AtriumApp extends ConsumerWidget {
                     seedColor: AtriumTheme.seed, brightness: Brightness.dark))
             : customDark;
 
+        final ThemeData lightTheme =
+            AtriumTheme.light(activeLight, fontFamily: fontFamily);
+        final ThemeData darkTheme =
+            AtriumTheme.dark(activeDark, fontFamily: fontFamily);
+
         return MaterialApp.router(
           title: 'Atrium',
           debugShowCheckedModeBanner: false,
-          theme: AtriumTheme.light(activeLight, fontFamily: fontFamily),
-          darkTheme:
-              AtriumTheme.dark(activeDark, fontFamily: fontFamily),
+          theme: lightTheme,
+          darkTheme: darkTheme,
           themeMode: themeMode,
           routerConfig: router,
           // Overlay the opt-in biometric lock above every route. The share
           // listener wraps it so a torrent arriving from another app is
           // handled wherever the user happens to be, and so its picker stays
           // underneath the lock when the app is locked.
-          builder: (BuildContext context, Widget? child) =>
-              TorrentShareListener(
-            child: _BiometricLockGate(child: child ?? const SizedBox.shrink()),
-          ),
+          builder: (BuildContext context, Widget? child) {
+            final bool isDark = themeMode == ThemeMode.dark ||
+                (themeMode == ThemeMode.system &&
+                    MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+            final ThemeData activeTheme = isDark ? darkTheme : lightTheme;
+            final Color navColor = activeTheme.navigationBarTheme.backgroundColor ??
+                activeTheme.colorScheme.surfaceContainer;
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: SystemUiOverlayStyle(
+                systemNavigationBarColor: navColor,
+                systemNavigationBarIconBrightness:
+                    isDark ? Brightness.light : Brightness.dark,
+                systemNavigationBarContrastEnforced: false,
+              ),
+              child: TorrentShareListener(
+                child: _BiometricLockGate(
+                  child: ColoredBox(
+                    color: navColor,
+                    child: SafeArea(
+                      top: false,
+                      left: false,
+                      right: false,
+                      bottom: true,
+                      child: child ?? const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
