@@ -2,32 +2,24 @@ import 'package:dio/dio.dart';
 
 import 'tracearr_auth_manager.dart';
 
-/// Intercepts requests to inject the Tracearr session token and handles
-/// 401/403 responses by clearing the token and retrying the request.
+/// Attaches the Tracearr API key to every request.
+///
+/// There is deliberately no refresh-and-retry here. The key is static, issued
+/// from Tracearr's settings screen, so a 401 means the key is wrong or has
+/// been regenerated. Replaying the same key would double every failed request
+/// and still fail, and it would delay the error the user actually needs to
+/// see. This also removes the reason the module used to keep a second Dio
+/// purely to replay requests off.
 class TracearrAuthInterceptor extends QueuedInterceptor {
-  TracearrAuthInterceptor({
-    required this.manager,
-    required this.dio,
-  });
+  TracearrAuthInterceptor({required this.manager});
 
   final TracearrAuthManager manager;
-
-  /// Used only to replay a request after refreshing the token. It must NOT be
-  /// the client this interceptor is installed on: this is a QueuedInterceptor,
-  /// so re-entering that client from inside onError waits for a queue slot
-  /// that only this handler can release.
-  final Dio dio;
 
   @override
   Future<void> onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // Avoid intercepting the login paths themselves.
-    if (options.path.contains('auth/sign-in')) {
-      return handler.next(options);
-    }
-
     try {
       final String token = await manager.ensureToken();
       options.headers['Authorization'] = 'Bearer $token';
@@ -35,39 +27,8 @@ class TracearrAuthInterceptor extends QueuedInterceptor {
       return handler.next(options);
     } catch (e, st) {
       return handler.reject(
-        DioException(
-          requestOptions: options,
-          error: e,
-          stackTrace: st,
-        ),
+        DioException(requestOptions: options, error: e, stackTrace: st),
       );
     }
-  }
-
-  @override
-  Future<void> onError(
-    DioException err,
-    ErrorInterceptorHandler handler,
-  ) async {
-    if (err.response?.statusCode == 401 || err.response?.statusCode == 403) {
-      if (err.requestOptions.path.contains('auth/sign-in')) {
-        return handler.next(err);
-      }
-
-      manager.clearToken();
-
-      try {
-        final String token = await manager.ensureToken();
-        final RequestOptions options = err.requestOptions;
-        options.headers['Authorization'] = 'Bearer $token';
-
-        final Response<dynamic> retry = await dio.fetch<dynamic>(options);
-        return handler.resolve(retry);
-      } catch (e) {
-        return handler.next(err);
-      }
-    }
-
-    return handler.next(err);
   }
 }

@@ -9,48 +9,42 @@ import 'models/tracearr_active_sessions.dart';
 import 'models/tracearr_v2_models.dart';
 import 'tracearr_api.dart';
 
-final _tracearrLoginDioProvider =
-    FutureProvider.autoDispose.family<Dio, Instance>((
-  Ref ref,
-  Instance instance,
-) async {
-  final Map<String, String> global = ref.watch(globalHeadersProvider);
-  final Dio dio = await ref
-      .watch(dioFactoryProvider)
-      .create(instance, globalHeaders: global);
-  ref.onDispose(() => dio.close(force: true));
-  return dio;
-});
-
+/// The key is static, so this needs nothing from the network.
 final tracearrAuthManagerProvider =
-    FutureProvider.autoDispose.family<TracearrAuthManager, Instance>((
+    Provider.autoDispose.family<TracearrAuthManager, Instance>((
   Ref ref,
   Instance instance,
-) async {
-  final Dio dio = await ref.watch(_tracearrLoginDioProvider(instance).future);
+) {
   return TracearrAuthManager(
-    baseUrl: Uri.parse(dio.options.baseUrl),
+    baseUrl: Uri.parse(instance.localUrl),
     auth: instance.auth,
-    dio: dio,
   );
 });
 
+/// The single client every Tracearr call goes through.
+///
+/// `onDispose` is registered **before** the first await, not after. This
+/// provider is autoDispose, so with nothing listening it can be torn down
+/// during that await, and registering afterwards throws
+/// UnmountedRefException. That surfaced as "Could not reach the server" on
+/// every Test connection, against servers that were answering perfectly.
 final tracearrDioProvider = FutureProvider.autoDispose.family<Dio, Instance>((
   Ref ref,
   Instance instance,
 ) async {
+  Dio? created;
+  ref.onDispose(() => created?.close(force: true));
+
   final Map<String, String> global = ref.watch(globalHeadersProvider);
   final Dio dio = await ref
       .watch(dioFactoryProvider)
       .create(instance, globalHeaders: global);
-  ref.onDispose(() => dio.close(force: true));
+  created = dio;
 
-  final TracearrAuthManager manager =
-      await ref.watch(tracearrAuthManagerProvider(instance).future);
-  final Dio loginDio =
-      await ref.watch(_tracearrLoginDioProvider(instance).future);
   dio.interceptors.add(
-    TracearrAuthInterceptor(manager: manager, dio: loginDio),
+    TracearrAuthInterceptor(
+      manager: ref.watch(tracearrAuthManagerProvider(instance)),
+    ),
   );
   return dio;
 });
@@ -62,7 +56,7 @@ final tracearrApiProvider =
 ) async {
   final Dio dio = await ref.watch(tracearrDioProvider(instance).future);
   final TracearrAuthManager manager =
-      await ref.watch(tracearrAuthManagerProvider(instance).future);
+      ref.watch(tracearrAuthManagerProvider(instance));
   final String token = await manager.ensureToken();
   return TracearrApi(dio, token: token);
 });

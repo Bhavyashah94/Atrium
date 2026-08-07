@@ -1,69 +1,56 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_networking/core_networking.dart';
-import 'package:dio/dio.dart';
 
-/// Manages Tracearr's internal session token (`.token`).
+/// Supplies the bearer token for Tracearr's public v2 API.
+///
+/// Tracearr issues an API key from its own settings screen, and that key is
+/// what every `api/v2/public/*` call carries. Atrium used to sign in with the
+/// user's actual Tracearr username and password and drive the internal v1
+/// endpoints with the resulting session token; that is gone. The key works
+/// whether the account signs in with a password, with Plex or through OIDC,
+/// and it means Atrium no longer holds anybody's Tracearr password.
 class TracearrAuthManager {
-  TracearrAuthManager({
-    required this.baseUrl,
-    required this.auth,
-    required Dio dio,
-  }) : _dio = dio;
+  TracearrAuthManager({required this.baseUrl, required this.auth});
 
   final Uri baseUrl;
   final InstanceAuth auth;
-  final Dio _dio;
 
-  String? _sessionToken;
+  /// The key to send, or null once cleared after a 401 so it is re-read.
+  String? _token;
 
-  /// Returns the current valid session token, or triggers a login flow
-  /// if one hasn't been acquired yet or was cleared after a 401.
+  /// Returns the API key to authenticate with.
+  ///
+  /// Throws rather than returning an empty string when the instance carries
+  /// the wrong kind of credential: an empty bearer token would be sent
+  /// anyway and come back as a puzzling 401, which is exactly the sort of
+  /// misreported failure that made the previous auth bug so hard to find.
   Future<String> ensureToken() async {
-    if (_sessionToken != null) {
-      return _sessionToken!;
+    final String? cached = _token;
+    if (cached != null) {
+      return cached;
     }
 
-    // Attempt login based on auth type
-    switch (auth) {
-      case InstanceAuthApiKey(:final String apiKey):
-        _sessionToken = apiKey;
-      case InstanceAuthUserPass(:final String username, :final String password):
-        _sessionToken = await _loginUserPass(username, password);
-      default:
-        _sessionToken = '';
+    final InstanceAuth current = auth;
+    if (current is! InstanceAuthApiKey) {
+      throw NetworkAuthException(
+        'Tracearr needs an API key. Generate one in Tracearr under Settings, '
+        'then paste it into this instance. (Got ${current.runtimeType}.)',
+      );
     }
 
-    return _sessionToken!;
+    final String key = current.apiKey.trim();
+    if (key.isEmpty) {
+      throw const NetworkAuthException(
+        'This Tracearr instance has no API key set. Generate one in Tracearr '
+        'under Settings and paste it in.',
+      );
+    }
+
+    _token = key;
+    return key;
   }
 
   void clearToken() {
-    _sessionToken = null;
-  }
-
-  Future<String> _loginUserPass(String username, String password) async {
-    try {
-      final Response<dynamic> response = await _dio.post<dynamic>(
-        'api/v1/auth/sign-in/username',
-        data: <String, dynamic>{
-          'username': username,
-          'password': password,
-        },
-      );
-      final Map<String, dynamic> data = response.data as Map<String, dynamic>;
-      final String? token = data['token'] as String?;
-      if (token == null) {
-        throw const NetworkAuthException(
-          'Tracearr login succeeded but returned no token.',
-        );
-      }
-      return token;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-        throw const NetworkAuthException(
-          'Tracearr rejected local credentials.',
-        );
-      }
-      throw NetworkException.fromDio(e);
-    }
+    _token = null;
   }
 }

@@ -114,7 +114,3 @@ site/dist/
 site/.vite/
 site/.cache/
 deno.lock
-
-# Graphify Knowledge Graph
-graphify-out/
-.agents/
