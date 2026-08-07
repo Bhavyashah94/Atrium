@@ -5,6 +5,7 @@ import 'package:core_storage/core_storage.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -70,22 +71,44 @@ class AtriumApp extends ConsumerWidget {
                     seedColor: AtriumTheme.seed, brightness: Brightness.dark))
             : customDark;
 
+        final ThemeData lightTheme =
+            AtriumTheme.light(activeLight, fontFamily: fontFamily);
+        final ThemeData darkTheme =
+            AtriumTheme.dark(activeDark, fontFamily: fontFamily);
+
         return MaterialApp.router(
           title: 'Atrium',
           debugShowCheckedModeBanner: false,
-          theme: AtriumTheme.light(activeLight, fontFamily: fontFamily),
-          darkTheme:
-              AtriumTheme.dark(activeDark, fontFamily: fontFamily),
+          theme: lightTheme,
+          darkTheme: darkTheme,
           themeMode: themeMode,
           routerConfig: router,
           // Overlay the opt-in biometric lock above every route. The share
           // listener wraps it so a torrent arriving from another app is
           // handled wherever the user happens to be, and so its picker stays
           // underneath the lock when the app is locked.
-          builder: (BuildContext context, Widget? child) =>
-              TorrentShareListener(
-            child: _BiometricLockGate(child: child ?? const SizedBox.shrink()),
-          ),
+          // The system navigation bar keeps the app's own colours: its icons
+          // are tinted against the surface the app actually paints there, so
+          // they stay legible in either theme. The app stays edge-to-edge -
+          // reserving the inset app-wide would letterbox every screen to fix
+          // what is really a sizing bug in one widget.
+          builder: (BuildContext context, Widget? child) {
+            final Brightness brightness = Theme.of(context).brightness;
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: SystemUiOverlayStyle(
+                systemNavigationBarIconBrightness:
+                    brightness == Brightness.dark
+                        ? Brightness.light
+                        : Brightness.dark,
+                systemNavigationBarContrastEnforced: false,
+              ),
+              child: TorrentShareListener(
+                child: _BiometricLockGate(
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              ),
+            );
+          },
         );
       },
     );
