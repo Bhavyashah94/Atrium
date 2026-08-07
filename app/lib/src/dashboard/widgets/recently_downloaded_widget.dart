@@ -98,6 +98,7 @@ class _DashboardRecentlyDownloadedWidgetState
     final ColorScheme cs = Theme.of(context).colorScheme;
 
     final List<_RecentDownloadItem> items = <_RecentDownloadItem>[];
+    final Set<String> seenKeys = <String>{};
     bool anyLoading = false;
     bool anyError = false;
 
@@ -113,6 +114,12 @@ class _DashboardRecentlyDownloadedWidgetState
         if (date == null || h.series == null) {
           continue;
         }
+        final String key =
+            '${i.id}_sonarr_${h.seriesId}_${h.episodeId ?? h.episode?.id ?? h.id}';
+        if (seenKeys.contains(key)) {
+          continue;
+        }
+        seenKeys.add(key);
         items.add(_RecentDownloadItem(
           title: h.episode?.title ?? h.series!.title,
           date: date,
@@ -136,6 +143,11 @@ class _DashboardRecentlyDownloadedWidgetState
         if (date == null || h.movie == null) {
           continue;
         }
+        final String key = '${i.id}_radarr_${h.movieId ?? h.movie!.id}';
+        if (seenKeys.contains(key)) {
+          continue;
+        }
+        seenKeys.add(key);
         items.add(_RecentDownloadItem(
           title: h.movie!.title,
           date: date,
