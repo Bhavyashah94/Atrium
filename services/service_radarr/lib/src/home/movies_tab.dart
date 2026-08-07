@@ -1173,6 +1173,11 @@ class _BulkEditDialogState extends ConsumerState<_BulkEditDialog> {
   }
 }
 
+enum _DeleteMode {
+  deleteEntry,
+  deleteFilesOnly,
+}
+
 class _BulkDeleteDialog extends ConsumerStatefulWidget {
   const _BulkDeleteDialog({
     required this.instance,
@@ -1187,7 +1192,9 @@ class _BulkDeleteDialog extends ConsumerStatefulWidget {
 }
 
 class _BulkDeleteDialogState extends ConsumerState<_BulkDeleteDialog> {
+  _DeleteMode _mode = _DeleteMode.deleteEntry;
   bool _deleteFiles = false;
+  bool _unmonitor = false;
 
   @override
   Widget build(BuildContext context) {
@@ -1196,20 +1203,52 @@ class _BulkDeleteDialogState extends ConsumerState<_BulkDeleteDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Are you sure you want to delete these movies? This action cannot be undone.',
-          ),
-          const SizedBox(height: 16),
-          CheckboxListTile(
-            title: const Text('Delete all files from disk'),
-            value: _deleteFiles,
+        children: <Widget>[
+          RadioListTile<_DeleteMode>(
+            title: const Text('Delete movie entry'),
+            subtitle: const Text('Remove from Radarr library'),
+            value: _DeleteMode.deleteEntry,
+            groupValue: _mode,
             contentPadding: EdgeInsets.zero,
-            onChanged: (val) => setState(() => _deleteFiles = val ?? false),
+            onChanged: (val) => setState(() {
+              if (val != null) _mode = val;
+            }),
           ),
+          if (_mode == _DeleteMode.deleteEntry)
+            Padding(
+              padding: const EdgeInsets.only(left: Insets.lg),
+              child: CheckboxListTile(
+                title: const Text('Also delete files from disk'),
+                value: _deleteFiles,
+                contentPadding: EdgeInsets.zero,
+                onChanged: (val) => setState(() => _deleteFiles = val ?? false),
+              ),
+            ),
+          RadioListTile<_DeleteMode>(
+            title: const Text('Delete files only'),
+            subtitle:
+                const Text('Keep entry in Radarr library to free disk space'),
+            value: _DeleteMode.deleteFilesOnly,
+            groupValue: _mode,
+            contentPadding: EdgeInsets.zero,
+            onChanged: (val) => setState(() {
+              if (val != null) _mode = val;
+            }),
+          ),
+          if (_mode == _DeleteMode.deleteFilesOnly)
+            Padding(
+              padding: const EdgeInsets.only(left: Insets.lg),
+              child: CheckboxListTile(
+                title: const Text('Unmonitor movie'),
+                subtitle: const Text('Prevent automatic re-downloads'),
+                value: _unmonitor,
+                contentPadding: EdgeInsets.zero,
+                onChanged: (val) => setState(() => _unmonitor = val ?? false),
+              ),
+            ),
         ],
       ),
-      actions: [
+      actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
@@ -1234,13 +1273,37 @@ class _BulkDeleteDialogState extends ConsumerState<_BulkDeleteDialog> {
             );
 
             Object? error;
+            int successCount = 0;
+            int failedCount = 0;
             try {
               final api =
                   await ref.read(radarrApiProvider(widget.instance).future);
-              await api.bulkDeleteMovies(
-                widget.selectedIds.toList(),
-                deleteFiles: _deleteFiles,
-              );
+              if (_mode == _DeleteMode.deleteEntry) {
+                await api.bulkDeleteMovies(
+                  widget.selectedIds.toList(),
+                  deleteFiles: _deleteFiles,
+                );
+              } else {
+                for (final id in widget.selectedIds) {
+                  try {
+                    final movie = await api.getMovieById(id);
+                    if (movie.movieFileId != null) {
+                      await api.deleteMovieFile(movie.movieFileId!);
+                    }
+                    if (_unmonitor) {
+                      try {
+                        final Map<String, dynamic> raw =
+                            await api.getMovieRaw(id);
+                        raw['monitored'] = false;
+                        await api.updateMovieRaw(raw);
+                      } catch (_) {}
+                    }
+                    successCount++;
+                  } catch (_) {
+                    failedCount++;
+                  }
+                }
+              }
             } catch (e) {
               error = e;
             } finally {
@@ -1250,18 +1313,29 @@ class _BulkDeleteDialogState extends ConsumerState<_BulkDeleteDialog> {
             if (!context.mounted) return;
             if (error != null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error deleting movies: $error')),
+                SnackBar(content: Text('Error: $error')),
               );
               return;
             }
             ref.invalidate(radarrMoviesProvider(widget.instance));
             ref
                 .read(radarrMoviesSelectionProvider(widget.instance).notifier)
-                .state = {};
+                .state = <int>{};
             Navigator.pop(context); // pop dialog
 
+            final String msg;
+            if (_mode == _DeleteMode.deleteEntry) {
+              msg = 'Successfully deleted ${widget.selectedIds.length} movie(s)';
+            } else if (failedCount == 0) {
+              msg = _unmonitor
+                  ? 'Successfully deleted files and unmonitored $successCount movie(s)'
+                  : 'Successfully deleted files for $successCount movie(s)';
+            } else {
+              msg = 'Deleted files for $successCount movie(s). Failed for $failedCount movie(s)';
+            }
+
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Successfully deleted movies')),
+              SnackBar(content: Text(msg)),
             );
           },
           child: const Text('Delete'),

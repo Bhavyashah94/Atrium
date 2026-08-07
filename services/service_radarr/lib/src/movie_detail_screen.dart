@@ -988,6 +988,8 @@ class _OverflowMenu extends ConsumerWidget {
       onSelected: (String v) async {
         if (v == 'delete') {
           await _confirmDelete(context, ref);
+        } else if (v == 'delete_file') {
+          await _confirmDeleteFile(context, ref);
         } else if (v == 'rename') {
           await _showRenameDialog(context);
         } else if (v == 'edit') {
@@ -1021,6 +1023,15 @@ class _OverflowMenu extends ConsumerWidget {
             contentPadding: EdgeInsets.zero,
           ),
         ),
+        if (movie.hasFile && movie.movieFileId != null)
+          const PopupMenuItem<String>(
+            value: 'delete_file',
+            child: ListTile(
+              leading: Icon(Icons.delete_sweep_outlined),
+              title: Text('Delete movie file'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
         const PopupMenuItem<String>(
           value: 'delete',
           child: ListTile(
@@ -1063,6 +1074,96 @@ class _OverflowMenu extends ConsumerWidget {
         movieId: movie.id,
       ),
     );
+  }
+
+  Future<void> _confirmDeleteFile(BuildContext context, WidgetRef ref) async {
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    bool unmonitor = false;
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) => AlertDialog(
+          title: const Text('Delete movie file?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Are you sure you want to delete the file for "${movie.title}" from disk? The movie entry will remain in Radarr.',
+              ),
+              const SizedBox(height: Insets.sm),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Unmonitor movie'),
+                subtitle: const Text('Prevent automatic re-downloads'),
+                value: unmonitor,
+                onChanged: (bool? v) => setState(() => unmonitor = v ?? false),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete File'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!(ok ?? false)) return;
+    if (!context.mounted) return;
+    try {
+      final RadarrApi api = await ref.read(radarrApiProvider(instance).future);
+      if (movie.movieFileId != null) {
+        await api.deleteMovieFile(movie.movieFileId!);
+      }
+      bool unmonitored = false;
+      Object? unmonitorError;
+      if (unmonitor) {
+        try {
+          final Map<String, dynamic> raw = await api.getMovieRaw(movie.id);
+          raw['monitored'] = false;
+          await api.updateMovieRaw(raw);
+          unmonitored = true;
+        } catch (e) {
+          unmonitorError = e;
+        }
+      }
+      ref.invalidate(radarrMovieByIdProvider((instance, movie.id)));
+      ref.invalidate(radarrMoviesProvider(instance));
+      onRefreshed();
+      if (unmonitor && !unmonitored) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              'File deleted, but failed to unmonitor movie: $unmonitorError',
+            ),
+          ),
+        );
+      } else {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              unmonitored
+                  ? 'File deleted and movie unmonitored.'
+                  : 'File deleted from disk.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Failed to delete file: $e')),
+      );
+    }
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {

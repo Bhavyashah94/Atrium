@@ -27,6 +27,30 @@ abstract class SonarrSeries with _$SonarrSeries {
     int? tvdbId,
     String? titleSlug,
     String? added,
+    int? qualityProfileId,
+    int? languageProfileId,
+    @Default(<int>[]) List<int> tags,
+    bool? seasonFolder,
+    String? rootFolderPath,
+    String? imdbId,
+    int? tmdbId,
+    int? tvMazeId,
+    int? tvRageId,
+    String? airTime,
+    String? cleanTitle,
+    bool? ended,
+    bool? episodesChanged,
+    String? firstAired,
+    String? folder,
+    String? lastAired,
+    String? monitorNewItems,
+    SonarrLanguage? originalLanguage,
+    String? profileName,
+    SonarrRatings? ratings,
+    String? remotePoster,
+    bool? useSceneNumbering,
+    @Default(<SonarrAlternateTitle>[]) List<SonarrAlternateTitle> alternateTitles,
+    SonarrAddOptions? addOptions,
   }) = _SonarrSeries;
 
   factory SonarrSeries.fromJson(Map<String, dynamic> json) =>
@@ -82,4 +106,52 @@ abstract class SonarrSeriesStatistics with _$SonarrSeriesStatistics {
 
   factory SonarrSeriesStatistics.fromJson(Map<String, dynamic> json) =>
       _$SonarrSeriesStatisticsFromJson(json);
+}
+
+@freezed
+abstract class SonarrAlternateTitle with _$SonarrAlternateTitle {
+  const factory SonarrAlternateTitle({
+    String? title,
+    int? seasonNumber,
+    int? sceneSeasonNumber,
+    String? sceneOrigin,
+  }) = _SonarrAlternateTitle;
+
+  factory SonarrAlternateTitle.fromJson(Map<String, dynamic> json) =>
+      _$SonarrAlternateTitleFromJson(json);
+}
+
+@freezed
+abstract class SonarrRatings with _$SonarrRatings {
+  const factory SonarrRatings({
+    int? votes,
+    double? value,
+  }) = _SonarrRatings;
+
+  factory SonarrRatings.fromJson(Map<String, dynamic> json) =>
+      _$SonarrRatingsFromJson(json);
+}
+
+@freezed
+abstract class SonarrAddOptions with _$SonarrAddOptions {
+  const factory SonarrAddOptions({
+    bool? ignoreEpisodesWithFiles,
+    bool? ignoreEpisodesWithoutFiles,
+    String? monitor,
+    bool? searchForMissingEpisodes,
+  }) = _SonarrAddOptions;
+
+  factory SonarrAddOptions.fromJson(Map<String, dynamic> json) =>
+      _$SonarrAddOptionsFromJson(json);
+}
+
+@freezed
+abstract class SonarrLanguage with _$SonarrLanguage {
+  const factory SonarrLanguage({
+    int? id,
+    String? name,
+  }) = _SonarrLanguage;
+
+  factory SonarrLanguage.fromJson(Map<String, dynamic> json) =>
+      _$SonarrLanguageFromJson(json);
 }
