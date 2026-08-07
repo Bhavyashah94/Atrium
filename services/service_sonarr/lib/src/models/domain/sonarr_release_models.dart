@@ -1,9 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'sonarr_series_models.dart';
-import 'sonarr_episode_models.dart';
-import 'sonarr_activity_models.dart';
 import 'sonarr_config_models.dart';
+import 'sonarr_episode_models.dart';
+import 'sonarr_series_models.dart';
 import 'sonarr_system_models.dart';
 
 part 'sonarr_release_models.freezed.dart';
@@ -32,8 +31,8 @@ abstract class SonarrReleaseProfile with _$SonarrReleaseProfile {
     @Default(0) int id,
     String? name,
     bool? enabled,
-    dynamic? required,
-    dynamic? ignored,
+    dynamic required,
+    dynamic ignored,
     int? indexerId,
     @Default(<int>[]) List<int> tags,
   }) = _SonarrReleaseProfile;

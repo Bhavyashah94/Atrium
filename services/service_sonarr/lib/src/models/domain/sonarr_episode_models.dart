@@ -1,9 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'sonarr_series_models.dart';
-import 'sonarr_activity_models.dart';
-import 'sonarr_release_models.dart';
 import 'sonarr_config_models.dart';
+import 'sonarr_series_models.dart';
 import 'sonarr_system_models.dart';
 
 part 'sonarr_episode_models.freezed.dart';

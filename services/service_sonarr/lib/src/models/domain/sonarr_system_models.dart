@@ -1,11 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'sonarr_series_models.dart';
-import 'sonarr_episode_models.dart';
-import 'sonarr_activity_models.dart';
-import 'sonarr_release_models.dart';
-import 'sonarr_config_models.dart';
-
 part 'sonarr_system_models.freezed.dart';
 part 'sonarr_system_models.g.dart';
 
@@ -69,7 +63,7 @@ abstract class SonarrField with _$SonarrField {
     String? helpText,
     String? helpTextWarning,
     String? helpLink,
-    dynamic? value,
+    dynamic value,
     String? type,
     bool? advanced,
     @Default(<SonarrSelectOption>[]) List<SonarrSelectOption> selectOptions,
