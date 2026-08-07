@@ -12,6 +12,25 @@ import '../../arr_artwork.dart';
 import '../dashboard_widget_card.dart';
 import '../dashboard_widget_kind.dart';
 
+class _SeasonGroup {
+  _SeasonGroup({
+    required this.series,
+    required this.seasonNumber,
+    required this.instance,
+    required this.downloadId,
+    required this.latestDate,
+    required this.api,
+  });
+
+  final SonarrSeries series;
+  final int seasonNumber;
+  final Instance instance;
+  final String? downloadId;
+  DateTime latestDate;
+  final SonarrApi? api;
+  final Map<int, String?> episodes = <int, String?>{};
+}
+
 class _RecentDownloadItem {
   const _RecentDownloadItem({
     required this.title,
@@ -102,6 +121,8 @@ class _DashboardRecentlyDownloadedWidgetState
     bool anyLoading = false;
     bool anyError = false;
 
+    final Map<String, _SeasonGroup> sonarrGroups = <String, _SeasonGroup>{};
+
     for (final Instance i in widget.sonarrInstances) {
       final AsyncValue<List<SonarrHistoryItem>> history =
           ref.watch(sonarrHistoryProvider(i));
@@ -111,36 +132,62 @@ class _DashboardRecentlyDownloadedWidgetState
       for (final SonarrHistoryItem h
           in history.value ?? const <SonarrHistoryItem>[]) {
         final DateTime? date = DateTime.tryParse(h.date ?? '');
-        if (date == null || h.series == null) {
+        if (date == null || h.series == null || h.episode == null) {
           continue;
         }
-        final String key = '${i.id}_sonarr_${h.seriesId}';
-        if (seenKeys.contains(key)) {
-          continue;
-        }
-        seenKeys.add(key);
 
-        String? epSubtitle;
-        if (h.episode != null) {
-          final String sNum =
-              h.episode!.seasonNumber.toString().padLeft(2, '0');
-          final String eNum =
-              h.episode!.episodeNumber.toString().padLeft(2, '0');
-          final String epCode = 'S${sNum}E$eNum';
-          final String epTitle = h.episode!.title.trim();
-          epSubtitle = epTitle.isNotEmpty ? '$epCode • $epTitle' : epCode;
-        }
+        final String batchKey = (h.downloadId != null && h.downloadId!.isNotEmpty)
+            ? h.downloadId!
+            : '${date.year}_${date.month}_${date.day}';
+        final String groupKey =
+            '${i.id}_sonarr_${h.seriesId}_S${h.episode!.seasonNumber}_$batchKey';
 
-        items.add(_RecentDownloadItem(
-          title: h.series!.title,
-          date: date,
-          isMovie: false,
-          instance: i,
-          series: h.series,
-          subtitle: epSubtitle,
-          posterUrl: sonarrPosterUrl(api, h.series!.images),
-        ));
+        final _SeasonGroup group = sonarrGroups.putIfAbsent(
+          groupKey,
+          () => _SeasonGroup(
+            series: h.series!,
+            seasonNumber: h.episode!.seasonNumber,
+            instance: i,
+            downloadId: h.downloadId,
+            latestDate: date,
+            api: api,
+          ),
+        );
+
+        if (date.isAfter(group.latestDate)) {
+          group.latestDate = date;
+        }
+        group.episodes[h.episode!.episodeNumber] = h.episode!.title.trim();
       }
+    }
+
+    for (final _SeasonGroup g in sonarrGroups.values) {
+      final String sNum = g.seasonNumber.toString().padLeft(2, '0');
+      String subtitle;
+      if (g.episodes.length == 1) {
+        final int epNum = g.episodes.keys.first;
+        final String? epTitle = g.episodes.values.first;
+        final String eNum = epNum.toString().padLeft(2, '0');
+        final String epCode = 'S${sNum}E$eNum';
+        subtitle = (epTitle != null && epTitle.isNotEmpty)
+            ? '$epCode • $epTitle'
+            : epCode;
+      } else {
+        final List<int> sortedEps = g.episodes.keys.toList()..sort();
+        final String minEp = sortedEps.first.toString().padLeft(2, '0');
+        final String maxEp = sortedEps.last.toString().padLeft(2, '0');
+        subtitle = 'S${sNum}E$minEp–E$maxEp (${sortedEps.length} Ep)';
+      }
+
+      items.add(_RecentDownloadItem(
+        title: g.series.title,
+        date: g.latestDate,
+        isMovie: false,
+        instance: g.instance,
+        series: g.series,
+        subtitle: subtitle,
+        posterUrl: sonarrPosterUrl(g.api, g.series.images),
+      ));
     }
     for (final Instance i in widget.radarrInstances) {
       final AsyncValue<List<RadarrHistoryItem>> history =
