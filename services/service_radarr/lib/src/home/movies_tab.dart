@@ -1200,53 +1200,51 @@ class _BulkDeleteDialogState extends ConsumerState<_BulkDeleteDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('Delete ${widget.selectedIds.length} Movies?'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          RadioListTile<_DeleteMode>(
-            title: const Text('Delete movie entry'),
-            subtitle: const Text('Remove from Radarr library'),
-            value: _DeleteMode.deleteEntry,
-            groupValue: _mode,
-            contentPadding: EdgeInsets.zero,
-            onChanged: (val) => setState(() {
-              if (val != null) _mode = val;
-            }),
-          ),
-          if (_mode == _DeleteMode.deleteEntry)
-            Padding(
-              padding: const EdgeInsets.only(left: Insets.lg),
-              child: CheckboxListTile(
-                title: const Text('Also delete files from disk'),
-                value: _deleteFiles,
-                contentPadding: EdgeInsets.zero,
-                onChanged: (val) => setState(() => _deleteFiles = val ?? false),
-              ),
+      content: RadioGroup<_DeleteMode>(
+        groupValue: _mode,
+        onChanged: (_DeleteMode? val) => setState(() {
+          if (val != null) _mode = val;
+        }),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const RadioListTile<_DeleteMode>(
+              title: Text('Delete movie entry'),
+              subtitle: Text('Remove from Radarr library'),
+              value: _DeleteMode.deleteEntry,
+              contentPadding: EdgeInsets.zero,
             ),
-          RadioListTile<_DeleteMode>(
-            title: const Text('Delete files only'),
-            subtitle:
-                const Text('Keep entry in Radarr library to free disk space'),
-            value: _DeleteMode.deleteFilesOnly,
-            groupValue: _mode,
-            contentPadding: EdgeInsets.zero,
-            onChanged: (val) => setState(() {
-              if (val != null) _mode = val;
-            }),
-          ),
-          if (_mode == _DeleteMode.deleteFilesOnly)
-            Padding(
-              padding: const EdgeInsets.only(left: Insets.lg),
-              child: CheckboxListTile(
-                title: const Text('Unmonitor movie'),
-                subtitle: const Text('Prevent automatic re-downloads'),
-                value: _unmonitor,
-                contentPadding: EdgeInsets.zero,
-                onChanged: (val) => setState(() => _unmonitor = val ?? false),
+            if (_mode == _DeleteMode.deleteEntry)
+              Padding(
+                padding: const EdgeInsets.only(left: Insets.lg),
+                child: CheckboxListTile(
+                  title: const Text('Also delete files from disk'),
+                  value: _deleteFiles,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setState(() => _deleteFiles = val ?? false),
+                ),
               ),
+            const RadioListTile<_DeleteMode>(
+              title: Text('Delete files only'),
+              subtitle:
+                  Text('Keep entry in Radarr library to free disk space'),
+              value: _DeleteMode.deleteFilesOnly,
+              contentPadding: EdgeInsets.zero,
             ),
-        ],
+            if (_mode == _DeleteMode.deleteFilesOnly)
+              Padding(
+                padding: const EdgeInsets.only(left: Insets.lg),
+                child: CheckboxListTile(
+                  title: const Text('Unmonitor movie'),
+                  subtitle: const Text('Prevent automatic re-downloads'),
+                  value: _unmonitor,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setState(() => _unmonitor = val ?? false),
+                ),
+              ),
+          ],
+        ),
       ),
       actions: <Widget>[
         TextButton(
