@@ -83,6 +83,14 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="application/x-bittorrent"/>
             </intent-filter>
+            <!-- Sharing several at once. Without this Atrium disappears from
+                 the chooser the moment a second file is selected, which is the
+                 normal way people move a batch off a tracker. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="application/x-bittorrent"/>
+            </intent-filter>
         </activity>
         <meta-data
             android:name="flutterEmbedding"

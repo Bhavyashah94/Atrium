@@ -128,6 +128,62 @@ void main() {
       );
     });
 
+    test('decodes a batch of files', () {
+      final TorrentShare? share = decodeTorrentShare(<Object?, Object?>{
+        'kind': 'files',
+        'items': <Object?>[
+          <Object?, Object?>{
+            'name': 'a.torrent',
+            'bytes': Uint8List.fromList(<int>[1]),
+          },
+          <Object?, Object?>{
+            'name': 'b.torrent',
+            'bytes': Uint8List.fromList(<int>[2, 3]),
+          },
+        ],
+        'skipped': 1,
+        'dropped': 2,
+      });
+      expect(share, isA<TorrentShareFiles>());
+      final TorrentShareFiles batch = share! as TorrentShareFiles;
+      expect(batch.files, hasLength(2));
+      expect(batch.files.first.name, 'a.torrent');
+      expect(batch.files.last.bytes, <int>[2, 3]);
+      expect(batch.skipped, 1);
+      expect(batch.dropped, 2);
+    });
+
+    test('drops unreadable entries from a batch but keeps the rest', () {
+      // Losing 49 torrents because the 50th was odd would be worse than
+      // saying one was skipped.
+      final TorrentShare? share = decodeTorrentShare(<Object?, Object?>{
+        'kind': 'files',
+        'items': <Object?>[
+          <Object?, Object?>{'name': 'good.torrent', 'bytes': Uint8List.fromList(<int>[1])},
+          <Object?, Object?>{'name': 'empty.torrent', 'bytes': Uint8List(0)},
+          'not a map',
+        ],
+      });
+      expect(share, isA<TorrentShareFiles>());
+      expect((share! as TorrentShareFiles).files, hasLength(1));
+    });
+
+    test('a batch with nothing readable decodes to null', () {
+      expect(
+        decodeTorrentShare(<Object?, Object?>{
+          'kind': 'files',
+          'items': <Object?>[
+            <Object?, Object?>{'bytes': Uint8List(0)},
+          ],
+        }),
+        isNull,
+      );
+      expect(
+        decodeTorrentShare(<Object?, Object?>{'kind': 'files', 'items': 'nope'}),
+        isNull,
+      );
+    });
+
     test('reports a file it was not allowed to read', () {
       // A share whose read grant did not cover the URI must say so. Silently
       // dropping it left the user watching Atrium open and do nothing.

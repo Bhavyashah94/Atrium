@@ -23,13 +23,18 @@ import 'qbittorrent_providers.dart';
 /// so the caller can refresh the torrent list.
 enum AddTorrentMode { link, file }
 
+/// One `.torrent` handed to the sheet, as bytes plus a name to show.
+///
+/// A record rather than a class so the app can pass these in without the
+/// service packages needing a shared type to depend on.
+typedef TorrentFileArg = ({Uint8List bytes, String? name});
+
 class AddTorrentSheet extends ConsumerStatefulWidget {
   const AddTorrentSheet({
     required this.instance,
     this.initialMode = AddTorrentMode.link,
     this.initialLink,
-    this.initialFileBytes,
-    this.initialFileName,
+    this.initialFiles,
     super.key,
   });
 
@@ -40,14 +45,10 @@ class AddTorrentSheet extends ConsumerStatefulWidget {
   /// link field. Set when another app shares a torrent with Atrium.
   final String? initialLink;
 
-  /// The bytes of a `.torrent` handed over by another app. When set the sheet
-  /// opens in file mode with these bytes already in hand, so there is nothing
-  /// to pick.
-  final Uint8List? initialFileBytes;
-
-  /// Display name for [initialFileBytes], shown so the user can see what they
-  /// are adding.
-  final String? initialFileName;
+  /// `.torrent` files handed over by another app. When set the sheet opens in
+  /// file mode with these already in hand, so there is nothing to pick. A
+  /// batch shares one category, save path and paused choice.
+  final List<TorrentFileArg>? initialFiles;
 
   /// Opens the sheet and returns whether a torrent was added.
   static Future<bool> show(
@@ -55,8 +56,7 @@ class AddTorrentSheet extends ConsumerStatefulWidget {
     Instance instance, {
     AddTorrentMode initialMode = AddTorrentMode.link,
     String? initialLink,
-    Uint8List? initialFileBytes,
-    String? initialFileName,
+    List<TorrentFileArg>? initialFiles,
   }) async {
     final bool? added = await showDialog<bool>(
       context: context,
@@ -64,8 +64,7 @@ class AddTorrentSheet extends ConsumerStatefulWidget {
         instance: instance,
         initialMode: initialMode,
         initialLink: initialLink,
-        initialFileBytes: initialFileBytes,
-        initialFileName: initialFileName,
+        initialFiles: initialFiles,
       ),
     );
     return added ?? false;
@@ -79,11 +78,11 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
   final TextEditingController _links = TextEditingController();
   final TextEditingController _savePath = TextEditingController();
 
-  // Shared bytes force file mode: there is nothing left to pick.
-  late final AddTorrentMode _mode = widget.initialFileBytes != null
-      ? AddTorrentMode.file
-      : widget.initialMode;
-  PlatformFile? _file;
+  // Shared files force file mode: there is nothing left to pick.
+  late final AddTorrentMode _mode =
+      (widget.initialFiles?.isNotEmpty ?? false) ? AddTorrentMode.file : widget.initialMode;
+  final List<TorrentFileArg> _files = <TorrentFileArg>[];
+  int _done = 0;
   String? _category;
   bool _paused = false;
   bool _sequential = false;
@@ -93,10 +92,20 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
   @override
   void initState() {
     super.initState();
+    final List<TorrentFileArg>? shared = widget.initialFiles;
+    if (shared != null && shared.isNotEmpty) {
+      _files.addAll(shared);
+    }
     if (widget.initialLink != null) {
       _links.text = widget.initialLink!;
     }
   }
+
+  String get _fileLabel => switch (_files.length) {
+        0 => 'Choose .torrent files',
+        1 => _files.first.name ?? 'One torrent',
+        final int n => '$n torrents',
+      };
 
   @override
   void dispose() {
@@ -111,17 +120,32 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
     }
     return _mode == AddTorrentMode.link
         ? _links.text.trim().isNotEmpty
-        : _file != null || widget.initialFileBytes != null;
+        : _files.isNotEmpty;
   }
 
   Future<void> _pickFile() async {
+    // pickFiles is already multi-select; the old code then took .single, which
+    // throws outright when more than one file is chosen.
     final FilePickerResult? res = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: <String>['torrent'],
     );
-    if (res != null && res.files.isNotEmpty) {
-      setState(() => _file = res.files.single);
+    final List<PlatformFile> picked = res?.files ?? <PlatformFile>[];
+    if (picked.isEmpty) {
+      return;
     }
+    final List<TorrentFileArg> read = <TorrentFileArg>[];
+    for (final PlatformFile file in picked) {
+      read.add((bytes: await file.readAsBytes(), name: file.name));
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _files
+        ..clear()
+        ..addAll(read);
+    });
   }
 
   Future<void> _submit() async {
@@ -149,19 +173,32 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
           sequential: _sequential,
         );
       } else {
-        // A picked file wins over shared bytes: if the user went and chose one
-        // anyway, that is the more recent intent.
-        final PlatformFile? f = _file;
-        final Uint8List bytes =
-            f != null ? await f.readAsBytes() : widget.initialFileBytes!;
-        await client.addTorrentFile(
-          bytes,
-          filename: f?.name ?? widget.initialFileName ?? 'shared.torrent',
-          category: _category,
-          savePath: savePath,
-          paused: _paused,
-          sequential: _sequential,
-        );
+        // One failure does not abandon the rest of the batch.
+        int failed = 0;
+        for (final TorrentFileArg file in _files) {
+          try {
+            await client.addTorrentFile(
+              file.bytes,
+              filename: file.name ?? 'shared.torrent',
+              category: _category,
+              savePath: savePath,
+              paused: _paused,
+              sequential: _sequential,
+            );
+          } catch (_) {
+            failed++;
+          }
+          if (mounted) {
+            setState(() => _done++);
+          }
+        }
+        if (failed == _files.length) {
+          throw StateError(
+            _files.length == 1
+                ? 'Could not add that torrent.'
+                : 'None of the ${_files.length} torrents could be added.',
+          );
+        }
       }
       if (mounted) {
         Navigator.of(context).pop(true);
@@ -204,13 +241,7 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
               OutlinedButton.icon(
                 onPressed: _pickFile,
                 icon: const Icon(Icons.folder_open),
-                label: Text(
-                  _file?.name ??
-                      widget.initialFileName ??
-                      (widget.initialFileBytes != null
-                          ? 'Shared torrent'
-                          : 'Choose a .torrent file'),
-                ),
+                label: Text(_fileLabel),
               ),
             const SizedBox(height: Insets.md),
             categories.when(
@@ -281,9 +312,17 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
                   child: ExpressiveProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.add),
-          label: const Text('Add'),
+          label: Text(_addLabel),
         ),
       ],
     );
+  }
+
+  /// A batch can take a while, so the button counts rather than just spinning.
+  String get _addLabel {
+    if (_mode != AddTorrentMode.file || _files.length <= 1) {
+      return 'Add';
+    }
+    return _busy ? 'Adding $_done of ${_files.length}' : 'Add ${_files.length}';
   }
 }

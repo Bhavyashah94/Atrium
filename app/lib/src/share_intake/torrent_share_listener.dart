@@ -147,6 +147,7 @@ class _TorrentShareListenerState extends ConsumerState<TorrentShareListener> {
     if (target == null) {
       return;
     }
+    await _warnAboutBatchLosses(share);
     await _openAddSheet(target, share);
   }
 
@@ -209,6 +210,26 @@ class _TorrentShareListenerState extends ConsumerState<TorrentShareListener> {
     );
   }
 
+  /// Warns about anything left out of a batch.
+  ///
+  /// Deliberately separate from opening the sheet: the sheet grabs a context
+  /// from the root navigator, and that must not sit behind an await.
+  Future<void> _warnAboutBatchLosses(TorrentShare share) async {
+    if (share is! TorrentShareFiles ||
+        (share.skipped == 0 && share.dropped == 0)) {
+      return;
+    }
+    final List<String> notes = <String>[
+      if (share.skipped > 0) '${share.skipped} could not be read',
+      if (share.dropped > 0) '${share.dropped} beyond the batch limit',
+    ];
+    await _tell(
+      'Adding ${share.files.length} of '
+      '${share.files.length + share.skipped + share.dropped} torrents. '
+      'Left out: ${notes.join(', ')}.',
+    );
+  }
+
   Future<void> _openAddSheet(Instance target, TorrentShare share) async {
     final BuildContext? context = _presentContext;
     if (context == null) {
@@ -216,8 +237,17 @@ class _TorrentShareListenerState extends ConsumerState<TorrentShareListener> {
     }
 
     final String? link = share is TorrentShareLink ? share.uri : null;
-    final Uint8List? bytes = share is TorrentShareFile ? share.bytes : null;
-    final String? name = share is TorrentShareFile ? share.name : null;
+
+    // A single shared file is just a batch of one, so both paths use the same
+    // list and the sheets only need to understand one shape.
+    final List<({Uint8List bytes, String? name})> files = switch (share) {
+      TorrentShareFile(:final Uint8List bytes, :final String? name) =>
+        <({Uint8List bytes, String? name})>[(bytes: bytes, name: name)],
+      TorrentShareFiles(:final List<TorrentShareFileEntry> files) => files
+          .map((TorrentShareFileEntry e) => (bytes: e.bytes, name: e.name))
+          .toList(growable: false),
+      _ => const <({Uint8List bytes, String? name})>[],
+    };
 
     switch (target.kind) {
       case ServiceKind.qbittorrent:
@@ -225,32 +255,28 @@ class _TorrentShareListenerState extends ConsumerState<TorrentShareListener> {
           context,
           target,
           initialLink: link,
-          initialFileBytes: bytes,
-          initialFileName: name,
+          initialFiles: files,
         );
       case ServiceKind.deluge:
         await showDelugeAddSheet(
           context,
           target,
           initialLink: link,
-          initialFileBytes: bytes,
-          initialFileName: name,
+          initialFiles: files,
         );
       case ServiceKind.transmission:
         await showTransmissionAddSheet(
           context,
           target,
           initialLink: link,
-          initialFileBytes: bytes,
-          initialFileName: name,
+          initialFiles: files,
         );
       case ServiceKind.rtorrent:
         await showRtorrentAddSheet(
           context,
           target,
           initialLink: link,
-          initialFileBytes: bytes,
-          initialFileName: name,
+          initialFiles: files,
         );
       // Unreachable: torrentTargets only yields the four kinds above.
       default:

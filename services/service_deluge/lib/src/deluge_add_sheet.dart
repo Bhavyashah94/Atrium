@@ -9,18 +9,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'deluge_client.dart';
 import 'deluge_providers.dart';
 
+/// One `.torrent` handed to the sheet, as bytes plus a name to show.
+///
+/// A record rather than a class so the app can pass these in without the
+/// service packages needing a shared type to depend on.
+typedef TorrentFileArg = ({Uint8List bytes, String? name});
+
 /// Opens the add-torrent sheet for [instance].
 ///
-/// The optional arguments prefill the sheet when another app shares a torrent
+/// The optional arguments prefill the sheet when another app shares torrents
 /// with Atrium: [initialLink] for a magnet or `.torrent` URL, or
-/// [initialFileBytes] with [initialFileName] for a `.torrent` handed over as
-/// bytes. The user still picks the save path and whether to start it.
+/// [initialFiles] for one or more `.torrent` files handed over as bytes. A
+/// batch shares one save path and one paused choice, since answering those per
+/// torrent is unusable past a handful.
 Future<void> showDelugeAddSheet(
   BuildContext context,
   Instance instance, {
   String? initialLink,
-  Uint8List? initialFileBytes,
-  String? initialFileName,
+  List<TorrentFileArg>? initialFiles,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -31,8 +37,7 @@ Future<void> showDelugeAddSheet(
     builder: (BuildContext context) => _DelugeAddSheet(
       instance: instance,
       initialLink: initialLink,
-      initialFileBytes: initialFileBytes,
-      initialFileName: initialFileName,
+      initialFiles: initialFiles,
     ),
   );
 }
@@ -48,14 +53,12 @@ class _DelugeAddSheet extends ConsumerStatefulWidget {
   const _DelugeAddSheet({
     required this.instance,
     this.initialLink,
-    this.initialFileBytes,
-    this.initialFileName,
+    this.initialFiles,
   });
 
   final Instance instance;
   final String? initialLink;
-  final Uint8List? initialFileBytes;
-  final String? initialFileName;
+  final List<TorrentFileArg>? initialFiles;
 
   @override
   ConsumerState<_DelugeAddSheet> createState() => _DelugeAddSheetState();
@@ -69,19 +72,40 @@ class _DelugeAddSheetState extends ConsumerState<_DelugeAddSheet> {
   bool _startPaused = false;
   bool _busy = false;
 
-  Uint8List? _fileBytes;
-  String? _fileName;
+  final List<TorrentFileArg> _files = <TorrentFileArg>[];
+
+  /// How far through a batch the submit has got, for the button label.
+  int _done = 0;
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialFileBytes != null) {
+    final List<TorrentFileArg>? shared = widget.initialFiles;
+    if (shared != null && shared.isNotEmpty) {
       _mode = _AddMode.file;
-      _fileBytes = widget.initialFileBytes;
-      _fileName = widget.initialFileName;
+      _files.addAll(shared);
     } else if (widget.initialLink != null) {
       _link.text = widget.initialLink!;
     }
+  }
+
+  String get _fileLabel => switch (_files.length) {
+        0 => 'Choose .torrent files',
+        1 => _files.first.name ?? 'One torrent',
+        final int n => '$n torrents',
+      };
+
+  /// A batch can take a while, so the button counts rather than just spinning.
+  String get _addLabel {
+    if (!_busy) {
+      return _mode == _AddMode.file && _files.length > 1
+          ? 'Add ${_files.length}'
+          : 'Add';
+    }
+    if (_mode == _AddMode.file && _files.length > 1) {
+      return 'Adding $_done of ${_files.length}...';
+    }
+    return 'Adding...';
   }
 
   @override
@@ -92,19 +116,25 @@ class _DelugeAddSheetState extends ConsumerState<_DelugeAddSheet> {
   }
 
   Future<void> _pickFile() async {
+    // pickFiles is already multi-select; the old code then threw the result
+    // away with singleOrNull, so choosing more than one silently did nothing.
     final FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: <String>['torrent'],
     );
-    final PlatformFile? file = result?.files.singleOrNull;
-    if (file == null) return;
+    final List<PlatformFile> picked = result?.files ?? <PlatformFile>[];
+    if (picked.isEmpty) return;
     // Read the bytes now: on Android the pick is a content:// URI, not a path
     // the client could reopen later.
-    final Uint8List bytes = await file.readAsBytes();
+    final List<TorrentFileArg> read = <TorrentFileArg>[];
+    for (final PlatformFile file in picked) {
+      read.add((bytes: await file.readAsBytes(), name: file.name));
+    }
     if (!mounted) return;
     setState(() {
-      _fileBytes = bytes;
-      _fileName = file.name;
+      _files
+        ..clear()
+        ..addAll(read);
     });
   }
 
@@ -112,7 +142,7 @@ class _DelugeAddSheetState extends ConsumerState<_DelugeAddSheet> {
     if (_busy) return false;
     return switch (_mode) {
       _AddMode.link => _link.text.trim().isNotEmpty,
-      _AddMode.file => _fileBytes != null,
+      _AddMode.file => _files.isNotEmpty,
     };
   }
 
@@ -143,12 +173,28 @@ class _DelugeAddSheetState extends ConsumerState<_DelugeAddSheet> {
             );
           }
         case _AddMode.file:
-          await client.addFile(
-            _fileBytes!,
-            filename: _fileName ?? 'torrent.torrent',
-            savePath: savePath,
-            paused: _startPaused,
+          // One failure does not abandon the rest of the batch; the count of
+          // what failed is reported at the end instead.
+          int failed = 0;
+          for (final TorrentFileArg file in _files) {
+            try {
+              await client.addFile(
+                file.bytes,
+                filename: file.name ?? 'torrent.torrent',
+                savePath: savePath,
+                paused: _startPaused,
+              );
+            } catch (_) {
+              failed++;
+            }
+            if (mounted) setState(() => _done++);
+          }
+          ref.invalidate(delugeRawTorrentsProvider(widget.instance));
+          navigator.pop();
+          messenger.showSnackBar(
+            SnackBar(content: Text(_batchResult(_files.length, failed))),
           );
+          return;
       }
       ref.invalidate(delugeRawTorrentsProvider(widget.instance));
       navigator.pop();
@@ -157,6 +203,16 @@ class _DelugeAddSheetState extends ConsumerState<_DelugeAddSheet> {
       if (mounted) setState(() => _busy = false);
       messenger.showSnackBar(SnackBar(content: Text('Add failed: $e')));
     }
+  }
+
+  static String _batchResult(int total, int failed) {
+    if (failed == 0) {
+      return total == 1 ? 'Torrent added' : '$total torrents added';
+    }
+    if (failed == total) {
+      return total == 1 ? 'Add failed' : 'All $total failed';
+    }
+    return 'Added ${total - failed} of $total, $failed failed';
   }
 
   @override
@@ -214,7 +270,7 @@ class _DelugeAddSheetState extends ConsumerState<_DelugeAddSheet> {
               OutlinedButton.icon(
                 onPressed: _busy ? null : _pickFile,
                 icon: const Icon(Icons.folder_open),
-                label: Text(_fileName ?? 'Choose a .torrent file'),
+                label: Text(_fileLabel),
               ),
             const SizedBox(height: Insets.md),
             TextField(
@@ -242,7 +298,7 @@ class _DelugeAddSheetState extends ConsumerState<_DelugeAddSheet> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.add),
-              label: Text(_busy ? 'Adding...' : 'Add'),
+              label: Text(_addLabel),
             ),
           ],
         ),
