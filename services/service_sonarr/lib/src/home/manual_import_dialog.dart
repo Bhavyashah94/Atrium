@@ -7,8 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/sonarr_episode.dart';
-import '../models/sonarr_series.dart';
+import '../models/sonarr_models.dart';
 import '../sonarr_providers.dart';
 
 /// Starts the Sonarr Manual Import user flow.
@@ -682,7 +681,7 @@ class __ManualImportMappingScreenState
     if (rawSeasons is List<dynamic>) {
       for (final dynamic s in rawSeasons) {
         if (s is SonarrSeason) {
-          numbers.add(s.seasonNumber);
+          if (s.seasonNumber != null) numbers.add(s.seasonNumber!);
         } else if (s is Map<String, dynamic>) {
           final dynamic n = s['seasonNumber'];
           if (n is int) numbers.add(n);

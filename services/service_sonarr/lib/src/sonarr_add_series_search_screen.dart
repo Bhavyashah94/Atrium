@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'models/sonarr_series.dart';
+import 'models/sonarr_models.dart';
 import 'series_detail_screen.dart';
 import 'sonarr_add_series_sheet.dart';
 import 'sonarr_api.dart';

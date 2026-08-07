@@ -1,11 +1,7 @@
 import 'package:core_networking/core_networking.dart';
 import 'package:dio/dio.dart';
 
-import 'models/sonarr_blocklist_item.dart';
-import 'models/sonarr_episode.dart';
-import 'models/sonarr_history_item.dart';
-import 'models/sonarr_queue_item.dart';
-import 'models/sonarr_series.dart';
+import 'models/sonarr_models.dart';
 
 /// Thin typed client over the Sonarr v3 REST API.
 class SonarrApi {

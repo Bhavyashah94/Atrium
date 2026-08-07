@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../models/sonarr_episode.dart';
-import '../models/sonarr_history_item.dart';
-import '../models/sonarr_series.dart';
+import '../models/sonarr_models.dart';
 import '../sonarr_providers.dart';
 import '../sonarr_release_search_screen.dart';
 import 'manual_import_dialog.dart';
@@ -636,12 +634,7 @@ class _EpisodeListLayout extends ConsumerWidget {
 
             String? qualityLabel;
             if (isCutoffTab && episode.episodeFile != null) {
-              final file = episode.episodeFile!;
-              final qObj = file['quality'] as Map<String, dynamic>?;
-              if (qObj != null && qObj['quality'] != null) {
-                final quality = qObj['quality'] as Map<String, dynamic>?;
-                qualityLabel = quality?['name'] as String?;
-              }
+              qualityLabel = episode.episodeFile!.quality?.name;
             }
 
             listItems.add(
@@ -1143,12 +1136,7 @@ class _GroupedEpisodeCardState extends ConsumerState<_GroupedEpisodeCard> {
 
                   String? qualityLabel;
                   if (widget.isCutoffTab && episode.episodeFile != null) {
-                    final file = episode.episodeFile!;
-                    final qObj = file['quality'] as Map<String, dynamic>?;
-                    if (qObj != null && qObj['quality'] != null) {
-                      final quality = qObj['quality'] as Map<String, dynamic>?;
-                      qualityLabel = quality?['name'] as String?;
-                    }
+                    qualityLabel = episode.episodeFile!.quality?.name;
                   }
 
                   return Card(

@@ -4,11 +4,7 @@ import 'package:core_storage/core_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
-import 'models/sonarr_blocklist_item.dart';
-import 'models/sonarr_episode.dart';
-import 'models/sonarr_history_item.dart';
-import 'models/sonarr_queue_item.dart';
-import 'models/sonarr_series.dart';
+import 'models/sonarr_models.dart';
 import 'sonarr_api.dart';
 
 /// How often the series library refreshes.
@@ -188,7 +184,7 @@ final sonarrFilteredSeriesProvider = Provider.autoDispose
         filtered = filtered.where((SonarrSeries s) {
           final SonarrSeriesStatistics? stats = s.statistics;
           if (stats == null) return false;
-          return stats.episodeFileCount < stats.episodeCount;
+          return (stats.episodeFileCount ?? 0) < (stats.episodeCount ?? 0);
         });
         break;
     }
@@ -311,15 +307,16 @@ final sonarrEpisodesProvider =
   final List<Map<String, dynamic>> files =
       results[1] as List<Map<String, dynamic>>;
 
-  final Map<int, Map<String, dynamic>> filesById = {
-    for (final file in files) file['id'] as int: file,
+  final Map<int, SonarrEpisodeFile> filesById = {
+    for (final file in files)
+      file['id'] as int: SonarrEpisodeFile.fromJson(file),
   };
 
   return episodes.map((episode) {
     if (episode.hasFile && episode.episodeFileId != null) {
-      final fileMap = filesById[episode.episodeFileId!];
-      if (fileMap != null) {
-        return episode.copyWith(episodeFile: fileMap);
+      final episodeFile = filesById[episode.episodeFileId!];
+      if (episodeFile != null) {
+        return episode.copyWith(episodeFile: episodeFile);
       }
     }
     return episode;

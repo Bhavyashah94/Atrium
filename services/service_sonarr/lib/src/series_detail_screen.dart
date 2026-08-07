@@ -7,10 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 import 'home/sonarr_rename_dialog.dart';
-import 'models/sonarr_episode.dart';
-import 'models/sonarr_history_item.dart';
-import 'models/sonarr_queue_item.dart';
-import 'models/sonarr_series.dart';
+import 'models/sonarr_models.dart';
 import 'sonarr_api.dart';
 import 'sonarr_providers.dart';
 import 'sonarr_release_search_screen.dart';
@@ -1016,7 +1013,7 @@ class _SeasonCard extends ConsumerWidget {
 
     final double seasonSizeBytes = episodes
         .where((e) => e.hasFile)
-        .map((e) => (e.episodeFile?['size'] as num?)?.toDouble() ?? 0.0)
+        .map((e) => e.episodeFile?.size?.toDouble() ?? 0.0)
         .sum;
     final String seasonSizeStr =
         seasonSizeBytes > 0 ? ' • ${_formatSize(seasonSizeBytes.toInt())}' : '';
@@ -1597,13 +1594,9 @@ class _EpisodeRow extends ConsumerWidget {
       badgeTextColor = cs.error;
     }
 
-    final Map<String, dynamic>? fileMap = episode.episodeFile;
-    final Map<String, dynamic>? qualityObj =
-        fileMap?['quality'] as Map<String, dynamic>?;
-    final Map<String, dynamic>? qualityInner =
-        qualityObj?['quality'] as Map<String, dynamic>?;
-    final String? quality = qualityInner?['name'] as String?;
-    final int? sizeBytes = fileMap?['size'] as int?;
+    final SonarrEpisodeFile? fileObj = episode.episodeFile;
+    final String? quality = fileObj?.quality?.name;
+    final int? sizeBytes = fileObj?.size;
     final String? sizeStr = sizeBytes != null ? _formatSize(sizeBytes) : null;
 
     final String subtitleText = [
@@ -1750,15 +1743,11 @@ void _showEpisodeBottomSheet({
   final ThemeData theme = Theme.of(context);
   final ColorScheme cs = theme.colorScheme;
 
-  final Map<String, dynamic>? fileMap = episode.episodeFile;
-  final Map<String, dynamic>? qualityObj =
-      fileMap?['quality'] as Map<String, dynamic>?;
-  final Map<String, dynamic>? qualityInner =
-      qualityObj?['quality'] as Map<String, dynamic>?;
-  final String? quality = qualityInner?['name'] as String?;
-  final int? sizeBytes = fileMap?['size'] as int?;
+  final SonarrEpisodeFile? fileObj = episode.episodeFile;
+  final String? quality = fileObj?.quality?.name;
+  final int? sizeBytes = fileObj?.size;
   final String? sizeStr = sizeBytes != null ? _formatSize(sizeBytes) : null;
-  final String? relativePath = fileMap?['relativePath'] as String?;
+  final String? relativePath = fileObj?.relativePath;
 
   showModalBottomSheet<void>(
     context: context,
@@ -2941,7 +2930,7 @@ void _showHistoryDetails(
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: item.data!.entries.map((MapEntry<String, String?> e) {
+                    children: item.data!.entries.map<Widget>((MapEntry<String, dynamic> e) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 2),
                         child: Text(

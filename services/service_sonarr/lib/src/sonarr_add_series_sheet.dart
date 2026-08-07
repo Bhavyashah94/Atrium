@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
-import 'models/sonarr_series.dart';
+import 'models/sonarr_models.dart';
 import 'sonarr_api.dart';
 import 'sonarr_providers.dart';
 

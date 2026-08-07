@@ -5,10 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
-import '../models/sonarr_blocklist_item.dart';
-import '../models/sonarr_history_item.dart';
-import '../models/sonarr_queue_item.dart';
-import '../models/sonarr_series.dart';
+import '../models/sonarr_models.dart';
 import '../sonarr_providers.dart';
 
 class ActivityTab extends ConsumerStatefulWidget {
