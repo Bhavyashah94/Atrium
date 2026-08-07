@@ -25,12 +25,12 @@ class TracearrAuthManager {
 
     // Attempt login based on auth type
     switch (auth) {
+      case InstanceAuthApiKey(:final String apiKey):
+        _sessionToken = apiKey;
       case InstanceAuthUserPass(:final String username, :final String password):
         _sessionToken = await _loginUserPass(username, password);
       default:
-        throw StateError(
-          'Tracearr does not support auth type: ${auth.runtimeType}',
-        );
+        _sessionToken = '';
     }
 
     return _sessionToken!;

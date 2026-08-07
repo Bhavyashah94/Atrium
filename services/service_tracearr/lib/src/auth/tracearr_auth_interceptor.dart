@@ -31,6 +31,7 @@ class TracearrAuthInterceptor extends QueuedInterceptor {
     try {
       final String token = await manager.ensureToken();
       options.headers['Authorization'] = 'Bearer $token';
+      options.headers['x-api-key'] = token;
       return handler.next(options);
     } catch (e, st) {
       return handler.reject(
