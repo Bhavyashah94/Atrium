@@ -126,8 +126,8 @@ class _DashboardRecentlyDownloadedWidgetState
               h.episode!.seasonNumber.toString().padLeft(2, '0');
           final String eNum =
               h.episode!.episodeNumber.toString().padLeft(2, '0');
-          final String epCode = 'S${sNum}E${eNum}';
-          final String epTitle = h.episode!.title?.trim() ?? '';
+          final String epCode = 'S${sNum}E$eNum';
+          final String epTitle = h.episode!.title.trim();
           epSubtitle = epTitle.isNotEmpty ? '$epCode • $epTitle' : epCode;
         }
 
