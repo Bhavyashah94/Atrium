@@ -87,32 +87,24 @@ class AtriumApp extends ConsumerWidget {
           // listener wraps it so a torrent arriving from another app is
           // handled wherever the user happens to be, and so its picker stays
           // underneath the lock when the app is locked.
+          // The system navigation bar keeps the app's own colours: its icons
+          // are tinted against the surface the app actually paints there, so
+          // they stay legible in either theme. The app stays edge-to-edge -
+          // reserving the inset app-wide would letterbox every screen to fix
+          // what is really a sizing bug in one widget.
           builder: (BuildContext context, Widget? child) {
-            final bool isDark = themeMode == ThemeMode.dark ||
-                (themeMode == ThemeMode.system &&
-                    MediaQuery.platformBrightnessOf(context) == Brightness.dark);
-            final ThemeData activeTheme = isDark ? darkTheme : lightTheme;
-            final Color navColor = activeTheme.navigationBarTheme.backgroundColor ??
-                activeTheme.colorScheme.surfaceContainer;
+            final Brightness brightness = Theme.of(context).brightness;
             return AnnotatedRegion<SystemUiOverlayStyle>(
               value: SystemUiOverlayStyle(
-                systemNavigationBarColor: navColor,
                 systemNavigationBarIconBrightness:
-                    isDark ? Brightness.light : Brightness.dark,
+                    brightness == Brightness.dark
+                        ? Brightness.light
+                        : Brightness.dark,
                 systemNavigationBarContrastEnforced: false,
               ),
               child: TorrentShareListener(
                 child: _BiometricLockGate(
-                  child: ColoredBox(
-                    color: navColor,
-                    child: SafeArea(
-                      top: false,
-                      left: false,
-                      right: false,
-                      bottom: true,
-                      child: child ?? const SizedBox.shrink(),
-                    ),
-                  ),
+                  child: child ?? const SizedBox.shrink(),
                 ),
               ),
             );
