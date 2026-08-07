@@ -39,6 +39,37 @@ final class TorrentShareFile extends TorrentShare {
   final String? name;
 }
 
+/// One `.torrent` within a shared batch.
+@immutable
+class TorrentShareFileEntry {
+  const TorrentShareFileEntry({required this.bytes, this.name});
+
+  final Uint8List bytes;
+  final String? name;
+}
+
+/// Several `.torrent` files shared at once.
+///
+/// Kept distinct from a queue of single files on purpose: a batch gets one
+/// sheet and one set of options, because answering the same save-path question
+/// fifty times is worse than not supporting batches at all.
+final class TorrentShareFiles extends TorrentShare {
+  const TorrentShareFiles({
+    required this.files,
+    this.skipped = 0,
+    this.dropped = 0,
+  });
+
+  final List<TorrentShareFileEntry> files;
+
+  /// Files in the batch that could not be read, so the count can be shown
+  /// rather than them vanishing silently.
+  final int skipped;
+
+  /// Files beyond the batch ceiling that were never read at all.
+  final int dropped;
+}
+
 /// Something arrived but cannot be added. Carries the message to show.
 final class TorrentShareProblem extends TorrentShare {
   const TorrentShareProblem(this.message);
@@ -94,6 +125,37 @@ TorrentShare? decodeTorrentShare(Object? payload) {
         name: name is String && name.trim().isNotEmpty ? name.trim() : null,
       );
 
+    case 'files':
+      final Object? items = payload['items'];
+      if (items is! List) {
+        return null;
+      }
+      final List<TorrentShareFileEntry> files = <TorrentShareFileEntry>[];
+      for (final Object? item in items) {
+        if (item is! Map) {
+          continue;
+        }
+        final Object? bytes = item['bytes'];
+        if (bytes is! Uint8List || bytes.isEmpty) {
+          continue;
+        }
+        final Object? name = item['name'];
+        files.add(
+          TorrentShareFileEntry(
+            bytes: bytes,
+            name: name is String && name.trim().isNotEmpty ? name.trim() : null,
+          ),
+        );
+      }
+      if (files.isEmpty) {
+        return null;
+      }
+      return TorrentShareFiles(
+        files: files,
+        skipped: _asInt(payload['skipped']),
+        dropped: _asInt(payload['dropped']),
+      );
+
     case 'empty':
       return const TorrentShareProblem(
         'That file was empty, so there was nothing to add.',
@@ -115,6 +177,8 @@ TorrentShare? decodeTorrentShare(Object? payload) {
       return null;
   }
 }
+
+int _asInt(Object? value) => value is int ? value : 0;
 
 /// Pulls a magnet URI or a link to a `.torrent` out of shared text.
 ///

@@ -277,6 +277,7 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
               initialSelection: _kind,
               label: const Text('Service'),
               expandedInsets: EdgeInsets.zero,
+              menuHeight: 350,
               leadingIcon: UnconstrainedBox(
                 child: _buildServiceIcon(_kind, size: 24),
               ),

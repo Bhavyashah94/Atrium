@@ -11,16 +11,16 @@ import 'transmission_providers.dart';
 
 /// Opens the add-torrent sheet for [instance].
 ///
-/// The optional arguments prefill the sheet when another app shares a torrent
-/// with Atrium: [initialLink] for a magnet or `.torrent` URL, or
-/// [initialFileBytes] with [initialFileName] for a `.torrent` handed over as
-/// bytes. The user still picks the download directory and whether to start it.
+/// The optional arguments prefill the sheet when another app shares torrents
+/// with Atrium: [initialLink] for a magnet or `.torrent` URL, or [initialFiles]
+/// for one or more `.torrent` files handed over as bytes. A batch shares one
+/// download directory and one paused choice, since answering those per torrent
+/// is unusable past a handful.
 Future<void> showTransmissionAddSheet(
   BuildContext context,
   Instance instance, {
   String? initialLink,
-  Uint8List? initialFileBytes,
-  String? initialFileName,
+  List<TorrentFileArg>? initialFiles,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -31,11 +31,16 @@ Future<void> showTransmissionAddSheet(
     builder: (BuildContext context) => _TransmissionAddSheet(
       instance: instance,
       initialLink: initialLink,
-      initialFileBytes: initialFileBytes,
-      initialFileName: initialFileName,
+      initialFiles: initialFiles,
     ),
   );
 }
+
+/// One `.torrent` handed to the sheet, as bytes plus a name to show.
+///
+/// A record rather than a class so the app can pass these in without the
+/// service packages needing a shared type to depend on.
+typedef TorrentFileArg = ({Uint8List bytes, String? name});
 
 enum _AddMode { link, file }
 
@@ -46,14 +51,12 @@ class _TransmissionAddSheet extends ConsumerStatefulWidget {
   const _TransmissionAddSheet({
     required this.instance,
     this.initialLink,
-    this.initialFileBytes,
-    this.initialFileName,
+    this.initialFiles,
   });
 
   final Instance instance;
   final String? initialLink;
-  final Uint8List? initialFileBytes;
-  final String? initialFileName;
+  final List<TorrentFileArg>? initialFiles;
 
   @override
   ConsumerState<_TransmissionAddSheet> createState() =>
@@ -69,19 +72,40 @@ class _TransmissionAddSheetState
   bool _startPaused = false;
   bool _busy = false;
 
-  Uint8List? _fileBytes;
-  String? _fileName;
+  final List<TorrentFileArg> _files = <TorrentFileArg>[];
+
+  /// How far through a batch the submit has got, for the button label.
+  int _done = 0;
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialFileBytes != null) {
+    final List<TorrentFileArg>? shared = widget.initialFiles;
+    if (shared != null && shared.isNotEmpty) {
       _mode = _AddMode.file;
-      _fileBytes = widget.initialFileBytes;
-      _fileName = widget.initialFileName;
+      _files.addAll(shared);
     } else if (widget.initialLink != null) {
       _link.text = widget.initialLink!;
     }
+  }
+
+  String get _fileLabel => switch (_files.length) {
+        0 => 'Choose .torrent files',
+        1 => _files.first.name ?? 'One torrent',
+        final int n => '$n torrents',
+      };
+
+  /// A batch can take a while, so the button counts rather than just spinning.
+  String get _addLabel {
+    if (!_busy) {
+      return _mode == _AddMode.file && _files.length > 1
+          ? 'Add ${_files.length}'
+          : 'Add';
+    }
+    if (_mode == _AddMode.file && _files.length > 1) {
+      return 'Adding $_done of ${_files.length}...';
+    }
+    return 'Adding...';
   }
 
   @override
@@ -96,14 +120,20 @@ class _TransmissionAddSheetState
       type: FileType.custom,
       allowedExtensions: <String>['torrent'],
     );
-    final PlatformFile? file = result?.files.singleOrNull;
-    if (file == null) return;
+    // pickFiles is already multi-select; the old code then threw the result
+    // away with singleOrNull, so choosing more than one silently did nothing.
+    final List<PlatformFile> picked = result?.files ?? <PlatformFile>[];
+    if (picked.isEmpty) return;
     // Read now: on Android the pick is a content:// URI, not a reopenable path.
-    final Uint8List bytes = await file.readAsBytes();
+    final List<TorrentFileArg> read = <TorrentFileArg>[];
+    for (final PlatformFile file in picked) {
+      read.add((bytes: await file.readAsBytes(), name: file.name));
+    }
     if (!mounted) return;
     setState(() {
-      _fileBytes = bytes;
-      _fileName = file.name;
+      _files
+        ..clear()
+        ..addAll(read);
     });
   }
 
@@ -111,7 +141,7 @@ class _TransmissionAddSheetState
     if (_busy) return false;
     return switch (_mode) {
       _AddMode.link => _link.text.trim().isNotEmpty,
-      _AddMode.file => _fileBytes != null,
+      _AddMode.file => _files.isNotEmpty,
     };
   }
 
@@ -127,18 +157,39 @@ class _TransmissionAddSheetState
           : _downloadDir.text.trim();
       // Both add calls report a duplicate as a *success* under a different key,
       // so say which happened rather than claiming a new torrent either way.
-      final bool added = switch (_mode) {
-        _AddMode.link => await api.addUrl(
-            _link.text.trim(),
-            downloadDir: dir,
-            paused: _startPaused,
+      if (_mode == _AddMode.file) {
+        // One failure does not abandon the rest of the batch; what failed is
+        // reported at the end instead.
+        int failed = 0;
+        int duplicates = 0;
+        for (final TorrentFileArg file in _files) {
+          try {
+            final bool added = await api.addFile(
+              file.bytes,
+              downloadDir: dir,
+              paused: _startPaused,
+            );
+            if (!added) duplicates++;
+          } catch (_) {
+            failed++;
+          }
+          if (mounted) setState(() => _done++);
+        }
+        ref.invalidate(transmissionRawTorrentsProvider(widget.instance));
+        navigator.pop();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(_batchResult(_files.length, failed, duplicates)),
           ),
-        _AddMode.file => await api.addFile(
-            _fileBytes!,
-            downloadDir: dir,
-            paused: _startPaused,
-          ),
-      };
+        );
+        return;
+      }
+
+      final bool added = await api.addUrl(
+        _link.text.trim(),
+        downloadDir: dir,
+        paused: _startPaused,
+      );
       ref.invalidate(transmissionRawTorrentsProvider(widget.instance));
       navigator.pop();
       messenger.showSnackBar(
@@ -152,6 +203,21 @@ class _TransmissionAddSheetState
       if (mounted) setState(() => _busy = false);
       messenger.showSnackBar(SnackBar(content: Text('Add failed: $e')));
     }
+  }
+
+  /// Transmission counts a duplicate as a success, so it gets its own tally
+  /// rather than being folded into either added or failed.
+  static String _batchResult(int total, int failed, int duplicates) {
+    final int added = total - failed - duplicates;
+    if (failed == 0 && duplicates == 0) {
+      return total == 1 ? 'Torrent added' : '$total torrents added';
+    }
+    final List<String> parts = <String>[
+      if (added > 0) '$added added',
+      if (duplicates > 0) '$duplicates already there',
+      if (failed > 0) '$failed failed',
+    ];
+    return parts.join(', ');
   }
 
   @override
@@ -208,7 +274,7 @@ class _TransmissionAddSheetState
               OutlinedButton.icon(
                 onPressed: _busy ? null : _pickFile,
                 icon: const Icon(Icons.folder_open),
-                label: Text(_fileName ?? 'Choose a .torrent file'),
+                label: Text(_fileLabel),
               ),
             const SizedBox(height: Insets.md),
             TextField(
@@ -236,7 +302,7 @@ class _TransmissionAddSheetState
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.add),
-              label: Text(_busy ? 'Adding...' : 'Add'),
+              label: Text(_addLabel),
             ),
           ],
         ),

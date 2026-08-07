@@ -155,7 +155,8 @@ class _DashboardRecentlyAddedWidgetState
       if (_needsReset) {
         _needsReset = false;
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients) {
+          if (_scrollController.hasClients &&
+              _scrollController.position.hasContentDimensions) {
             _scrollController.jumpTo(0.0);
           }
         });

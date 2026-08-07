@@ -36,7 +36,7 @@ enum _HealthMode {
     case ServiceKind.seerr:
       return (path: 'api/v1/status', mode: _HealthMode.authed);
     case ServiceKind.tracearr:
-      return (path: 'api/v1/sessions/active', mode: _HealthMode.reachable);
+      return (path: 'api/v2/public/docs', mode: _HealthMode.authed);
     // Query-key services - AuthInterceptor appends the key as a query param.
     case ServiceKind.tautulli:
       return (

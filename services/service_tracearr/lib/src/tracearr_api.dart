@@ -1,37 +1,11 @@
-import 'dart:convert';
-
 import 'package:core_networking/core_networking.dart';
 import 'package:dio/dio.dart';
 
 import 'models/tracearr_active_sessions.dart';
-import 'models/tracearr_activity_concurrent.dart';
-import 'models/tracearr_activity_engagement.dart';
-import 'models/tracearr_activity_locations.dart';
-import 'models/tracearr_activity_platform.dart';
-import 'models/tracearr_activity_play.dart';
-import 'models/tracearr_activity_play_dow.dart';
-import 'models/tracearr_activity_play_hod.dart';
-import 'models/tracearr_activity_quality.dart';
-import 'models/tracearr_activity_stats.dart';
-import 'models/tracearr_completion.dart';
-import 'models/tracearr_dashboard_stats.dart';
-import 'models/tracearr_library_roi.dart';
-import 'models/tracearr_library_storage.dart';
-import 'models/tracearr_library_watch_activity.dart';
-import 'models/tracearr_patterns.dart';
 import 'models/tracearr_session.dart';
-import 'models/tracearr_stats.dart';
-import 'models/tracearr_top_movies.dart';
-import 'models/tracearr_top_shows.dart';
-
-/// Thin typed client over the Tracearr API.
+import 'models/tracearr_v2_models.dart';
 
 /// The `data` array out of a Tracearr response envelope, as maps.
-///
-/// Tracearr wraps list results as `{"data": [...]}`. Reading that through
-/// `dynamic` works until a payload is not the shape expected and it throws
-/// mid-parse, so the shape is checked once here and anything that is not a
-/// JSON object is dropped rather than crashing the screen.
 List<Map<String, dynamic>> _envelopeList(Object? body) {
   if (body is! Map<String, dynamic>) return const <Map<String, dynamic>>[];
   final Object? data = body['data'];
@@ -39,6 +13,7 @@ List<Map<String, dynamic>> _envelopeList(Object? body) {
   return data.whereType<Map<String, dynamic>>().toList();
 }
 
+/// Typed client for Tracearr 2.0 Public API (v2 primary, v1 health fallback).
 class TracearrApi {
   TracearrApi(this._dio, {this.token});
 
@@ -55,8 +30,7 @@ class TracearrApi {
     return '$base$cleanPath${sep}token=$token';
   }
 
-  /// Generates a proxied image URL through Tracearr's internal backend proxy,
-  /// allowing authenticated retrieval of Plex and Jellyfin posters/thumbnails.
+  /// Image URL helper for artwork/posters.
   String? proxyImageUrl({
     required String? path,
     String? serverId,
@@ -64,676 +38,447 @@ class TracearrApi {
     int? height,
     String? fallback,
   }) {
-    if (path == null || path.isEmpty) return null;
-    if (path.startsWith('http')) return path;
-    if (serverId == null || serverId.isEmpty) return null;
-    final String base = _dio.options.baseUrl.replaceAll(RegExp(r'/+$'), '');
-    final Map<String, String> query = <String, String>{
-      'server': serverId,
-      'url': path,
-      if (width != null) 'width': width.toString(),
-      if (height != null) 'height': height.toString(),
-      if (fallback != null && fallback.isNotEmpty) 'fallback': fallback,
-      if (token != null && token!.isNotEmpty) 'token': token!,
-    };
-    final Uri uri =
-        Uri.parse('$base/api/v1/images/proxy').replace(queryParameters: query);
-    return uri.toString();
+    return imageUrl(path);
   }
 
-  String _formatIsoDate(DateTime dt) {
-    final String year = dt.year.toString().padLeft(4, '0');
-    final String month = dt.month.toString().padLeft(2, '0');
-    final String day = dt.day.toString().padLeft(2, '0');
-    return '$year-$month-${day}T00:00:00.000Z';
+  // ---------------------------------------------------------------------------
+  // Endpoint 1: GET /api/v2/public/docs - OpenAPI Specification & Health
+  // ---------------------------------------------------------------------------
+
+  /// Verifies server health via public API endpoint (GET /api/v2/public/docs).
+  Future<bool> getHealth() async {
+    try {
+      final Response<dynamic> resp =
+          await _dio.get<dynamic>('api/v2/public/docs');
+      return resp.statusCode == 200;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+        throw const NetworkAuthException('Tracearr rejected API key');
+      }
+      throw NetworkException.fromDio(e);
+    }
   }
 
-  /// Retrieves the active sessions from the internal Tracearr API.
+  // ---------------------------------------------------------------------------
+  // Endpoint 2: GET /api/v2/public/history - Watch history as plays
+  // ---------------------------------------------------------------------------
+
+  /// Retrieves global watch history (GET /api/v2/public/history).
+  Future<TracearrV2HistoryResponse> getV2History({
+    String? cursor,
+    int pageSize = 25,
+    String? userId,
+    String? serverId,
+    String? mediaId,
+    String? ratingKey,
+    String? imdbId,
+    int? tmdbId,
+    int? tvdbId,
+    String? mediaType,
+    bool? watched,
+    String? since,
+    String? until,
+  }) async {
+    try {
+      final Map<String, dynamic> query = <String, dynamic>{
+        'pageSize': pageSize,
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+        if (userId != null && userId.isNotEmpty) 'user_id': userId,
+        if (serverId != null && serverId.isNotEmpty) 'server_id': serverId,
+        if (mediaId != null && mediaId.isNotEmpty) 'media_id': mediaId,
+        if (ratingKey != null && ratingKey.isNotEmpty) 'rating_key': ratingKey,
+        if (imdbId != null && imdbId.isNotEmpty) 'imdb_id': imdbId,
+        if (tmdbId != null) 'tmdb_id': tmdbId,
+        if (tvdbId != null) 'tvdb_id': tvdbId,
+        if (mediaType != null && mediaType.isNotEmpty) 'media_type': mediaType,
+        if (watched != null) 'watched': watched,
+        if (since != null && since.isNotEmpty) 'since': since,
+        if (until != null && until.isNotEmpty) 'until': until,
+      };
+      final Response<dynamic> resp = await _dio.get<dynamic>(
+        'api/v2/public/history',
+        queryParameters: query,
+      );
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2HistoryResponse.fromJson(
+            resp.data as Map<String, dynamic>,);
+      }
+      return const TracearrV2HistoryResponse();
+    } on DioException catch (e) {
+      throw NetworkException.fromDio(e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Endpoint 3: GET /api/v2/public/streams - Active streams
+  // ---------------------------------------------------------------------------
+
+  /// Retrieves active playback streams transformed for UI (GET /api/v2/public/streams).
   Future<TracearrActiveSessions> getActiveSessions() async {
     try {
       final Response<dynamic> resp =
-          await _dio.get<dynamic>('api/v1/sessions/active');
-      if (resp.data is List) {
-        return TracearrActiveSessions(
-          sessions: (resp.data as List)
-              .map(
-                (dynamic e) =>
-                    TracearrSession.fromJson(e as Map<String, dynamic>),
-              )
-              .toList(),
-        );
-      }
-      return TracearrActiveSessions.fromJson(resp.data as Map<String, dynamic>);
+          await _dio.get<dynamic>('api/v2/public/streams');
+      final List<Map<String, dynamic>> data = _envelopeList(resp.data);
+      final List<TracearrSession> sessions = data.map((Map<String, dynamic> item) {
+        final int progress = (item['progress_ms'] as num?)?.toInt() ?? 0;
+        final int duration = (item['duration_ms'] as num?)?.toInt() ?? 100000;
+        return TracearrSession.fromJson(<String, dynamic>{
+          'id': item['id']?.toString() ?? '',
+          'serverId': item['server_id']?.toString() ?? '',
+          'state': item['state']?.toString() ?? 'playing',
+          'mediaType': item['media_type']?.toString() ?? 'movie',
+          'mediaTitle': item['media_title']?.toString() ?? '',
+          'grandparentTitle': item['grandparent_title']?.toString() ??
+              item['show_title']?.toString(),
+          'parentTitle': item['parent_title']?.toString(),
+          'progressMs': progress,
+          'totalDurationMs': duration > 0 ? duration : 100000,
+          'ipAddress': '',
+          'playerName': item['player_name']?.toString() ??
+              item['player']?.toString() ??
+              '',
+          'product': item['product']?.toString() ??
+              item['platform_name']?.toString() ??
+              '',
+          'device': item['device_name']?.toString() ??
+              item['device']?.toString() ??
+              '',
+          'platform': item['platform_name']?.toString() ??
+              item['platform']?.toString() ??
+              '',
+          'quality': item['resolution']?.toString() ?? '',
+          'isTranscode': item['is_transcode'] == true ||
+              item['stream_decision'] == 'transcode' ||
+              item['video_decision'] == 'transcode',
+          'userName': item['username']?.toString() ??
+              item['user_name']?.toString(),
+          'avatarUrl': item['user_avatar_url']?.toString() ??
+              item['user_thumb']?.toString() ??
+              item['user_avatar']?.toString(),
+          'thumbPath': item['poster_url']?.toString() ??
+              item['thumb_path']?.toString(),
+        });
+      }).toList();
+      return TracearrActiveSessions(sessions: sessions);
     } on DioException catch (e) {
       throw NetworkException.fromDio(e);
     }
   }
 
-  Future<TracearrStats> getStats(
-    List<String> serverIds,
-    String timezone, {
-    String period = 'month',
-    DateTime? from,
-    DateTime? to,
+  /// Retrieves active streams typed response (GET /api/v2/public/streams).
+  Future<TracearrV2StreamsResponse> getV2Streams({
+    String? serverId,
+    bool? summary,
   }) async {
     try {
       final Map<String, dynamic> query = <String, dynamic>{
-        'serverIds': serverIds,
-        'timezone': timezone,
-        'period': period,
-      };
-      if (from != null) query['startDate'] = _formatIsoDate(from);
-      if (to != null) query['endDate'] = _formatIsoDate(to);
-      final Response<dynamic> resp = await _dio.get<dynamic>(
-        'api/v1/library/stats',
-        queryParameters: query,
-        options: Options(listFormat: ListFormat.multi),
-      );
-      return TracearrStats.fromJson(resp.data as Map<String, dynamic>);
-    } on DioException catch (e) {
-      throw NetworkException.fromDio(e);
-    }
-  }
-
-  Future<TracearrActivityStats> getActivityStats(
-    List<String> serverIds,
-    String timezone, {
-    String period = 'month',
-    DateTime? from,
-    DateTime? to,
-  }) async {
-    try {
-      final Map<String, dynamic> query = <String, dynamic>{
-        'serverIds': serverIds,
-        'timezone': timezone,
-        'period': period,
-      };
-      if (from != null) query['startDate'] = _formatIsoDate(from);
-      if (to != null) query['endDate'] = _formatIsoDate(to);
-
-      final Options opts = Options(listFormat: ListFormat.multi);
-      final Future<Response<dynamic>> playsReq = _dio.get<dynamic>(
-        'api/v1/stats/plays',
-        queryParameters: query,
-        options: opts,
-      );
-      final Future<Response<dynamic>> dowReq = _dio.get<dynamic>(
-        'api/v1/stats/plays-by-dayofweek',
-        queryParameters: query,
-        options: opts,
-      );
-      final Future<Response<dynamic>> hodReq = _dio.get<dynamic>(
-        'api/v1/stats/plays-by-hourofday',
-        queryParameters: query,
-        options: opts,
-      );
-      final Future<Response<dynamic>> platformsReq = _dio.get<dynamic>(
-        'api/v1/stats/platforms',
-        queryParameters: query,
-        options: opts,
-      );
-      final Future<Response<dynamic>> qualityReq = _dio.get<dynamic>(
-        'api/v1/stats/quality',
-        queryParameters: query,
-        options: opts,
-      );
-      final Future<Response<dynamic>> concurrentReq = _dio.get<dynamic>(
-        'api/v1/stats/concurrent',
-        queryParameters: query,
-        options: opts,
-      );
-      final Future<Response<dynamic>> engagementReq = _dio.get<dynamic>(
-        'api/v1/stats/engagement',
-        queryParameters: query,
-        options: opts,
-      );
-
-      final List<Response<dynamic>> resps =
-          await Future.wait(<Future<Response<dynamic>>>[
-        playsReq,
-        dowReq,
-        hodReq,
-        platformsReq,
-        qualityReq,
-        concurrentReq,
-        engagementReq,
-      ]);
-
-      final List<TracearrActivityPlay> plays = <TracearrActivityPlay>[
-        for (final Map<String, dynamic> item in _envelopeList(resps[0].data))
-          TracearrActivityPlay.fromJson(item),
-      ];
-
-      final List<TracearrActivityPlayDow> playsDow = <TracearrActivityPlayDow>[
-        for (final Map<String, dynamic> item in _envelopeList(resps[1].data))
-          TracearrActivityPlayDow.fromJson(item),
-      ];
-
-      final List<TracearrActivityPlayHod> playsHod = <TracearrActivityPlayHod>[
-        for (final Map<String, dynamic> item in _envelopeList(resps[2].data))
-          TracearrActivityPlayHod.fromJson(item),
-      ];
-
-      final List<TracearrActivityPlatform> platforms =
-          <TracearrActivityPlatform>[
-        for (final Map<String, dynamic> item in _envelopeList(resps[3].data))
-          TracearrActivityPlatform.fromJson(item),
-      ];
-
-      TracearrActivityQuality quality = const TracearrActivityQuality();
-      final Object? qualityBody = resps[4].data;
-      if (qualityBody is Map<String, dynamic>) {
-        quality = TracearrActivityQuality.fromJson(qualityBody);
-      }
-
-      final List<TracearrActivityConcurrent> concurrent =
-          <TracearrActivityConcurrent>[
-        for (final Map<String, dynamic> item in _envelopeList(resps[5].data))
-          TracearrActivityConcurrent.fromJson(item),
-      ];
-
-      TracearrActivityEngagement engagement = const TracearrActivityEngagement(
-        summary: TracearrEngagementSummary(),
-      );
-      final Object? engagementBody = resps[6].data;
-      if (engagementBody is Map<String, dynamic>) {
-        engagement = TracearrActivityEngagement.fromJson(engagementBody);
-      }
-
-      return TracearrActivityStats(
-        plays: plays,
-        playsByDayOfWeek: playsDow,
-        playsByHourOfDay: playsHod,
-        platforms: platforms,
-        quality: quality,
-        concurrentPlays: concurrent,
-        engagement: engagement,
-      );
-    } on DioException catch (e) {
-      throw NetworkException.fromDio(e);
-    }
-  }
-
-  Future<List<TracearrSession>> getHistory(
-    List<String> serverIds, {
-    int page = 1,
-  }) async {
-    try {
-      final Map<String, dynamic> query = <String, dynamic>{
-        'serverIds': serverIds,
-        'pageSize': 50,
-        'page': page,
+        if (serverId != null && serverId.isNotEmpty) 'server_id': serverId,
+        if (summary != null) 'summary': summary,
       };
       final Response<dynamic> resp = await _dio.get<dynamic>(
-        'api/v1/sessions/history',
+        'api/v2/public/streams',
         queryParameters: query,
-        options: Options(listFormat: ListFormat.multi),
       );
-      return <TracearrSession>[
-        for (final Map<String, dynamic> item in _envelopeList(resp.data))
-          TracearrSession.fromJson(item),
-      ];
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2StreamsResponse.fromJson(
+            resp.data as Map<String, dynamic>,);
+      }
+      return const TracearrV2StreamsResponse();
     } on DioException catch (e) {
       throw NetworkException.fromDio(e);
     }
   }
 
-  Future<TracearrActivityLocationsResponse> getLocations(
-    List<String> serverIds,
-    String timezone,
-  ) async {
+  // ---------------------------------------------------------------------------
+  // Endpoint 4: GET /api/v2/public/media/{ref} - Media identity & availability
+  // ---------------------------------------------------------------------------
+
+  /// Retrieves media details by ref (GET /api/v2/public/media/{ref}).
+  Future<TracearrV2MediaDetails?> getMediaByRef(String ref) async {
     try {
-      final Map<String, dynamic> query = <String, dynamic>{
-        'serverIds': serverIds,
-        'timezone': timezone,
-        'period': 'month',
-      };
-      final Response<dynamic> res = await _dio.get<dynamic>(
-        'api/v1/stats/locations',
-        queryParameters: query,
-        options: Options(listFormat: ListFormat.multi),
-      );
-      return TracearrActivityLocationsResponse.fromJson(
-        res.data as Map<String, dynamic>,
-      );
+      final Response<dynamic> resp =
+          await _dio.get<dynamic>('api/v2/public/media/$ref');
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2MediaDetails.fromJson(resp.data as Map<String, dynamic>,);
+      }
+      return null;
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
       throw NetworkException.fromDio(e);
-    } catch (e) {
-      throw Exception('Failed to fetch locations: $e');
     }
   }
 
-  Future<TracearrDashboardStats> getDashboardStats(
-    List<String> serverIds,
-    String timezone,
-  ) async {
+  /// Retrieves full media resource model by ref (GET /api/v2/public/media/{ref}).
+  Future<TracearrV2MediaResource?> getMediaResource(String ref) async {
     try {
-      final Response<dynamic> res = await _dio.get<dynamic>(
-        'api/v1/stats/dashboard',
-        queryParameters: <String, dynamic>{
-          'serverIds': serverIds,
-          'timezone': timezone,
-        },
-        options: Options(listFormat: ListFormat.multi),
-      );
-
-      dynamic rawData = res.data;
-      if (rawData is String) {
-        try {
-          rawData = jsonDecode(rawData);
-        } catch (_) {}
+      final Response<dynamic> resp =
+          await _dio.get<dynamic>('api/v2/public/media/$ref');
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2MediaResource.fromJson(
+            resp.data as Map<String, dynamic>,);
       }
-
-      Map<String, dynamic> data = <String, dynamic>{};
-      if (rawData is Map) {
-        data = Map<String, dynamic>.from(rawData);
-      } else if (rawData is List && rawData.isNotEmpty) {
-        final dynamic first = rawData.first;
-        if (first is Map) {
-          data = Map<String, dynamic>.from(first);
-        }
-      }
-
-      if (data.containsKey('data')) {
-        if (data['data'] is Map) {
-          data = Map<String, dynamic>.from(data['data'] as Map);
-        } else if (data['data'] is List && (data['data'] as List).isNotEmpty) {
-          final dynamic first = (data['data'] as List).first;
-          if (first is Map) {
-            data = Map<String, dynamic>.from(first);
-          }
-        }
-      }
-
-      double parseDouble(dynamic value) {
-        if (value == null) return 0.0;
-        if (value is num) return value.toDouble();
-        if (value is String) return double.tryParse(value) ?? 0.0;
-        return 0.0;
-      }
-
-      int parseInt(dynamic value) {
-        if (value == null) return 0;
-        if (value is num) return value.toInt();
-        if (value is String) return int.tryParse(value) ?? 0;
-        return 0;
-      }
-
-      final int activeStreams =
-          parseInt(data['activeStreams'] ?? data['active_streams']);
-      final int todayPlays =
-          parseInt(data['todayPlays'] ?? data['today_plays']);
-      final int todaySessions =
-          parseInt(data['todaySessions'] ?? data['today_sessions']);
-      final double watchTimeHours =
-          parseDouble(data['watchTimeHours'] ?? data['watch_time_hours']);
-      final int alertsLast24h =
-          parseInt(data['alertsLast24h'] ?? data['alerts_last_24h']);
-      final int activeUsersToday =
-          parseInt(data['activeUsersToday'] ?? data['active_users_today']);
-
-      final TracearrDashboardStats stats = TracearrDashboardStats(
-        activeStreams: activeStreams,
-        todayPlays: todayPlays,
-        todaySessions: todaySessions,
-        watchTimeHours: watchTimeHours,
-        alertsLast24h: alertsLast24h,
-        activeUsersToday: activeUsersToday,
-      );
-
-      return stats;
+      return null;
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
       throw NetworkException.fromDio(e);
-    } catch (e) {
-      throw Exception('Failed to fetch dashboard stats: $e');
     }
   }
 
-  Future<TracearrLibraryWatchResponse> getLibraryWatchItems({
-    required List<String> serverIds,
-    int page = 1,
-    int pageSize = 20,
+  // ---------------------------------------------------------------------------
+  // Endpoint 5: GET /api/v2/public/media/{ref}/children - Media children
+  // ---------------------------------------------------------------------------
+
+  /// Retrieves child media items (GET /api/v2/public/media/{ref}/children).
+  Future<TracearrV2MediaChildrenResponse> getMediaChildren(String ref) async {
+    try {
+      final Response<dynamic> resp =
+          await _dio.get<dynamic>('api/v2/public/media/$ref/children');
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2MediaChildrenResponse.fromJson(
+            resp.data as Map<String, dynamic>,);
+      }
+      return const TracearrV2MediaChildrenResponse();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return const TracearrV2MediaChildrenResponse();
+      }
+      throw NetworkException.fromDio(e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Endpoint 6: GET /api/v2/public/media/{ref}/stats - Media play statistics
+  // ---------------------------------------------------------------------------
+
+  /// Retrieves play statistics for a media item (GET /api/v2/public/media/{ref}/stats).
+  Future<TracearrV2MediaStatsResponse?> getMediaStats(String ref) async {
+    try {
+      final Response<dynamic> resp =
+          await _dio.get<dynamic>('api/v2/public/media/$ref/stats');
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2MediaStatsResponse.fromJson(
+            resp.data as Map<String, dynamic>,);
+      }
+      return null;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      throw NetworkException.fromDio(e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Endpoint 7: GET /api/v2/public/media/{ref}/watchers - Media watchers
+  // ---------------------------------------------------------------------------
+
+  /// Retrieves media watchers (GET /api/v2/public/media/{ref}/watchers).
+  Future<TracearrV2MediaWatchersResponse> getMediaWatchers(
+    String ref, {
+    String? window,
+    String? serverId,
   }) async {
     try {
       final Map<String, dynamic> query = <String, dynamic>{
-        'serverIds': serverIds,
-        'page': page,
+        if (window != null && window.isNotEmpty) 'window': window,
+        if (serverId != null && serverId.isNotEmpty) 'server_id': serverId,
+      };
+      final Response<dynamic> resp = await _dio.get<dynamic>(
+        'api/v2/public/media/$ref/watchers',
+        queryParameters: query,
+      );
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2MediaWatchersResponse.fromJson(
+            resp.data as Map<String, dynamic>,);
+      }
+      return TracearrV2MediaWatchersResponse(mediaId: ref, mediaType: 'movie');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return TracearrV2MediaWatchersResponse(mediaId: ref, mediaType: 'movie');
+      }
+      throw NetworkException.fromDio(e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Endpoint 8: GET /api/v2/public/media/{ref}/history - Media watch history
+  // ---------------------------------------------------------------------------
+
+  /// Retrieves watch history for a single media item (GET /api/v2/public/media/{ref}/history).
+  Future<TracearrV2HistoryResponse> getMediaHistory(
+    String ref, {
+    String? cursor,
+    int pageSize = 25,
+  }) async {
+    try {
+      final Map<String, dynamic> query = <String, dynamic>{
         'pageSize': pageSize,
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
       };
-
-      final Response<dynamic> res = await _dio.get<dynamic>(
-        'api/v1/library/watch',
+      final Response<dynamic> resp = await _dio.get<dynamic>(
+        'api/v2/public/media/$ref/history',
         queryParameters: query,
-        options: Options(listFormat: ListFormat.multi),
       );
-
-      dynamic rawData = res.data;
-      if (rawData is String) {
-        try {
-          rawData = jsonDecode(rawData);
-        } catch (_) {}
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2HistoryResponse.fromJson(
+            resp.data as Map<String, dynamic>,);
       }
-
-      Map<String, dynamic> jsonMap = <String, dynamic>{};
-      if (rawData is Map) {
-        jsonMap = Map<String, dynamic>.from(rawData);
-      }
-
-      return TracearrLibraryWatchResponse.fromJson(jsonMap);
+      return const TracearrV2HistoryResponse();
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return const TracearrV2HistoryResponse();
+      }
       throw NetworkException.fromDio(e);
-    } catch (e) {
-      throw Exception('Failed to fetch library watch items: $e');
     }
   }
 
-  Future<TracearrLibraryRoiResponse> getLibraryRoiItems({
-    required List<String> serverIds,
-    int page = 1,
-    int pageSize = 10,
-    String sortBy = 'watch_hours_per_gb',
-    String sortOrder = 'desc',
-    required String timezone,
+  // ---------------------------------------------------------------------------
+  // Endpoint 9: GET /api/v2/public/users - Identities with account correlation
+  // ---------------------------------------------------------------------------
+
+  /// Retrieves user list (GET /api/v2/public/users).
+  Future<TracearrV2UsersResponse> getV2Users({
+    String? cursor,
+    int pageSize = 25,
+    bool includeRemoved = false,
   }) async {
     try {
       final Map<String, dynamic> query = <String, dynamic>{
-        'serverIds': serverIds,
-        'page': page,
         'pageSize': pageSize,
-        'sortBy': sortBy,
-        'sortOrder': sortOrder,
-        'timezone': timezone,
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+        if (includeRemoved) 'include_removed': true,
       };
-
-      final Response<dynamic> res = await _dio.get<dynamic>(
-        'api/v1/library/roi',
+      final Response<dynamic> resp = await _dio.get<dynamic>(
+        'api/v2/public/users',
         queryParameters: query,
-        options: Options(listFormat: ListFormat.multi),
       );
-
-      dynamic rawData = res.data;
-      if (rawData is String) {
-        try {
-          rawData = jsonDecode(rawData);
-        } catch (_) {}
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2UsersResponse.fromJson(
+            resp.data as Map<String, dynamic>,);
       }
-
-      Map<String, dynamic> jsonMap = <String, dynamic>{};
-      if (rawData is Map) {
-        jsonMap = Map<String, dynamic>.from(rawData);
-      }
-
-      return TracearrLibraryRoiResponse.fromJson(jsonMap);
+      return const TracearrV2UsersResponse();
     } on DioException catch (e) {
       throw NetworkException.fromDio(e);
-    } catch (e) {
-      throw Exception('Failed to fetch library ROI items: $e');
     }
   }
 
-  Future<TracearrStorageResponse> getLibraryStorage(
-    String serverId,
-    String period,
-    String timezone,
-  ) async {
+  // ---------------------------------------------------------------------------
+  // Endpoint 10: GET /api/v2/public/users/{id} - One identity
+  // ---------------------------------------------------------------------------
+
+  /// Resolves a single Tracearr identity by ID (GET /api/v2/public/users/{id}).
+  Future<TracearrV2UserIdentity?> getUserById(String id) async {
     try {
-      String formattedPeriod = period;
-      if (formattedPeriod == 'month' || formattedPeriod == '30d') {
-        formattedPeriod = '30d';
-      } else if (formattedPeriod == 'week' || formattedPeriod == '7d') {
-        formattedPeriod = '7d';
-      } else if (formattedPeriod == 'year' ||
-          formattedPeriod == '1yr' ||
-          formattedPeriod == '1y') {
-        formattedPeriod = '1y';
-      } else if (formattedPeriod.toLowerCase() == 'all') {
-        formattedPeriod = 'all';
-      } else if (formattedPeriod == 'custom') {
-        formattedPeriod = '30d';
+      final Response<dynamic> resp =
+          await _dio.get<dynamic>('api/v2/public/users/$id');
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2UserIdentity.fromJson(
+            resp.data as Map<String, dynamic>,);
       }
-
-      final Map<String, dynamic> query = <String, dynamic>{
-        'serverId': serverId,
-        'period': formattedPeriod,
-        'timezone': timezone,
-      };
-      final Response<dynamic> res = await _dio.get<dynamic>(
-        'api/v1/library/storage',
-        queryParameters: query,
-      );
-
-      dynamic rawData = res.data;
-      if (rawData is String) {
-        try {
-          rawData = jsonDecode(rawData);
-        } catch (_) {}
-      }
-
-      Map<String, dynamic> jsonMap = <String, dynamic>{};
-      if (rawData is Map) {
-        jsonMap = Map<String, dynamic>.from(rawData);
-      }
-
-      return TracearrStorageResponse.fromJson(jsonMap);
+      return null;
     } on DioException catch (e) {
       throw NetworkException.fromDio(e);
-    } catch (e) {
-      throw Exception(
-        'Failed to fetch library storage stats for server $serverId: $e',
-      );
     }
   }
 
-  Future<TracearrStorageResponse> getAggregatedLibraryStorage(
-    List<String> serverIds,
-    String period,
-    String timezone,
-  ) async {
-    if (serverIds.isEmpty) {
-      return TracearrStorageResponse.aggregate(<TracearrStorageResponse>[]);
+  // ---------------------------------------------------------------------------
+  // Endpoint 11: GET /api/v2/public/users/{id}/stats - Identity play statistics
+  // ---------------------------------------------------------------------------
+
+  /// Retrieves user stats (GET /api/v2/public/users/{id}/stats).
+  Future<TracearrV2UserStatsResponse?> getUserStats(String userId) async {
+    try {
+      final Response<dynamic> resp =
+          await _dio.get<dynamic>('api/v2/public/users/$userId/stats');
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2UserStatsResponse.fromJson(
+            resp.data as Map<String, dynamic>,);
+      }
+      return null;
+    } on DioException catch (e) {
+      throw NetworkException.fromDio(e);
     }
-    final List<TracearrStorageResponse> responses = <TracearrStorageResponse>[];
-    await Future.wait(
-      serverIds.map((String id) async {
-        try {
-          final TracearrStorageResponse res =
-              await getLibraryStorage(id, period, timezone);
-          responses.add(res);
-        } catch (_) {
-          // Ignore individual server storage failures so indexed servers still render
-        }
-      }),
-    );
-    return TracearrStorageResponse.aggregate(responses);
   }
 
-  Future<Map<String, TracearrStorageResponse>> getMultiServerLibraryStorage(
-    List<String> serverIds,
-    String period,
-    String timezone,
-  ) async {
-    final Map<String, TracearrStorageResponse> result =
-        <String, TracearrStorageResponse>{};
-    if (serverIds.isEmpty) return result;
-    await Future.wait(
-      serverIds.map((String id) async {
-        try {
-          final TracearrStorageResponse res =
-              await getLibraryStorage(id, period, timezone);
-          result[id] = res;
-        } catch (_) {
-          // Ignore failures from inactive/unindexed servers
-        }
-      }),
-    );
-    return result;
-  }
+  // ---------------------------------------------------------------------------
+  // Endpoint 12: GET /api/v2/public/users/{id}/history - Identity watch history
+  // ---------------------------------------------------------------------------
 
-  Future<TracearrTopMoviesResponse> getTopMovies({
-    required List<String> serverIds,
-    String period = '30d',
-    String sortBy = 'plays',
-    String sortOrder = 'desc',
-    int page = 1,
-    int pageSize = 10,
+  /// Retrieves watch history for a single identity (GET /api/v2/public/users/{id}/history).
+  Future<TracearrV2HistoryResponse> getUserHistory(
+    String userId, {
+    String? cursor,
+    int pageSize = 25,
   }) async {
     try {
       final Map<String, dynamic> query = <String, dynamic>{
-        'serverIds': serverIds,
-        'period': period,
-        'sortBy': sortBy,
-        'sortOrder': sortOrder,
-        'page': page,
         'pageSize': pageSize,
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
       };
-
-      final Response<dynamic> res = await _dio.get<dynamic>(
-        'api/v1/library/top-movies',
+      final Response<dynamic> resp = await _dio.get<dynamic>(
+        'api/v2/public/users/$userId/history',
         queryParameters: query,
-        options: Options(listFormat: ListFormat.multi),
       );
-
-      dynamic rawData = res.data;
-      if (rawData is String) {
-        try {
-          rawData = jsonDecode(rawData);
-        } catch (_) {}
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2HistoryResponse.fromJson(
+            resp.data as Map<String, dynamic>,);
       }
-      Map<String, dynamic> jsonMap = <String, dynamic>{};
-      if (rawData is Map) {
-        jsonMap = Map<String, dynamic>.from(rawData);
-      }
-      return TracearrTopMoviesResponse.fromJson(jsonMap);
+      return const TracearrV2HistoryResponse();
     } on DioException catch (e) {
       throw NetworkException.fromDio(e);
-    } catch (e) {
-      throw Exception('Failed to fetch top movies: $e');
     }
   }
 
-  Future<TracearrTopShowsResponse> getTopShows({
-    required List<String> serverIds,
-    String period = '30d',
-    String sortBy = 'plays',
-    String sortOrder = 'desc',
-    int page = 1,
-    int pageSize = 10,
+  // ---------------------------------------------------------------------------
+  // Endpoint 13: GET /api/v2/public/recently-added - Recently added items
+  // ---------------------------------------------------------------------------
+
+  /// Retrieves recently added media (GET /api/v2/public/recently-added).
+  Future<TracearrV2RecentlyAddedResponse> getV2RecentlyAdded({
+    int pageSize = 25,
+    String? cursor,
+    String? serverId,
+    String? libraryId,
+    String? mediaType,
+    bool includeRemoved = false,
   }) async {
     try {
       final Map<String, dynamic> query = <String, dynamic>{
-        'serverIds': serverIds,
-        'period': period,
-        'sortBy': sortBy,
-        'sortOrder': sortOrder,
-        'page': page,
         'pageSize': pageSize,
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+        if (serverId != null && serverId.isNotEmpty) 'server_id': serverId,
+        if (libraryId != null && libraryId.isNotEmpty) 'library_id': libraryId,
+        if (mediaType != null && mediaType.isNotEmpty) 'media_type': mediaType,
+        if (includeRemoved) 'include_removed': true,
       };
-
-      final Response<dynamic> res = await _dio.get<dynamic>(
-        'api/v1/library/top-shows',
+      final Response<dynamic> resp = await _dio.get<dynamic>(
+        'api/v2/public/recently-added',
         queryParameters: query,
-        options: Options(listFormat: ListFormat.multi),
       );
-
-      dynamic rawData = res.data;
-      if (rawData is String) {
-        try {
-          rawData = jsonDecode(rawData);
-        } catch (_) {}
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2RecentlyAddedResponse.fromJson(
+            resp.data as Map<String, dynamic>,);
       }
-      Map<String, dynamic> jsonMap = <String, dynamic>{};
-      if (rawData is Map) {
-        jsonMap = Map<String, dynamic>.from(rawData);
-      }
-      return TracearrTopShowsResponse.fromJson(jsonMap);
+      return const TracearrV2RecentlyAddedResponse();
     } on DioException catch (e) {
       throw NetworkException.fromDio(e);
-    } catch (e) {
-      throw Exception('Failed to fetch top shows: $e');
     }
   }
 
-  Future<TracearrCompletionSummary> getAggregatedLibraryCompletion(
-    List<String> serverIds,
-  ) async {
-    final List<TracearrCompletionSummary> summaries =
-        <TracearrCompletionSummary>[];
-    await Future.wait(
-      serverIds.map((String serverId) async {
-        for (final String mediaType in <String>['movie', 'episode']) {
-          try {
-            final Map<String, dynamic> query = <String, dynamic>{
-              'serverId': serverId,
-              'aggregateLevel': 'item',
-              'page': 1,
-              'pageSize': 1,
-              'mediaType': mediaType,
-            };
-            final Response<dynamic> res = await _dio.get<dynamic>(
-              'api/v1/library/completion',
-              queryParameters: query,
-            );
-            if (res.statusCode == 200 && res.data != null) {
-              dynamic rawData = res.data;
-              if (rawData is String) {
-                try {
-                  rawData = jsonDecode(rawData);
-                } catch (_) {}
-              }
-              if (rawData is Map) {
-                final Map<String, dynamic> jsonMap =
-                    Map<String, dynamic>.from(rawData);
-                if (jsonMap['summary'] is Map) {
-                  summaries.add(
-                    TracearrCompletionSummary.fromJson(
-                      Map<String, dynamic>.from(jsonMap['summary'] as Map),
-                    ),
-                  );
-                }
-              }
-            }
-          } catch (_) {
-            // ignore
-          }
-        }
-      }),
-    );
-    return TracearrCompletionSummary.aggregate(summaries);
-  }
+  // ---------------------------------------------------------------------------
+  // Endpoint 14: GET /api/v2/public/libraries - Per-library rollups
+  // ---------------------------------------------------------------------------
 
-  Future<TracearrPatternsResponse> getLibraryPatterns({
-    required List<String> serverIds,
-    int periodWeeks = 12,
-    required String timezone,
-  }) async {
+  /// Retrieves media libraries (GET /api/v2/public/libraries).
+  Future<TracearrV2LibrariesResponse> getV2Libraries() async {
     try {
-      final Map<String, dynamic> query = <String, dynamic>{
-        'serverIds': serverIds,
-        'periodWeeks': periodWeeks,
-        'timezone': timezone,
-      };
-
-      final Response<dynamic> res = await _dio.get<dynamic>(
-        'api/v1/library/patterns',
-        queryParameters: query,
-        options: Options(listFormat: ListFormat.multi),
-      );
-
-      dynamic rawData = res.data;
-      if (rawData is String) {
-        try {
-          rawData = jsonDecode(rawData);
-        } catch (_) {}
+      final Response<dynamic> resp =
+          await _dio.get<dynamic>('api/v2/public/libraries');
+      if (resp.data is Map<String, dynamic>) {
+        return TracearrV2LibrariesResponse.fromJson(
+            resp.data as Map<String, dynamic>,);
       }
-      Map<String, dynamic> jsonMap = <String, dynamic>{};
-      if (rawData is Map) {
-        jsonMap = Map<String, dynamic>.from(rawData);
-      }
-      return TracearrPatternsResponse.fromJson(jsonMap);
+      return const TracearrV2LibrariesResponse();
     } on DioException catch (e) {
       throw NetworkException.fromDio(e);
-    } catch (e) {
-      throw Exception('Failed to fetch library patterns: $e');
     }
   }
 }

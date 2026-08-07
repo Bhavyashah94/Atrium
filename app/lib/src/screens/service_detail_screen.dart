@@ -110,57 +110,10 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                 );
               },
             ),
-            title: instance.kind == ServiceKind.emby
-                ? TextField(
-                    readOnly: true,
-                    onTap: () {
-                      showSearch<void>(
-                        context: context,
-                        useRootNavigator: true,
-                        delegate: EmbySearchDelegate(instance: instance),
-                      );
-                    },
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 16,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSecondaryContainer,
-                        ),
-                    decoration: InputDecoration(
-                      hintText: 'Search Emby...',
-                      hintStyle:
-                          Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                fontSize: 16,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSecondaryContainer
-                                    .withValues(alpha: 0.7),
-                              ),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color:
-                            Theme.of(context).colorScheme.onSecondaryContainer,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 10.0,
-                        horizontal: 20.0,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(32),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(32),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor:
-                          Theme.of(context).colorScheme.secondaryContainer,
-                    ),
-                  )
-                : Text(instance.name),
+            title: Text(instance.name),
             actions: <Widget>[
-              if (instance.kind == ServiceKind.jellyfin ||
+              if (instance.kind == ServiceKind.emby ||
+                  instance.kind == ServiceKind.jellyfin ||
                   instance.kind == ServiceKind.plex ||
                   instance.kind == ServiceKind.seerr)
                 IconButton(

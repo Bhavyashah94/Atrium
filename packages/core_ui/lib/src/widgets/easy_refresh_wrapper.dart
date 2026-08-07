@@ -80,7 +80,8 @@ class ClampingERScrollPhysics extends material.ScrollPhysics {
   double applyBoundaryConditions(
       material.ScrollMetrics position, double value,) {
     // If dragging or already out of range, let the delegate handle it.
-    if (_activeDrags.contains(position) || position.outOfRange) {
+    if (_activeDrags.contains(position) ||
+        (position.hasContentDimensions && position.outOfRange)) {
       return _delegate.applyBoundaryConditions(position, value);
     }
 
@@ -96,7 +97,7 @@ class ClampingERScrollPhysics extends material.ScrollPhysics {
   ) {
     _activeDrags.remove(position);
 
-    if (position.outOfRange) {
+    if (position.hasContentDimensions && position.outOfRange) {
       return _delegate.createBallisticSimulation(position, velocity);
     }
 

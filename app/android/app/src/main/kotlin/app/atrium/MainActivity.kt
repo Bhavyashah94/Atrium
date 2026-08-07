@@ -18,6 +18,10 @@ class MainActivity : FlutterFragmentActivity() {
     // sent to the wrong app), and reading it would just stall the UI.
     private val MAX_TORRENT_BYTES = 10 * 1024 * 1024
 
+    // A batch this size is already unusual; anything beyond it is a mis-share
+    // and reading it would block the UI thread for a long time.
+    private val MAX_BATCH_FILES = 200
+
     private var shareChannel: MethodChannel? = null
 
     // The intent Atrium was launched with, held until Dart asks for it. Dart
@@ -120,8 +124,56 @@ class MainActivity : FlutterFragmentActivity() {
                     if (uri == null) null else filePayload(uri)
                 }
             }
+            Intent.ACTION_SEND_MULTIPLE -> {
+                val uris = streamUris(intent).ifEmpty { clipUris(intent) }
+                if (uris.isEmpty()) null else filesPayload(uris)
+            }
             else -> null
         }
+    }
+
+    /// Reads a batch of shared torrents.
+    ///
+    /// One unreadable file does not sink the whole batch: it is counted and the
+    /// rest still go through, because losing 49 torrents because the 50th was
+    /// odd would be worse than telling the user one was skipped.
+    private fun filesPayload(uris: List<Uri>): Map<String, Any?> {
+        val items = ArrayList<Map<String, Any?>>()
+        var skipped = 0
+        for (uri in uris.take(MAX_BATCH_FILES)) {
+            val one = filePayload(uri)
+            if (one["kind"] == "file") {
+                items.add(mapOf("name" to one["name"], "bytes" to one["bytes"]))
+            } else {
+                skipped++
+            }
+        }
+        if (items.isEmpty()) return mapOf("kind" to "unreadable")
+        return mapOf(
+            "kind" to "files",
+            "items" to items,
+            "skipped" to skipped,
+            "dropped" to maxOf(0, uris.size - MAX_BATCH_FILES),
+        )
+    }
+
+    private fun streamUris(intent: Intent): List<Uri> =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+        } ?: emptyList()
+
+    /// Every URI on the clip. Share sheets put the files here as well as in
+    /// EXTRA_STREAM, and only the clip carries the read grant.
+    private fun clipUris(intent: Intent): List<Uri> {
+        val clip = intent.clipData ?: return emptyList()
+        val out = ArrayList<Uri>(clip.itemCount)
+        for (i in 0 until clip.itemCount) {
+            clip.getItemAt(i)?.uri?.let { out.add(it) }
+        }
+        return out
     }
 
     /// Reads a content:// URI into bytes. The read grant belongs to this

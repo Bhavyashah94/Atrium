@@ -108,7 +108,8 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.bazarr ||
         ServiceKind.seerr ||
         ServiceKind.tautulli ||
-        ServiceKind.sabnzbd =>
+        ServiceKind.sabnzbd ||
+        ServiceKind.tracearr =>
           AuthStyle.apiKey,
         // Transmission and rTorrent both use HTTP Basic, and for both it is
         // *optional* - rTorrent's XML-RPC has no auth of its own and is only
@@ -118,8 +119,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.emby ||
         ServiceKind.nzbget ||
         ServiceKind.transmission ||
-        ServiceKind.rtorrent ||
-        ServiceKind.tracearr =>
+        ServiceKind.rtorrent =>
           AuthStyle.userPass,
         ServiceKind.plex => AuthStyle.plexToken,
         // Deluge's Web UI takes a password with no username; it is still a
