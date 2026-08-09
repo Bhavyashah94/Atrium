@@ -285,7 +285,9 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
                 for (final ServiceKind k in ServiceKind.values)
                   DropdownMenuEntry<ServiceKind>(
                     value: k,
-                    label: '${k.displayName} - ${k.tagline}',
+                    label: k.isBeta
+                        ? '${k.displayName} - ${k.tagline} (Beta)'
+                        : '${k.displayName} - ${k.tagline}',
                     leadingIcon: _buildServiceIcon(k),
                   ),
               ],

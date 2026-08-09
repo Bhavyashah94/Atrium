@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:core_ui/core_ui.dart' show BetaBadge, Insets;
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,7 +56,16 @@ class _TracearrDashboardTabState extends ConsumerState<TracearrDashboardTab> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Text('Dashboard'),
+            if (widget.instance.kind.isBeta) ...<Widget>[
+              const SizedBox(width: Insets.sm),
+              const BetaBadge(),
+            ],
+          ],
+        ),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.refresh),

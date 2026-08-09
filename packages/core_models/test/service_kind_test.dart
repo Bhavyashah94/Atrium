@@ -57,6 +57,12 @@ void main() {
     expect(ServiceKind.tracearr.defaultPort, 3000);
   });
 
+  test('Tracearr is flagged beta; stable services are not', () {
+    expect(ServiceKind.tracearr.isBeta, isTrue);
+    expect(ServiceKind.sonarr.isBeta, isFalse);
+    expect(ServiceKind.qbittorrent.isBeta, isFalse);
+  });
+
   test('existing services retain their default ports', () {
     expect(ServiceKind.sonarr.defaultPort, 8989);
     expect(ServiceKind.glances.defaultPort, 61208);

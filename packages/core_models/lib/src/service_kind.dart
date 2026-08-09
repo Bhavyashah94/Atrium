@@ -73,6 +73,14 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.tracearr => 'Stream monitoring',
       };
 
+  /// Whether this service's integration is still in beta. Surfaced as a
+  /// "BETA" badge in the service picker, on the instance tile, and on the
+  /// service's own screen so users know it is not yet fully stable.
+  bool get isBeta => switch (this) {
+        ServiceKind.tracearr => true,
+        _ => false,
+      };
+
   /// Vendor-default port. Used as a hint when the user is entering a URL
   /// without one.
   int? get defaultPort => switch (this) {
