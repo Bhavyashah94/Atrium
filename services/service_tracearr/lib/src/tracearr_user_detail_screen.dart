@@ -848,7 +848,7 @@ class _UserWatchHistorySection extends StatelessWidget {
                       : theme.colorScheme.tertiary,
                 ),
                 onTap: mediaRef != null
-                    ? () => Navigator.of(context).push(
+                    ? () => Navigator.of(context, rootNavigator: true).push(
                           MaterialPageRoute<void>(
                             builder: (_) => TracearrV2MediaDetailScreen(
                               instance: instance,

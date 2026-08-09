@@ -377,7 +377,7 @@ class _RecentlyAddedPosterCard extends ConsumerWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: mediaRef != null
-            ? () => Navigator.of(context).push(
+            ? () => Navigator.of(context, rootNavigator: true).push(
                   MaterialPageRoute<void>(
                     builder: (_) => TracearrV2MediaDetailScreen(
                       instance: instance,
@@ -588,7 +588,7 @@ class _RecentlyAddedListTile extends ConsumerWidget {
         ),
         trailing: const Icon(Icons.chevron_right),
         onTap: mediaRef != null
-            ? () => Navigator.of(context).push(
+            ? () => Navigator.of(context, rootNavigator: true).push(
                   MaterialPageRoute<void>(
                     builder: (_) => TracearrV2MediaDetailScreen(
                       instance: instance,

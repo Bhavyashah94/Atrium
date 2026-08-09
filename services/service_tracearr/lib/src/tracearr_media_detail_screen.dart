@@ -1229,7 +1229,7 @@ class _MediaWatchersPreviewSection extends ConsumerWidget {
                     '$plays ${plays == 1 ? "play" : "plays"}${watchTimeText.isNotEmpty ? " • $watchTimeText" : ""}',
                   ),
                   onTap: userId != null
-                      ? () => Navigator.of(context).push(
+                      ? () => Navigator.of(context, rootNavigator: true).push(
                             MaterialPageRoute<void>(
                               builder: (_) => TracearrV2UserDetailScreen(
                                 instance: instance,
@@ -1533,7 +1533,7 @@ class _AllWatchersBottomSheet extends StatelessWidget {
                     onTap: userId != null
                         ? () {
                             Navigator.of(context).pop();
-                            Navigator.of(context).push(
+                            Navigator.of(context, rootNavigator: true).push(
                               MaterialPageRoute<void>(
                                 builder: (_) => TracearrV2UserDetailScreen(
                                   instance: instance,

@@ -383,7 +383,7 @@ class _UserAccountTile extends ConsumerWidget {
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
           if (user.id != null) {
-            Navigator.of(context).push(
+            Navigator.of(context, rootNavigator: true).push(
               MaterialPageRoute<void>(
                 builder: (_) => TracearrV2UserDetailScreen(
                   instance: instance,
