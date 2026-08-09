@@ -122,3 +122,10 @@ deno.lock
 .dart_skills/
 scratch/
 skills-lock.json
+
+beszel/
+
+# Graphify
+.venv/
+graphify-out/
+.claude/
