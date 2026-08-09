@@ -71,6 +71,15 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
         ),
       );
     }
+    if (instance.kind == ServiceKind.tracearr) {
+      return TracearrHome(
+        instance: instance,
+        drawer: ServicesDrawer(
+          instances: ref.watch(activeInstancesProvider),
+          profile: ref.watch(activeProfileProvider),
+        ),
+      );
+    }
     return PopScope<Object?>(
         canPop: false,
         onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -189,9 +198,10 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
 
   Widget _bodyFor(Instance instance) {
     return switch (instance.kind) {
-      // Sonarr and Radarr never reach here: build() returns early.
+      // Sonarr, Radarr, and Tracearr never reach here: build() returns early.
       ServiceKind.sonarr => const SizedBox.shrink(),
       ServiceKind.radarr => const SizedBox.shrink(),
+      ServiceKind.tracearr => const SizedBox.shrink(),
       ServiceKind.prowlarr => ProwlarrHome(instance: instance),
       ServiceKind.bazarr => BazarrHome(instance: instance),
       ServiceKind.seerr => SeerrHome(instance: instance),
@@ -200,7 +210,6 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       ServiceKind.emby => EmbyHome(instance: instance),
       ServiceKind.plex => PlexHome(instance: instance),
       ServiceKind.qbittorrent => QbittorrentHome(instance: instance),
-      ServiceKind.tracearr => TracearrHome(instance: instance),
       ServiceKind.sabnzbd => SabnzbdHome(instance: instance),
       ServiceKind.nzbget => NzbgetHome(instance: instance),
       ServiceKind.deluge => DelugeHome(instance: instance),
