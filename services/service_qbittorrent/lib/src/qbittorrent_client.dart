@@ -409,6 +409,38 @@ class QbittorrentClient {
         );
       });
 
+  Future<void> removeTags(List<String> hashes, String tags) =>
+      _guarded(() async {
+        await _dio.post<dynamic>(
+          'api/v2/torrents/removeTags',
+          data: <String, dynamic>{'hashes': hashes.join('|'), 'tags': tags},
+          options: Options(contentType: Headers.formUrlEncodedContentType),
+        );
+      });
+
+  /// Creates tags so they exist on the server even before any torrent uses
+  /// them. addTags implicitly creates unknown tags too, but calling this first
+  /// keeps a freshly-typed tag in the picker list.
+  Future<void> createTags(String tags) => _guarded(() async {
+        await _dio.post<dynamic>(
+          'api/v2/torrents/createTags',
+          data: <String, dynamic>{'tags': tags},
+          options: Options(contentType: Headers.formUrlEncodedContentType),
+        );
+      });
+
+  /// Every tag defined on the instance (GET /api/v2/torrents/tags returns a
+  /// bare JSON array of strings).
+  Future<List<String>> getTags() => _guarded(() async {
+        final Response<dynamic> resp =
+            await _dio.get<dynamic>('api/v2/torrents/tags');
+        final dynamic data = resp.data;
+        if (data is List) {
+          return data.map((dynamic e) => e.toString()).toList();
+        }
+        return <String>[];
+      });
+
   Future<Uint8List> exportTorrent(String hash) => _guarded(() async {
         final Response<List<int>> resp = await _dio.get<List<int>>(
           'api/v2/torrents/export',

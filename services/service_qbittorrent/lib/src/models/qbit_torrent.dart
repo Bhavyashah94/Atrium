@@ -35,6 +35,9 @@ abstract class QbitTorrent with _$QbitTorrent {
     @Default(8640000) int eta,
     @JsonKey(name: 'magnet_uri') @Default('') String magnetUri,
     @Default('') String category,
+
+    /// Comma-separated tag list, exactly as qBittorrent returns it.
+    @Default('') String tags,
     @Default(0) double ratio,
     @JsonKey(name: 'num_seeds') @Default(0) int numSeeds,
     @JsonKey(name: 'num_leechs') @Default(0) int numLeechs,

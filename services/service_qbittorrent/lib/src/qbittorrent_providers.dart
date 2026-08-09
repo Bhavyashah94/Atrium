@@ -140,6 +140,8 @@ final qbitFilterStatusProvider = StateProvider.autoDispose
     .family<String?, Instance>((ref, instance) => null);
 final qbitFilterCategoryProvider = StateProvider.autoDispose
     .family<String?, Instance>((ref, instance) => null);
+final qbitFilterTagProvider = StateProvider.autoDispose
+    .family<String?, Instance>((ref, instance) => null);
 
 /// Whether a torrent belongs to the given status filter bucket.
 ///
@@ -185,6 +187,27 @@ bool qbitStatusMatches(String status, QbitTorrent t) {
   }
 }
 
+/// Splits qBittorrent's comma-separated `tags` string into trimmed,
+/// non-empty tag names. qBit joins tags with ", ", so trimming matters.
+List<String> qbitParseTags(String tags) => tags
+    .split(',')
+    .map((String s) => s.trim())
+    .where((String s) => s.isNotEmpty)
+    .toList();
+
+/// Whether a torrent belongs to the given tag filter bucket.
+///
+/// 'untagged' matches torrents carrying no tags; any other value matches
+/// torrents that carry that exact tag. Shared by the list provider and the
+/// filter drawer counts.
+bool qbitTagMatches(String tag, QbitTorrent t) {
+  final List<String> tags = qbitParseTags(t.tags);
+  if (tag == 'untagged') {
+    return tags.isEmpty;
+  }
+  return tags.contains(tag);
+}
+
 /// All torrents for an instance, sorted by the active [qbitSortProvider].
 /// Polls every [qbitListPollInterval] while watched; stops when the screen
 /// goes away (autoDispose).
@@ -215,6 +238,7 @@ final qbitTorrentsProvider = Provider.autoDispose
   final String? statusFilter = ref.watch(qbitFilterStatusProvider(instance));
   final String? categoryFilter =
       ref.watch(qbitFilterCategoryProvider(instance));
+  final String? tagFilter = ref.watch(qbitFilterTagProvider(instance));
 
   return rawAsync.whenData((List<QbitTorrent> raw) {
     final List<QbitTorrent> torrents = List<QbitTorrent>.of(raw);
@@ -237,6 +261,10 @@ final qbitTorrentsProvider = Provider.autoDispose
       } else {
         torrents.retainWhere((QbitTorrent t) => t.category == categoryFilter);
       }
+    }
+
+    if (tagFilter != null) {
+      torrents.retainWhere((QbitTorrent t) => qbitTagMatches(tagFilter, t));
     }
 
     torrents.sort((QbitTorrent a, QbitTorrent b) {
@@ -307,6 +335,17 @@ final qbitCategoriesProvider =
   final QbittorrentClient client =
       await ref.watch(qbittorrentClientProvider(instance).future);
   return client.getCategories();
+});
+
+/// Tag names defined on an instance. Fetched on demand for the tag picker.
+final qbitTagsProvider =
+    FutureProvider.autoDispose.family<List<String>, Instance>((
+  Ref ref,
+  Instance instance,
+) async {
+  final QbittorrentClient client =
+      await ref.watch(qbittorrentClientProvider(instance).future);
+  return client.getTags();
 });
 
 /// Detailed properties for one torrent, keyed by (instance, hash).

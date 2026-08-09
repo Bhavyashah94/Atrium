@@ -13,9 +13,12 @@ class QbittorrentFilterDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statusFilter = ref.watch(qbitFilterStatusProvider(instance));
     final categoryFilter = ref.watch(qbitFilterCategoryProvider(instance));
+    final tagFilter = ref.watch(qbitFilterTagProvider(instance));
 
     final AsyncValue<List<String>> categoriesAsync =
         ref.watch(qbitCategoriesProvider(instance));
+    final AsyncValue<List<String>> tagsAsync =
+        ref.watch(qbitTagsProvider(instance));
     final AsyncValue<List<QbitTorrent>> rawTorrentsAsync =
         ref.watch(qbitRawTorrentsProvider(instance));
 
@@ -30,6 +33,10 @@ class QbittorrentFilterDrawer extends ConsumerWidget {
         return torrents.where((t) => t.category.isEmpty).length;
       }
       return torrents.where((t) => t.category == category).length;
+    }
+
+    int getTagCount(String tag, List<QbitTorrent> torrents) {
+      return torrents.where((QbitTorrent t) => qbitTagMatches(tag, t)).length;
     }
 
     return Drawer(
@@ -176,6 +183,53 @@ class QbittorrentFilterDrawer extends ConsumerWidget {
                                 qbitFilterCategoryProvider(instance).notifier,
                               )
                               .state = cat;
+                        },
+                      ),
+                    ),
+                    orElse: () => [],
+                  ),
+                ],
+              ),
+              ExpansionTile(
+                initiallyExpanded: true,
+                title: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Text('Tags'),
+                ),
+                shape: const Border(),
+                collapsedShape: const Border(),
+                children: [
+                  _FilterTile(
+                    title: 'All Tags',
+                    count: torrents.length,
+                    icon: Icons.sell,
+                    isSelected: tagFilter == null,
+                    onTap: () {
+                      ref.read(qbitFilterTagProvider(instance).notifier).state =
+                          null;
+                    },
+                  ),
+                  _FilterTile(
+                    title: 'Untagged',
+                    count: getTagCount('untagged', torrents),
+                    icon: Icons.label_off,
+                    isSelected: tagFilter == 'untagged',
+                    onTap: () {
+                      ref.read(qbitFilterTagProvider(instance).notifier).state =
+                          'untagged';
+                    },
+                  ),
+                  ...tagsAsync.maybeWhen(
+                    data: (tags) => tags.map(
+                      (tag) => _FilterTile(
+                        title: tag,
+                        count: getTagCount(tag, torrents),
+                        icon: Icons.label,
+                        isSelected: tagFilter == tag,
+                        onTap: () {
+                          ref
+                              .read(qbitFilterTagProvider(instance).notifier)
+                              .state = tag;
                         },
                       ),
                     ),

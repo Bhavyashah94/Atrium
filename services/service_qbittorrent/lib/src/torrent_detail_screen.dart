@@ -628,6 +628,8 @@ class _OverviewTab extends ConsumerWidget {
                   if (p.comment.isNotEmpty) ('Comment', p.comment),
                 ],
               ),
+              const SizedBox(height: Insets.md),
+              _TagsCard(instance: instance, torrent: torrent),
               const SizedBox(height: Insets.xl),
             ],
           ),
@@ -720,6 +722,161 @@ class _SectionCard extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tags section on the Overview tab: current tags as removable chips plus an
+/// Add control that offers the instance's existing tags or a freshly typed one.
+class _TagsCard extends ConsumerWidget {
+  const _TagsCard({required this.instance, required this.torrent});
+
+  final Instance instance;
+  final QbitTorrent torrent;
+
+  List<String> get _tags => torrent.tags
+      .split(',')
+      .map((String t) => t.trim())
+      .where((String t) => t.isNotEmpty)
+      .toList();
+
+  Future<void> _apply(
+    BuildContext context,
+    WidgetRef ref,
+    Future<void> Function(QbittorrentClient c) action,
+  ) async {
+    try {
+      final QbittorrentClient client =
+          await ref.read(qbittorrentClientProvider(instance).future);
+      await action(client);
+      ref.invalidate(qbitRawTorrentsProvider(instance));
+      ref.invalidate(qbitTagsProvider(instance));
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Tag update failed: $e')),
+      );
+    }
+  }
+
+  Future<void> _addTag(BuildContext context, WidgetRef ref) async {
+    final List<String> all =
+        await ref.read(qbitTagsProvider(instance).future).catchError(
+              (Object _) => <String>[],
+            );
+    final Set<String> existing = _tags.toSet();
+    final List<String> available =
+        all.where((String t) => !existing.contains(t)).toList()..sort();
+    if (!context.mounted) return;
+    final TextEditingController ctrl = TextEditingController();
+    final String? chosen = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Add tag'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            TextField(
+              controller: ctrl,
+              autofocus: true,
+              decoration: const InputDecoration(hintText: 'New tag'),
+              onSubmitted: (String v) => Navigator.of(context).pop(v.trim()),
+            ),
+            if (available.isNotEmpty) ...<Widget>[
+              const SizedBox(height: Insets.md),
+              Wrap(
+                spacing: Insets.sm,
+                runSpacing: Insets.sm,
+                children: <Widget>[
+                  for (final String t in available)
+                    ActionChip(
+                      label: Text(t),
+                      onPressed: () => Navigator.of(context).pop(t),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(ctrl.text.trim()),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+    if (chosen == null || chosen.isEmpty) return;
+    if (!context.mounted) return;
+    await _apply(
+      context,
+      ref,
+      (QbittorrentClient c) => c.addTags(<String>[torrent.hash], chosen),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme cs = theme.colorScheme;
+    final List<String> tags = _tags;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(Insets.lg),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Tags',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () => _addTag(context, ref),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add'),
+              ),
+            ],
+          ),
+          const SizedBox(height: Insets.sm),
+          if (tags.isEmpty)
+            Text(
+              'No tags',
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: cs.onSurfaceVariant),
+            )
+          else
+            Wrap(
+              spacing: Insets.sm,
+              runSpacing: Insets.sm,
+              children: <Widget>[
+                for (final String t in tags)
+                  Chip(
+                    label: Text(t),
+                    onDeleted: () => _apply(
+                      context,
+                      ref,
+                      (QbittorrentClient c) =>
+                          c.removeTags(<String>[torrent.hash], t),
+                    ),
+                  ),
+              ],
             ),
         ],
       ),
@@ -1137,6 +1294,18 @@ class _TrackersTab extends ConsumerWidget {
                           ),
                         ],
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy, size: 18),
+                      tooltip: 'Copy tracker URL',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () async {
+                        await Clipboard.setData(ClipboardData(text: t.url));
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Tracker URL copied')),
+                        );
+                      },
                     ),
                   ],
                 ),
