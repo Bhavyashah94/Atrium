@@ -21,11 +21,38 @@ class BeszelHome extends ConsumerWidget {
       skipLoadingOnRefresh: true,
       data: (systems) {
         if (systems.isEmpty) {
-          return const Center(child: Text('No systems found'));
+          return EasyRefresh(
+            header: const ClassicHeader(
+              position: IndicatorPosition.locator,
+              dragText: 'Pull to refresh',
+              armedText: 'Release ready',
+              readyText: 'Refreshing...',
+              processingText: 'Refreshing...',
+              processedText: 'Succeeded',
+              failedText: 'Failed',
+              messageText: 'Last updated at %T',
+            ),
+            onRefresh: () async =>
+                ref.refresh(beszelSystemsProvider(instance).future),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: <Widget>[
+                const HeaderLocator.sliver(),
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: const Text('No systems found'),
+                  ),
+                ),
+              ],
+            ),
+          );
         }
         
         return EasyRefresh(
           header: const ClassicHeader(
+            position: IndicatorPosition.locator,
             dragText: 'Pull to refresh',
             armedText: 'Release ready',
             readyText: 'Refreshing...',
@@ -36,23 +63,42 @@ class BeszelHome extends ConsumerWidget {
           ),
           onRefresh: () async =>
               ref.refresh(beszelSystemsProvider(instance).future),
-          child: ListView(
-            padding: Insets.page,
-            children: <Widget>[
-              for (final system in systems)
-                InkWell(
-                  onTap: () => pushScreen<void>(
-                    context,
-                    BeszelSystemDetailScreen(
-                      instance: instance,
-                      system: system,
-                    ),
-                  ),
-                  child: BeszelSystemCard(
-                    instance: instance,
-                    system: system,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: <Widget>[
+              const HeaderLocator.sliver(),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  Insets.md,
+                  Insets.md,
+                  Insets.md,
+                  Insets.xxl,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (BuildContext context, int index) {
+                      final system = systems[index];
+                      return InkWell(
+                        onTap: () => pushScreen<void>(
+                          context,
+                          BeszelSystemDetailScreen(
+                            instance: instance,
+                            system: system,
+                          ),
+                        ),
+                        child: BeszelSystemCard(
+                          instance: instance,
+                          system: system,
+                        ),
+                      );
+                    },
+                    childCount: systems.length,
                   ),
                 ),
+              ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: Insets.xl),
+              ),
             ],
           ),
         );

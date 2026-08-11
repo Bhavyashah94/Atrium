@@ -84,8 +84,22 @@ class _BeszelSystemDetailScreenState extends ConsumerState<BeszelSystemDetailScr
     final args = (instance: widget.instance, systemId: widget.system.id, chartTime: chartTime);
     final statsAsync = ref.watch(beszelSystemStatsProvider(args));
 
-    return CustomScrollView(
-      slivers: [
+    return EasyRefresh(
+      header: const ClassicHeader(
+        position: IndicatorPosition.locator,
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
+      onRefresh: () async => ref.refresh(beszelSystemStatsProvider(args).future),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          const HeaderLocator.sliver(),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(Insets.md, Insets.md, Insets.md, 0),
@@ -330,8 +344,9 @@ class _BeszelSystemDetailScreenState extends ConsumerState<BeszelSystemDetailScr
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildLargeStatCard(BuildContext context, String title, Widget chart) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -363,10 +378,25 @@ class _BeszelSystemDetailScreenState extends ConsumerState<BeszelSystemDetailScr
   }
 
   Widget _buildContainerStatsTab(WidgetRef ref) {
-    final asyncContainers = ref.watch(beszelContainersProvider((instance: widget.instance, systemId: widget.system.id)));
+    final args = (instance: widget.instance, systemId: widget.system.id);
+    final asyncContainers = ref.watch(beszelContainersProvider(args));
 
-    return CustomScrollView(
-      slivers: [
+    return EasyRefresh(
+      header: const ClassicHeader(
+        position: IndicatorPosition.locator,
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
+      onRefresh: () async => ref.refresh(beszelContainersProvider(args).future),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          const HeaderLocator.sliver(),
         SliverPadding(
           padding: const EdgeInsets.all(Insets.md),
           sliver: asyncContainers.when(
@@ -399,15 +429,30 @@ class _BeszelSystemDetailScreenState extends ConsumerState<BeszelSystemDetailScr
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSystemdStatsTab(WidgetRef ref) {
     final args = (instance: widget.instance, systemId: widget.system.id);
     final asyncSystemd = ref.watch(beszelSystemdServicesProvider(args));
 
-    return CustomScrollView(
-      slivers: [
+    return EasyRefresh(
+      header: const ClassicHeader(
+        position: IndicatorPosition.locator,
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
+      onRefresh: () async => ref.refresh(beszelSystemdServicesProvider(args).future),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          const HeaderLocator.sliver(),
         SliverPadding(
           padding: const EdgeInsets.all(Insets.md),
           sliver: asyncSystemd.when(
@@ -451,8 +496,9 @@ class _BeszelSystemDetailScreenState extends ConsumerState<BeszelSystemDetailScr
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 }
 
 class _BeszelSystemdServiceCard extends StatelessWidget {

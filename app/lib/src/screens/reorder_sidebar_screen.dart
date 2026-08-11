@@ -68,12 +68,10 @@ class _ReorderSidebarScreenState extends ConsumerState<ReorderSidebarScreen> {
                 ),
                 Expanded(
                   child: ReorderableListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: _localInstances!.length,
-                    onReorder: (int oldIndex, int newIndex) {
+                    onReorderItem: (int oldIndex, int newIndex) {
                       setState(() {
-                        if (oldIndex < newIndex) {
-                          newIndex -= 1;
-                        }
                         final Instance item =
                             _localInstances!.removeAt(oldIndex);
                         _localInstances!.insert(newIndex, item);

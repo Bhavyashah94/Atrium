@@ -190,6 +190,7 @@ class JellyfinLibraryGrid extends ConsumerWidget {
           if (list.isEmpty) {
             return EasyRefresh(
         header: const ClassicHeader(
+          position: IndicatorPosition.locator,
           dragText: 'Pull to refresh',
           armedText: 'Release ready',
           readyText: 'Refreshing...',
@@ -200,14 +201,17 @@ class JellyfinLibraryGrid extends ConsumerWidget {
         ),
         onRefresh: () async =>
           ref.invalidate(jellyfinLibraryItemsProvider((instance, view))),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const <Widget>[
-            SizedBox(height: 100),
-            EmptyView(
-              icon: Icons.movie_outlined,
-              title: 'Empty library',
-              message: 'Nothing in this library yet.',
+        child: const CustomScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          slivers: <Widget>[
+            HeaderLocator.sliver(),
+            SliverToBoxAdapter(child: SizedBox(height: 100)),
+            SliverToBoxAdapter(
+              child: EmptyView(
+                icon: Icons.movie_outlined,
+                title: 'Empty library',
+                message: 'Nothing in this library yet.',
+              ),
             ),
           ],
         ),
@@ -218,6 +222,7 @@ class JellyfinLibraryGrid extends ConsumerWidget {
 
           return EasyRefresh(
       header: const ClassicHeader(
+        position: IndicatorPosition.locator,
         dragText: 'Pull to refresh',
         armedText: 'Release ready',
         readyText: 'Refreshing...',
@@ -397,6 +402,7 @@ class JellyfinItemsGrid extends ConsumerWidget {
           if (list.isEmpty) {
             return EasyRefresh(
         header: const ClassicHeader(
+          position: IndicatorPosition.locator,
           dragText: 'Pull to refresh',
           armedText: 'Release ready',
           readyText: 'Refreshing...',
@@ -407,14 +413,17 @@ class JellyfinItemsGrid extends ConsumerWidget {
         ),
         onRefresh: () async =>
           ref.invalidate(jellyfinItemsProvider((instance, libraryId))),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const <Widget>[
-            SizedBox(height: 100),
-            EmptyView(
-              icon: Icons.movie_outlined,
-              title: 'Empty library',
-              message: 'Nothing in this library yet.',
+        child: const CustomScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          slivers: <Widget>[
+            HeaderLocator.sliver(),
+            SliverToBoxAdapter(child: SizedBox(height: 100)),
+            SliverToBoxAdapter(
+              child: EmptyView(
+                icon: Icons.movie_outlined,
+                title: 'Empty library',
+                message: 'Nothing in this library yet.',
+              ),
             ),
           ],
         ),
@@ -427,6 +436,7 @@ class JellyfinItemsGrid extends ConsumerWidget {
 
           return EasyRefresh(
       header: const ClassicHeader(
+        position: IndicatorPosition.locator,
         dragText: 'Pull to refresh',
         armedText: 'Release ready',
         readyText: 'Refreshing...',
@@ -1170,15 +1180,16 @@ class _HomeSections extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
+      header: const ClassicHeader(
+        position: IndicatorPosition.locator,
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
       onRefresh: () async {
         ref.invalidate(jellyfinSessionsProvider(instance));
         ref.invalidate(jellyfinResumeItemsProvider(instance));
@@ -1186,24 +1197,40 @@ class _HomeSections extends ConsumerWidget {
         ref.invalidate(jellyfinFavoritesProvider(instance));
         ref.invalidate(jellyfinNextUpProvider(instance));
       },
-      child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: Insets.md),
-        children: <Widget>[
-          _ActiveSessionsSection(instance: instance),
-          _HorizontalSection(
-            instance: instance,
-            title: 'Currently Watching',
-            provider: jellyfinResumeItemsProvider(instance),
-          ),
-          _HorizontalSection(
-            instance: instance,
-            title: 'Recently Added',
-            provider: jellyfinLatestItemsProvider(instance),
-          ),
-          _HorizontalSection(
-            instance: instance,
-            title: 'Favorites',
-            provider: jellyfinFavoritesProvider(instance),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: <Widget>[
+          const HeaderLocator.sliver(),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(0, Insets.md, 0, Insets.xxl),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate(
+                <Widget>[
+                  _ActiveSessionsSection(instance: instance),
+                  _HorizontalSection(
+                    instance: instance,
+                    title: 'Currently Watching',
+                    provider: jellyfinResumeItemsProvider(instance),
+                  ),
+                  _HorizontalSection(
+                    instance: instance,
+                    title: 'Next Up',
+                    provider: jellyfinNextUpProvider(instance),
+                  ),
+                  _HorizontalSection(
+                    instance: instance,
+                    title: 'Recently Added',
+                    provider: jellyfinLatestItemsProvider(instance),
+                  ),
+                  _HorizontalSection(
+                    instance: instance,
+                    title: 'Favorites',
+                    provider: jellyfinFavoritesProvider(instance),
+                  ),
+                  const SizedBox(height: Insets.xl),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -1230,6 +1257,7 @@ class _HorizontalSection extends ConsumerWidget {
 
     return AsyncValueView<List<JellyfinItem>>(
       value: items,
+      loading: const SizedBox.shrink(),
       onRetry: () => ref.invalidate(provider),
       data: (List<JellyfinItem> list) {
         if (list.isEmpty) {
@@ -1364,6 +1392,7 @@ class _ActiveSessionsSection extends ConsumerWidget {
 
     return AsyncValueView<List<ActiveSession>>(
       value: sessions,
+      loading: const SizedBox.shrink(),
       onRetry: () => ref.invalidate(jellyfinSessionsProvider(instance)),
       data: (List<ActiveSession> list) {
         if (list.isEmpty) {
@@ -1733,7 +1762,9 @@ Widget _buildJellyfinGridOrList(
 
   if (showSections) {
     return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       slivers: <Widget>[
+        const HeaderLocator.sliver(),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
             Insets.lg,
@@ -1807,22 +1838,29 @@ Widget _buildJellyfinGridOrList(
     );
   }
 
-  if (viewMode == JellyfinViewMode.list) {
-    return ListView.builder(
-      padding: Insets.page,
-      itemCount: list.length,
-      itemBuilder: (BuildContext context, int index) =>
-          itemBuilder(context, index, list[index]),
-    );
-  }
-
-  return MasonryGridView.extent(
-    padding: Insets.page,
-    maxCrossAxisExtent: 140.0,
-    crossAxisSpacing: Insets.md,
-    mainAxisSpacing: Insets.md,
-    itemCount: list.length,
-    itemBuilder: (BuildContext context, int index) =>
-        itemBuilder(context, index, list[index]),
+  return CustomScrollView(
+    physics: const AlwaysScrollableScrollPhysics(),
+    slivers: <Widget>[
+      const HeaderLocator.sliver(),
+      SliverPadding(
+        padding: Insets.page,
+        sliver: viewMode == JellyfinViewMode.list
+            ? SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) =>
+                      itemBuilder(context, index, list[index]),
+                  childCount: list.length,
+                ),
+              )
+            : SliverMasonryGrid.extent(
+                maxCrossAxisExtent: 140.0,
+                crossAxisSpacing: Insets.md,
+                mainAxisSpacing: Insets.md,
+                childCount: list.length,
+                itemBuilder: (BuildContext context, int index) =>
+                    itemBuilder(context, index, list[index]),
+              ),
+      ),
+    ],
   );
 }
