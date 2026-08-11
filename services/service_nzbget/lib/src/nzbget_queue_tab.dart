@@ -157,7 +157,7 @@ class _NzbgetQueueTabState extends ConsumerState<NzbgetQueueTab> {
               setState(() => _draggingNzbId = null);
             }
           },
-          onReorderItem: (int oldIndex, int newIndex) {
+          onReorder: (int oldIndex, int newIndex) {
             // Resolve the dragged group by id rather than trusting the
             // callback's oldIndex against a list a poll may have replaced.
             final int trueOldIndex = _working.indexWhere(
