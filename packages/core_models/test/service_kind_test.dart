@@ -27,6 +27,7 @@ void main() {
         'transmission',
         'rtorrent',
         'tracearr',
+        'beszel',
       ],
     );
   });

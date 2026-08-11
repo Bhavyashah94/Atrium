@@ -123,8 +123,6 @@ deno.lock
 scratch/
 skills-lock.json
 
-beszel/
-
 # Graphify
 .venv/
 graphify-out/

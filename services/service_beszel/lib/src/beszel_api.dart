@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
+
+import 'models/beszel_container.dart';
 import 'models/beszel_stats.dart';
 import 'models/beszel_system.dart';
-import 'models/beszel_container.dart';
 import 'models/beszel_systemd_service.dart';
 
 class BeszelApi {
@@ -11,8 +12,8 @@ class BeszelApi {
 
   Future<List<BeszelSystem>> getSystems() async {
     try {
-      final Response<dynamic> response = await _dio.get<dynamic>('/api/collections/systems/records');
-      final items = (response.data['items'] as List<dynamic>?) ?? [];
+      final Response<Map<String, dynamic>> response = await _dio.get<Map<String, dynamic>>('/api/collections/systems/records');
+      final items = (response.data?['items'] as List<dynamic>?) ?? [];
       return items.map((e) => BeszelSystem.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
       return [];
@@ -22,7 +23,7 @@ class BeszelApi {
   Future<List<BeszelStats>> getSystemStats(String systemId, [ChartTime chartTime = ChartTime.hour1]) async {
     try {
       final filter = _buildTimeFilter('system', systemId, chartTime);
-      final Response<dynamic> response = await _dio.get<dynamic>(
+      final Response<Map<String, dynamic>> response = await _dio.get<Map<String, dynamic>>(
         '/api/collections/system_stats/records',
         queryParameters: {
           'filter': filter,
@@ -30,7 +31,7 @@ class BeszelApi {
           'perPage': 2000,
         },
       );
-      final items = (response.data['items'] as List<dynamic>?) ?? [];
+      final items = (response.data?['items'] as List<dynamic>?) ?? [];
       
       return items.map((e) {
         final data = e as Map<String, dynamic>;
@@ -117,14 +118,14 @@ class BeszelApi {
 
   Future<List<BeszelContainer>> getContainers(String systemId) async {
     try {
-      final Response<dynamic> response = await _dio.get<dynamic>(
+      final Response<Map<String, dynamic>> response = await _dio.get<Map<String, dynamic>>(
         '/api/collections/containers/records',
         queryParameters: {
           'filter': "system='$systemId'",
           'perPage': 2000,
         },
       );
-      final items = (response.data['items'] as List<dynamic>?) ?? [];
+      final items = (response.data?['items'] as List<dynamic>?) ?? [];
       return items.map((e) => BeszelContainer.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
       return [];
@@ -134,7 +135,7 @@ class BeszelApi {
   Future<List<BeszelStats>> getContainerStats(String systemId, String containerName, [ChartTime chartTime = ChartTime.hour1]) async {
     try {
       final filter = _buildTimeFilter('system', systemId, chartTime);
-      final Response<dynamic> response = await _dio.get<dynamic>(
+      final Response<Map<String, dynamic>> response = await _dio.get<Map<String, dynamic>>(
         '/api/collections/container_stats/records',
         queryParameters: {
           'filter': filter,
@@ -142,7 +143,7 @@ class BeszelApi {
           'perPage': 2000,
         },
       );
-      final items = (response.data['items'] as List<dynamic>?) ?? [];
+      final items = (response.data?['items'] as List<dynamic>?) ?? [];
       
       final result = <BeszelStats>[];
       for (final e in items) {
@@ -166,7 +167,6 @@ class BeszelApi {
         result.add(BeszelStats(
           cpuUsage: (stats['c'] as num?)?.toDouble() ?? 0.0,
           memoryUsage: ((stats['m'] as num?)?.toDouble() ?? 0.0) * 1024, // Convert GB to MB
-          diskUsage: 0.0,
           created: created,
         ));
       }
@@ -178,14 +178,14 @@ class BeszelApi {
 
   Future<List<BeszelSystemdService>> getSystemdServices(String systemId) async {
     try {
-      final Response<dynamic> response = await _dio.get<dynamic>(
+      final Response<Map<String, dynamic>> response = await _dio.get<Map<String, dynamic>>(
         '/api/collections/systemd_services/records',
         queryParameters: {
           'filter': "system='$systemId'",
           'perPage': 2000,
         },
       );
-      final items = (response.data['items'] as List<dynamic>?) ?? [];
+      final items = (response.data?['items'] as List<dynamic>?) ?? [];
       return items
           .map((e) => BeszelSystemdService.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -197,7 +197,7 @@ class BeszelApi {
   Future<List<Map<String, dynamic>>> getAllContainerStats(String systemId, [ChartTime chartTime = ChartTime.hour1]) async {
     try {
       final filter = _buildTimeFilter('system', systemId, chartTime);
-      final Response<dynamic> response = await _dio.get<dynamic>(
+      final Response<Map<String, dynamic>> response = await _dio.get<Map<String, dynamic>>(
         '/api/collections/container_stats/records',
         queryParameters: {
           'filter': filter,
@@ -205,7 +205,7 @@ class BeszelApi {
           'perPage': 2000,
         },
       );
-      final items = (response.data['items'] as List<dynamic>?) ?? [];
+      final items = (response.data?['items'] as List<dynamic>?) ?? [];
       return items.map((e) => e as Map<String, dynamic>).toList();
     } catch (e) {
       return [];

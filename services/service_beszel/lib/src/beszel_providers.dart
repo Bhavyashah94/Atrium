@@ -2,10 +2,11 @@ import 'package:core_models/core_models.dart';
 import 'package:core_networking/core_networking.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+
 import 'beszel_api.dart';
+import 'models/beszel_container.dart';
 import 'models/beszel_stats.dart';
 import 'models/beszel_system.dart';
-import 'models/beszel_container.dart';
 import 'models/beszel_systemd_service.dart';
 
 final beszelChartTimeProvider = StateProvider<ChartTime>((ref) => ChartTime.hour1);
@@ -33,14 +34,14 @@ final beszelApiProvider = Provider.family<Future<BeszelApi>, Instance>(
   if (instance.auth is InstanceAuthUserPass) {
     final creds = instance.auth as InstanceAuthUserPass;
     try {
-      final loginResp = await dio.post<dynamic>(
+      final loginResp = await dio.post<Map<String, dynamic>>(
         '/api/collections/users/auth-with-password',
         data: {
           'identity': creds.username,
           'password': creds.password,
         },
       );
-      final token = loginResp.data['token'] as String?;
+      final token = loginResp.data?['token'] as String?;
       if (token != null && token.isNotEmpty) {
         dio.options.headers['Authorization'] = 'Bearer $token';
       }

@@ -1,4 +1,4 @@
-library service_beszel;
+library;
 
 export 'src/beszel_api.dart';
 export 'src/beszel_home.dart';

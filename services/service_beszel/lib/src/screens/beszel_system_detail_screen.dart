@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../beszel_providers.dart';
+import '../models/beszel_container.dart';
+import '../models/beszel_stats.dart';
 import '../models/beszel_system.dart';
 import '../models/beszel_systemd_service.dart';
-import '../models/beszel_stats.dart';
-import '../models/beszel_container.dart';
 import '../widgets/beszel_system_card.dart';
 
 class BeszelSystemDetailScreen extends ConsumerStatefulWidget {
@@ -285,7 +285,6 @@ class _BeszelSystemDetailScreenState extends ConsumerState<BeszelSystemDetailScr
                         colorScheme.primary.withValues(alpha: 0.7),
                       showLabels: true,
                       chartTime: chartTime,
-                      tooltipSuffix: '%',
                     ),
                   ),
                   _buildLargeStatCard(
@@ -487,7 +486,7 @@ class _BeszelSystemdServiceCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.2),
+                    color: statusColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -588,7 +587,7 @@ class _BeszelContainerCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.2),
+                    color: statusColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -648,10 +647,10 @@ Widget _buildStatItem(BuildContext context, IconData icon, String label, String 
   return Container(
     padding: const EdgeInsets.all(Insets.sm),
     decoration: BoxDecoration(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       borderRadius: Radii.card,
       border: Border.all(
-        color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
       ),
     ),
     child: Column(

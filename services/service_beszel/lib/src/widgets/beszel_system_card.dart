@@ -3,7 +3,6 @@ import 'package:core_ui/core_ui.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../beszel_providers.dart';
 import '../models/beszel_stats.dart';
@@ -121,10 +120,10 @@ class BeszelSystemCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(Insets.sm),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: Radii.card,
         border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+          color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
       ),
       child: Column(
@@ -228,8 +227,6 @@ class BeszelSystemCard extends ConsumerWidget {
     return LineChart(
       LineChartData(
         gridData: FlGridData(
-          show: true,
-          drawVerticalLine: true,
           horizontalInterval: intervalY,
           getDrawingHorizontalLine: (value) => FlLine(
             color: Colors.grey.withValues(alpha: 0.2),
@@ -242,8 +239,8 @@ class BeszelSystemCard extends ConsumerWidget {
         ),
         titlesData: FlTitlesData(
           show: showLabels,
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(),
+          rightTitles: const AxisTitles(),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: showLabels,
@@ -320,7 +317,6 @@ class BeszelSystemCard extends ConsumerWidget {
             gradient: LinearGradient(
               colors: [startColor, endColor],
             ),
-            barWidth: 2,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(
@@ -342,7 +338,6 @@ class BeszelSystemCard extends ConsumerWidget {
               gradient: LinearGradient(
                 colors: [secondaryStartColor, secondaryEndColor],
               ),
-              barWidth: 2,
               isStrokeCapRound: true,
               dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(

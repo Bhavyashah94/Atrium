@@ -2,7 +2,6 @@ import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 import 'beszel_providers.dart';
 import 'screens/beszel_system_detail_screen.dart';
@@ -41,16 +40,13 @@ class BeszelHome extends ConsumerWidget {
             itemBuilder: (context, index) {
               final system = systems[index];
               return InkWell(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => BeszelSystemDetailScreen(
-                        instance: instance,
-                        system: system,
-                      ),
-                    ),
-                  );
-                },
+                onTap: () => pushScreen<void>(
+                  context,
+                  BeszelSystemDetailScreen(
+                    instance: instance,
+                    system: system,
+                  ),
+                ),
                 child: BeszelSystemCard(
                   instance: instance,
                   system: system,
