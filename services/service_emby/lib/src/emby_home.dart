@@ -186,6 +186,7 @@ class EmbyLibraryGrid extends ConsumerWidget {
           if (list.isEmpty) {
             return EasyRefresh(
         header: const ClassicHeader(
+          position: IndicatorPosition.locator,
           dragText: 'Pull to refresh',
           armedText: 'Release ready',
           readyText: 'Refreshing...',
@@ -196,14 +197,17 @@ class EmbyLibraryGrid extends ConsumerWidget {
         ),
         onRefresh: () async =>
           ref.invalidate(embyLibraryItemsProvider((instance, view))),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const <Widget>[
-            SizedBox(height: 100),
-            EmptyView(
-              icon: Icons.movie_outlined,
-              title: 'Empty library',
-              message: 'Nothing in this library yet.',
+        child: const CustomScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          slivers: <Widget>[
+            HeaderLocator.sliver(),
+            SliverToBoxAdapter(child: SizedBox(height: 100)),
+            SliverToBoxAdapter(
+              child: EmptyView(
+                icon: Icons.movie_outlined,
+                title: 'Empty library',
+                message: 'Nothing in this library yet.',
+              ),
             ),
           ],
         ),
@@ -216,6 +220,7 @@ class EmbyLibraryGrid extends ConsumerWidget {
 
           return EasyRefresh(
       header: const ClassicHeader(
+        position: IndicatorPosition.locator,
         dragText: 'Pull to refresh',
         armedText: 'Release ready',
         readyText: 'Refreshing...',
@@ -389,6 +394,7 @@ class EmbyItemsGrid extends ConsumerWidget {
           if (list.isEmpty) {
             return EasyRefresh(
         header: const ClassicHeader(
+          position: IndicatorPosition.locator,
           dragText: 'Pull to refresh',
           armedText: 'Release ready',
           readyText: 'Refreshing...',
@@ -399,14 +405,17 @@ class EmbyItemsGrid extends ConsumerWidget {
         ),
         onRefresh: () async =>
           ref.invalidate(embyItemsProvider((instance, libraryId))),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const <Widget>[
-            SizedBox(height: 100),
-            EmptyView(
-              icon: Icons.movie_outlined,
-              title: 'Empty library',
-              message: 'Nothing in this library yet.',
+        child: const CustomScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          slivers: <Widget>[
+            HeaderLocator.sliver(),
+            SliverToBoxAdapter(child: SizedBox(height: 100)),
+            SliverToBoxAdapter(
+              child: EmptyView(
+                icon: Icons.movie_outlined,
+                title: 'Empty library',
+                message: 'Nothing in this library yet.',
+              ),
             ),
           ],
         ),
@@ -419,6 +428,7 @@ class EmbyItemsGrid extends ConsumerWidget {
 
           return EasyRefresh(
       header: const ClassicHeader(
+        position: IndicatorPosition.locator,
         dragText: 'Pull to refresh',
         armedText: 'Release ready',
         readyText: 'Refreshing...',
@@ -1204,15 +1214,16 @@ class _HomeSections extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
+      header: const ClassicHeader(
+        position: IndicatorPosition.locator,
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
       onRefresh: () async {
         ref.invalidate(embySessionsProvider(instance));
         ref.invalidate(embyResumeItemsProvider(instance));
@@ -1220,24 +1231,40 @@ class _HomeSections extends ConsumerWidget {
         ref.invalidate(embyFavoritesProvider(instance));
         ref.invalidate(embyNextUpProvider(instance));
       },
-      child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: Insets.md),
-        children: <Widget>[
-          _ActiveSessionsSection(instance: instance),
-          _HorizontalSection(
-            instance: instance,
-            title: 'Currently Watching',
-            provider: embyResumeItemsProvider(instance),
-          ),
-          _HorizontalSection(
-            instance: instance,
-            title: 'Recently Added',
-            provider: embyLatestItemsProvider(instance),
-          ),
-          _HorizontalSection(
-            instance: instance,
-            title: 'Favorites',
-            provider: embyFavoritesProvider(instance),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: <Widget>[
+          const HeaderLocator.sliver(),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(0, Insets.md, 0, Insets.xxl),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate(
+                <Widget>[
+                  _ActiveSessionsSection(instance: instance),
+                  _HorizontalSection(
+                    instance: instance,
+                    title: 'Currently Watching',
+                    provider: embyResumeItemsProvider(instance),
+                  ),
+                  _HorizontalSection(
+                    instance: instance,
+                    title: 'Next Up',
+                    provider: embyNextUpProvider(instance),
+                  ),
+                  _HorizontalSection(
+                    instance: instance,
+                    title: 'Recently Added',
+                    provider: embyLatestItemsProvider(instance),
+                  ),
+                  _HorizontalSection(
+                    instance: instance,
+                    title: 'Favorites',
+                    provider: embyFavoritesProvider(instance),
+                  ),
+                  const SizedBox(height: Insets.xl),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -1263,6 +1290,7 @@ class _HorizontalSection extends ConsumerWidget {
 
     return AsyncValueView<List<EmbyItem>>(
       value: items,
+      loading: const SizedBox.shrink(),
       onRetry: () {},
       data: (List<EmbyItem> list) {
         if (list.isEmpty) {
@@ -1396,6 +1424,7 @@ class _ActiveSessionsSection extends ConsumerWidget {
 
     return AsyncValueView<List<ActiveSession>>(
       value: sessions,
+      loading: const SizedBox.shrink(),
       onRetry: () {},
       data: (List<ActiveSession> list) {
         if (list.isEmpty) {
@@ -1768,7 +1797,9 @@ Widget _buildEmbyGridOrList(
 
   if (showSections) {
     return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       slivers: <Widget>[
+        const HeaderLocator.sliver(),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
             Insets.lg,
@@ -1842,22 +1873,29 @@ Widget _buildEmbyGridOrList(
     );
   }
 
-  if (viewMode == EmbyViewMode.list) {
-    return ListView.builder(
-      padding: Insets.page,
-      itemCount: list.length,
-      itemBuilder: (BuildContext context, int index) =>
-          itemBuilder(context, index, list[index]),
-    );
-  }
-
-  return MasonryGridView.extent(
-    padding: Insets.page,
-    maxCrossAxisExtent: 140.0,
-    crossAxisSpacing: Insets.md,
-    mainAxisSpacing: Insets.md,
-    itemCount: list.length,
-    itemBuilder: (BuildContext context, int index) =>
-        itemBuilder(context, index, list[index]),
+  return CustomScrollView(
+    physics: const AlwaysScrollableScrollPhysics(),
+    slivers: <Widget>[
+      const HeaderLocator.sliver(),
+      SliverPadding(
+        padding: Insets.page,
+        sliver: viewMode == EmbyViewMode.list
+            ? SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) =>
+                      itemBuilder(context, index, list[index]),
+                  childCount: list.length,
+                ),
+              )
+            : SliverMasonryGrid.extent(
+                maxCrossAxisExtent: 140.0,
+                crossAxisSpacing: Insets.md,
+                mainAxisSpacing: Insets.md,
+                childCount: list.length,
+                itemBuilder: (BuildContext context, int index) =>
+                    itemBuilder(context, index, list[index]),
+              ),
+      ),
+    ],
   );
 }

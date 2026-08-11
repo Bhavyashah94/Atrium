@@ -167,9 +167,6 @@ class _NzbgetQueueTabState extends ConsumerState<NzbgetQueueTab> {
               setState(() => _draggingNzbId = null);
               return;
             }
-            if (newIndex > trueOldIndex) {
-              newIndex -= 1;
-            }
             final int offset = newIndex - trueOldIndex;
             if (offset == 0) {
               setState(() => _draggingNzbId = null);

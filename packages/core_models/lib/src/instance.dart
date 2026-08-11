@@ -42,7 +42,7 @@ abstract class Instance with _$Instance {
     required UrlMode urlMode,
 
     /// Auth material. See [InstanceAuth].
-    required InstanceAuth auth,
+    @JsonKey(toJson: _authToJson) required InstanceAuth auth,
 
     /// Accept self-signed TLS certificates. Off by default - turning this on
     /// is the user explicitly opting out of cert validation for this
@@ -93,3 +93,5 @@ String _redactUrlUserInfo(String raw) {
 /// store `overseerr` and must keep loading.
 ServiceKind _serviceKindFromJson(String value) =>
     value == 'overseerr' ? ServiceKind.seerr : ServiceKind.values.byName(value);
+
+Map<String, dynamic> _authToJson(InstanceAuth auth) => auth.toJson();
