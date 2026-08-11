@@ -3,6 +3,12 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'deluge_torrent_detail.freezed.dart';
 part 'deluge_torrent_detail.g.dart';
 
+/// Deluge's JSON-RPC is loose with booleans: libtorrent-derived flags such as a
+/// peer's `seed` (computed as `flags & seed`) arrive as ints (0/1), not
+/// `true`/`false`. A plain `as bool?` cast then throws
+/// ("int is not a subtype of bool?"), so coerce int/bool/null down to a bool.
+bool _delugeBool(Object? v) => v is bool ? v : (v is num ? v != 0 : false);
+
 /// One file inside a torrent.
 ///
 /// Deluge splits this across three parallel arrays - `files` (index, path,
@@ -47,7 +53,7 @@ abstract class DelugeTracker with _$DelugeTracker {
     @Default('') String url,
     @Default(0) int tier,
     @Default('') String message,
-    @Default(false) bool verified,
+    @JsonKey(fromJson: _delugeBool) @Default(false) bool verified,
   }) = _DelugeTracker;
 
   factory DelugeTracker.fromJson(Map<String, dynamic> json) =>
@@ -66,7 +72,7 @@ abstract class DelugePeer with _$DelugePeer {
 
     /// 0 - 1.
     @Default(0) double progress,
-    @Default(false) bool seed,
+    @JsonKey(fromJson: _delugeBool) @Default(false) bool seed,
   }) = _DelugePeer;
 
   factory DelugePeer.fromJson(Map<String, dynamic> json) =>
@@ -78,7 +84,7 @@ abstract class DelugePeer with _$DelugePeer {
 abstract class DelugeTorrentDetail with _$DelugeTorrentDetail {
   const factory DelugeTorrentDetail({
     @Default('') String comment,
-    @Default(false) bool private,
+    @JsonKey(fromJson: _delugeBool) @Default(false) bool private,
     @JsonKey(name: 'num_files') @Default(0) int numFiles,
     @JsonKey(name: 'total_size') @Default(0) int totalSize,
 

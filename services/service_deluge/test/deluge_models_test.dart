@@ -124,6 +124,28 @@ void main() {
       expect(d.peers, isEmpty);
       expect(d.files, isEmpty);
     });
+
+    test('coerces int flags to bool without throwing', () {
+      // Regression: Deluge returns libtorrent-derived flags such as a peer's
+      // `seed` (computed as `flags & seed`) as ints (0/1), not booleans. A hard
+      // `as bool?` cast threw "int is not a subtype of bool?" and blew up every
+      // detail tab. Ints must coerce: nonzero is true, zero is false.
+      final DelugeTorrentDetail d =
+          DelugeTorrentDetail.fromStatus(<String, dynamic>{
+        'private': 1,
+        'trackers': <dynamic>[
+          <String, dynamic>{'url': 'udp://t:1/announce', 'tier': 0, 'verified': 0},
+        ],
+        'peers': <dynamic>[
+          <String, dynamic>{'ip': '1.2.3.4', 'seed': 1, 'progress': 1.0},
+          <String, dynamic>{'ip': '5.6.7.8', 'seed': 0, 'progress': 0.2},
+        ],
+      });
+      expect(d.private, isTrue);
+      expect(d.trackers.single.verified, isFalse);
+      expect(d.peers[0].seed, isTrue);
+      expect(d.peers[1].seed, isFalse);
+    });
   });
 
   group('DelugeFilterTree', () {
