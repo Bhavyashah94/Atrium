@@ -43,3 +43,4 @@ workspace:
   - services/service_glances
   - services/service_speedtest_tracker
   - services/service_tracearr
+  - services/service_beszel

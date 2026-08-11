@@ -17,6 +17,7 @@ import 'package:service_qbittorrent/service_qbittorrent.dart';
 import 'package:service_radarr/service_radarr.dart';
 import 'package:service_sabnzbd/service_sabnzbd.dart';
 import 'package:service_glances/service_glances.dart';
+import 'package:service_beszel/service_beszel.dart';
 import 'package:service_sonarr/service_sonarr.dart';
 import 'package:service_speedtest_tracker/service_speedtest_tracker.dart';
 import 'package:service_tautulli/service_tautulli.dart';
@@ -229,6 +230,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       ServiceKind.transmission => TransmissionHome(instance: instance),
       ServiceKind.rtorrent => RtorrentHome(instance: instance),
       ServiceKind.glances => GlancesHome(instance: instance),
+      ServiceKind.beszel => BeszelHome(instance: instance),
       ServiceKind.speedtestTracker => SpeedtestTrackerHome(instance: instance),
     };
   }
