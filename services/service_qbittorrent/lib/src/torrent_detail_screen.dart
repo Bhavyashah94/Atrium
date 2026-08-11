@@ -1117,8 +1117,6 @@ class _FilesTabState extends ConsumerState<_FilesTab>
                           children: <Widget>[
                             Text(
                               f.name,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodyMedium,
                             ),
                             const SizedBox(height: 4),

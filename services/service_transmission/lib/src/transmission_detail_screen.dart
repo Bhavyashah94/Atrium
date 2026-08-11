@@ -217,7 +217,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
           onChanged: _busy
               ? null
               : (bool? v) => _setWanted(i, v ?? false),
-          title: Text(f.displayName, maxLines: 2),
+          title: Text(f.displayName),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
