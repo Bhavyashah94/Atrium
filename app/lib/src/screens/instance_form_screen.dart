@@ -633,14 +633,6 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
   }
 
   Widget _buildServiceIcon(ServiceKind kind, {double size = 24}) {
-    // Kinds with no bundled PNG fall back to the Material icon.
-    if (kind == ServiceKind.sabnzbd ||
-        kind == ServiceKind.speedtestTracker ||
-        kind == ServiceKind.deluge ||
-        kind == ServiceKind.transmission ||
-        kind == ServiceKind.rtorrent) {
-      return Icon(ServiceVisuals.icon(kind), size: size);
-    }
     return Image.asset(
       'assets/service_icons/${kind.name}.png',
       width: size,
