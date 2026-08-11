@@ -119,7 +119,20 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                 );
               },
             ),
-            title: Text(instance.name),
+            title: Row(
+              children: <Widget>[
+                Flexible(
+                  child: Text(
+                    instance.name,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (instance.kind.isBeta) ...<Widget>[
+                  const SizedBox(width: Insets.sm),
+                  const BetaBadge(),
+                ],
+              ],
+            ),
             actions: <Widget>[
               if (instance.kind == ServiceKind.emby ||
                   instance.kind == ServiceKind.jellyfin ||
