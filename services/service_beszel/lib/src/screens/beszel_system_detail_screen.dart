@@ -153,6 +153,8 @@ class _BeszelSystemDetailScreenState extends ConsumerState<BeszelSystemDetailScr
         SliverPadding(
           padding: const EdgeInsets.all(Insets.md),
           sliver: statsAsync.when(
+            skipLoadingOnReload: true,
+            skipLoadingOnRefresh: true,
             data: (statsList) {
               if (statsList.isEmpty) {
                 return const SliverToBoxAdapter(
@@ -368,6 +370,8 @@ class _BeszelSystemDetailScreenState extends ConsumerState<BeszelSystemDetailScr
         SliverPadding(
           padding: const EdgeInsets.all(Insets.md),
           sliver: asyncContainers.when(
+            skipLoadingOnReload: true,
+            skipLoadingOnRefresh: true,
             data: (containers) {
               if (containers.isEmpty) {
                 return const SliverToBoxAdapter(
@@ -407,6 +411,8 @@ class _BeszelSystemDetailScreenState extends ConsumerState<BeszelSystemDetailScr
         SliverPadding(
           padding: const EdgeInsets.all(Insets.md),
           sliver: asyncSystemd.when(
+            skipLoadingOnReload: true,
+            skipLoadingOnRefresh: true,
             data: (services) {
               if (services.isEmpty) {
                 return SliverToBoxAdapter(

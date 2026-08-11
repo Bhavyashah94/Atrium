@@ -17,6 +17,8 @@ class BeszelHome extends ConsumerWidget {
     final asyncSystems = ref.watch(beszelSystemsProvider(instance));
 
     return asyncSystems.when(
+      skipLoadingOnReload: true,
+      skipLoadingOnRefresh: true,
       data: (systems) {
         if (systems.isEmpty) {
           return const Center(child: Text('No systems found'));
@@ -34,25 +36,24 @@ class BeszelHome extends ConsumerWidget {
           ),
           onRefresh: () async =>
               ref.refresh(beszelSystemsProvider(instance).future),
-          child: ListView.builder(
+          child: ListView(
             padding: Insets.page,
-            itemCount: systems.length,
-            itemBuilder: (context, index) {
-              final system = systems[index];
-              return InkWell(
-                onTap: () => pushScreen<void>(
-                  context,
-                  BeszelSystemDetailScreen(
+            children: <Widget>[
+              for (final system in systems)
+                InkWell(
+                  onTap: () => pushScreen<void>(
+                    context,
+                    BeszelSystemDetailScreen(
+                      instance: instance,
+                      system: system,
+                    ),
+                  ),
+                  child: BeszelSystemCard(
                     instance: instance,
                     system: system,
                   ),
                 ),
-                child: BeszelSystemCard(
-                  instance: instance,
-                  system: system,
-                ),
-              );
-            },
+            ],
           ),
         );
       },
