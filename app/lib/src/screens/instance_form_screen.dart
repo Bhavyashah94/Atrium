@@ -282,10 +282,12 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
                 child: _buildServiceIcon(_kind, size: 24),
               ),
               dropdownMenuEntries: <DropdownMenuEntry<ServiceKind>>[
-                for (final ServiceKind k in ServiceKind.values)
+                for (final ServiceKind k in ServiceKind.values.toList()..sort((a, b) => a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase())))
                   DropdownMenuEntry<ServiceKind>(
                     value: k,
-                    label: '${k.displayName} - ${k.tagline}',
+                    label: k.isBeta
+                        ? '${k.displayName} - ${k.tagline} (Beta)'
+                        : '${k.displayName} - ${k.tagline}',
                     leadingIcon: _buildServiceIcon(k),
                   ),
               ],
@@ -438,7 +440,8 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
                 ],
               ),
             ],
-            if (_kind == ServiceKind.glances) ...<Widget>[
+            if (_kind == ServiceKind.glances ||
+                _kind == ServiceKind.dashdot) ...<Widget>[
               const SizedBox(height: Insets.lg),
               Text(
                 'Polling',
@@ -631,14 +634,6 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
   }
 
   Widget _buildServiceIcon(ServiceKind kind, {double size = 24}) {
-    // Kinds with no bundled PNG fall back to the Material icon.
-    if (kind == ServiceKind.sabnzbd ||
-        kind == ServiceKind.speedtestTracker ||
-        kind == ServiceKind.deluge ||
-        kind == ServiceKind.transmission ||
-        kind == ServiceKind.rtorrent) {
-      return Icon(ServiceVisuals.icon(kind), size: size);
-    }
     return Image.asset(
       'assets/service_icons/${kind.name}.png',
       width: size,

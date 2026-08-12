@@ -104,7 +104,6 @@ v3implemented.yaml
 /atrium-*.apk
 openapi.json
 SESSION_CHANGES.md
-v2.json
 
 # site (Vite)
 node_modules/
@@ -114,3 +113,17 @@ site/dist/
 site/.vite/
 site/.cache/
 deno.lock
+
+# Agent workspace & skills
+.agent
+.agent/
+.agents
+.agents/
+.dart_skills/
+scratch/
+skills-lock.json
+
+# Graphify
+.venv/
+graphify-out/
+.claude/

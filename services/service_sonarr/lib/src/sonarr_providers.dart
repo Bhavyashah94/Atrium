@@ -9,10 +9,27 @@ import 'models/sonarr_episode.dart';
 import 'models/sonarr_history_item.dart';
 import 'models/sonarr_queue_item.dart';
 import 'models/sonarr_series.dart';
+import 'services/sonarr_client.dart';
 import 'sonarr_api.dart';
 
 /// How often the series library refreshes.
 const Duration sonarrLibraryPollInterval = Duration(seconds: 60);
+
+/// A [SonarrClient] bound to a specific instance.
+final sonarrClientProvider = FutureProvider.family<SonarrClient, Instance>((
+  Ref ref,
+  Instance instance,
+) async {
+  final dio = await ref.watch(instanceDioProvider(instance).future);
+  final String? apiKey = switch (instance.auth) {
+    InstanceAuthApiKey(:final String apiKey) => apiKey,
+    _ => null,
+  };
+  return SonarrClient(
+    dio: dio,
+    apiKey: apiKey,
+  );
+});
 
 /// A [SonarrApi] bound to a specific instance.
 final sonarrApiProvider = FutureProvider.family<SonarrApi, Instance>((

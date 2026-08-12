@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../design_tokens.dart';
 import '../service_visuals.dart';
+import 'beta_badge.dart';
 import 'status_chip.dart';
 
 /// A list tile representing one configured [Instance]: service icon badge,
@@ -40,10 +41,20 @@ class ServiceTile extends StatelessWidget {
           ),
           child: Icon(ServiceVisuals.icon(instance.kind), color: accent),
         ),
-        title: Text(
-          instance.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        title: Row(
+          children: <Widget>[
+            Flexible(
+              child: Text(
+                instance.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (instance.kind.isBeta) ...<Widget>[
+              const SizedBox(width: Insets.sm),
+              const BetaBadge(),
+            ],
+          ],
         ),
         subtitle: Text(subtitle ?? instance.kind.tagline),
         trailing: StatusChip(health: health, compact: true),

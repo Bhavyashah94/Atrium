@@ -184,7 +184,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         final RtorrentFile f = files[i];
         return ListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(f.displayName, maxLines: 2),
+          title: Text(f.displayName),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[

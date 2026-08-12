@@ -58,6 +58,10 @@ enum _HealthMode {
       return (path: 'api/v2/app/version', mode: _HealthMode.reachable);
     case ServiceKind.glances:
       return (path: 'api/4/core', mode: _HealthMode.authed);
+    case ServiceKind.beszel:
+      return (path: 'api/health', mode: _HealthMode.publicEndpoint);
+    case ServiceKind.dashdot:
+      return (path: 'info', mode: _HealthMode.publicEndpoint);
     case ServiceKind.speedtestTracker:
       return (path: 'api/v1/results?page[size]=1', mode: _HealthMode.authed);
     case ServiceKind.nzbget:
@@ -94,6 +98,7 @@ String? _probeBody(ServiceKind kind) => switch (kind) {
       ServiceKind.rtorrent => '<?xml version="1.0"?><methodCall>'
           '<methodName>system.client_version</methodName>'
           '<params></params></methodCall>',
+      ServiceKind.beszel => null,
       _ => null,
     };
 

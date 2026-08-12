@@ -23,6 +23,7 @@ abstract class Profile with _$Profile {
   const factory Profile({
     required String id,
     required String name,
+    @JsonKey(toJson: _instancesToJson)
     @Default(<Instance>[]) List<Instance> instances,
 
     /// HTTP headers sent with every request from every instance in this
@@ -31,9 +32,16 @@ abstract class Profile with _$Profile {
     @Default(<String, String>{}) Map<String, String> globalHeaders,
 
     /// Wake-on-LAN targets configured for this profile.
+    @JsonKey(toJson: _wolDevicesToJson)
     @Default(<WolDevice>[]) List<WolDevice> wolDevices,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, dynamic> json) =>
       _$ProfileFromJson(json);
 }
+
+List<Map<String, dynamic>> _instancesToJson(List<Instance> instances) =>
+    instances.map((Instance i) => i.toJson()).toList();
+
+List<Map<String, dynamic>> _wolDevicesToJson(List<WolDevice> devices) =>
+    devices.map((WolDevice d) => d.toJson()).toList();

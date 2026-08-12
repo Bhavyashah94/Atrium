@@ -1,0 +1,2 @@
+# Ignore generated OpenAPI client & freezed model code
+lib/src/generated/

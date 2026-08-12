@@ -160,7 +160,7 @@ class DashboardBoard extends ConsumerWidget {
 
   void _refreshAll(WidgetRef ref, List<Instance> instances) {
     for (final Instance i in instances) {
-      ref.invalidate(instanceHealthProvider(i));
+      ref.invalidate(instanceHealthProvider(i.id));
       switch (i.kind) {
         case ServiceKind.sonarr:
           ref.invalidate(sonarrSeriesProvider(i));

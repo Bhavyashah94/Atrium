@@ -27,6 +27,8 @@ void main() {
         'transmission',
         'rtorrent',
         'tracearr',
+        'beszel',
+        'dashdot',
       ],
     );
   });
@@ -55,6 +57,15 @@ void main() {
     expect(ServiceKind.tracearr.authStyle, AuthStyle.apiKey);
     // Upstream's own default; its compose maps ${PORT:-3000}:3000.
     expect(ServiceKind.tracearr.defaultPort, 3000);
+  });
+
+  test('newer integrations are flagged beta; stable ones are not', () {
+    expect(ServiceKind.tracearr.isBeta, isTrue);
+    expect(ServiceKind.transmission.isBeta, isTrue);
+    expect(ServiceKind.deluge.isBeta, isTrue);
+    expect(ServiceKind.rtorrent.isBeta, isTrue);
+    expect(ServiceKind.sonarr.isBeta, isFalse);
+    expect(ServiceKind.qbittorrent.isBeta, isFalse);
   });
 
   test('existing services retain their default ports', () {

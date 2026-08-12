@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:core_router/core_router.dart';
 import 'package:service_bazarr/service_bazarr.dart';
+import 'package:service_dashdot/service_dashdot.dart';
 import 'package:service_deluge/service_deluge.dart';
 import 'package:service_emby/service_emby.dart';
 import 'package:service_jellyfin/service_jellyfin.dart';
@@ -17,6 +18,7 @@ import 'package:service_qbittorrent/service_qbittorrent.dart';
 import 'package:service_radarr/service_radarr.dart';
 import 'package:service_sabnzbd/service_sabnzbd.dart';
 import 'package:service_glances/service_glances.dart';
+import 'package:service_beszel/service_beszel.dart';
 import 'package:service_sonarr/service_sonarr.dart';
 import 'package:service_speedtest_tracker/service_speedtest_tracker.dart';
 import 'package:service_tautulli/service_tautulli.dart';
@@ -71,6 +73,15 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
         ),
       );
     }
+    if (instance.kind == ServiceKind.tracearr) {
+      return TracearrHome(
+        instance: instance,
+        drawer: ServicesDrawer(
+          instances: ref.watch(activeInstancesProvider),
+          profile: ref.watch(activeProfileProvider),
+        ),
+      );
+    }
     return PopScope<Object?>(
         canPop: false,
         onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -110,7 +121,20 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                 );
               },
             ),
-            title: Text(instance.name),
+            title: Row(
+              children: <Widget>[
+                Flexible(
+                  child: Text(
+                    instance.name,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (instance.kind.isBeta) ...<Widget>[
+                  const SizedBox(width: Insets.sm),
+                  const BetaBadge(),
+                ],
+              ],
+            ),
             actions: <Widget>[
               if (instance.kind == ServiceKind.emby ||
                   instance.kind == ServiceKind.jellyfin ||
@@ -189,9 +213,10 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
 
   Widget _bodyFor(Instance instance) {
     return switch (instance.kind) {
-      // Sonarr and Radarr never reach here: build() returns early.
+      // Sonarr, Radarr, and Tracearr never reach here: build() returns early.
       ServiceKind.sonarr => const SizedBox.shrink(),
       ServiceKind.radarr => const SizedBox.shrink(),
+      ServiceKind.tracearr => const SizedBox.shrink(),
       ServiceKind.prowlarr => ProwlarrHome(instance: instance),
       ServiceKind.bazarr => BazarrHome(instance: instance),
       ServiceKind.seerr => SeerrHome(instance: instance),
@@ -200,13 +225,14 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       ServiceKind.emby => EmbyHome(instance: instance),
       ServiceKind.plex => PlexHome(instance: instance),
       ServiceKind.qbittorrent => QbittorrentHome(instance: instance),
-      ServiceKind.tracearr => TracearrHome(instance: instance),
       ServiceKind.sabnzbd => SabnzbdHome(instance: instance),
       ServiceKind.nzbget => NzbgetHome(instance: instance),
       ServiceKind.deluge => DelugeHome(instance: instance),
       ServiceKind.transmission => TransmissionHome(instance: instance),
       ServiceKind.rtorrent => RtorrentHome(instance: instance),
       ServiceKind.glances => GlancesHome(instance: instance),
+      ServiceKind.beszel => BeszelHome(instance: instance),
+      ServiceKind.dashdot => DashdotHome(instance: instance),
       ServiceKind.speedtestTracker => SpeedtestTrackerHome(instance: instance),
     };
   }

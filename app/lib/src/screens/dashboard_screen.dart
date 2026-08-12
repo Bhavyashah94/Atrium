@@ -318,47 +318,56 @@ class _ServicesList extends StatelessWidget {
       instances,
       (Instance i) => i.kind.role,
     );
-    final List<ServiceRole> roles = ServiceRole.values
-        .where((ServiceRole r) => byRole.containsKey(r))
-        .toList();
+
+    final List<_SidebarItem> items = <_SidebarItem>[];
+    for (final ServiceRole role in ServiceRole.values) {
+      final List<Instance>? group = byRole[role];
+      if (group != null && group.isNotEmpty) {
+        items.add(_SidebarItem.header(role));
+        for (final Instance inst in group) {
+          items.add(_SidebarItem.tile(inst));
+        }
+      }
+    }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(
-        Insets.sm,
-        Insets.sm,
-        Insets.sm,
-        Insets.sm,
-      ),
-      itemCount: roles.length,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(Insets.sm),
+      itemCount: items.length,
       itemBuilder: (BuildContext context, int index) {
-        final ServiceRole role = roles[index];
-        final List<Instance> group = byRole[role]!;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(
-                top: Insets.md,
-                bottom: Insets.xs,
-                left: Insets.sm,
-              ),
-              child: Text(
-                ServiceVisuals.roleLabel(role),
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-              ),
+        final _SidebarItem item = items[index];
+        if (item.header != null) {
+          return Padding(
+            padding: const EdgeInsets.only(
+              top: Insets.md,
+              bottom: Insets.xs,
+              left: Insets.sm,
             ),
-            for (final Instance instance in group)
-              Padding(
-                padding: const EdgeInsets.only(bottom: Insets.xs),
-                child: _HealthAwareTile(instance: instance),
-              ),
-          ],
+            child: Text(
+              ServiceVisuals.roleLabel(item.header!),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          );
+        }
+        return Padding(
+          padding: const EdgeInsets.only(bottom: Insets.xs),
+          child: RepaintBoundary(
+            child: _HealthAwareTile(instance: item.tile!),
+          ),
         );
       },
     );
   }
+}
+
+class _SidebarItem {
+  const _SidebarItem.header(this.header) : tile = null;
+  const _SidebarItem.tile(this.tile) : header = null;
+
+  final ServiceRole? header;
+  final Instance? tile;
 }
 
 /// A [ServiceTile] whose health dot reflects a live probe. Tapping closes the
@@ -370,10 +379,9 @@ class _HealthAwareTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final Health health = ref.watch(instanceHealthProvider(instance)).maybeWhen(
-          data: (Health h) => h,
-          orElse: () => Health.unknown,
-        );
+    final AsyncValue<Health> asyncHealth =
+        ref.watch(instanceHealthProvider(instance.id));
+    final Health health = asyncHealth.value ?? Health.unknown;
     return ServiceTile(
       instance: instance,
       health: health,
