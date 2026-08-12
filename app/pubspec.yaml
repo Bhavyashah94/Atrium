@@ -48,6 +48,7 @@ dependencies:
   service_sonarr:
   service_glances:
   service_beszel:
+  service_dashdot:
   service_speedtest_tracker:
   service_tautulli:
   service_rtorrent:
