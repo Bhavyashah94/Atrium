@@ -125,7 +125,7 @@ class _CircularFlatPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size s) {
-    const stroke = 4.0;
+    const stroke = 12.0;
     final center = s.center(Offset.zero);
     final radius = (math.min(s.width, s.height) - stroke) / 2;
     final rect = Rect.fromCircle(center: center, radius: radius);
@@ -159,7 +159,7 @@ class _CircularFlatPainter extends CustomPainter {
     }
 
     // gap before active in dp -> angle
-    const gapDp = 8.0;
+    const gapDp = 18.0; // larger than stroke to account for caps
     final gapAngle = gapDp / radius; // s = r * angle
     const total = math.pi * 2;
 
@@ -201,7 +201,7 @@ class _CircularWavyPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size s) {
-    const stroke = 4.0;
+    const stroke = 12.0;
     final center = s.center(Offset.zero);
     final baseRadius = (math.min(s.width, s.height) - stroke) / 2;
 

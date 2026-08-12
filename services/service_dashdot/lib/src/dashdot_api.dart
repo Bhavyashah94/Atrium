@@ -16,8 +16,15 @@ class DashdotApi {
         final rawStorage = data['storage'] as List<dynamic>? ?? [];
         final rawNetwork = data['network'] as Map<String, dynamic>? ?? {};
         final rawGpu = data['gpu'] as Map<String, dynamic>? ?? {};
+        final rawOs = data['os'] as Map<String, dynamic>? ?? {};
 
         final mappedData = <String, dynamic>{
+          'os': {
+            'distro': rawOs['distro'],
+            'release': rawOs['release'],
+            'arch': rawOs['arch'],
+            'uptime': rawOs['uptime'],
+          },
           'cpu': {
             'cpu_brand': '${rawCpu['brand'] ?? ''} ${rawCpu['model'] ?? ''}'.trim(),
             'cores': rawCpu['cores'],
@@ -119,17 +126,21 @@ class DashdotApi {
 
   Future<dynamic> getNetworkLoad() async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>('/load/network');
-      if (response.data != null) {
-        final up = response.data!['up'];
-        final down = response.data!['down'];
+      final response = await _dio.get<dynamic>('/load/network');
+      final data = response.data;
+      if (data != null && data is Map) {
         return {
-          'up_MBps': up != null ? ((up / 1024 / 1024) * 100).truncate() / 100 : 0,
-          'down_MBps': down != null ? ((down / 1024 / 1024) * 100).truncate() / 100 : 0,
+          'up': data['up'],
+          'down': data['down'],
+          'up_Bps': data['up'],
+          'down_Bps': data['down'],
+          'up_MBps': data['up'],
+          'down_MBps': data['down'],
         };
       }
-      return null;
-    } catch (e) {
+      return data;
+    } catch (e, st) {
+      print('NETWORK ERROR: $e\n$st');
       return null;
     }
   }

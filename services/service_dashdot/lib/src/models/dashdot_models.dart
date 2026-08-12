@@ -5,6 +5,7 @@ part 'dashdot_models.g.dart';
 @JsonSerializable(createToJson: false)
 class DashdotInfo {
   const DashdotInfo({
+    this.os,
     this.cpu,
     this.ram,
     this.storage,
@@ -15,11 +16,30 @@ class DashdotInfo {
   factory DashdotInfo.fromJson(Map<String, dynamic> json) =>
       _$DashdotInfoFromJson(json);
 
+  final DashdotOsInfo? os;
   final DashdotCpuInfo? cpu;
   final DashdotRamInfo? ram;
   final List<DashdotStorageInfo>? storage;
   final DashdotNetworkInfo? network;
   final List<dynamic>? gpu;
+}
+
+@JsonSerializable(createToJson: false)
+class DashdotOsInfo {
+  const DashdotOsInfo({
+    this.distro,
+    this.release,
+    this.arch,
+    this.uptime,
+  });
+
+  factory DashdotOsInfo.fromJson(Map<String, dynamic> json) =>
+      _$DashdotOsInfoFromJson(json);
+
+  final String? distro;
+  final String? release;
+  final String? arch;
+  final num? uptime;
 }
 
 @JsonSerializable(createToJson: false)

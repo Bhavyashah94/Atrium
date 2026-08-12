@@ -8,7 +8,8 @@ const int _maxHistoryPoints = 60;
 
 class MetricHistory {
   final List<double> values;
-  MetricHistory(this.values);
+  final List<double> temps;
+  MetricHistory(this.values, {this.temps = const []});
 }
 
 class NetworkHistory {
@@ -35,10 +36,13 @@ class CpuHistoryNotifier extends Notifier<CpuHistoryState> {
         if (cores.isNotEmpty) {
           double totalLoad = 0;
           List<double> coreLoads = [];
+          List<double> coreTemps = [];
           for (var core in cores) {
             final load = (core['load'] as num?)?.toDouble() ?? 0.0;
+            final temp = (core['temp'] as num?)?.toDouble() ?? 0.0;
             totalLoad += load;
             coreLoads.add(load);
+            coreTemps.add(temp);
           }
           final double avgLoad = totalLoad / cores.length;
           
@@ -48,9 +52,12 @@ class CpuHistoryNotifier extends Notifier<CpuHistoryState> {
           final List<MetricHistory> newCores = [];
           for (int i = 0; i < coreLoads.length; i++) {
             final List<double> prevCoreValues = state.cores.length > i ? state.cores[i].values : [];
+            final List<double> prevCoreTemps = state.cores.length > i ? state.cores[i].temps : [];
             final List<double> newCore = List.from(prevCoreValues)..add(coreLoads[i]);
+            final List<double> newTemps = List.from(prevCoreTemps)..add(coreTemps[i]);
             if (newCore.length > _maxHistoryPoints) newCore.removeAt(0);
-            newCores.add(MetricHistory(newCore));
+            if (newTemps.length > _maxHistoryPoints) newTemps.removeAt(0);
+            newCores.add(MetricHistory(newCore, temps: newTemps));
           }
           
           state = CpuHistoryState(MetricHistory(newOverall), newCores);
@@ -130,8 +137,8 @@ class NetworkHistoryNotifier extends Notifier<NetworkHistory> {
     ref.listen(dashdotNetworkLoadProvider(instance), (previous, next) {
       if (next.hasValue && next.value != null && next.value is Map) {
         final map = next.value as Map;
-        final num down = map['down_MBps'] as num? ?? 0;
-        final num up = map['up_MBps'] as num? ?? 0;
+        final num down = map['down'] as num? ?? 0;
+        final num up = map['up'] as num? ?? 0;
         
         final List<double> newDown = List.from(state.down)..add(down.toDouble());
         final List<double> newUp = List.from(state.up)..add(up.toDouble());
@@ -148,4 +155,43 @@ class NetworkHistoryNotifier extends Notifier<NetworkHistory> {
 
 final dashdotNetworkHistoryProvider = NotifierProvider.family<NetworkHistoryNotifier, NetworkHistory, Instance>(
   NetworkHistoryNotifier.new,
+);
+
+class GpuHistoryState {
+  final MetricHistory history;
+  final List<dynamic> layout;
+  GpuHistoryState(this.history, this.layout);
+}
+
+class GpuHistoryNotifier extends Notifier<GpuHistoryState> {
+  GpuHistoryNotifier(this.instance);
+  final Instance instance;
+
+  @override
+  GpuHistoryState build() {
+    ref.listen(dashdotGpuLoadProvider(instance), (previous, next) {
+      if (next.hasValue && next.value != null && next.value is Map) {
+        final map = next.value as Map;
+        final List<dynamic> layout = map['layout'] as List<dynamic>? ?? [];
+        if (layout.isNotEmpty) {
+          double totalLoad = 0;
+          for (var gpu in layout) {
+            totalLoad += (gpu['load'] as num?)?.toDouble() ?? 0.0;
+          }
+          final avgLoad = totalLoad / layout.length;
+          
+          final List<double> newValues = List.from(state.history.values)..add(avgLoad);
+          if (newValues.length > _maxHistoryPoints) {
+            newValues.removeAt(0);
+          }
+          state = GpuHistoryState(MetricHistory(newValues), layout);
+        }
+      }
+    });
+    return GpuHistoryState(MetricHistory([]), []);
+  }
+}
+
+final dashdotGpuHistoryProvider = NotifierProvider.family<GpuHistoryNotifier, GpuHistoryState, Instance>(
+  GpuHistoryNotifier.new,
 );

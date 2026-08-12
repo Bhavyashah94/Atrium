@@ -14,31 +14,8 @@ class DashdotHome extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          const TabBar(
-            tabs: [
-              Tab(text: 'Live Metrics'),
-              Tab(text: 'System Info'),
-            ],
-          ),
-          Expanded(
-            child: TabBarView(
-              children: [
-                _buildMetricsTab(context, ref),
-                _buildInfoTab(context, ref),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoTab(BuildContext context, WidgetRef ref) {
     final infoAsync = ref.watch(dashdotInfoProvider(instance));
+    
     return infoAsync.when(
       data: (info) {
         if (info == null) {
@@ -49,77 +26,173 @@ class DashdotHome extends ConsumerWidget {
         final ram = info.ram;
         final storageList = info.storage ?? [];
         final network = info.network;
+        
+        final rawStorageLoad = ref.watch(dashdotStorageLoadProvider(instance)).value;
+        List<dynamic> rawStorageList = [];
+        if (rawStorageLoad != null && rawStorageLoad is List) {
+          rawStorageList = rawStorageLoad;
+        }
 
-        return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            noMoreText: 'No more',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
-          onRefresh: () async {
-            ref.invalidate(dashdotInfoProvider(instance));
-            ref.invalidate(dashdotConfigProvider(instance));
-          },
-          child: ListView(
-            padding: Insets.page,
+        final refreshHeader = const ClassicHeader(
+          dragText: 'Pull to refresh',
+          armedText: 'Release ready',
+          readyText: 'Refreshing...',
+          processingText: 'Refreshing...',
+          processedText: 'Succeeded',
+          noMoreText: 'No more',
+          failedText: 'Failed',
+          messageText: 'Last updated at %T',
+        );
+
+        Future<void> onRefresh() async {
+          ref.invalidate(dashdotInfoProvider(instance));
+          ref.invalidate(dashdotConfigProvider(instance));
+        }
+
+        return DefaultTabController(
+          length: 2,
+          child: Column(
             children: [
-              _InfoBox(
-                title: 'CPU',
-                subtitle: cpu?.cpuBrand ?? 'Unknown',
-                details: '${cpu?.cores ?? '?'} Cores / ${cpu?.threads ?? '?'} Threads\n${cpu?.freq ?? '?'} GHz',
-                icon: Icons.memory,
+              TabBar(
+                tabs: const [
+                  Tab(text: 'Live Metrics'),
+                  Tab(text: 'System Information'),
+                ],
+                labelColor: Theme.of(context).colorScheme.primary,
+                unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                indicatorColor: Theme.of(context).colorScheme.primary,
               ),
-              const SizedBox(height: Insets.md),
-              _InfoBox(
-                title: 'RAM',
-                subtitle: ram != null && ram.totalCapacity != null ? '${ram.totalCapacity} GB' : 'Unknown',
-                details: (ram?.sticks?.isNotEmpty ?? false)
-                    ? '${ram!.sticks!.first.type ?? ''} @ ${ram.sticks!.first.frequency ?? '?'} MHz'
-                    : '',
-                icon: Icons.developer_board,
-              ),
-              const SizedBox(height: Insets.md),
-              _InfoBox(
-                title: 'Network',
-                subtitle: network?.type ?? 'Unknown',
-                details: 'Speed: ${network?.interfaceSpeed ?? '?'} Mbps' +
-                    (network != null && ((network.downMBps ?? 0) > 0 || (network.upMBps ?? 0) > 0)
-                        ? '\n⬇ ${network.downMBps} Mbps  ⬆ ${network.upMBps} Mbps' 
-                        : ''),
-                icon: Icons.network_check,
-              ),
-              const SizedBox(height: Insets.md),
-              if (storageList.isNotEmpty)
-                _InfoBox(
-                  title: 'Storage',
-                  subtitle: storageList.first.type ?? 'Disk',
-                  details: '${storageList.first.capacity} GB',
-                  icon: Icons.storage,
-                )
-              else
-                const _InfoBox(
-                  title: 'Storage',
-                  subtitle: 'Unknown',
-                  details: '',
-                  icon: Icons.storage,
-                ),
-              if (info.gpu != null && info.gpu!.isNotEmpty) ...[
-                const SizedBox(height: Insets.md),
-                ...info.gpu!.map((g) => Padding(
-                      padding: const EdgeInsets.only(bottom: Insets.md),
-                      child: _InfoBox(
-                        title: 'GPU',
-                        subtitle: g['name'] ?? 'GPU',
-                        details: '${g['memory']} MB',
-                        icon: Icons.monitor,
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    EasyRefresh(
+                      header: refreshHeader,
+                      onRefresh: onRefresh,
+                      child: ListView(
+                        padding: const EdgeInsets.all(Insets.md),
+                        children: [
+                          DashdotRingMetricsCard(instance: instance),
+                          DashdotGpusRow(instance: instance),
+                          const SizedBox(height: Insets.md),
+                          DashdotOsCard(instance: instance),
+                          const SizedBox(height: Insets.md),
+                          DashdotStatsRow(instance: instance),
+                        ],
                       ),
-                    )),
-              ],
+                    ),
+                    EasyRefresh(
+                      header: refreshHeader,
+                      onRefresh: onRefresh,
+                      child: ListView(
+                        padding: const EdgeInsets.all(Insets.md),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: Insets.sm),
+                            child: Text('CPU INFORMATION', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                          ),
+                          _InfoBox(
+                            title: 'CPU',
+                            subtitle: cpu?.cpuBrand ?? 'Unknown',
+                            details: '${cpu?.cores ?? '?'} Cores / ${cpu?.threads ?? '?'} Threads\n${cpu?.freq ?? '?'} GHz',
+                            icon: Icons.memory,
+                          ),
+                          const SizedBox(height: Insets.lg),
+                          
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: Insets.sm),
+                            child: Text('RAM INFORMATION', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                          ),
+                          _InfoBox(
+                            title: 'RAM',
+                            subtitle: ram != null && ram.totalCapacity != null ? '${ram.totalCapacity} GB' : 'Unknown',
+                            details: (ram?.sticks?.isNotEmpty ?? false)
+                                ? '${ram!.sticks!.first.type ?? ''} @ ${ram.sticks!.first.frequency ?? '?'} MHz'
+                                : '',
+                            icon: Icons.developer_board,
+                          ),
+                          const SizedBox(height: Insets.lg),
+
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: Insets.sm),
+                            child: Text('NETWORK INFORMATION', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                          ),
+                          _InfoBox(
+                            title: 'Network',
+                            subtitle: network?.type ?? 'Unknown',
+                            details: 'Speed: ${network?.interfaceSpeed ?? '?'} Mbps',
+                            icon: Icons.network_check,
+                          ),
+                          const SizedBox(height: Insets.lg),
+
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: Insets.sm),
+                            child: Text('STORAGE INFORMATION', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                          ),
+                          if (storageList.isNotEmpty) ...[
+                            ...storageList.asMap().entries.map((entry) {
+                              final idx = entry.key;
+                              final disk = entry.value;
+                              
+                              double usedGB = 0.0;
+                              if (idx < rawStorageList.length) {
+                                final used = rawStorageList[idx];
+                                if (used is num) usedGB = used.toDouble();
+                              }
+                              
+                              final capacityGB = (disk.capacity as num?)?.toDouble() ?? 0.0;
+                              final usedPct = capacityGB > 0 ? (usedGB / capacityGB * 100) : 0.0;
+                              
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: Insets.md),
+                                child: _InfoBox(
+                                  title: 'Storage ${idx + 1}',
+                                  subtitle: disk.type ?? 'Disk',
+                                  details: 'Total: $capacityGB GB\nUsed: ${usedGB.toStringAsFixed(1)} GB (${usedPct.toStringAsFixed(1)}%)',
+                                  icon: Icons.storage,
+                                ),
+                              );
+                            }),
+                          ] else
+                            const _InfoBox(
+                              title: 'Storage',
+                              subtitle: 'Unknown',
+                              details: '',
+                              icon: Icons.storage,
+                            ),
+                          const SizedBox(height: Insets.sm),
+
+                          if ((info.gpu != null && info.gpu!.isNotEmpty) || ref.watch(dashdotGpuHistoryProvider(instance)).layout.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: Insets.sm, top: Insets.sm),
+                              child: Text('GPU INFORMATION', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                            ),
+                          if (info.gpu != null && info.gpu!.isNotEmpty) ...[
+                            ...info.gpu!.map((g) => Padding(
+                                  padding: const EdgeInsets.only(bottom: Insets.md),
+                                  child: _InfoBox(
+                                    title: 'GPU',
+                                    subtitle: g['name'] ?? 'GPU',
+                                    details: '${g['memory']} MB',
+                                    icon: Icons.monitor,
+                                  ),
+                                )),
+                          ] else if (ref.watch(dashdotGpuHistoryProvider(instance)).layout.isNotEmpty) ...[
+                            ...ref.watch(dashdotGpuHistoryProvider(instance)).layout.map((g) => Padding(
+                                  padding: const EdgeInsets.only(bottom: Insets.md),
+                                  child: _InfoBox(
+                                    title: 'GPU',
+                                    subtitle: g['name'] ?? 'GPU',
+                                    details: 'Load: ${g['load']}%  Mem: ${g['memory']}MB',
+                                    icon: Icons.monitor,
+                                  ),
+                                )),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         );
@@ -128,135 +201,37 @@ class DashdotHome extends ConsumerWidget {
       error: (e, st) => Center(child: Text('Error: $e')),
     );
   }
-
-  Widget _buildMetricsTab(BuildContext context, WidgetRef ref) {
-    return ListView(
-      padding: const EdgeInsets.all(Insets.md),
-      children: [
-        DashdotCpuCard(instance: instance),
-        const SizedBox(height: Insets.md),
-        _buildRamLoadCard(context, ref),
-        const SizedBox(height: Insets.md),
-        _buildStorageLoadCard(context, ref),
-        const SizedBox(height: Insets.md),
-        _buildNetworkLoadCard(context, ref),
-      ],
-    );
-  }
-
-  Widget _buildRamLoadCard(BuildContext context, WidgetRef ref) {
-    final history = ref.watch(dashdotRamHistoryProvider(instance));
-    final currentLoad = history.values.isNotEmpty ? history.values.last : 0.0;
-    
-    return Consumer(builder: (context, ref, _) {
-      final info = ref.read(dashdotInfoProvider(instance)).value;
-      final num totalGb = (info?.ram?.totalCapacity as num?) ?? 0;
-      final double pct = totalGb > 0 ? (currentLoad / totalGb * 100) : 0.0;
-      
-      return DashdotMetricCard(
-        title: 'Memory',
-        subtitle: '${pct.toStringAsFixed(0)}% in use',
-        chart: DashdotLineChart(
-          values: history.values,
-          maxY: totalGb.toDouble(),
-          lineColor: Colors.purple,
-        ),
-        details: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            DashdotSubMetric(label: 'In use', value: '${currentLoad.toStringAsFixed(1)} GB'),
-            DashdotSubMetric(label: 'Available', value: '${(totalGb - currentLoad).clamp(0, totalGb).toStringAsFixed(1)} GB'),
-            DashdotSubMetric(label: 'Speed', value: (info?.ram?.sticks?.isNotEmpty ?? false) ? '${info!.ram!.sticks!.first.frequency} MHz' : 'Unknown'),
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _buildStorageLoadCard(BuildContext context, WidgetRef ref) {
-    final history = ref.watch(dashdotStorageHistoryProvider(instance));
-    final currentLoad = history.values.isNotEmpty ? history.values.last : 0.0;
-    
-    return Consumer(builder: (context, ref, _) {
-      final info = ref.read(dashdotInfoProvider(instance)).value;
-      double totalGb = 0;
-      for (var disk in info?.storage ?? []) {
-        totalGb += (disk.capacity as num?)?.toDouble() ?? 0;
-      }
-      final double pct = totalGb > 0 ? (currentLoad / totalGb * 100) : 0.0;
-      
-      return DashdotMetricCard(
-        title: 'Disk',
-        subtitle: '${pct.toStringAsFixed(0)}% used',
-        chart: DashdotLineChart(
-          values: history.values,
-          maxY: totalGb,
-          lineColor: Colors.green,
-        ),
-        details: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            DashdotSubMetric(label: 'Capacity', value: '${totalGb.toStringAsFixed(1)} GB'),
-            DashdotSubMetric(label: 'Used', value: '${currentLoad.toStringAsFixed(1)} GB'),
-            DashdotSubMetric(label: 'Free', value: '${(totalGb - currentLoad).clamp(0, totalGb).toStringAsFixed(1)} GB'),
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _buildNetworkLoadCard(BuildContext context, WidgetRef ref) {
-    final history = ref.watch(dashdotNetworkHistoryProvider(instance));
-    final currentDown = history.down.isNotEmpty ? history.down.last : 0.0;
-    final currentUp = history.up.isNotEmpty ? history.up.last : 0.0;
-    
-    return Consumer(builder: (context, ref, _) {
-      final info = ref.read(dashdotInfoProvider(instance)).value;
-      final num interfaceSpeedMbps = info?.network?.interfaceSpeed as num? ?? 0;
-      final num interfaceSpeedMBps = interfaceSpeedMbps / 8;
-      
-      return DashdotMetricCard(
-        title: 'Network',
-        subtitle: 'S: ${currentDown.toStringAsFixed(1)} R: ${currentUp.toStringAsFixed(1)} Mbps',
-        chart: DashdotLineChart(
-          values: history.down, // R/down
-          secondaryValues: history.up, // S/up
-          maxY: interfaceSpeedMBps.toDouble() > 0 ? interfaceSpeedMBps.toDouble() : 100.0,
-          lineColor: Colors.orange, // Receive
-          secondaryLineColor: Colors.orange.withOpacity(0.5), // Send
-        ),
-        details: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            DashdotSubMetric(label: 'Send', value: '${currentUp.toStringAsFixed(1)} MB/s', color: Colors.orange.withOpacity(0.5)),
-            DashdotSubMetric(label: 'Receive', value: '${currentDown.toStringAsFixed(1)} MB/s', color: Colors.orange),
-            DashdotSubMetric(label: 'Interface', value: '${interfaceSpeedMbps.toStringAsFixed(0)} Mbps'),
-          ],
-        ),
-      );
-    });
-  }
-
 }
 
-class DashdotMetricCard extends StatelessWidget {
-  const DashdotMetricCard({
-    required this.title,
-    required this.subtitle,
-    required this.chart,
-    required this.details,
-    this.onTap,
-    super.key,
-  });
-
-  final String title;
-  final String subtitle;
-  final Widget chart;
-  final Widget details;
-  final VoidCallback? onTap;
+class DashdotRingMetricsCard extends ConsumerWidget {
+  const DashdotRingMetricsCard({required this.instance, super.key});
+  final Instance instance;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cpuHistory = ref.watch(dashdotCpuHistoryProvider(instance)).overall;
+    final ramHistory = ref.watch(dashdotRamHistoryProvider(instance));
+    final storageHistory = ref.watch(dashdotStorageHistoryProvider(instance));
+
+    final currentCpu = cpuHistory.values.isNotEmpty ? cpuHistory.values.last : 0.0;
+    
+    final info = ref.read(dashdotInfoProvider(instance)).value;
+    
+    final num totalRamGb = (info?.ram?.totalCapacity as num?) ?? 0;
+    final currentRamLoad = ramHistory.values.isNotEmpty ? ramHistory.values.last : 0.0;
+    final double ramPct = totalRamGb > 0 ? (currentRamLoad / totalRamGb * 100) : 0.0;
+    
+    double totalDiskGb = 0;
+    for (var disk in info?.storage ?? []) {
+      totalDiskGb += (disk.capacity as num?)?.toDouble() ?? 0;
+    }
+    final currentDiskLoad = storageHistory.values.isNotEmpty ? storageHistory.values.last : 0.0;
+    final double diskPct = totalDiskGb > 0 ? (currentDiskLoad / totalDiskGb * 100) : 0.0;
+
+    final cpuColor = Theme.of(context).colorScheme.primary;
+    final ramColor = Theme.of(context).colorScheme.tertiary;
+    final diskColor = Theme.of(context).colorScheme.secondary;
+
     return Card(
       elevation: 0,
       clipBehavior: Clip.antiAlias,
@@ -264,131 +239,400 @@ class DashdotMetricCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(Insets.md),
         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
       ),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(Insets.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Padding(
+        padding: const EdgeInsets.all(Insets.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Live Metrics', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              ],
+            ),
+            const SizedBox(height: Insets.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: SizedBox(
+                      width: 140,
+                      height: 140,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          _buildRing(140, currentCpu / 100, cpuColor),
+                          _buildRing(105, ramPct / 100, ramColor),
+                          _buildRing(70, diskPct / 100, diskColor),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: Insets.md),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _LegendItem(color: cpuColor, label: 'CPU', value: '${currentCpu.toStringAsFixed(0)}%'),
+                    const SizedBox(height: Insets.md),
+                    _LegendItem(color: ramColor, label: 'RAM', value: '${ramPct.toStringAsFixed(0)}%'),
+                    const SizedBox(height: Insets.md),
+                    _LegendItem(color: diskColor, label: 'Disk', value: '${diskPct.toStringAsFixed(0)}%'),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRing(double size, double value, Color color) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: value.clamp(0.0, 1.0)),
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutCubic,
+      builder: (BuildContext context, double animValue, Widget? child) {
+        return SizedBox(
+          width: size,
+          height: size,
+          child: CircularProgressIndicatorM3E(
+            shape: ProgressM3EShape.flat,
+            value: animValue,
+            trackColor: color.withValues(alpha: 0.15),
+            activeColor: color,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LegendItem extends StatelessWidget {
+  const _LegendItem({required this.color, required this.label, required this.value});
+  final Color color;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 40,
+          child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        ),
+        Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+}
+
+class DashdotOsCard extends ConsumerWidget {
+  const DashdotOsCard({required this.instance, super.key});
+  final Instance instance;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = ref.watch(dashdotInfoProvider(instance)).value;
+    final os = info?.os;
+    final cpu = info?.cpu;
+    
+    final distro = os?.distro ?? 'Unknown OS';
+    final release = os?.release ?? '';
+    final title = release.isNotEmpty ? '$distro $release' : distro;
+    
+    final cpuBrand = cpu?.cpuBrand ?? 'Unknown';
+    final cores = cpu?.cores != null ? '${cpu!.cores} core' : '';
+    final arch = os?.arch != null ? (os!.arch!.startsWith('x') ? os!.arch! : 'x${os!.arch}') : '';
+    
+    final List<String> subs = [
+      if (cpuBrand.isNotEmpty) cpuBrand.split(' ')[0],
+      if (cores.isNotEmpty) cores,
+      if (arch.isNotEmpty) arch,
+    ];
+    
+    final uptimeSecs = (os?.uptime ?? 0).toInt();
+    final int days = uptimeSecs ~/ 86400;
+    final int hours = (uptimeSecs % 86400) ~/ 3600;
+    final int mins = (uptimeSecs % 3600) ~/ 60;
+    final String uptimeStr = days > 0 ? '${days}d ${hours}h' : '${hours}h ${mins}m';
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Insets.md),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(Insets.md),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.computer, size: 28, color: Theme.of(context).colorScheme.primary),
+            ),
+            const SizedBox(width: Insets.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                  Text(subtitle, style: Theme.of(context).textTheme.titleLarge),
+                  Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  Text(subs.join(' • '), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ],
               ),
-              const SizedBox(height: Insets.md),
-              SizedBox(
-                height: 120,
-                width: double.infinity,
-                child: chart,
-              ),
-              const SizedBox(height: Insets.md),
-              details,
-            ],
-          ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(uptimeStr, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text('uptime', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class DashdotSubMetric extends StatelessWidget {
-  const DashdotSubMetric({
-    required this.label,
-    required this.value,
-    this.color,
-    super.key,
-  });
-
-  final String label;
-  final String value;
-  final Color? color;
+class DashdotGpusRow extends ConsumerWidget {
+  const DashdotGpusRow({required this.instance, super.key});
+  final Instance instance;
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = ref.watch(dashdotInfoProvider(instance)).value;
+    final gpuState = ref.watch(dashdotGpuHistoryProvider(instance));
+    if (gpuState.layout.isEmpty) return const SizedBox.shrink();
+
+    final gpuColor = Theme.of(context).colorScheme.error;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: Insets.md),
+      child: Column(
+        children: gpuState.layout.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final gpu = entry.value;
+          final load = (gpu['load'] as num?)?.toDouble() ?? 0.0;
+          final mem = (gpu['memory'] as num?)?.toDouble() ?? 0.0;
+          
+          String? infoName;
+          double totalMem = 0.0;
+          if (info?.gpu != null && idx < info!.gpu!.length) {
+            final gInfo = info.gpu![idx];
+            infoName = gInfo['name'] ?? gInfo['model'];
+            totalMem = (gInfo['memory'] as num?)?.toDouble() ?? 0.0;
+          }
+          
+          final name = infoName ?? gpu['name'] ?? (gpuState.layout.length > 1 ? 'GPU $idx' : 'GPU');
+          final double? memProgress = mem == 0 ? 0.0 : (totalMem > 0 ? (mem / totalMem).clamp(0.0, 1.0) : null);
+          
+          return Card(
+            elevation: 0,
+            margin: EdgeInsets.only(bottom: idx < gpuState.layout.length - 1 ? Insets.md : 0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Insets.md),
+              side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(Insets.md),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: gpuColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.memory, size: 32, color: gpuColor),
+                  ),
+                  const SizedBox(width: Insets.lg),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: Insets.md),
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 40,
+                              child: Text('Load', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                            ),
+                            const SizedBox(width: Insets.sm),
+                            Expanded(
+                              child: TweenAnimationBuilder<double>(
+                                tween: Tween<double>(begin: 0, end: load / 100),
+                                duration: const Duration(milliseconds: 600),
+                                curve: Curves.easeOutCubic,
+                                builder: (context, val, _) => LinearProgressIndicatorM3E(
+                                  value: val,
+                                  shape: ProgressM3EShape.flat,
+                                  activeColor: gpuColor,
+                                  trackColor: gpuColor.withValues(alpha: 0.15),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: Insets.md),
+                            SizedBox(
+                              width: 45,
+                              child: Text('${load.toStringAsFixed(0)}%', textAlign: TextAlign.end, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: Insets.sm),
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 40,
+                              child: Text('Mem', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                            ),
+                            const SizedBox(width: Insets.sm),
+                            Expanded(
+                              child: memProgress == null
+                                  ? LinearProgressIndicatorM3E(
+                                      value: null,
+                                      shape: ProgressM3EShape.flat,
+                                      activeColor: Theme.of(context).colorScheme.tertiary,
+                                      trackColor: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.15),
+                                    )
+                                  : TweenAnimationBuilder<double>(
+                                      tween: Tween<double>(begin: 0, end: memProgress),
+                                      duration: const Duration(milliseconds: 600),
+                                      curve: Curves.easeOutCubic,
+                                      builder: (context, val, _) => LinearProgressIndicatorM3E(
+                                        value: val,
+                                        shape: ProgressM3EShape.flat,
+                                        activeColor: Theme.of(context).colorScheme.tertiary,
+                                        trackColor: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.15),
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(width: Insets.md),
+                            SizedBox(
+                              width: 55,
+                              child: Text('${mem.toStringAsFixed(0)} MB', textAlign: TextAlign.end, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class DashdotStatsRow extends ConsumerWidget {
+  const DashdotStatsRow({required this.instance, super.key});
+  final Instance instance;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final netHistory = ref.watch(dashdotNetworkHistoryProvider(instance));
+    final cpuHistoryState = ref.watch(dashdotCpuHistoryProvider(instance));
+    
+    final currentDownBytes = netHistory.down.isNotEmpty ? netHistory.down.last : 0.0;
+    final currentUpBytes = netHistory.up.isNotEmpty ? netHistory.up.last : 0.0;
+    
+    String formatBytes(double bytes) {
+      if (bytes >= 1048576) return '${(bytes / 1048576).toStringAsFixed(1)} MB/s';
+      if (bytes >= 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB/s';
+      return '${bytes.toStringAsFixed(0)} B/s';
+    }
+
+    final downStr = formatBytes(currentDownBytes).split(' ');
+    final upStr = formatBytes(currentUpBytes).split(' ');
+    
+    double cpuTemp = 0.0;
+    if (cpuHistoryState.cores.isNotEmpty && cpuHistoryState.cores.first.temps.isNotEmpty) {
+      cpuTemp = cpuHistoryState.cores.first.temps.last;
+    }
+    
+    return Row(
       children: [
-        Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-        Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color)),
+        Expanded(
+          child: _StatBox(
+            label: 'DOWN',
+            value: downStr[0],
+            unit: downStr[1],
+            valueColor: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: Insets.sm),
+        Expanded(
+          child: _StatBox(
+            label: 'UP',
+            value: upStr[0],
+            unit: upStr[1],
+            valueColor: Theme.of(context).colorScheme.tertiary,
+          ),
+        ),
+        const SizedBox(width: Insets.sm),
+        Expanded(
+          child: _StatBox(
+            label: 'TEMP',
+            value: '${cpuTemp.toStringAsFixed(0)}°',
+            unit: 'CPU',
+            valueColor: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
       ],
     );
   }
 }
 
-class DashdotCpuCard extends ConsumerStatefulWidget {
-  const DashdotCpuCard({required this.instance, super.key});
-  final Instance instance;
+class _StatBox extends StatelessWidget {
+  const _StatBox({
+    required this.label,
+    required this.value,
+    required this.unit,
+    required this.valueColor,
+  });
 
-  @override
-  ConsumerState<DashdotCpuCard> createState() => _DashdotCpuCardState();
-}
-
-class _DashdotCpuCardState extends ConsumerState<DashdotCpuCard> {
-  bool _showLogicalCores = false;
+  final String label;
+  final String value;
+  final String unit;
+  final Color valueColor;
 
   @override
   Widget build(BuildContext context) {
-    final historyState = ref.watch(dashdotCpuHistoryProvider(widget.instance));
-    final currentLoad = historyState.overall.values.isNotEmpty ? historyState.overall.values.last : 0.0;
-    
-    Widget chart;
-    if (_showLogicalCores && historyState.cores.isNotEmpty) {
-      chart = GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 80,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-          childAspectRatio: 1.0,
-        ),
-        itemCount: historyState.cores.length,
-        itemBuilder: (context, index) {
-          final coreHistory = historyState.cores[index];
-          return Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.blue.withOpacity(0.2)),
-            ),
-            child: DashdotLineChart(
-              values: coreHistory.values,
-              maxY: 100,
-              lineColor: Colors.blue,
-            ),
-          );
-        },
-      );
-    } else {
-      chart = DashdotLineChart(
-        values: historyState.overall.values,
-        maxY: 100,
-        lineColor: Colors.blue,
-      );
-    }
-
-    return DashdotMetricCard(
-      title: 'CPU',
-      subtitle: '${currentLoad.toStringAsFixed(0)}% utilization',
-      chart: chart,
-      onTap: () {
-        setState(() {
-          _showLogicalCores = !_showLogicalCores;
-        });
-      },
-      details: Consumer(builder: (context, ref, _) {
-        final info = ref.read(dashdotInfoProvider(widget.instance)).value;
-        final cpu = info?.cpu;
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Insets.md),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: Insets.md, horizontal: Insets.sm),
+        child: Column(
           children: [
-            DashdotSubMetric(label: 'Utilization', value: '${currentLoad.toStringAsFixed(1)}%'),
-            DashdotSubMetric(label: 'Speed', value: '${cpu?.freq ?? '?'} GHz'),
-            DashdotSubMetric(label: 'Cores', value: '${cpu?.cores ?? '?'}'),
-            DashdotSubMetric(label: 'Logical', value: '${cpu?.threads ?? '?'}'),
+            Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 4),
+            Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: valueColor, fontWeight: FontWeight.bold)),
+            Text(unit, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
-        );
-      }),
+        ),
+      ),
     );
   }
 }
@@ -408,45 +652,58 @@ class _InfoBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(Insets.sm),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer,
+    final color = Theme.of(context).colorScheme.primary;
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Insets.md),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(width: Insets.xs),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
+      child: Padding(
+        padding: const EdgeInsets.all(Insets.md),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
               ),
-            ],
-          ),
-          const SizedBox(height: Insets.xs),
-          Text(
-            subtitle,
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          if (details.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(
-              details,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    height: 1.2,
+              child: Icon(icon, size: 32, color: color),
+            ),
+            const SizedBox(width: Insets.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title.toUpperCase(),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  if (details.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      details,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
