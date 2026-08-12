@@ -27,6 +27,27 @@ class ReleaseNote {
 /// Newest first. Update alongside appVersion and the pubspec at each release.
 const List<ReleaseNote> releaseNotes = <ReleaseNote>[
   ReleaseNote(
+    version: '1.4.0',
+    date: '2026-08-13',
+    groups: <ChangeGroup>[
+      ChangeGroup(ChangeCategory.added, <String>[
+        'Beszel is now a supported service: see your systems, their live metrics, and a detailed screen for each one.',
+        'dashdot is now a supported service too, with live CPU, memory, disk, and GPU rings and a system information tab.',
+        'qBittorrent gained tag management: filter your torrents by tag, and copy a tracker URL straight from the trackers list.',
+      ]),
+      ChangeGroup(ChangeCategory.improved, <String>[
+        'The Files tab now shows the full file name instead of cutting it off.',
+        'rTorrent, Deluge, Transmission, SABnzbd, and Speedtest Tracker now use their own icons.',
+        'Tracearr, Transmission, Deluge, and rTorrent are marked as beta so you know what is still settling in.',
+      ]),
+      ChangeGroup(ChangeCategory.fixed, <String>[
+        'Testing a connection now checks your credentials for Beszel and for qBittorrent API keys, instead of only checking that the server answers.',
+        'The Deluge torrent detail screen no longer crashes on some torrents.',
+        'Scrolling is smoother in Emby, Jellyfin, and Beszel.',
+      ]),
+    ],
+  ),
+  ReleaseNote(
     version: '1.3.3',
     date: '2026-08-07',
     groups: <ChangeGroup>[

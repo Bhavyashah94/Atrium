@@ -1,0 +1,10 @@
+Two new services this time. Beszel shows your systems with live metrics and a
+detailed screen for each. Dashdot shows live CPU, memory, disk, and GPU usage
+with a system information tab.
+
+qBittorrent gained tag management: filter your torrents by tag and copy a
+tracker URL from the trackers list. The Files tab now shows the full file name.
+
+Fixed: testing a connection now checks your credentials for Beszel and for
+qBittorrent API keys, the Deluge detail screen no longer crashes on some
+torrents, and scrolling is smoother in Emby, Jellyfin, and Beszel.
