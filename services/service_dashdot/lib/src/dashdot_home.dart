@@ -13,7 +13,7 @@ class DashdotHome extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final infoAsync = ref.watch(dashdotInfoProvider(instance));
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(instance.name),
@@ -32,23 +32,63 @@ class DashdotHome extends ConsumerWidget {
           if (info == null) {
             return const Center(child: Text('Failed to load Dashdot info.'));
           }
+
+          final cpu = info.cpu;
+          final ram = info.ram;
+          final storageList = info.storage ?? [];
+          final network = info.network;
+
           return ListView(
             padding: Insets.page,
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(Insets.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('System Info', style: Theme.of(context).textTheme.titleLarge),
-                      const SizedBox(height: Insets.sm),
-                      Text('OS: ${info.os?.name ?? 'Unknown'}'),
-                      Text('Uptime: ${info.os?.uptime ?? 'Unknown'}'),
-                    ],
+              GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: Insets.md,
+                mainAxisSpacing: Insets.md,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 1.5,
+                children: [
+                  _InfoBox(
+                    title: 'CPU',
+                    subtitle: cpu?.brand ?? 'Unknown',
+                    details: '${cpu?.cores ?? '?'} Cores / ${cpu?.threads ?? '?'} Threads\n${cpu?.frequency ?? '?'} GHz',
+                    icon: Icons.memory,
                   ),
-                ),
+                  _InfoBox(
+                    title: 'RAM',
+                    subtitle: ram != null && ram.size != null ? '${(ram.size! / 1024 / 1024 / 1024).toStringAsFixed(2)} GB' : 'Unknown',
+                    details: (ram?.layout?.isNotEmpty ?? false)
+                        ? '${ram!.layout!.first.type ?? ''} @ ${ram.layout!.first.frequency ?? '?'} MHz'
+                        : '',
+                    icon: Icons.developer_board,
+                  ),
+                  _InfoBox(
+                    title: 'Network',
+                    subtitle: network?.type ?? 'Unknown',
+                    details: network != null 
+                        ? '⬇ ${(network.speedDown is num ? network.speedDown : 0).toStringAsFixed(1)} Mbps\n⬆ ${(network.speedUp is num ? network.speedUp : 0).toStringAsFixed(1)} Mbps' 
+                        : '',
+                    icon: Icons.network_check,
+                  ),
+                  if (storageList.isNotEmpty)
+                    _InfoBox(
+                      title: 'Storage',
+                      subtitle: storageList.first.disks?.firstOrNull?.type ?? 'Disk',
+                      details: '${((storageList.first.size ?? 0) / 1024 / 1024 / 1024).toStringAsFixed(2)} GB',
+                      icon: Icons.storage,
+                    )
+                  else
+                    const _InfoBox(
+                      title: 'Storage',
+                      subtitle: 'Unknown',
+                      details: '',
+                      icon: Icons.storage,
+                    ),
+                ],
               ),
+              const SizedBox(height: Insets.lg),
+              Text('Live Metrics', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: Insets.md),
               _buildStreamCard(context, ref, 'CPU Load', dashdotCpuLoadProvider(instance)),
               const SizedBox(height: Insets.md),
@@ -69,15 +109,11 @@ class DashdotHome extends ConsumerWidget {
   }
 
   Widget _buildStreamCard(
-    BuildContext context, 
-    WidgetRef ref, 
-    String title, 
+    BuildContext context,
+    WidgetRef ref,
+    String title,
     StreamProvider<dynamic> provider,
   ) {
-    // Note: Since we used StreamProvider.family, it's not autoDispose by default unless we declared it so,
-    // but we didn't use `.autoDispose`. We used `StreamProvider.family`.
-    // Wait, I defined them as `StreamProvider.family` in the other file. 
-    // Let me just use `ProviderListenable<AsyncValue<Map<String, dynamic>?>>`.
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(Insets.md),
@@ -106,6 +142,69 @@ class DashdotHome extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _InfoBox extends StatelessWidget {
+  const _InfoBox({
+    required this.title,
+    required this.subtitle,
+    required this.details,
+    required this.icon,
+  });
+
+  final String title;
+  final String subtitle;
+  final String details;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(Insets.sm),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(Insets.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: Insets.xs),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: Insets.xs),
+          Text(
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          if (details.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              details,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.2,
+                  ),
+            ),
+          ],
+        ],
       ),
     );
   }
