@@ -1,6 +1,8 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_networking/core_networking.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:service_beszel/service_beszel.dart';
 import 'package:service_emby/service_emby.dart';
 import 'package:service_jellyfin/service_jellyfin.dart';
 import 'package:service_plex/service_plex.dart';
@@ -22,7 +24,10 @@ import 'connection_test_result.dart';
 /// expose `login()`, and Plex is verified against its token-gated
 /// `getLibraries()`. qBittorrent logs in for cookie auth, but an API key is
 /// stateless (Authorization: Bearer) and cannot use the login endpoint, so it
-/// is verified against an authed endpoint instead.
+/// is verified against an authed endpoint instead. Beszel logs in through
+/// PocketBase's auth-with-password: its `api/health` endpoint is public (a
+/// lightweight probe would pass with any password), so it must attempt the real
+/// login, where a rejected email or password comes back as HTTP 400.
 class ConnectionTester {
   ConnectionTester(this._ref);
 
@@ -64,6 +69,18 @@ class ConnectionTester {
         return _verify(() async {
           final PlexApi api = await _ref.read(plexApiProvider(forced).future);
           await api.getLibraries();
+        });
+      case ServiceKind.beszel:
+        return _verify(() async {
+          // `api/health` is public, so a probe can't tell a good password from a
+          // bad one; log in against PocketBase for real and let a rejection (a
+          // 400 from auth-with-password) surface as an auth failure.
+          final Dio dio = await _ref.read(dioFactoryProvider).create(forced);
+          try {
+            await verifyBeszelConnection(dio, forced.auth);
+          } finally {
+            dio.close(force: true);
+          }
         });
       default:
         final HealthProbe probe =
