@@ -19,55 +19,56 @@ class DashdotInfo {
   final DashdotRamInfo? ram;
   final List<DashdotStorageInfo>? storage;
   final DashdotNetworkInfo? network;
-  final DashdotGpuInfo? gpu;
+  final List<dynamic>? gpu;
 }
 
 @JsonSerializable(createToJson: false)
 class DashdotCpuInfo {
   const DashdotCpuInfo({
-    this.brand,
-    this.model,
+    this.cpuBrand,
     this.cores,
     this.threads,
-    this.frequency,
+    this.freq,
   });
 
   factory DashdotCpuInfo.fromJson(Map<String, dynamic> json) =>
       _$DashdotCpuInfoFromJson(json);
 
-  final String? brand;
-  final String? model;
+  @JsonKey(name: 'cpu_brand')
+  final String? cpuBrand;
   final int? cores;
   final int? threads;
-  final dynamic frequency; // could be double or int
+  final dynamic freq;
 }
 
 @JsonSerializable(createToJson: false)
 class DashdotRamInfo {
   const DashdotRamInfo({
-    this.size,
-    this.layout,
+    this.totalCapacity,
+    this.sticks,
   });
 
   factory DashdotRamInfo.fromJson(Map<String, dynamic> json) =>
       _$DashdotRamInfoFromJson(json);
 
-  final int? size;
-  final List<DashdotRamLayout>? layout;
+  @JsonKey(name: 'total_capacity')
+  final dynamic totalCapacity;
+  final List<DashdotRamStick>? sticks;
 }
 
 @JsonSerializable(createToJson: false)
-class DashdotRamLayout {
-  const DashdotRamLayout({
-    this.brand,
+class DashdotRamStick {
+  const DashdotRamStick({
+    this.ramBrand,
     this.type,
     this.frequency,
   });
 
-  factory DashdotRamLayout.fromJson(Map<String, dynamic> json) =>
-      _$DashdotRamLayoutFromJson(json);
+  factory DashdotRamStick.fromJson(Map<String, dynamic> json) =>
+      _$DashdotRamStickFromJson(json);
 
-  final String? brand;
+  @JsonKey(name: 'ram_brand')
+  final String? ramBrand;
   final String? type;
   final int? frequency;
 }
@@ -75,59 +76,41 @@ class DashdotRamLayout {
 @JsonSerializable(createToJson: false)
 class DashdotStorageInfo {
   const DashdotStorageInfo({
-    this.size,
-    this.disks,
+    this.storageBrand,
+    this.device,
+    this.type,
+    this.capacity,
   });
 
   factory DashdotStorageInfo.fromJson(Map<String, dynamic> json) =>
       _$DashdotStorageInfoFromJson(json);
 
-  final int? size;
-  final List<DashdotDiskInfo>? disks;
-}
-
-@JsonSerializable(createToJson: false)
-class DashdotDiskInfo {
-  const DashdotDiskInfo({
-    this.brand,
-    this.device,
-    this.type,
-  });
-
-  factory DashdotDiskInfo.fromJson(Map<String, dynamic> json) =>
-      _$DashdotDiskInfoFromJson(json);
-
-  final String? brand;
+  @JsonKey(name: 'storage_brand')
+  final String? storageBrand;
   final String? device;
   final String? type;
+  final dynamic capacity;
 }
 
 @JsonSerializable(createToJson: false)
 class DashdotNetworkInfo {
   const DashdotNetworkInfo({
     this.type,
-    this.speedDown,
-    this.speedUp,
+    this.downMBps,
+    this.upMBps,
+    this.interfaceSpeed,
   });
 
   factory DashdotNetworkInfo.fromJson(Map<String, dynamic> json) =>
       _$DashdotNetworkInfoFromJson(json);
 
   final String? type;
-  final dynamic speedDown;
-  final dynamic speedUp;
-}
-
-@JsonSerializable(createToJson: false)
-class DashdotGpuInfo {
-  const DashdotGpuInfo({
-    this.layout,
-  });
-
-  factory DashdotGpuInfo.fromJson(Map<String, dynamic> json) =>
-      _$DashdotGpuInfoFromJson(json);
-
-  final List<dynamic>? layout;
+  @JsonKey(name: 'down_MBps')
+  final dynamic downMBps;
+  @JsonKey(name: 'up_MBps')
+  final dynamic upMBps;
+  @JsonKey(name: 'interface_speed')
+  final dynamic interfaceSpeed;
 }
 
 @JsonSerializable(createToJson: false)

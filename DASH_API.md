@@ -136,3 +136,29 @@ Response Payload:
   "down_MBps": 0.02
 }
 ```
+
+5. `curl -s http://localhost:3001/info | jq '{gpu: {gpus: (.gpu.layout | map({name: "\(.brand) \(.model)", memory}))}}'`
+
+Response Payload: 
+```bash
+{
+  "gpu": {
+    "gpus": [
+      {
+        "name": "NVIDIA GeForce GTX 1650",
+        "memory": 4096
+      },
+      {
+        "name": "Advanced Micro Devices, Inc. [AMD/ATI] Cezanne",
+        "memory": 512
+      }
+    ]
+  }
+}```
+
+6. `curl -s http://localhost:3001/load/storage | jq '.[] / 1024 / 1024 / 1024'`
+
+Response Payload:
+```bash
+461.6812934875488
+```
