@@ -142,12 +142,16 @@ class DashdotHome extends ConsumerWidget {
                               final capacityGB = (disk.capacity as num?)?.toDouble() ?? 0.0;
                               final usedPct = capacityGB > 0 ? (usedGB / capacityGB * 100) : 0.0;
                               
+                              final displayType = disk.type == 'HD' ? 'HDD' : (disk.type ?? 'Disk');
+                              final brand = disk.storageBrand;
+                              final subtitle = (brand != null && brand.isNotEmpty) ? '$brand ($displayType)' : displayType;
+                              
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: Insets.md),
                                 child: _InfoBox(
                                   title: 'Storage ${idx + 1}',
-                                  subtitle: disk.type ?? 'Disk',
-                                  details: 'Total: $capacityGB GB\nUsed: ${usedGB.toStringAsFixed(1)} GB (${usedPct.toStringAsFixed(1)}%)',
+                                  subtitle: subtitle,
+                                  details: 'Total: $capacityGB GB${usedGB < 0 ? "" : "\nUsed: ${usedGB.toStringAsFixed(1)} GB (${usedPct.toStringAsFixed(1)}%)"}',
                                   icon: Icons.storage,
                                 ),
                               );
