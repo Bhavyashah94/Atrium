@@ -45,3 +45,5 @@ workspace:
   - services/service_tracearr
   - services/service_beszel
   - services/service_dashdot
+  - services/service_lidarr
+  - services/service_ombi

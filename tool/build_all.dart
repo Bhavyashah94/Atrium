@@ -141,6 +141,24 @@ Future<BuildResult> runBuildRunner(
       dir.path.replaceFirst(rootDir.path + Platform.pathSeparator, '');
 
   try {
+    final openApiParserScript = File('${dir.path}/tool/openapi_parser.dart');
+    if (openApiParserScript.existsSync()) {
+      final parserProcess = await Process.run(
+        Platform.resolvedExecutable,
+        ['run', 'tool/openapi_parser.dart'],
+        workingDirectory: dir.path,
+      );
+      if (parserProcess.exitCode != 0) {
+        return BuildResult(
+          relativePath: relativePath,
+          exitCode: parserProcess.exitCode,
+          stdout: parserProcess.stdout.toString(),
+          stderr: parserProcess.stderr.toString(),
+          duration: stopwatch.elapsed,
+        );
+      }
+    }
+
     final process = await Process.start(
       Platform.resolvedExecutable,
       ['run', 'build_runner', ...commandArgs],
