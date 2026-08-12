@@ -116,12 +116,28 @@ class DashdotHome extends ConsumerWidget {
                             padding: const EdgeInsets.only(bottom: Insets.sm),
                             child: Text('NETWORK INFORMATION', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                           ),
-                          _InfoBox(
-                            title: 'Network',
-                            subtitle: network?.type ?? 'Unknown',
-                            details: 'Speed: ${network?.interfaceSpeed ?? '?'} Mbps',
-                            icon: Icons.network_check,
-                          ),
+                          Builder(builder: (context) {
+                            String speedStr = '? Mbps';
+                            if (network?.interfaceSpeed != null) {
+                              if (network!.interfaceSpeed is num) {
+                                final speed = (network.interfaceSpeed as num).toDouble();
+                                if (speed >= 1000) {
+                                  final gbps = speed / 1000;
+                                  speedStr = '${gbps == gbps.truncate() ? gbps.toInt() : gbps.toStringAsFixed(1)} Gbps';
+                                } else {
+                                  speedStr = '${speed == speed.truncate() ? speed.toInt() : speed.toStringAsFixed(0)} Mbps';
+                                }
+                              } else {
+                                speedStr = '${network.interfaceSpeed} Mbps';
+                              }
+                            }
+                            return _InfoBox(
+                              title: 'Network',
+                              subtitle: network?.type ?? 'Unknown',
+                              details: 'Speed: $speedStr',
+                              icon: Icons.network_check,
+                            );
+                          }),
                           const SizedBox(height: Insets.lg),
 
                           Padding(
