@@ -1,3 +1,4 @@
+
 ```bash
 curl -s -X GET "http://localhost:3001/info" | jq '{
   cpu: {
@@ -72,5 +73,66 @@ Response Payload:
     "up_MBps": 113.41
   },
   "gpu": []
+}
+```
+
+
+2. `curl http://localhost:3001/load/cpu | jq`
+
+Response Payload: 
+```bash
+[
+  {
+    "load": 24.46808510638298,
+    "temp": 39,
+    "core": 0
+  },
+  {
+    "load": 28.865979381443296,
+    "temp": 39,
+    "core": 1
+  },
+  {
+    "load": 18.367346938775512,
+    "temp": 41,
+    "core": 2
+  },
+  {
+    "load": 39.175257731958766,
+    "temp": 41,
+    "core": 3
+  }
+]
+```
+
+3. `curl http://localhost:3001/load/ram | jq '{load: (((.load / 1024 / 1024 / 1024) * 100) | trunc / 100)}'`
+
+Response Payload: 
+```bash
+{
+  "load": 4.96
+}
+```
+
+4. `curl -s http://100.86.78.83:3005/load/storage | jq 'map(if . < 0 then . else ((. / 1073741824 * 100 | trunc) / 100) end)'`
+
+Response Payload: 
+```bash
+[
+  -1,
+  537.38
+]
+```
+
+5. `curl -s http://100.86.78.83:3005/load/network | jq '{
+  up_MBps: (((.up / 1024 / 1024) * 100 | trunc) / 100),
+  down_MBps: (((.down / 1024 / 1024) * 100 | trunc) / 100)
+}'`
+
+Response Payload:
+```bash
+{
+  "up_MBps": 0.06,
+  "down_MBps": 0.02
 }
 ```
