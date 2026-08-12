@@ -3,12 +3,12 @@
 The central courtyard for your self-hosted media stack.
 One Android app that fronts Sonarr, Radarr, Prowlarr, Bazarr,
 Seerr, Tautulli, Tracearr, Jellyfin, Emby, Plex, qBittorrent, Deluge,
-Transmission, rTorrent, SABnzbd, NZBGet, Glances and Speedtest Tracker - and routes every request through the right URL
+Transmission, rTorrent, SABnzbd, NZBGet, Glances, Speedtest Tracker, Beszel and dashdot - and routes every request through the right URL
 whether you're on the home Wi-Fi or out in the world.
 
 **[Website][site]** - screenshots and a tour, no install needed.
 
-> **Status:** v1.3.3. Install from [F-Droid][fdroid], or grab a signed APK
+> **Status:** v1.4.0. Install from [F-Droid][fdroid], or grab a signed APK
 > from the [releases page][releases].
 
 ## Why
@@ -71,6 +71,8 @@ each one covers:
 | NZBGet                 | queue with reorder/priority/category, add NZB, speed limit, history   |
 | Glances                | CPU/memory/network/disk monitoring                                    |
 | Speedtest Tracker      | latest result, history chart, dashboard, confirmed remote test runs   |
+| Beszel                 | systems list, live metrics, per-system detail screen                  |
+| dashdot                | live CPU, memory, disk, and GPU usage with a system-info tab           |
 
 ## Install
 

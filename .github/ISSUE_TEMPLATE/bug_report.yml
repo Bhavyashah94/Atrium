@@ -23,7 +23,7 @@ body:
     attributes:
       label: Atrium version
       description: Settings, then About.
-      placeholder: "1.3.3"
+      placeholder: "1.4.0"
     validations:
       required: true
 
@@ -61,6 +61,8 @@ body:
         - qBittorrent
         - SABnzbd
         - Glances
+        - Beszel
+        - dashdot
         - Something else
     validations:
       required: true

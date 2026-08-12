@@ -89,6 +89,8 @@ Atrium is a **controller** app. Video playback was removed by design
   transport commands are exercised best-effort
 - **Glances**: per-instance polling, CPU/memory gauges, swap + per-core
   bars, network with interface pinning, disks, uptime
+- **Beszel**: systems list, live metrics, and a per-system detail screen
+- **dashdot**: live CPU, memory, disk, and GPU usage with a system-info tab
 - **Speedtest Tracker** (live-verified): authenticated 1.1+ result history,
   latest metrics, combined download / upload chart, multi-instance dashboard
   widget, and confirmed 1.6+ remote runs with queued/running/terminal-state
