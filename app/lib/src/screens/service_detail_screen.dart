@@ -231,6 +231,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       ServiceKind.rtorrent => RtorrentHome(instance: instance),
       ServiceKind.glances => GlancesHome(instance: instance),
       ServiceKind.beszel => BeszelHome(instance: instance),
+      ServiceKind.dashdot => const Scaffold(body: Center(child: Text('Dashdot support coming soon'))),
       ServiceKind.speedtestTracker => SpeedtestTrackerHome(instance: instance),
     };
   }
