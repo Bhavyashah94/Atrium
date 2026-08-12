@@ -440,7 +440,8 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
                 ],
               ),
             ],
-            if (_kind == ServiceKind.glances) ...<Widget>[
+            if (_kind == ServiceKind.glances ||
+                _kind == ServiceKind.dashdot) ...<Widget>[
               const SizedBox(height: Insets.lg),
               Text(
                 'Polling',

@@ -6,7 +6,6 @@ import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 import 'dashdot_history_providers.dart';
 import 'dashdot_providers.dart';
-import 'widgets/dashdot_chart.dart';
 
 class DashdotHome extends ConsumerWidget {
   const DashdotHome({required this.instance, super.key});
@@ -191,7 +190,7 @@ class DashdotHome extends ConsumerWidget {
                                   padding: const EdgeInsets.only(bottom: Insets.md),
                                   child: _InfoBox(
                                     title: 'GPU',
-                                    subtitle: g['name'] ?? 'GPU',
+                                    subtitle: (g['name'] as String?) ?? 'GPU',
                                     details: '${g['memory']} MB',
                                     icon: Icons.monitor,
                                   ),
@@ -201,7 +200,7 @@ class DashdotHome extends ConsumerWidget {
                                   padding: const EdgeInsets.only(bottom: Insets.md),
                                   child: _InfoBox(
                                     title: 'GPU',
-                                    subtitle: g['name'] ?? 'GPU',
+                                    subtitle: (g['name'] as String?) ?? 'GPU',
                                     details: 'Load: ${g['load']}%  Mem: ${g['memory']}MB',
                                     icon: Icons.monitor,
                                   ),
@@ -322,6 +321,7 @@ class DashdotRingMetricsCard extends ConsumerWidget {
             value: animValue,
             trackColor: color.withValues(alpha: 0.15),
             activeColor: color,
+            strokeWidth: 12,
           ),
         );
       },
@@ -372,7 +372,10 @@ class DashdotOsCard extends ConsumerWidget {
     
     final cpuBrand = cpu?.cpuBrand ?? 'Unknown';
     final cores = cpu?.cores != null ? '${cpu!.cores} core' : '';
-    final arch = os?.arch != null ? (os!.arch!.startsWith('x') ? os!.arch! : 'x${os!.arch}') : '';
+    final archRaw = os?.arch;
+    final arch = archRaw == null
+        ? ''
+        : (archRaw.startsWith('x') ? archRaw : 'x$archRaw');
     
     final List<String> subs = [
       if (cpuBrand.isNotEmpty) cpuBrand.split(' ')[0],
@@ -453,11 +456,11 @@ class DashdotGpusRow extends ConsumerWidget {
           double totalMem = 0.0;
           if (info?.gpu != null && idx < info!.gpu!.length) {
             final gInfo = info.gpu![idx];
-            infoName = gInfo['name'] ?? gInfo['model'];
+            infoName = (gInfo['name'] ?? gInfo['model']) as String?;
             totalMem = (gInfo['memory'] as num?)?.toDouble() ?? 0.0;
           }
           
-          final name = infoName ?? gpu['name'] ?? (gpuState.layout.length > 1 ? 'GPU $idx' : 'GPU');
+          final String name = infoName ?? (gpu['name'] as String?) ?? (gpuState.layout.length > 1 ? 'GPU $idx' : 'GPU');
           final double? memProgress = mem == 0 ? 0.0 : (totalMem > 0 ? (mem / totalMem).clamp(0.0, 1.0) : null);
           
           return Card(

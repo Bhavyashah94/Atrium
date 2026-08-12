@@ -20,42 +20,59 @@ final dashdotConfigProvider = FutureProvider.family<DashdotConfig?, Instance>((r
   return api.getConfig();
 });
 
-final dashdotCpuLoadProvider = StreamProvider.family<dynamic, Instance>((ref, instance) async* {
+// Live-load providers poll at the instance's configured interval and are
+// autoDispose so the polling loop stops when the metrics view is left.
+final dashdotCpuLoadProvider =
+    StreamProvider.autoDispose.family<dynamic, Instance>((ref, instance) async* {
   final api = await ref.watch(dashdotApiProvider(instance));
   while (true) {
     yield await api.getCpuLoad();
-    await Future<void>.delayed(const Duration(seconds: 2));
+    await Future<void>.delayed(
+      Duration(seconds: instance.pollingIntervalSeconds),
+    );
   }
 });
 
-final dashdotRamLoadProvider = StreamProvider.family<dynamic, Instance>((ref, instance) async* {
+final dashdotRamLoadProvider =
+    StreamProvider.autoDispose.family<dynamic, Instance>((ref, instance) async* {
   final api = await ref.watch(dashdotApiProvider(instance));
   while (true) {
     yield await api.getRamLoad();
-    await Future<void>.delayed(const Duration(seconds: 2));
+    await Future<void>.delayed(
+      Duration(seconds: instance.pollingIntervalSeconds),
+    );
   }
 });
 
-final dashdotStorageLoadProvider = StreamProvider.family<dynamic, Instance>((ref, instance) async* {
+final dashdotStorageLoadProvider =
+    StreamProvider.autoDispose.family<dynamic, Instance>((ref, instance) async* {
   final api = await ref.watch(dashdotApiProvider(instance));
   while (true) {
     yield await api.getStorageLoad();
-    await Future<void>.delayed(const Duration(seconds: 2));
+    await Future<void>.delayed(
+      Duration(seconds: instance.pollingIntervalSeconds),
+    );
   }
 });
 
-final dashdotNetworkLoadProvider = StreamProvider.family<dynamic, Instance>((ref, instance) async* {
+final dashdotNetworkLoadProvider =
+    StreamProvider.autoDispose.family<dynamic, Instance>((ref, instance) async* {
   final api = await ref.watch(dashdotApiProvider(instance));
   while (true) {
     yield await api.getNetworkLoad();
-    await Future<void>.delayed(const Duration(seconds: 2));
+    await Future<void>.delayed(
+      Duration(seconds: instance.pollingIntervalSeconds),
+    );
   }
 });
 
-final dashdotGpuLoadProvider = StreamProvider.family<dynamic, Instance>((ref, instance) async* {
+final dashdotGpuLoadProvider =
+    StreamProvider.autoDispose.family<dynamic, Instance>((ref, instance) async* {
   final api = await ref.watch(dashdotApiProvider(instance));
   while (true) {
     yield await api.getGpuLoad();
-    await Future<void>.delayed(const Duration(seconds: 2));
+    await Future<void>.delayed(
+      Duration(seconds: instance.pollingIntervalSeconds),
+    );
   }
 });
