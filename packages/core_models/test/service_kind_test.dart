@@ -28,6 +28,7 @@ void main() {
         'rtorrent',
         'tracearr',
         'beszel',
+        'dashdot',
       ],
     );
   });
