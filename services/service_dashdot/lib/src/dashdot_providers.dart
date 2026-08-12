@@ -20,7 +20,7 @@ final dashdotConfigProvider = FutureProvider.family<DashdotConfig?, Instance>((r
   return api.getConfig();
 });
 
-final dashdotCpuLoadProvider = StreamProvider.family<Map<String, dynamic>?, Instance>((ref, instance) async* {
+final dashdotCpuLoadProvider = StreamProvider.family<dynamic, Instance>((ref, instance) async* {
   final api = await ref.watch(dashdotApiProvider(instance));
   while (true) {
     yield await api.getCpuLoad();
@@ -28,7 +28,7 @@ final dashdotCpuLoadProvider = StreamProvider.family<Map<String, dynamic>?, Inst
   }
 });
 
-final dashdotRamLoadProvider = StreamProvider.family<Map<String, dynamic>?, Instance>((ref, instance) async* {
+final dashdotRamLoadProvider = StreamProvider.family<dynamic, Instance>((ref, instance) async* {
   final api = await ref.watch(dashdotApiProvider(instance));
   while (true) {
     yield await api.getRamLoad();
@@ -36,7 +36,7 @@ final dashdotRamLoadProvider = StreamProvider.family<Map<String, dynamic>?, Inst
   }
 });
 
-final dashdotStorageLoadProvider = StreamProvider.family<Map<String, dynamic>?, Instance>((ref, instance) async* {
+final dashdotStorageLoadProvider = StreamProvider.family<dynamic, Instance>((ref, instance) async* {
   final api = await ref.watch(dashdotApiProvider(instance));
   while (true) {
     yield await api.getStorageLoad();
@@ -44,7 +44,7 @@ final dashdotStorageLoadProvider = StreamProvider.family<Map<String, dynamic>?, 
   }
 });
 
-final dashdotNetworkLoadProvider = StreamProvider.family<Map<String, dynamic>?, Instance>((ref, instance) async* {
+final dashdotNetworkLoadProvider = StreamProvider.family<dynamic, Instance>((ref, instance) async* {
   final api = await ref.watch(dashdotApiProvider(instance));
   while (true) {
     yield await api.getNetworkLoad();
@@ -52,7 +52,7 @@ final dashdotNetworkLoadProvider = StreamProvider.family<Map<String, dynamic>?, 
   }
 });
 
-final dashdotGpuLoadProvider = StreamProvider.family<Map<String, dynamic>?, Instance>((ref, instance) async* {
+final dashdotGpuLoadProvider = StreamProvider.family<dynamic, Instance>((ref, instance) async* {
   final api = await ref.watch(dashdotApiProvider(instance));
   while (true) {
     yield await api.getGpuLoad();

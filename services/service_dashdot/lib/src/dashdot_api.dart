@@ -29,45 +29,45 @@ class DashdotApi {
     }
   }
 
-  Future<Map<String, dynamic>?> getCpuLoad() async {
+  Future<dynamic> getCpuLoad() async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>('/load/cpu');
+      final response = await _dio.get<dynamic>('/load/cpu');
       return response.data;
     } catch (e) {
       return null;
     }
   }
 
-  Future<Map<String, dynamic>?> getRamLoad() async {
+  Future<dynamic> getRamLoad() async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>('/load/ram');
+      final response = await _dio.get<dynamic>('/load/ram');
       return response.data;
     } catch (e) {
       return null;
     }
   }
 
-  Future<Map<String, dynamic>?> getStorageLoad() async {
+  Future<dynamic> getStorageLoad() async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>('/load/storage');
+      final response = await _dio.get<dynamic>('/load/storage');
       return response.data;
     } catch (e) {
       return null;
     }
   }
 
-  Future<Map<String, dynamic>?> getNetworkLoad() async {
+  Future<dynamic> getNetworkLoad() async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>('/load/network');
+      final response = await _dio.get<dynamic>('/load/network');
       return response.data;
     } catch (e) {
       return null;
     }
   }
 
-  Future<Map<String, dynamic>?> getGpuLoad() async {
+  Future<dynamic> getGpuLoad() async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>('/load/gpu');
+      final response = await _dio.get<dynamic>('/load/gpu');
       return response.data;
     } catch (e) {
       return null;

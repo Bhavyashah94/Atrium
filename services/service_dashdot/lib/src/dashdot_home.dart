@@ -72,7 +72,7 @@ class DashdotHome extends ConsumerWidget {
     BuildContext context, 
     WidgetRef ref, 
     String title, 
-    StreamProvider<Map<String, dynamic>?> provider,
+    StreamProvider<dynamic> provider,
   ) {
     // Note: Since we used StreamProvider.family, it's not autoDispose by default unless we declared it so,
     // but we didn't use `.autoDispose`. We used `StreamProvider.family`.
@@ -90,7 +90,7 @@ class DashdotHome extends ConsumerWidget {
               builder: (context, ref, child) {
                 final asyncValue = ref.watch(provider);
                 return asyncValue.when(
-                  data: (Map<String, dynamic>? data) {
+                  data: (dynamic data) {
                     if (data == null) return const Text('No data');
                     return Text(
                       const JsonEncoder.withIndent('  ').convert(data),
