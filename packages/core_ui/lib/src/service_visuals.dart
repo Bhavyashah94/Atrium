@@ -27,6 +27,7 @@ abstract final class ServiceVisuals {
         ServiceKind.rtorrent => Icons.rocket_launch_outlined,
         ServiceKind.tracearr => Icons.track_changes_outlined,
         ServiceKind.beszel => Icons.monitor_heart_outlined,
+        ServiceKind.dashdot => Icons.dashboard_outlined,
       };
 
   static Color accent(ServiceKind kind) => switch (kind) {
@@ -49,6 +50,7 @@ abstract final class ServiceVisuals {
         ServiceKind.rtorrent => const Color(0xFF3AB54A),
         ServiceKind.tracearr => const Color(0xFF4CAF50),
         ServiceKind.beszel => const Color(0xFF607D8B),
+        ServiceKind.dashdot => const Color(0xFFE9433B),
       };
 
   /// Human label for a [ServiceRole] section header.

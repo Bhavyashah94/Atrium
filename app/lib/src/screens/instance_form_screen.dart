@@ -282,7 +282,7 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
                 child: _buildServiceIcon(_kind, size: 24),
               ),
               dropdownMenuEntries: <DropdownMenuEntry<ServiceKind>>[
-                for (final ServiceKind k in ServiceKind.values)
+                for (final ServiceKind k in ServiceKind.values.toList()..sort((a, b) => a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase())))
                   DropdownMenuEntry<ServiceKind>(
                     value: k,
                     label: k.isBeta
@@ -440,7 +440,8 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
                 ],
               ),
             ],
-            if (_kind == ServiceKind.glances) ...<Widget>[
+            if (_kind == ServiceKind.glances ||
+                _kind == ServiceKind.dashdot) ...<Widget>[
               const SizedBox(height: Insets.lg),
               Text(
                 'Polling',

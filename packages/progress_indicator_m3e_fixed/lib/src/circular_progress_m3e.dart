@@ -13,6 +13,7 @@ class CircularProgressIndicatorM3E extends StatefulWidget {
     this.activeColor,
     this.trackColor,
     this.rotation = 0.0, // radians, for indeterminate rotation
+    this.strokeWidth = 4.0,
   });
 
   final double? value; // 0..1 (null => indeterminate arc sweep)
@@ -21,6 +22,7 @@ class CircularProgressIndicatorM3E extends StatefulWidget {
   final Color? activeColor;
   final Color? trackColor;
   final double rotation;
+  final double strokeWidth;
 
   @override
   State<CircularProgressIndicatorM3E> createState() =>
@@ -94,6 +96,7 @@ class _CircularProgressIndicatorM3EState
                   active: active,
                   track: track,
                   rotation: rot,
+                  strokeWidth: widget.strokeWidth,
                 )
               : _CircularFlatPainter(
                   value: widget.value,
@@ -101,6 +104,7 @@ class _CircularProgressIndicatorM3EState
                   track: track,
                   rotation: rot,
                   size: widget.size,
+                  strokeWidth: widget.strokeWidth,
                 ),
         ),
       ),
@@ -115,6 +119,7 @@ class _CircularFlatPainter extends CustomPainter {
     required this.track,
     required this.rotation,
     required this.size,
+    required this.strokeWidth,
   });
 
   final double? value;
@@ -122,10 +127,11 @@ class _CircularFlatPainter extends CustomPainter {
   final Color track;
   final double rotation;
   final CircularProgressM3ESize size;
+  final double strokeWidth;
 
   @override
   void paint(Canvas canvas, Size s) {
-    const stroke = 4.0;
+    final stroke = strokeWidth;
     final center = s.center(Offset.zero);
     final radius = (math.min(s.width, s.height) - stroke) / 2;
     final rect = Rect.fromCircle(center: center, radius: radius);
@@ -158,8 +164,8 @@ class _CircularFlatPainter extends CustomPainter {
       return;
     }
 
-    // gap before active in dp -> angle
-    const gapDp = 8.0;
+    // gap before active in dp -> angle; scales with stroke (8dp at stroke 4)
+    final gapDp = strokeWidth * 2;
     final gapAngle = gapDp / radius; // s = r * angle
     const total = math.pi * 2;
 
@@ -183,7 +189,8 @@ class _CircularFlatPainter extends CustomPainter {
       active != old.active ||
       track != old.track ||
       rotation != old.rotation ||
-      size != old.size;
+      size != old.size ||
+      strokeWidth != old.strokeWidth;
 }
 
 class _CircularWavyPainter extends CustomPainter {
@@ -192,16 +199,18 @@ class _CircularWavyPainter extends CustomPainter {
     required this.active,
     required this.track,
     required this.rotation,
+    required this.strokeWidth,
   });
 
   final double? value;
   final Color active;
   final Color track;
   final double rotation;
+  final double strokeWidth;
 
   @override
   void paint(Canvas canvas, Size s) {
-    const stroke = 4.0;
+    final stroke = strokeWidth;
     final center = s.center(Offset.zero);
     final baseRadius = (math.min(s.width, s.height) - stroke) / 2;
 
@@ -291,5 +300,6 @@ class _CircularWavyPainter extends CustomPainter {
       value != old.value ||
       active != old.active ||
       track != old.track ||
-      rotation != old.rotation;
+      rotation != old.rotation ||
+      strokeWidth != old.strokeWidth;
 }

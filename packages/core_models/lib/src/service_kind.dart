@@ -23,6 +23,7 @@ enum ServiceKind {
   rtorrent,
   tracearr,
   beszel,
+  dashdot,
 }
 
 /// Static metadata about a [ServiceKind] - display name, default port, the
@@ -51,6 +52,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.rtorrent => 'rTorrent',
         ServiceKind.tracearr => 'Tracearr',
         ServiceKind.beszel => 'Beszel',
+        ServiceKind.dashdot => 'Dashdot',
       };
 
   /// One-line role description.
@@ -74,6 +76,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.rtorrent => 'Torrent client',
         ServiceKind.tracearr => 'Stream monitoring',
         ServiceKind.beszel => 'System monitor',
+        ServiceKind.dashdot => 'System monitor',
       };
 
   /// Whether this service's integration is still in beta. Surfaced as a
@@ -113,6 +116,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.rtorrent => 8000,
         ServiceKind.tracearr => 3000,
         ServiceKind.beszel => 8090,
+        ServiceKind.dashdot => 3001,
       };
 
   /// What auth flow the service uses by default. Some services (Jellyfin) can
@@ -144,6 +148,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.glances => AuthStyle.none,
         ServiceKind.speedtestTracker => AuthStyle.bearerToken,
         ServiceKind.beszel => AuthStyle.userPass,
+        ServiceKind.dashdot => AuthStyle.none,
       };
 
   /// Broad role of the service in the stack - used for grouping in the
@@ -170,6 +175,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.glances => ServiceRole.analytics,
         ServiceKind.speedtestTracker => ServiceRole.analytics,
         ServiceKind.beszel => ServiceRole.analytics,
+        ServiceKind.dashdot => ServiceRole.analytics,
       };
 
   /// Whether this service can be handed a torrent - a magnet URI, a link to a

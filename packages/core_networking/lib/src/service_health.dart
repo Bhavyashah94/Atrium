@@ -60,6 +60,8 @@ enum _HealthMode {
       return (path: 'api/4/core', mode: _HealthMode.authed);
     case ServiceKind.beszel:
       return (path: 'api/health', mode: _HealthMode.publicEndpoint);
+    case ServiceKind.dashdot:
+      return (path: 'info', mode: _HealthMode.publicEndpoint);
     case ServiceKind.speedtestTracker:
       return (path: 'api/v1/results?page[size]=1', mode: _HealthMode.authed);
     case ServiceKind.nzbget:
