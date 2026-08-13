@@ -1,122 +1,148 @@
-/// Utility formatters for Tracearr UI screens.
-library;
+import 'package:core_models/core_models.dart';
+import 'package:intl/intl.dart';
 
-/// Checks if a string matches a standard UUID pattern.
-bool isUuid(String? text) {
-  if (text == null || text.trim().isEmpty) return false;
-  final RegExp uuidRegExp = RegExp(
-    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
-  );
-  return uuidRegExp.hasMatch(text.trim());
-}
+import '../generated/models/recently_added_record.dart';
+import '../generated/models/user_identity.dart';
 
-/// Resolves a human-readable server name using a server map, falling back to
-/// clean server type descriptors instead of raw UUIDs.
-String resolveServerName({
-  required Map<String, String> serverMap,
-  String? serverName,
-  String? serverId,
-  String? serverType,
-}) {
-  if (serverName != null && serverName.trim().isNotEmpty && !isUuid(serverName)) {
-    return serverName.trim();
+/// Helper utilities for formatting bytes, durations, dates, and resolving media/user image URLs in Tracearr.
+abstract class TracearrFormatters {
+  /// Formats byte counts into human-readable strings (e.g., 570.1 GB).
+  static String formatBytes(int? bytes) {
+    if (bytes == null || bytes <= 0) return '0 B';
+    if (bytes < 1024) return '$bytes B';
+    final kb = bytes / 1024;
+    if (kb < 1024) return '${kb.toStringAsFixed(1)} KB';
+    final mb = kb / 1024;
+    if (mb < 1024) return '${mb.toStringAsFixed(1)} MB';
+    final gb = mb / 1024;
+    if (gb < 1024) return '${gb.toStringAsFixed(1)} GB';
+    final tb = gb / 1024;
+    return '${tb.toStringAsFixed(2)} TB';
   }
 
-  if (serverId != null && serverMap.containsKey(serverId)) {
-    final String? mapped = serverMap[serverId];
-    if (mapped != null && mapped.trim().isNotEmpty && !isUuid(mapped)) {
-      return mapped.trim();
+  /// Formats ISO date string into readable date (e.g., "Aug 11, 2026").
+  static String formatDate(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return '';
+    try {
+      final dateTime = DateTime.parse(isoString).toLocal();
+      return DateFormat('MMM d, yyyy • h:mm a').format(dateTime);
+    } catch (_) {
+      return isoString;
     }
   }
 
-  final String type = (serverType != null && serverType.trim().isNotEmpty)
-      ? serverType.trim().toUpperCase()
-      : 'MEDIA';
-
-  if (serverId != null && serverId.trim().isNotEmpty && !isUuid(serverId)) {
-    return '$type (${serverId.trim()})';
+  /// Formats millisecond duration into "1h 45m" or "22m".
+  static String formatDurationMs(int? durationMs) {
+    if (durationMs == null || durationMs <= 0) return '0m';
+    final seconds = durationMs ~/ 1000;
+    final minutes = seconds ~/ 60;
+    if (minutes < 60) return '${minutes}m';
+    final hours = minutes ~/ 60;
+    final remMinutes = minutes % 60;
+    return '${hours}h ${remMinutes}m';
   }
 
-  return '$type Server';
+  /// Resolves relative media poster or avatar URLs against instance base URL with authenticated apiKey query param.
+  static String? resolveImageUrl(String? path, Instance instance) {
+    if (path == null || path.isEmpty) return null;
+
+    final String? token = switch (instance.auth) {
+      InstanceAuthApiKey(:final String apiKey) => apiKey,
+      _ => null,
+    };
+
+    String fullUrl;
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      fullUrl = path;
+    } else {
+      final baseUrlStr = instance.externalUrl.isNotEmpty
+          ? instance.externalUrl
+          : instance.localUrl;
+      final baseUrl = baseUrlStr.replaceAll(RegExp(r'/$'), '');
+      final cleanPath = path.startsWith('/') ? path : '/$path';
+      fullUrl = '$baseUrl$cleanPath';
+    }
+
+    if (token != null && token.isNotEmpty) {
+      final separator = fullUrl.contains('?') ? '&' : '?';
+      if (!fullUrl.contains('apiKey=') && !fullUrl.contains('apikey=')) {
+        fullUrl = '$fullUrl${separator}apiKey=$token';
+      }
+    }
+
+    return fullUrl;
+  }
+
+  /// Resolves user avatar image URL for [UserIdentity]. Fallback to server account external/server user ID proxy URL if avatarUrl is null.
+  /// Resolves user avatar image URL for [UserIdentity]. Fallback to server account external/server user ID proxy URL if avatarUrl is null.
+  static String? resolveUserAvatarUrl(UserIdentity user, Instance instance) {
+    final accounts = user.accounts ?? [];
+    if (accounts.isNotEmpty) {
+      final acc = accounts.first;
+      final sid = acc.serverId;
+      final uid = acc.externalUserId ?? acc.serverUserId;
+      if (sid != null && uid != null) {
+        final serverType = acc.serverType?.toLowerCase() ?? '';
+        final innerPath = serverType == 'plex'
+            ? '/users/$uid/avatar'
+            : '/Users/$uid/Images/Primary';
+        final encodedServer = Uri.encodeQueryComponent(sid);
+        final encodedUrl = Uri.encodeQueryComponent(innerPath);
+        final path =
+            '/api/v1/images/proxy?server=$encodedServer&url=$encodedUrl&width=100&height=100&fallback=avatar';
+        return resolveImageUrl(path, instance);
+      }
+    }
+    return null;
+  }
+
+  /// Resolves media poster image URL for [RecentlyAddedRecord]. Construct server image proxy URL if posterUrl is null.
+  static String? resolveRecentlyAddedPosterUrl(
+    RecentlyAddedRecord item,
+    Instance instance,
+  ) {
+    final sid = item.serverId;
+    final ratingKey =
+        item.grandparentRatingKey ?? item.parentRatingKey ?? item.ratingKey;
+    if (sid != null && ratingKey != null) {
+      final serverType = item.serverType?.toLowerCase() ?? '';
+      final innerPath = serverType == 'plex'
+          ? '/library/metadata/$ratingKey/thumb'
+          : '/Items/$ratingKey/Images/Primary';
+      final encodedServer = Uri.encodeQueryComponent(sid);
+      final encodedUrl = Uri.encodeQueryComponent(innerPath);
+      final path =
+          '/api/v1/images/proxy?server=$encodedServer&url=$encodedUrl&width=300&height=450&fallback=poster';
+      return resolveImageUrl(path, instance);
+    }
+    return null;
+  }
+
+  /// Gets HTTP headers required for requesting image proxy endpoints (Bearer and X-API-Key authentication).
+  static Map<String, String>? getImageHeaders(Instance instance) {
+    final String? token = switch (instance.auth) {
+      InstanceAuthApiKey(:final String apiKey) => apiKey,
+      _ => null,
+    };
+    if (token != null && token.isNotEmpty) {
+      return {
+        'Authorization': 'Bearer $token',
+        'X-API-Key': token,
+      };
+    }
+    return null;
+  }
+
+  /// Formats DateTime to relative string (e.g. "12m ago", "2h ago", "Yesterday", "MMM d").
+  static String formatRelativeTime(DateTime? date) {
+    if (date == null) return '';
+    final now = DateTime.now();
+    final diff = now.difference(date.toLocal());
+    if (diff.inSeconds < 60) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return DateFormat('MMM d').format(date.toLocal());
+  }
 }
-
-/// Formats ISO timestamps into human-readable exact date and time strings.
-String formatTracearrTimestamp(String? isoString) {
-  if (isoString == null || isoString.trim().isEmpty) return '';
-  try {
-    final DateTime dt = DateTime.parse(isoString.trim()).toLocal();
-    const List<String> months = <String>[
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    final String month = months[dt.month - 1];
-    final int hour = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
-    final String minute = dt.minute.toString().padLeft(2, '0');
-    final String period = dt.hour >= 12 ? 'PM' : 'AM';
-
-    return '$month ${dt.day}, ${dt.year} at $hour:$minute $period';
-  } catch (_) {
-    return isoString;
-  }
-}
-
-/// Formats watch time in milliseconds into human readable hours/minutes format.
-String formatTracearrWatchTime(int? watchTimeMs) {
-  if (watchTimeMs == null || watchTimeMs <= 0) return '';
-  final int totalMinutes = watchTimeMs ~/ 60000;
-  final int hours = totalMinutes ~/ 60;
-  final int minutes = totalMinutes % 60;
-  if (hours > 0) {
-    return minutes > 0 ? '${hours}h ${minutes}m' : '${hours}h';
-  }
-  return '${minutes}m';
-}
-
-/// Formats season and episode numbers into S1 • E4 or Season 1 format.
-String formatTracearrSeasonEpisode(int? seasonNumber, int? episodeNumber) {
-  if (seasonNumber != null && episodeNumber != null) {
-    return 'S$seasonNumber • E$episodeNumber';
-  }
-  if (seasonNumber != null) {
-    return 'Season $seasonNumber';
-  }
-  if (episodeNumber != null) {
-    return 'Episode $episodeNumber';
-  }
-  return '';
-}
-
-/// Formats raw file size byte count into human-readable B, KB, MB, GB, or TB string.
-String formatTracearrBytes(int? bytes) {
-  if (bytes == null || bytes <= 0) return '';
-  const double kb = 1024;
-  const double mb = kb * 1024;
-  const double gb = mb * 1024;
-  const double tb = gb * 1024;
-
-  if (bytes >= tb) {
-    return '${(bytes / tb).toStringAsFixed(1)} TB';
-  }
-  if (bytes >= gb) {
-    return '${(bytes / gb).toStringAsFixed(1)} GB';
-  }
-  if (bytes >= mb) {
-    return '${(bytes / mb).toStringAsFixed(1)} MB';
-  }
-  if (bytes >= kb) {
-    return '${(bytes / kb).toStringAsFixed(1)} KB';
-  }
-  return '$bytes B';
-}
-
-

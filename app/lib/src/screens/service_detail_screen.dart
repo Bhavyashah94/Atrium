@@ -73,7 +73,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       );
     }
     if (instance.kind == ServiceKind.tracearr) {
-      return TracearrHome(
+      return TracearrHomeScreen(
         instance: instance,
         drawer: ServicesDrawer(
           instances: ref.watch(activeInstancesProvider),

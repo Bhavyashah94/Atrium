@@ -3,18 +3,16 @@ import 'package:core_router/core_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'activity/activity_tab.dart';
+import 'media/media_tab.dart';
+import 'overview/overview_tab.dart';
+import 'people/people_tab.dart';
+import 'providers/tracearr_providers.dart';
+import 'security/security_tab.dart';
 
-import 'home/dashboard_tab.dart';
-import 'home/history_tab.dart';
-import 'home/libraries_tab.dart';
-import 'home/recently_added_tab.dart';
-import 'home/users_tab.dart';
-import 'tracearr_providers.dart';
-
-/// Tracearr 2.0 per-instance main hub UI matching Sonarr and Radarr architecture:
-/// Material 3 Bottom NavigationBar, auto-hiding scroll listener, PopScope unwinding, and IndexedStack.
-class TracearrHome extends ConsumerWidget {
-  const TracearrHome({
+/// Clean-slate 5-destination home shell for Tracearr service.
+class TracearrHomeScreen extends ConsumerWidget {
+  const TracearrHomeScreen({
     required this.instance,
     this.drawer,
     super.key,
@@ -25,15 +23,28 @@ class TracearrHome extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final int currentIndex = ref.watch(tracearrActiveTabBarIndexProvider(instance));
-    final bool isNavbarVisible = ref.watch(tracearrBottomNavVisibleProvider(instance));
+    final currentIndex = ref.watch(tracearrActiveTabProvider(instance));
+    final isNavbarVisible =
+        ref.watch(tracearrBottomNavVisibleProvider(instance));
 
-    final List<Widget> tabs = <Widget>[
-      TracearrDashboardTab(instance: instance),
-      TracearrHistoryTab(instance: instance),
-      TracearrRecentlyAddedTab(instance: instance),
-      TracearrUsersTab(instance: instance),
-      TracearrLibrariesTab(instance: instance),
+    final streamsAsync = ref.watch(tracearrStreamsProvider(instance));
+    final violationsAsync = ref.watch(tracearrViolationsProvider(instance));
+
+    final activeStreamsCount = streamsAsync.value?.length ?? 0;
+    final unackViolationsCount =
+        violationsAsync.value?.where((v) => !v.acknowledged).length ?? 0;
+
+    final destinations = <Widget>[
+      // Destination 0: Overview (Fleet Health, 24h Summary, Live Pulse, 7d Trends)
+      OverviewTab(instance: instance),
+      // Destination 1: Activity (Active Streams Triage & Continuous Watch History)
+      ActivityTab(instance: instance),
+      // Destination 2: Media (Recently Added Catalog & Storage Distribution)
+      MediaTab(instance: instance),
+      // Destination 3: People (User Directory & Cross-Server Linked Accounts)
+      PeopleTab(instance: instance),
+      // Destination 4: Security (Sentinel Violation Incident Ledger & Triage)
+      SecurityTab(instance: instance),
     ];
 
     return Scaffold(
@@ -45,21 +56,27 @@ class TracearrHome extends ConsumerWidget {
           if (notification.metrics.axis == Axis.vertical) {
             if (notification is ScrollUpdateNotification) {
               final double pixels = notification.metrics.pixels;
-              if (pixels > 10.0) {
+              if (pixels > 20.0) {
                 final double maxExtent = notification.metrics.maxScrollExtent;
-                final bool isAtBottom = pixels >= maxExtent - 10.0;
+                final bool isAtBottom = pixels >= maxExtent - 20.0;
                 final double? delta = notification.scrollDelta;
-                if (delta != null && delta != 0.0) {
+                if (delta != null && delta.abs() > 4.0) {
                   final bool isScrollingDown = delta > 0.0;
                   final bool currentVisible =
                       ref.read(tracearrBottomNavVisibleProvider(instance));
                   if (isScrollingDown && currentVisible) {
                     ref
-                        .read(tracearrBottomNavVisibleProvider(instance).notifier)
+                        .read(
+                          tracearrBottomNavVisibleProvider(instance).notifier,
+                        )
                         .state = false;
-                  } else if (!isScrollingDown && !currentVisible && !isAtBottom) {
+                  } else if (!isScrollingDown &&
+                      !currentVisible &&
+                      !isAtBottom) {
                     ref
-                        .read(tracearrBottomNavVisibleProvider(instance).notifier)
+                        .read(
+                          tracearrBottomNavVisibleProvider(instance).notifier,
+                        )
                         .state = true;
                   }
                 }
@@ -83,55 +100,31 @@ class TracearrHome extends ConsumerWidget {
               onPopInvokedWithResult: (bool didPop, Object? result) {
                 if (didPop) return;
 
-                if (Scaffold.of(context).isDrawerOpen) {
-                  Navigator.of(context).pop();
+                // Close drawer if open
+                final ScaffoldState scaffold = Scaffold.of(context);
+                if (scaffold.isDrawerOpen) {
+                  scaffold.closeDrawer();
                   return;
                 }
 
-                if (ref.read(tracearrActiveTabBarIndexProvider(instance)) != 0) {
-                  ref
-                      .read(tracearrActiveTabBarIndexProvider(instance).notifier)
-                      .state = 0;
+                // Return to first destination (Overview) if on a deeper tab
+                if (ref.read(tracearrActiveTabProvider(instance)) != 0) {
+                  ref.read(tracearrActiveTabProvider(instance).notifier).state =
+                      0;
                   return;
                 }
 
+                // Return to main dashboard
                 GoRouter.of(context).go(AtriumRoutes.dashboard);
               },
               child: IndexedStack(
                 index: currentIndex,
-                children: tabs,
+                children: destinations,
               ),
             );
           },
         ),
       ),
-      floatingActionButton: (currentIndex == 1 || currentIndex == 2) && isNavbarVisible
-          ? FloatingActionButton.small(
-              heroTag: 'tracearr_sort_filter_fab',
-              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-              foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
-              onPressed: () {
-                if (currentIndex == 1) {
-                  showModalBottomSheet<void>(
-                    context: context,
-                    showDragHandle: true,
-                    useRootNavigator: true,
-                    builder: (BuildContext context) =>
-                        TracearrHistorySortFilterBottomSheet(instance: instance),
-                  );
-                } else if (currentIndex == 2) {
-                  showModalBottomSheet<void>(
-                    context: context,
-                    showDragHandle: true,
-                    useRootNavigator: true,
-                    builder: (BuildContext context) =>
-                        TracearrRecentlyAddedSortFilterBottomSheet(instance: instance),
-                  );
-                }
-              },
-              child: const Icon(Icons.tune),
-            )
-          : null,
       bottomNavigationBar: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: isNavbarVisible ? 80 : 0,
@@ -142,35 +135,64 @@ class TracearrHome extends ConsumerWidget {
             child: NavigationBar(
               selectedIndex: currentIndex,
               onDestinationSelected: (int index) {
-                ref
-                    .read(tracearrActiveTabBarIndexProvider(instance).notifier)
-                    .state = index;
+                if (index == currentIndex) {
+                  ref
+                      .read(
+                        tracearrHomeScrollToTopProvider(
+                          (instance, index),
+                        ).notifier,
+                      )
+                      .update((state) => state + 1);
+                } else {
+                  ref.read(tracearrActiveTabProvider(instance).notifier).state =
+                      index;
+                }
               },
-              destinations: const <Widget>[
-                NavigationDestination(
+              destinations: [
+                const NavigationDestination(
                   icon: Icon(Icons.dashboard_outlined),
                   selectedIcon: Icon(Icons.dashboard),
-                  label: 'Dashboard',
+                  label: 'Overview',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.history_outlined),
-                  selectedIcon: Icon(Icons.history),
-                  label: 'History',
+                  icon: activeStreamsCount > 0
+                      ? Badge.count(
+                          count: activeStreamsCount,
+                          child: const Icon(Icons.sensors_outlined),
+                        )
+                      : const Icon(Icons.sensors_outlined),
+                  selectedIcon: activeStreamsCount > 0
+                      ? Badge.count(
+                          count: activeStreamsCount,
+                          child: const Icon(Icons.sensors),
+                        )
+                      : const Icon(Icons.sensors),
+                  label: 'Activity',
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.grid_view_outlined),
-                  selectedIcon: Icon(Icons.grid_view),
-                  label: 'Recent',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.people_alt_outlined),
-                  selectedIcon: Icon(Icons.people_alt),
-                  label: 'Users',
-                ),
-                NavigationDestination(
+                const NavigationDestination(
                   icon: Icon(Icons.video_library_outlined),
                   selectedIcon: Icon(Icons.video_library),
-                  label: 'Libraries',
+                  label: 'Media',
+                ),
+                const NavigationDestination(
+                  icon: Icon(Icons.people_outline),
+                  selectedIcon: Icon(Icons.people),
+                  label: 'People',
+                ),
+                NavigationDestination(
+                  icon: unackViolationsCount > 0
+                      ? Badge.count(
+                          count: unackViolationsCount,
+                          child: const Icon(Icons.shield_outlined),
+                        )
+                      : const Icon(Icons.shield_outlined),
+                  selectedIcon: unackViolationsCount > 0
+                      ? Badge.count(
+                          count: unackViolationsCount,
+                          child: const Icon(Icons.shield),
+                        )
+                      : const Icon(Icons.shield),
+                  label: 'Security',
                 ),
               ],
             ),

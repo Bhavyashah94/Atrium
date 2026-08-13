@@ -605,7 +605,12 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "description": "Tracearr user id"
+            "description": "Tracearr identity id"
+          },
+          "server_user_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tracearr's id for this per-server account"
           },
           "username": {
             "type": "string",
@@ -622,6 +627,7 @@
         },
         "required": [
           "id",
+          "server_user_id",
           "username",
           "thumb_url",
           "avatar_url"

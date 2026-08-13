@@ -199,7 +199,7 @@ class DashboardBoard extends ConsumerWidget {
         case ServiceKind.speedtestTracker:
           ref.invalidate(speedtestOverviewProvider(i));
         case ServiceKind.tracearr:
-          ref.invalidate(tracearrActiveSessionsProvider(i));
+          ref.invalidate(tracearrStreamsProvider(i));
         default:
           break;
       }
