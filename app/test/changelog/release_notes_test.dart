@@ -4,7 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('release notes are newest first and well formed', () {
-    expect(releaseNotes.first.version, '1.4.0');
+    // Pinned to appVersion rather than a literal: the invariant is that the
+    // newest note describes the version being shipped, and hardcoding it just
+    // means one more file to edit by hand at every release.
+    expect(releaseNotes.first.version, appVersion);
     for (final ReleaseNote note in releaseNotes) {
       expect(note.date, isNotEmpty);
       expect(note.groups, isNotEmpty);
