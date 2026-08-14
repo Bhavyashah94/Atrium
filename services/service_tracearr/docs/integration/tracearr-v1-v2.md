@@ -1,30 +1,70 @@
-# Tracearr API v1 vs. v2 Coexistence Strategy (`service_tracearr/docs/integration`)
+# Tracearr API v1 and v2
 
 > [!WARNING]
-> **CRITICAL ARCHITECTURAL WARNING FOR CONTRIBUTORS**:
-> Do not attempt to "clean up" or eliminate Tracearr v1 API calls in favor of v2 without reading this document. The coexistence of both API versions is an intentional, permanent architectural requirement.
+> Do not "clean up" the remaining v1 calls by pointing them at v2. Six of them
+> have no v2 equivalent. Removing them removes the feature.
 
----
+Atrium talks to both API generations. `TracearrRemoteDataSource` holds a
+`RawPublicAPIV2Api` (required) and a `RawPublicAPIApi` (optional, v1), and
+picks per call. v2 is the default; v1 is used only where v2 has no answer.
 
-## 1. Why Both API Generations Coexist
+## Which generation serves what
 
-| Feature Area | API Used | Why v1 is Required / Irreplaceable | Why v2 is Required |
-| :--- | :---: | :--- | :--- |
-| **Recently Added Feed** | **v1** (`/api/v1/media/recent`) | Returns raw `rating_key`, `parent_rating_key`, `grandparent_rating_key`, `server_id`, and `server_type`. These are required by `TracearrMediaUrlResolver` to construct valid authenticated image proxy URLs on the client. | v2 endpoints abstract away server rating keys and server types into server-agnostic UUIDs that cannot resolve downstream server artwork. |
-| **Fleet Health & Server List**| **v1** (`/api/v1/health`) | Returns server connectivity state (`online: true/false`), server types (Plex, Jellyfin, Emby), and per-server live stream counts. | v2 has no server health or connectivity endpoint. |
-| **Active Live Streams** | **v1** (`/api/v1/activity`) | Returns real-time session state, buffer progress, bandwidth, and stream decision. | v2 is primarily focused on historical playback records. |
-| **24h Fleet Stats & Trends**| **v1** (`/api/v1/stats/today`) | Returns aggregated 24h play totals, watch hours, and 7-day trend buckets. | v2 does not expose 24h fleet rolling aggregates. |
-| **Media Details & Telemetry** | **v2** (`/api/v2/public/media/`)| — | Provides canonical media UUIDs, multi-server availability, watchers leaderboard, and TV hierarchy. |
-| **User Directory & Dossiers** | **v2** (`/api/v2/public/users/`)| — | Provides user identities, favorite genres, lifetime stats, and per-user history. |
-| **Dedicated Item History** | **v2** (`/api/v2/public/media/{ref}/history`) | — | Provides dedicated playback history filtered specifically to a single media item. |
+Derived from `TracearrRemoteDataSource`. If you change a call's generation,
+change this table in the same commit.
 
----
+| v1 only (no v2 equivalent) | Why v1 |
+| :--- | :--- |
+| `getHealth` | Per-server connectivity, server type and live stream counts. v2 has no health or connectivity endpoint. |
+| `getStatsToday` | Rolling 24h play totals and watch hours. v2 exposes no fleet aggregate. |
+| `getActivity` | 7-day trend buckets for the Overview histogram. |
+| `getStats` | Aggregate fleet stats. |
+| `getViolations` | Sentinel policy violation ledger. |
+| `terminateStream` | The only write path in the module. |
 
-## 2. Identifier Resolution Bridge
+Everything else is v2: `getStreams`, `getHistory`, `getRecentlyAdded`,
+`getLibraries`, `getMediaHistory`, the media family (`getMediaByRef`,
+`getMediaStatsByRef`, `getMediaWatchersByRef`, `getMediaChildrenByRef`) and the
+user family (`getUsers`, `getUserById`, `getUserStatsById`,
+`getUserHistoryById`).
 
-`TracearrMediaDetailScreen.navigate()` bridges v1 and v2 seamlessly:
-- When opened from the v1 Recently Added feed, the item provides `mediaId ?? ratingKey ?? id`.
-- The v2 backend endpoint `/api/v2/public/media/{ref}` natively accepts either:
-  1. A canonical Tracearr v2 UUID (e.g. `c4b8e21a-...`)
-  2. A downstream media server rating key (e.g. `46000`)
-- This allows v1 ingestion feeds to route directly into v2 intelligence detail screens with zero friction.
+Note that live streams and recently-added are **v2**, not v1. v2's
+server-agnostic ids do not prevent artwork resolution, because posters are
+built from the `thumb_path` those responses already carry.
+
+## Auth
+
+Both generations authenticate the same way and only this way:
+
+```
+Authorization: Bearer trr_pub_<token>
+```
+
+There is no `x-api-key` fallback. The header does not appear anywhere in
+Tracearr's server, so sending one is inert. `core_networking`'s
+`AuthInterceptor` sets the bearer for `ServiceKind.tracearr`; note that the
+branch is shared with `ServiceKind.speedtestTracker`, so changes there affect
+both services.
+
+The image proxy (`v1/images/proxy`) is the exception: it is deliberately
+unauthenticated upstream, so plain `<img>`-style loads work without headers.
+Do not attach the token to poster URLs.
+
+## Identifier bridging
+
+`/api/v2/public/media/{ref}` accepts either a canonical Tracearr UUID or a
+downstream server rating key, so items coming from feeds that carry only a
+rating key can route straight into a v2 detail screen. See
+[identifiers.md](identifiers.md).
+
+## Rate limits
+
+Two limiters apply, both per minute and both keyed on `${ip}:${token}` once the
+bearer validates:
+
+- a global limiter, default 1000/min
+- a publicV2-specific limiter, default **240/min**, admin-configurable
+
+240 is the one that matters. Opening Overview costs 5 requests, so fan-out on
+open is the thing to watch. `core_networking`'s `RateLimitInterceptor` retries
+a 429 using `Retry-After`.

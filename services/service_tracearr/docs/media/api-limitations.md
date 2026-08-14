@@ -22,7 +22,7 @@ This document records the upstream API schema limitations and backend boundaries
 ---
 
 ### 1.3 Library Names vs. Content-Type Rollups
-- **Description**: `/api/v1/libraries` returns `LibraryRollup` objects containing `id`, `server_id`, `movie_count`, `show_count`, and `track_count`, but does not return custom human-assigned library name strings (e.g. "4K Movies").
+- **Description**: `/api/v2/public/libraries` returns `LibraryRollup` objects containing `id`, `server_id`, `movie_count`, `show_count`, and `track_count`, but does not return custom human-assigned library name strings (e.g. "4K Movies").
 - **Client Handling**: Content-type labels are dynamically derived:
   - If `movieCount > 0`: `Movies (${lib.itemCount})`
   - If `showCount > 0`: `TV Shows (${lib.itemCount})`
@@ -34,7 +34,7 @@ This document records the upstream API schema limitations and backend boundaries
 ### 1.4 Recently Added Episode Metadata Limitation
 
 #### Upstream API Limitation
-- **Description**: Tracearr's Recently Added endpoints (`GET /api/v1/media/recently-added` and `GET /api/v2/public/recently-added`) do not currently serialize `show_title`, `season_number`, `episode_number`, or a canonical `show_media_id` on episode records in `RecentlyAddedRecord`.
+- **Description**: Tracearr's Recently Added endpoint (`GET /api/v2/public/recently-added`) does not currently serialize `show_title`, `season_number`, `episode_number`, or a canonical `show_media_id` on episode records in `RecentlyAddedRecord`.
 - **Backend Discrepancy**: These fields are actively available through other Tracearr API surfaces (such as `/history` and `/streams`), confirming that the backend database possesses the underlying relational metadata, but the Recently Added serialization contract omits it.
 - **No Batch Media Lookup**: There is no batch lookup endpoint (such as `POST /api/v2/public/media/batch` or `GET /api/v2/public/media?ids=...`) in either v1 or v2 APIs.
 - **No N+1 Lookups**: Per-item `GET /api/v2/public/media/{ref}` lookups must **not** be performed to enrich cards in the Recently Added grid, as that creates an $N+1$ request pattern (e.g. 30 individual round trips per page).

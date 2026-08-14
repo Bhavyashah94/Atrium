@@ -1,85 +1,70 @@
-# Tracearr Service Documentation (`service_tracearr`)
+# Tracearr service notes (`service_tracearr`)
 
-Welcome to the canonical developer documentation for the **Tracearr Service** (`service_tracearr`) within Atrium.
+Tracearr monitors playback across a fleet of Plex, Jellyfin and Emby servers.
+`service_tracearr` is Atrium's client for it, built strictly on Tracearr's
+public v1 and v2 APIs.
 
-Tracearr is a multi-server telemetry, media intelligence, and activity monitoring platform for media fleets (supporting Plex, Jellyfin, and Emby). `service_tracearr` integrates Tracearr instances into the unified Atrium Flutter client.
+## What is written down here, and what is not
 
----
+These notes cover things you **cannot** learn by reading `lib/`: constraints
+that live in Tracearr's server, and decisions whose reasoning would otherwise
+be lost.
 
-## 1. System Responsibilities & Boundaries
+They deliberately do **not** contain a provider catalog, a file tree, a model
+list or a route map. That kind of inventory duplicates the code, and it goes
+stale silently: an out-of-date list is worse than no list, because the next
+reader trusts it. For "what exists", read `lib/`; for "does it still behave
+that way", read `test/`. The tests are the real defence against upstream
+change, because they fail when Tracearr's payloads move. Prose does not.
 
-`service_tracearr` is responsible for:
-- **Fleet Pulse & Health Monitoring**: Deriving real-time active stream counts, hardware vs. software transcode distribution, and 24-hour playback metrics across distributed servers.
-- **Real-Time Stream & History Audit**: Visualizing active streaming sessions, transcode decisions, playback diagnostics, and chronological audit logs.
-- **Media Catalog & Availability Intelligence**: Exposing physical file storage locations, resolutions (4K UHD vs. 1080p), TV series hierarchy (seasons and episodes), and direct media server launchers.
-- **User Intelligence & Dossiers**: Tracking per-user watch times, favorite genres, top viewed media, and distinct device profiles.
-- **Security & Incident Telemetry**: Managing concurrent stream policy violations, unusual IP locations, and security incidents.
+- [Tracearr API v1 and v2](integration/tracearr-v1-v2.md): which generation
+  serves which feature, and why both are still wired up.
+- [Identifier reference](integration/identifiers.md): every id type in play,
+  where it comes from, and what it is scoped to.
+- [Media API boundaries](media/api-limitations.md): what the upstream schema
+  does not give us, and what we do instead.
 
-### Service Boundaries
-- **Encapsulation**: All Tracearr-specific OpenAPI serialization, multi-server rating key translation, image proxy URL construction, and telemetry normalization remain isolated inside `service_tracearr`.
-- **Atrium Integration**: `service_tracearr` communicates with Atrium core through domain models (`Instance`, `ApiResponse`), Riverpod provider families, and `pushScreen()` routing conventions.
-
----
-
-## 2. High-Level Architecture
-
-The service follows a strict unidirectional data flow:
+## Shape of the module
 
 ```mermaid
 graph TD
-    UI[Widgets & Screens] -->|watch / read| Providers[Riverpod Providers & Notifiers]
+    UI[Widgets and screens] -->|watch / read| Providers[Riverpod providers and notifiers]
     Providers -->|invoke| Repository[TracearrRepository]
-    Repository -->|coordinate & map| RemoteDataSource[TracearrRemoteDataSource]
-    RemoteDataSource -->|HTTP via Dio| ApiV1[Generated RawPublicAPIApi v1]
-    RemoteDataSource -->|HTTP via Dio| ApiV2[Generated RawPublicAPIV2Api v2]
+    Repository -->|coordinate| RemoteDataSource[TracearrRemoteDataSource]
+    RemoteDataSource -->|Dio| ApiV1[Generated RawPublicAPIApi v1]
+    RemoteDataSource -->|Dio| ApiV2[Generated RawPublicAPIV2Api v2]
     RemoteDataSource -->|raw DTOs| Repository
-    Repository -->|transform via Mappers| Models[Domain Models in tracearr_models.dart]
+    Repository -->|mappers| Models[Domain models]
     Models --> Providers
     Providers --> UI
 ```
 
----
+Tracearr-specific concerns stay inside this package: OpenAPI DTOs, rating-key
+translation, image proxy URL construction. It talks to the rest of Atrium only
+through `Instance`, provider families and `pushScreen()`.
 
-## 3. Documentation Index
+## Contracts worth preserving
 
-### Core Architecture & Engineering
-- [Architecture Overview](architecture.md): Service structure, dependency injection, data flow, and caching.
-- [API Integration](api.md): v1 and v2 API surface, OpenAPI generation (`RawPublicAPIApi`, `RawPublicAPIV2Api`), and authentication.
-- [Providers & State Management](providers.md): Complete Riverpod provider catalog, families, and notifiers.
-- [Models & Serialization](models.md): Generated DTOs vs. Domain models and mapper transformations.
-- [Navigation & Routing](navigation.md): Complete navigation map, route contracts, and contextual parameters.
-- [Workflows](workflows.md): User-facing behavioral journeys and workflows.
-- [Error Handling & Resilience](error-handling.md): Failures, retries, empty states, and section isolation.
-- [Testing Guide](testing.md): Unit, widget, and provider test suites with verification commands.
+1. **v1 is not dead weight.** Six calls have no v2 equivalent at all: fleet
+   health, 24h stats, activity trends, policy violations, stream termination.
+   See the [v1 and v2 notes](integration/tracearr-v1-v2.md) before removing any
+   of them.
 
-### Feature Subsystems
-- **Media Intelligence**:
-  - [Media Architecture](media/architecture.md): Subsystem layout, components, and media type hierarchies.
-  - [Media Navigation & TV Hierarchy](media/navigation.md): Context-aware Episode $\rightarrow$ Series transitions.
-  - [Media Pagination](media/pagination.md): `EasyRefresh` infinite scrolling and cursor pagination.
-  - [Media API Limitations](media/api-limitations.md): Downstream URL contracts and schema boundaries.
-- **Activity & Telemetry**:
-  - [Activity Architecture](activity/architecture.md): Active streams, history sessions, and transcode diagnostics.
-- **User Directory**:
-  - [Users Architecture](users/architecture.md): User directory, dossiers, and audience telemetry.
-- **Overview & Fleet Pulse**:
-  - [Overview Architecture](overview/architecture.md): Health, 24h trends, and aggregate metrics.
-- **Integration Specifics**:
-  - [v1 vs. v2 Coexistence Strategy](integration/tracearr-v1-v2.md): Why both versions exist and migration boundaries.
-  - [Identifier Reference](integration/identifiers.md): Canonical media UUIDs, rating keys, machine IDs, and scopes.
+2. **Section isolation.** Secondary telemetry (per-season episodes, dedicated
+   history) runs inside its own `Consumer`, so one failing request degrades one
+   box instead of blanking the screen. The per-season `Consumer` also keeps
+   episode loading lazy: a collapsed season never mounts, so it never fetches.
 
----
+3. **Contextual episode navigation.** Episode to series carries
+   `initialSeasonNumber` and `initialEpisodeNumber` so the parent screen expands
+   the right season and marks the originating episode.
 
-## 4. Key Architectural Contracts to Preserve
+4. **No request-per-tile.** Artwork is harvested from responses that already
+   carry a thumb path and cached, rather than resolved with a lookup per card.
+   Tracearr has no batch media endpoint, so a per-tile fetch would mean roughly
+   30 round trips per page against a shared rate limit.
 
-1. **Do not casually delete v1 endpoints**: v1 endpoints expose low-level server rating keys, machine identifiers, and raw timestamps required for client-side artwork resolution that v2 abstracts away.
-2. **Preserve Contextual Navigation**: Episode $\rightarrow$ Series navigation carries `initialSeasonNumber` and `initialEpisodeNumber` to auto-expand originating seasons and highlight active episodes.
-3. **Respect Section Isolation**: Secondary telemetry (Dedicated History, TV hierarchy episodes) must run in isolated Riverpod `Consumer` boundaries so failure in one section does not blank the parent screen.
-
----
-
-## 5. Source of Truth & Keeping Docs Updated
-
-The Dart source code in `lib/`, OpenAPI specifications in `tool/`, and the automated test suite in `test/` serve as the **authoritative sources of truth** for `service_tracearr`.
-
-These documentation files describe the current production architecture and user journeys. **Whenever a provider, domain model, navigation route, mapper, or API contract is modified, contributors must update the corresponding markdown documents in `docs/` as part of the same change.**
+5. **Write actions are honest about being local.** Acknowledging or dismissing
+   a violation is device-local, because those routes need session auth and are
+   closed to public API tokens. The UI says so rather than implying it wrote
+   back to the server.

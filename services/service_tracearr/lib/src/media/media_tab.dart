@@ -111,6 +111,15 @@ class _MediaTabState extends ConsumerState<MediaTab> {
           await ref
               .read(tracearrRecentPaginatedProvider(widget.instance).notifier)
               .loadMore();
+          // Ask the state rather than loadMore's bool. That returns false for
+          // three different reasons - exhausted, already loading, or failed -
+          // so mapping it straight to noMore would end pagination for good on
+          // a transient error. hasMore also stays true while the first page is
+          // still in flight, which a bare cursor check would misread as the
+          // end of the catalog.
+          return ref.read(tracearrRecentPaginatedProvider(widget.instance)).hasMore
+              ? IndicatorResult.success
+              : IndicatorResult.noMore;
         },
         child: NotificationListener<ScrollNotification>(
           onNotification: (notification) {
