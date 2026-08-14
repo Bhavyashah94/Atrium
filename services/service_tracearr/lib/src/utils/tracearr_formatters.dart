@@ -118,7 +118,7 @@ abstract class TracearrFormatters {
     return null;
   }
 
-  /// Gets HTTP headers required for requesting image proxy endpoints (Bearer and X-API-Key authentication).
+  /// Gets HTTP headers required for requesting image proxy endpoints (Bearer authentication).
   static Map<String, String>? getImageHeaders(Instance instance) {
     final String? token = switch (instance.auth) {
       InstanceAuthApiKey(:final String apiKey) => apiKey,
@@ -127,7 +127,6 @@ abstract class TracearrFormatters {
     if (token != null && token.isNotEmpty) {
       return {
         'Authorization': 'Bearer $token',
-        'X-API-Key': token,
       };
     }
     return null;

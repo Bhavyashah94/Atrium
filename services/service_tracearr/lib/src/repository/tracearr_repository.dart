@@ -5,11 +5,12 @@ import '../generated/api/raw_public_a_p_i_v2_api.dart';
 import '../generated/models/active_stream.dart';
 import '../generated/models/history_record.dart';
 import '../generated/models/history_response.dart';
-import '../generated/models/media_resource.dart';
+import '../generated/models/media_child.dart';
 import '../generated/models/recently_added_record.dart';
 import '../generated/models/user_identity.dart';
 import '../generated/models/user_stats_response.dart';
 import '../generated/models/watcher.dart';
+import '../generated/responses/tracearr_exception.dart';
 import '../mappers/mappers.dart';
 import '../media/tracearr_media_url_resolver.dart';
 import '../models/tracearr_models.dart';
@@ -226,17 +227,23 @@ class TracearrRepository {
       final sId = item.serverId ?? '';
       final rKey = item.ratingKey;
       final mId = item.mediaId;
+      final posterRatingKey = (item.mediaType?.toLowerCase() == 'episode' &&
+              item.grandparentRatingKey != null &&
+              item.grandparentRatingKey!.isNotEmpty)
+          ? item.grandparentRatingKey
+          : rKey;
 
-      String? cachedPath = _artworkCache.getThumbPath(sId, rKey ?? '');
+      String? cachedPath =
+          _artworkCache.getThumbPath(sId, posterRatingKey ?? '');
       if (cachedPath == null && mId != null) {
         cachedPath = _artworkCache.getThumbPathByMediaId(sId, mId);
       }
 
       final thumbPath = cachedPath ??
-          (rKey != null && rKey.isNotEmpty
+          (posterRatingKey != null && posterRatingKey.isNotEmpty
               ? TracearrMediaUrlResolver.buildFallbackPosterPath(
                   item.serverType,
-                  rKey,
+                  posterRatingKey,
                 )
               : null);
 
@@ -314,19 +321,50 @@ class TracearrRepository {
   /// Fetch detailed user profile aggregated with lifetime stats and watch history.
   Future<TracearrUserDetail> getUserDetail(String userId) {
     return _deduplicate('user_detail_$userId', () async {
-      final identityFuture = _remoteDataSource.getUserById(id: userId);
-      final statsFuture = _remoteDataSource.getUserStatsById(id: userId);
-      final historyFuture = _remoteDataSource.getUserHistoryById(id: userId);
+      String effectiveId = userId;
+      UserIdentity? identity;
+      UserStatsResponse? stats;
+      HistoryResponse? history;
 
-      final results = await Future.wait<dynamic>([
-        identityFuture,
-        statsFuture,
-        historyFuture,
-      ]);
+      try {
+        final identityFuture = _remoteDataSource.getUserById(id: userId);
+        final statsFuture = _remoteDataSource.getUserStatsById(id: userId);
+        final historyFuture = _remoteDataSource.getUserHistoryById(id: userId);
 
-      final identity = results[0] as UserIdentity;
-      final stats = results[1] as UserStatsResponse?;
-      final history = results[2] as HistoryResponse?;
+        final results = await Future.wait<dynamic>([
+          identityFuture,
+          statsFuture,
+          historyFuture,
+        ]);
+
+        identity = results[0] as UserIdentity;
+        stats = results[1] as UserStatsResponse?;
+        history = results[2] as HistoryResponse?;
+      } catch (_) {
+        // Direct ID lookup failed (e.g. username was provided).
+        // Resolve the username against the user directory.
+        final allUsers = await _remoteDataSource.getUsers();
+        final match = allUsers.firstWhere(
+          (u) =>
+              u.username?.toLowerCase() == userId.toLowerCase() ||
+              u.id?.toLowerCase() == userId.toLowerCase(),
+          orElse: () => throw TracearrException('User not found: $userId'),
+        );
+        effectiveId = match.id ?? userId;
+        identity = match;
+
+        final statsFuture = _remoteDataSource.getUserStatsById(id: effectiveId);
+        final historyFuture =
+            _remoteDataSource.getUserHistoryById(id: effectiveId);
+
+        final results = await Future.wait<dynamic>([
+          statsFuture,
+          historyFuture,
+        ]);
+
+        stats = results[0] as UserStatsResponse?;
+        history = results[1] as HistoryResponse?;
+      }
 
       return TracearrUserMapper.detailFromDto(
         identity: identity,
@@ -345,20 +383,31 @@ class TracearrRepository {
       final watchersFuture =
           _remoteDataSource.getMediaWatchersByRef(ref: mediaRef);
 
+      final mediaRes = await mediaFuture;
+      final isShow = mediaRes.mediaType?.toLowerCase() == 'show' ||
+          mediaRes.mediaType?.toLowerCase() == 'season';
+
+      Future<List<MediaChild>>? childrenFuture;
+      if (isShow) {
+        childrenFuture = _remoteDataSource.getMediaChildrenByRef(ref: mediaRef);
+      }
+
       final results = await Future.wait<dynamic>([
-        mediaFuture,
         statsFuture,
         watchersFuture,
+        if (childrenFuture != null) childrenFuture,
       ]);
 
-      final mediaRes = results[0] as MediaResource;
-      final statsWindows = results[1] as Map<String, dynamic>?;
-      final watchers = results[2] as List<Watcher>?;
+      final statsWindows = results[0] as Map<String, dynamic>?;
+      final watchers = results[1] as List<Watcher>?;
+      final children =
+          isShow && results.length > 2 ? results[2] as List<MediaChild>? : null;
 
       return TracearrMediaMapper.detailFromDto(
         item: mediaRes,
         statsWindows: statsWindows,
         watchersList: watchers,
+        childrenList: children,
         baseUrl: _baseUrl,
         mediaRef: mediaRef,
       );
@@ -366,7 +415,7 @@ class TracearrRepository {
   }
 
   /// Fetch media children (seasons or episodes).
-  Future<List<TracearrRecentlyAddedItem>> getMediaChildren(String mediaRef) {
+  Future<List<TracearrMediaChild>> getMediaChildren(String mediaRef) {
     return _deduplicate('media_children_$mediaRef', () async {
       final rawChildren =
           await _remoteDataSource.getMediaChildrenByRef(ref: mediaRef);

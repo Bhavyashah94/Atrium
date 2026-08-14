@@ -10,7 +10,7 @@ import 'widgets/user_directory_section.dart';
 ///
 /// Features fleet user directory, live search, multi-metric sorting,
 /// cross-server account badges, and continuous pagination.
-class PeopleTab extends ConsumerWidget {
+class PeopleTab extends ConsumerStatefulWidget {
   const PeopleTab({
     required this.instance,
     super.key,
@@ -18,14 +18,40 @@ class PeopleTab extends ConsumerWidget {
 
   final Instance instance;
 
-  Future<void> _refreshAll(WidgetRef ref) async {
-    ref.invalidate(tracearrUsersProvider(instance));
+  @override
+  ConsumerState<PeopleTab> createState() => _PeopleTabState();
+}
+
+class _PeopleTabState extends ConsumerState<PeopleTab> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refreshAll() async {
+    ref.invalidate(tracearrUsersProvider(widget.instance));
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    ref.listen<int>(
+      tracearrHomeScrollToTopProvider((widget.instance, 3)),
+      (previous, next) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -39,7 +65,7 @@ class PeopleTab extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              instance.name,
+              widget.instance.name,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -64,8 +90,9 @@ class PeopleTab extends ConsumerWidget {
           failedText: 'Failed',
           messageText: 'Last updated at %T',
         ),
-        onRefresh: () => _refreshAll(ref),
+        onRefresh: _refreshAll,
         child: ListView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(
             horizontal: Insets.lg,
@@ -73,8 +100,10 @@ class PeopleTab extends ConsumerWidget {
           ),
           children: [
             // Fleet User Directory Section
-            UserDirectorySection(
-              instance: instance,
+            RepaintBoundary(
+              child: UserDirectorySection(
+                instance: widget.instance,
+              ),
             ),
             const SizedBox(height: Insets.xl),
           ],

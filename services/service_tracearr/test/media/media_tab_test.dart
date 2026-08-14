@@ -67,6 +67,7 @@ void main() {
       serverId: 'srv_1',
       serverType: 'plex',
       libraryId: 'lib_movies',
+      movieCount: 1200,
       itemCount: 1200,
       totalFileSize: 10995116277760, // ~10 TB
       resolutions: {'4K': 120, '1080p': 1080},
@@ -75,6 +76,7 @@ void main() {
       serverId: 'srv_2',
       serverType: 'jellyfin',
       libraryId: 'lib_shows',
+      showCount: 450,
       itemCount: 450,
       totalFileSize: 4398046511104, // ~4 TB
       resolutions: {'1080p': 350, '720p': 100},
@@ -101,6 +103,18 @@ void main() {
       title: 'Succession',
       year: 2018,
       ratingKey: 'rk_102',
+    ),
+    TracearrRecentlyAddedItem(
+      id: 'rec_3',
+      serverId: 'srv_1',
+      serverType: 'plex',
+      libraryId: 'lib_shows',
+      mediaType: 'episode',
+      title: 'Celebration',
+      seasonNumber: 1,
+      episodeNumber: 1,
+      addedAt: DateTime.now().subtract(const Duration(hours: 2)),
+      ratingKey: 'rk_103',
     ),
   ];
 
@@ -209,8 +223,8 @@ void main() {
       expect(find.text('1080P: 1430'), findsOneWidget);
       expect(find.text('720P: 100'), findsOneWidget);
       expect(find.text('All Libraries'), findsOneWidget);
-      expect(find.text('PLEX (1200)'), findsOneWidget);
-      expect(find.text('JELLYFIN (450)'), findsOneWidget);
+      expect(find.text('PLEX Movies (1200)'), findsOneWidget);
+      expect(find.text('JELLYFIN TV Shows (450)'), findsOneWidget);
     });
 
     testWidgets('renders recently added section with grid/list view toggle',
@@ -227,22 +241,25 @@ void main() {
 
       expect(find.byType(RecentlyAddedGrid), findsOneWidget);
       expect(find.text('RECENTLY ADDED'), findsOneWidget);
-      expect(find.byType(RecentlyAddedPosterTile), findsNWidgets(2));
+      expect(find.byType(RecentlyAddedPosterTile), findsNWidgets(3));
       expect(find.text('Interstellar'), findsOneWidget);
       expect(find.text('Succession'), findsOneWidget);
+      expect(find.text('S1:E1 • Celebration'), findsOneWidget);
+      expect(find.text('Added 2h ago'), findsOneWidget);
 
       // Toggle to List View
       await tester.tap(find.byIcon(Icons.view_list_outlined));
       await tester.pumpAndSettle();
 
-      expect(find.byType(RecentlyAddedCard), findsNWidgets(2));
+      expect(find.byType(RecentlyAddedCard), findsNWidgets(3));
       expect(find.byType(RecentlyAddedPosterTile), findsNothing);
+      expect(find.text('S1:E1 • Celebration'), findsOneWidget);
 
       // Toggle back to Grid View
       await tester.tap(find.byIcon(Icons.grid_view_outlined));
       await tester.pumpAndSettle();
 
-      expect(find.byType(RecentlyAddedPosterTile), findsNWidgets(2));
+      expect(find.byType(RecentlyAddedPosterTile), findsNWidgets(3));
     });
   });
 
@@ -305,7 +322,182 @@ void main() {
       expect(find.text('9 plays'), findsOneWidget);
     });
 
-    testWidgets('renders TV show hierarchy accordion with seasons & episodes',
+    testWidgets('renders TV show hierarchy with season DTOs correctly',
+        (tester) async {
+      const testShowWithSeasons = TracearrMediaDetail(
+        id: 'med_102',
+        title: 'Succession',
+        mediaType: 'show',
+        year: 2018,
+        genres: ['Drama'],
+        children: [
+          TracearrMediaChild(
+            id: 'season_1',
+            mediaType: 'season',
+            title: 'Season 1',
+            seasonNumber: 1,
+            episodeCount: 10,
+          ),
+          TracearrMediaChild(
+            id: 'season_2',
+            mediaType: 'season',
+            title: 'Season 2',
+            seasonNumber: 2,
+            episodeCount: 10,
+          ),
+        ],
+      );
+
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            tracearrMediaDetailProvider((testInstance, 'rk_102')).overrideWith(
+              (ref) async => testShowWithSeasons,
+            ),
+            tracearrMediaHistoryProvider((testInstance, 'rk_102')).overrideWith(
+              (ref) async => const TracearrHistoryPage(items: []),
+            ),
+            tracearrMediaDetailProvider((testInstance, 'ep_1')).overrideWith(
+              (ref) async => const TracearrMediaDetail(
+                id: 'ep_1',
+                title: 'Celebration',
+                mediaType: 'episode',
+                showMediaId: 'rk_102',
+              ),
+            ),
+            tracearrMediaHistoryProvider((testInstance, 'ep_1')).overrideWith(
+              (ref) async => const TracearrHistoryPage(items: []),
+            ),
+            tracearrMediaChildrenProvider((testInstance, 'season_1'))
+                .overrideWith(
+              (ref) async => const [
+                TracearrMediaChild(
+                  id: 'ep_1',
+                  mediaType: 'episode',
+                  title: 'Celebration',
+                  seasonNumber: 1,
+                  episodeNumber: 1,
+                ),
+                TracearrMediaChild(
+                  id: 'ep_2',
+                  mediaType: 'episode',
+                  title: 'Shit Show at the Hit Factory',
+                  seasonNumber: 1,
+                  episodeNumber: 2,
+                ),
+              ],
+            ),
+          ],
+          child: const MaterialApp(
+            home: TracearrMediaDetailScreen(
+              instance: testInstance,
+              mediaRef: 'rk_102',
+              initialTitle: 'Succession',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MediaTvHierarchyView), findsOneWidget);
+      expect(find.text('SEASONS (2) · 20 EPISODES'), findsOneWidget);
+      expect(find.text('Season 1'), findsOneWidget);
+      expect(find.text('10 Episodes'), findsNWidgets(2));
+      expect(find.text('S1'), findsOneWidget);
+      expect(find.text('S2'), findsOneWidget);
+
+      // Tap Season 1 ExpansionTile to fetch and reveal episodes
+      await tester.tap(find.text('Season 1'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Celebration'), findsOneWidget);
+      expect(find.text('Shit Show at the Hit Factory'), findsOneWidget);
+
+      // Tap Celebration episode to navigate to episode media detail
+      await tester.tap(find.text('Celebration'));
+      await tester.pumpAndSettle();
+
+      final detailScreens = tester
+          .widgetList<TracearrMediaDetailScreen>(
+            find.byType(TracearrMediaDetailScreen),
+          )
+          .toList();
+      expect(detailScreens.last.mediaRef, equals('ep_1'));
+    });
+
+    testWidgets('renders Series ActionChip on episode detail and navigates to show',
+        (tester) async {
+      const testEpisodeDetail = TracearrMediaDetail(
+        id: 'ep_101',
+        title: 'Celebration',
+        mediaType: 'episode',
+        showMediaId: 'show_uuid_succession',
+        year: 2018,
+      );
+
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            tracearrMediaDetailProvider((testInstance, 'ep_101')).overrideWith(
+              (ref) async => testEpisodeDetail,
+            ),
+            tracearrMediaDetailProvider(
+              (testInstance, 'show_uuid_succession'),
+            ).overrideWith(
+              (ref) async => const TracearrMediaDetail(
+                id: 'show_uuid_succession',
+                title: 'Succession',
+                mediaType: 'show',
+              ),
+            ),
+            tracearrMediaHistoryProvider((testInstance, 'ep_101')).overrideWith(
+              (ref) async => const TracearrHistoryPage(items: []),
+            ),
+            tracearrMediaHistoryProvider(
+              (testInstance, 'show_uuid_succession'),
+            ).overrideWith(
+              (ref) async => const TracearrHistoryPage(items: []),
+            ),
+          ],
+          child: const MaterialApp(
+            home: TracearrMediaDetailScreen(
+              instance: testInstance,
+              mediaRef: 'ep_101',
+              initialTitle: 'Celebration',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.tv_outlined), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.tv_outlined));
+      await tester.pumpAndSettle();
+
+      final detailScreens = tester
+          .widgetList<TracearrMediaDetailScreen>(
+            find.byType(TracearrMediaDetailScreen),
+          )
+          .toList();
+      expect(detailScreens.last.mediaRef, equals('show_uuid_succession'));
+    });
+
+    testWidgets('renders TV show hierarchy accordion with episode DTOs',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
@@ -339,6 +531,317 @@ void main() {
       expect(find.text('SEASONS & EPISODES (2)'), findsOneWidget);
       expect(find.text('Season 1'), findsOneWidget);
       expect(find.text('2 Episodes'), findsOneWidget);
+    });
+
+    testWidgets('RecentlyAddedPosterTile prioritizes mediaId over ratingKey and id',
+        (tester) async {
+      const itemWithMediaId = TracearrRecentlyAddedItem(
+        id: 'rec_db_row_1',
+        serverId: 'srv_1',
+        libraryId: 'lib_1',
+        mediaType: 'movie',
+        title: 'Oppenheimer',
+        mediaId: 'canonical_media_uuid_opp',
+        ratingKey: 'plex_rating_key_45000',
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            tracearrMediaDetailProvider(
+              (testInstance, 'canonical_media_uuid_opp'),
+            ).overrideWith(
+              (ref) async => testMediaDetail,
+            ),
+            tracearrMediaHistoryProvider(
+              (testInstance, 'canonical_media_uuid_opp'),
+            ).overrideWith(
+              (ref) async => const TracearrHistoryPage(items: []),
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 150,
+                height: 250,
+                child: RecentlyAddedPosterTile(
+                  item: itemWithMediaId,
+                  instance: testInstance,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Oppenheimer'));
+      await tester.pumpAndSettle();
+
+      final detailScreen = tester
+          .widget<TracearrMediaDetailScreen>(find.byType(TracearrMediaDetailScreen));
+      expect(detailScreen.mediaRef, equals('canonical_media_uuid_opp'));
+    });
+
+    testWidgets('RecentlyAddedPosterTile falls back to ratingKey when mediaId is null',
+        (tester) async {
+      const itemWithRatingKey = TracearrRecentlyAddedItem(
+        id: 'rec_db_row_2',
+        serverId: 'srv_1',
+        libraryId: 'lib_1',
+        mediaType: 'movie',
+        title: 'Barbie',
+        ratingKey: 'plex_rating_key_46000',
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            tracearrMediaDetailProvider(
+              (testInstance, 'plex_rating_key_46000'),
+            ).overrideWith(
+              (ref) async => testMediaDetail,
+            ),
+            tracearrMediaHistoryProvider(
+              (testInstance, 'plex_rating_key_46000'),
+            ).overrideWith(
+              (ref) async => const TracearrHistoryPage(items: []),
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 150,
+                height: 250,
+                child: RecentlyAddedPosterTile(
+                  item: itemWithRatingKey,
+                  instance: testInstance,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Barbie'));
+      await tester.pumpAndSettle();
+
+      final detailScreen = tester
+          .widget<TracearrMediaDetailScreen>(find.byType(TracearrMediaDetailScreen));
+      expect(detailScreen.mediaRef, equals('plex_rating_key_46000'));
+    });
+
+    testWidgets(
+        'Episode -> Series contextual navigation auto-expands matching season and highlights current episode',
+        (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      const testEpisodeDetail = TracearrMediaDetail(
+        id: 'ep_107',
+        title: 'Celebration',
+        mediaType: 'episode',
+        showMediaId: 'show_succ_1',
+      );
+
+      const testParentShowDetail = TracearrMediaDetail(
+        id: 'show_succ_1',
+        title: 'Succession',
+        mediaType: 'show',
+        children: [
+          TracearrMediaChild(
+            id: 'season_1',
+            mediaType: 'season',
+            title: 'Season 1',
+            seasonNumber: 1,
+            episodeCount: 10,
+          ),
+          TracearrMediaChild(
+            id: 'season_2',
+            mediaType: 'season',
+            title: 'Season 2',
+            seasonNumber: 2,
+            episodeCount: 10,
+          ),
+        ],
+      );
+
+      const season2Episodes = [
+        TracearrMediaChild(
+          id: 'ep_206',
+          mediaType: 'episode',
+          title: 'Argestes',
+          seasonNumber: 2,
+          episodeNumber: 6,
+        ),
+        TracearrMediaChild(
+          id: 'ep_207',
+          mediaType: 'episode',
+          title: 'Return',
+          seasonNumber: 2,
+          episodeNumber: 7,
+        ),
+        TracearrMediaChild(
+          id: 'ep_208',
+          mediaType: 'episode',
+          title: 'Dundee',
+          seasonNumber: 2,
+          episodeNumber: 8,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            tracearrMediaDetailProvider((testInstance, 'ep_107')).overrideWith(
+              (ref) async => testEpisodeDetail,
+            ),
+            tracearrMediaDetailProvider((testInstance, 'show_succ_1'))
+                .overrideWith(
+              (ref) async => testParentShowDetail,
+            ),
+            tracearrMediaChildrenProvider((testInstance, 'season_2'))
+                .overrideWith(
+              (ref) async => season2Episodes,
+            ),
+            tracearrMediaHistoryProvider((testInstance, 'ep_107')).overrideWith(
+              (ref) async => const TracearrHistoryPage(items: []),
+            ),
+            tracearrMediaHistoryProvider((testInstance, 'show_succ_1'))
+                .overrideWith(
+              (ref) async => const TracearrHistoryPage(items: []),
+            ),
+          ],
+          child: const MaterialApp(
+            home: TracearrMediaDetailScreen(
+              instance: testInstance,
+              mediaRef: 'ep_107',
+              initialTitle: 'Celebration',
+              initialSeasonNumber: 2,
+              initialEpisodeNumber: 7,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap Series ActionChip
+      expect(find.byIcon(Icons.tv_outlined), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.tv_outlined));
+      await tester.pumpAndSettle();
+
+      // Parent show is opened with Season 2 auto-expanded
+      expect(find.text('Succession'), findsWidgets);
+      expect(find.text('Return'), findsOneWidget);
+      expect(find.text('Dundee'), findsOneWidget);
+      expect(find.text('CURRENT'), findsOneWidget);
+    });
+
+    testWidgets('TV hierarchy is rendered above availability on show detail',
+        (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      const testShowDetail = TracearrMediaDetail(
+        id: 'show_1',
+        title: 'Severance',
+        mediaType: 'show',
+        availability: [
+          TracearrMediaAvailability(
+            serverId: 'srv_1',
+            serverType: 'plex',
+            ratingKey: 'rk_1',
+          ),
+        ],
+        children: [
+          TracearrMediaChild(
+            id: 'season_1',
+            mediaType: 'season',
+            title: 'Season 1',
+            seasonNumber: 1,
+            episodeCount: 9,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            tracearrMediaDetailProvider((testInstance, 'show_1')).overrideWith(
+              (ref) async => testShowDetail,
+            ),
+            tracearrMediaHistoryProvider((testInstance, 'show_1')).overrideWith(
+              (ref) async => const TracearrHistoryPage(items: []),
+            ),
+          ],
+          child: const MaterialApp(
+            home: TracearrMediaDetailScreen(
+              instance: testInstance,
+              mediaRef: 'show_1',
+              initialTitle: 'Severance',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final hierarchyFinder = find.byType(MediaTvHierarchyView);
+      final availabilityFinder = find.byType(MediaAvailabilityCard);
+
+      expect(hierarchyFinder, findsOneWidget);
+      expect(availabilityFinder, findsOneWidget);
+
+      final hierarchyTop = tester.getTopLeft(hierarchyFinder).dy;
+      final availabilityTop = tester.getTopLeft(availabilityFinder).dy;
+
+      expect(hierarchyTop, lessThan(availabilityTop));
+    });
+
+    testWidgets('Non-Plex launcher displays clean notice without raw server IDs',
+        (tester) async {
+      const nonPlexAvailability = [
+        TracearrMediaAvailability(
+          serverId: '7c89f5a0-9b34-45e1-8899-abcdef012345',
+          serverType: 'jellyfin',
+          ratingKey: 'jf_item_99',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: MediaAvailabilityCard(
+              instance: testInstance,
+              availability: nonPlexAvailability,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('JELLYFIN'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.open_in_new));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Direct web player launching is currently only supported for Plex servers.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('7c89f5a0-9b34-45e1-8899-abcdef012345'),
+        findsNothing,
+      );
     });
   });
 }

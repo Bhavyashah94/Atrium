@@ -162,22 +162,6 @@ class _WatchHistorySectionState extends State<WatchHistorySection> {
                   ),
                 );
               }),
-              const SizedBox(height: Insets.xs),
-
-              // Pagination Load More Trigger
-              if (historyState.hasMore)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: Insets.sm),
-                    child: historyState.isLoadingMore
-                        ? const ExpressiveProgressIndicator()
-                        : OutlinedButton.icon(
-                            icon: const Icon(Icons.expand_more, size: 18),
-                            label: const Text('Load More History'),
-                            onPressed: notifier.loadMore,
-                          ),
-                  ),
-                ),
             ],
           ],
         );

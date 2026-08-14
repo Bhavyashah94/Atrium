@@ -157,22 +157,6 @@ class _RecentlyAddedGridState extends ConsumerState<RecentlyAddedGrid> {
                 );
               }).toList(),
             ),
-          const SizedBox(height: Insets.md),
-
-          // Pagination Load More Trigger
-          if (recentState.hasMore)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: Insets.sm),
-                child: recentState.isLoadingMore
-                    ? const ExpressiveProgressIndicator()
-                    : OutlinedButton.icon(
-                        icon: const Icon(Icons.expand_more, size: 18),
-                        label: const Text('Load More Media'),
-                        onPressed: notifier.loadMore,
-                      ),
-              ),
-            ),
         ],
       ],
     );

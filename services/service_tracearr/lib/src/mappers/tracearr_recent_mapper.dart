@@ -19,11 +19,15 @@ class TracearrRecentMapper {
       title: item.title ?? '',
       year: item.year,
       addedAt: item.addedAt != null ? DateTime.tryParse(item.addedAt!) : null,
+      removedAt:
+          item.removedAt != null ? DateTime.tryParse(item.removedAt!) : null,
       mediaId: item.mediaId,
       imdbId: item.imdbId,
       tmdbId: item.tmdbId?.toString(),
       tvdbId: item.tvdbId?.toString(),
       ratingKey: item.ratingKey,
+      parentRatingKey: item.parentRatingKey,
+      grandparentRatingKey: item.grandparentRatingKey,
       resolvedPosterUrl: resolvedPosterUrl,
     );
   }

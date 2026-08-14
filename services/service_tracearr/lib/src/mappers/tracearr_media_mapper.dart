@@ -51,6 +51,7 @@ class TracearrMediaMapper {
     required MediaResource item,
     Map<String, dynamic>? statsWindows,
     List<Watcher>? watchersList,
+    List<MediaChild>? childrenList,
     required String baseUrl,
     String? mediaRef,
   }) {
@@ -109,12 +110,14 @@ class TracearrMediaMapper {
       mediaType: item.mediaType ?? 'movie',
       title: item.title ?? 'Unknown Media',
       year: item.year,
+      showMediaId: item.showMediaId,
       imdbId: item.imdbId,
       tmdbId: item.tmdbId?.toString(),
       tvdbId: item.tvdbId?.toString(),
       genres: item.genres ?? const <String>[],
       posterUrl: resolvedPosterUrl,
       availability: mapAvailabilities(item.availability),
+      children: mapChildren(childrenList),
       allTimePlays: allTimePlays,
       allTimeWatchTimeMs: allTimeWatchTimeMs,
       last30DaysPlays: last30DaysPlays,
@@ -123,22 +126,19 @@ class TracearrMediaMapper {
     );
   }
 
-  static TracearrRecentlyAddedItem mapChild(MediaChild item) {
-    return TracearrRecentlyAddedItem(
+  static TracearrMediaChild mapChild(MediaChild item) {
+    return TracearrMediaChild(
       id: item.id ?? '',
-      serverId: '',
-      libraryId: '',
       mediaType: item.mediaType ?? 'episode',
       title: item.title ?? '',
+      showMediaId: item.showMediaId,
       seasonNumber: item.seasonNumber,
       episodeNumber: item.episodeNumber,
-      imdbId: item.imdbId,
-      tmdbId: item.tmdbId?.toString(),
-      tvdbId: item.tvdbId?.toString(),
+      episodeCount: item.episodeCount,
     );
   }
 
-  static List<TracearrRecentlyAddedItem> mapChildren(List<MediaChild>? list) {
+  static List<TracearrMediaChild> mapChildren(List<MediaChild>? list) {
     if (list == null || list.isEmpty) return const [];
     return list.map(mapChild).toList();
   }

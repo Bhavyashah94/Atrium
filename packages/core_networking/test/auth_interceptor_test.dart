@@ -24,6 +24,31 @@ void main() {
     final RequestOptions request = adapter.request!;
     expect(request.headers['Authorization'], 'Bearer $token');
     expect(request.headers['Accept'], 'application/json');
+    expect(request.headers.containsKey('x-api-key'), isFalse);
+    expect(request.headers.containsKey('X-Api-Key'), isFalse);
+    expect(request.queryParameters.values, isNot(contains(token)));
+    expect(request.uri.toString(), isNot(contains(token)));
+  });
+
+  test('Tracearr token is sent only as a Bearer header without x-api-key', () async {
+    const String token = 'placeholder-tracearr-token';
+    final _RecordingAdapter adapter = _RecordingAdapter();
+    final Dio dio = Dio(BaseOptions(baseUrl: 'https://tracearr.example.test/'))
+      ..httpClientAdapter = adapter
+      ..interceptors.add(
+        const AuthInterceptor(
+          kind: ServiceKind.tracearr,
+          auth: InstanceAuth.apiKey(apiKey: token),
+        ),
+      );
+
+    await dio.get<dynamic>('api/v2/public/history');
+
+    final RequestOptions request = adapter.request!;
+    expect(request.headers['Authorization'], 'Bearer $token');
+    expect(request.headers['Accept'], 'application/json');
+    expect(request.headers.containsKey('x-api-key'), isFalse);
+    expect(request.headers.containsKey('X-Api-Key'), isFalse);
     expect(request.queryParameters.values, isNot(contains(token)));
     expect(request.uri.toString(), isNot(contains(token)));
   });

@@ -52,17 +52,30 @@ class ActiveStreamCard extends StatelessWidget {
         (stream.hwDecoding != null && stream.hwDecoding!.isNotEmpty) ||
         (stream.hwEncoding != null && stream.hwEncoding!.isNotEmpty);
 
-    final String transcodeLabel = !stream.isTranscode
-        ? 'Direct Play'
-        : isHw
-            ? 'HW Transcode'
-            : 'CPU Transcode';
+    final String vDec = stream.videoDecision?.toLowerCase() ?? '';
+    final bool isDirectStream = vDec == 'copy' ||
+        (stream.isTranscode &&
+            stream.audioDecision?.toLowerCase() == 'transcode' &&
+            vDec != 'transcode');
+    final bool isDirectPlay = (vDec == 'directplay' ||
+            (vDec.isEmpty && !stream.isTranscode)) &&
+        !isDirectStream;
 
-    final Color transcodeColor = !stream.isTranscode
+    final String transcodeLabel = isDirectPlay
+        ? 'Direct Play'
+        : isDirectStream
+            ? 'Direct Stream'
+            : isHw
+                ? 'HW Transcode'
+                : 'CPU Transcode';
+
+    final Color transcodeColor = isDirectPlay
         ? const Color(0xFF4CAF50)
-        : isHw
-            ? const Color(0xFF2196F3)
-            : const Color(0xFFFF9800);
+        : isDirectStream
+            ? const Color(0xFF00BCD4)
+            : isHw
+                ? const Color(0xFF2196F3)
+                : const Color(0xFFFF9800);
 
     final int bitrate = stream.bitrate ?? 0;
     final String bitrateText = bitrate >= 1000
@@ -93,9 +106,12 @@ class ActiveStreamCard extends StatelessWidget {
                     onTap: () => TracearrMediaDetailScreen.navigate(
                       context,
                       instance: instance,
-                      mediaRef: stream.ratingKey ?? stream.id,
+                      mediaRef: stream.mediaId ?? stream.ratingKey ?? stream.id,
                       initialTitle: stream.mediaTitle,
+                      initialShowTitle: stream.showTitle,
                       initialPosterUrl: stream.posterUrl,
+                      initialSeasonNumber: stream.seasonNumber,
+                      initialEpisodeNumber: stream.episodeNumber,
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(Radii.sm),
@@ -137,17 +153,21 @@ class ActiveStreamCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          stream.mediaTitle,
+                          (stream.seasonNumber != null &&
+                                  stream.episodeNumber != null)
+                              ? 'S${stream.seasonNumber}:E${stream.episodeNumber} • ${stream.mediaTitle}'
+                              : stream.mediaTitle,
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (stream.showTitle != null) ...[
+                        if (stream.showTitle != null &&
+                            stream.showTitle!.isNotEmpty) ...[
                           const SizedBox(height: 2),
                           Text(
-                            '${stream.showTitle} • S${stream.seasonNumber}:E${stream.episodeNumber}',
+                            stream.showTitle!,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -180,16 +200,40 @@ class ActiveStreamCard extends StatelessWidget {
                                     radius: 9,
                                     backgroundColor:
                                         colorScheme.primaryContainer,
-                                    child: Text(
-                                      stream.userUsername.isNotEmpty
-                                          ? stream.userUsername[0].toUpperCase()
-                                          : 'U',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: colorScheme.onPrimaryContainer,
-                                      ),
-                                    ),
+                                    child: stream.userAvatarUrl != null &&
+                                            stream.userAvatarUrl!.isNotEmpty
+                                        ? ClipOval(
+                                            child: CachedNetworkImage(
+                                              imageUrl: stream.userAvatarUrl!,
+                                              width: 18,
+                                              height: 18,
+                                              fit: BoxFit.cover,
+                                              errorWidget: (c, u, e) => Text(
+                                                stream.userUsername.isNotEmpty
+                                                    ? stream.userUsername[0]
+                                                        .toUpperCase()
+                                                    : 'U',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: colorScheme
+                                                      .onPrimaryContainer,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                        : Text(
+                                            stream.userUsername.isNotEmpty
+                                                ? stream.userUsername[0]
+                                                    .toUpperCase()
+                                                : 'U',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: colorScheme
+                                                  .onPrimaryContainer,
+                                            ),
+                                          ),
                                   ),
                                   const SizedBox(width: 6),
                                   Text(

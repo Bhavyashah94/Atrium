@@ -16,23 +16,45 @@ class RecentlyAddedPosterTile extends StatelessWidget {
   final Instance instance;
   final TracearrRecentlyAddedItem item;
 
+  String _formatRelativeTime(DateTime? date) {
+    if (date == null) return '';
+    final now = DateTime.now();
+    final diff = now.difference(date);
+    if (diff.inDays > 365) {
+      return '${(diff.inDays / 365).floor()}y ago';
+    } else if (diff.inDays > 30) {
+      return '${(diff.inDays / 30).floor()}mo ago';
+    } else if (diff.inDays > 0) {
+      return '${diff.inDays}d ago';
+    } else if (diff.inHours > 0) {
+      return '${diff.inHours}h ago';
+    } else if (diff.inMinutes > 0) {
+      return '${diff.inMinutes}m ago';
+    }
+    return 'just now';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     final posterUrl = item.resolvedPosterUrl;
+    final timeStr = _formatRelativeTime(item.addedAt);
+    final isTv = item.mediaType == 'show' || item.mediaType == 'episode';
 
     return InkWell(
       borderRadius: BorderRadius.circular(Radii.md),
       onTap: () {
-        final mediaRef = item.ratingKey ?? item.id;
+        final mediaRef = item.mediaId ?? item.ratingKey ?? item.id;
         TracearrMediaDetailScreen.navigate(
           context,
           instance: instance,
           mediaRef: mediaRef,
           initialTitle: item.title,
           initialPosterUrl: posterUrl,
+          initialSeasonNumber: item.seasonNumber,
+          initialEpisodeNumber: item.episodeNumber,
         );
       },
       child: Column(
@@ -54,9 +76,7 @@ class RecentlyAddedPosterTile extends StatelessWidget {
                         color: colorScheme.surfaceContainerHighest,
                         child: Center(
                           child: Icon(
-                            item.mediaType == 'show'
-                                ? Icons.tv
-                                : Icons.movie_outlined,
+                            isTv ? Icons.tv : Icons.movie_outlined,
                             color: colorScheme.onSurfaceVariant,
                             size: 32,
                           ),
@@ -68,9 +88,7 @@ class RecentlyAddedPosterTile extends StatelessWidget {
                       color: colorScheme.surfaceContainerHighest,
                       child: Center(
                         child: Icon(
-                          item.mediaType == 'show'
-                              ? Icons.tv
-                              : Icons.movie_outlined,
+                          isTv ? Icons.tv : Icons.movie_outlined,
                           color: colorScheme.onSurfaceVariant,
                           size: 32,
                         ),
@@ -130,13 +148,27 @@ class RecentlyAddedPosterTile extends StatelessWidget {
 
           // Title
           Text(
-            item.title,
+            (item.seasonNumber != null && item.episodeNumber != null)
+                ? 'S${item.seasonNumber}:E${item.episodeNumber} • ${item.title}'
+                : item.title,
             style: theme.textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
+          if (timeStr.isNotEmpty) ...[
+            const SizedBox(height: 1),
+            Text(
+              'Added $timeStr',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 9,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ],
       ),
     );

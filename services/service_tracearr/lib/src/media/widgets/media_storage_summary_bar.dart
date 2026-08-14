@@ -193,8 +193,34 @@ class MediaStorageSummaryBar extends StatelessWidget {
                         ),
                         ...libraries.map((lib) {
                           final isSelected = selectedFilter == lib.libraryId;
-                          final String label =
-                              '${lib.serverType.toUpperCase()} (${lib.itemCount})';
+                          final uniqueServers =
+                              libraries.map((l) => l.serverId).toSet();
+                          final isMultiServer = uniqueServers.length > 1;
+
+                          final String typeName;
+                          if (lib.movieCount > 0 &&
+                              lib.showCount == 0 &&
+                              lib.trackCount == 0) {
+                            typeName = 'Movies';
+                          } else if (lib.showCount > 0 &&
+                              lib.movieCount == 0 &&
+                              lib.trackCount == 0) {
+                            typeName = 'TV Shows';
+                          } else if (lib.trackCount > 0 &&
+                              lib.movieCount == 0 &&
+                              lib.showCount == 0) {
+                            typeName = 'Music';
+                          } else {
+                            typeName = '';
+                          }
+
+                          final String serverPrefix = (isMultiServer &&
+                                  lib.serverType.isNotEmpty)
+                              ? '${lib.serverType.toUpperCase()} '
+                              : '';
+                          final String label = typeName.isNotEmpty
+                              ? '$serverPrefix$typeName (${lib.itemCount})'
+                              : '${lib.serverType.toUpperCase()} (${lib.itemCount})';
 
                           return Padding(
                             padding: const EdgeInsets.only(left: Insets.xs),

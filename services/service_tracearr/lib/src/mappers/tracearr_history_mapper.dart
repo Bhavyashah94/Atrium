@@ -25,6 +25,16 @@ class TracearrHistoryMapper {
         (tInfo?.hwEncoding != null && tInfo!.hwEncoding!.isNotEmpty) ||
         (tInfo?.hwRequested == true);
 
+    final sourceRes =
+        (item.sourceVideoWidth != null && item.sourceVideoHeight != null)
+            ? '${item.sourceVideoWidth}x${item.sourceVideoHeight}'
+            : null;
+
+    final streamRes = (item.streamVideoDetails?.width != null &&
+            item.streamVideoDetails?.height != null)
+        ? '${item.streamVideoDetails!.width!.toInt()}x${item.streamVideoDetails!.height!.toInt()}'
+        : null;
+
     return TracearrHistoryItem(
       id: item.id ?? '',
       serverId: item.serverId ?? '',
@@ -66,6 +76,16 @@ class TracearrHistoryMapper {
       transcodeReasons: tInfo?.reasons ?? const <String>[],
       subtitleLanguage: item.subtitleInfo?.language,
       subtitleCodec: item.subtitleInfo?.codec,
+      subtitleDecision: item.subtitleInfo?.decision,
+      transcodeSpeed: tInfo?.speed,
+      isThrottled: tInfo?.throttled,
+      sourceDynamicRange: item.sourceVideoDetails?.dynamicRange,
+      streamDynamicRange: item.streamVideoDetails?.dynamicRange,
+      sourceResolution: sourceRes,
+      streamResolution: streamRes,
+      sourceContainer: tInfo?.sourceContainer,
+      streamContainer: tInfo?.streamContainer,
+      containerDecision: tInfo?.containerDecision,
       userId: item.user?.id,
       serverUserId: item.user?.serverUserId,
       segmentCount: item.segmentCount,

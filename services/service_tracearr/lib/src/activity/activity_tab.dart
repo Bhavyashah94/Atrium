@@ -11,7 +11,7 @@ import 'widgets/watch_history_section.dart';
 ///
 /// Features live active stream telemetry, transcode triage, diagnostics, safe stream
 /// termination flow, and continuous paginated watch history.
-class ActivityTab extends ConsumerWidget {
+class ActivityTab extends ConsumerStatefulWidget {
   const ActivityTab({
     required this.instance,
     super.key,
@@ -19,19 +19,45 @@ class ActivityTab extends ConsumerWidget {
 
   final Instance instance;
 
-  Future<void> _refreshAll(WidgetRef ref) async {
-    ref.invalidate(tracearrStreamsProvider(instance));
+  @override
+  ConsumerState<ActivityTab> createState() => _ActivityTabState();
+}
+
+class _ActivityTabState extends ConsumerState<ActivityTab> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refreshAll() async {
+    ref.invalidate(tracearrStreamsProvider(widget.instance));
     await ref
-        .read(tracearrHistoryPaginatedProvider(instance).notifier)
+        .read(tracearrHistoryPaginatedProvider(widget.instance).notifier)
         .refresh();
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final streamsAsync = ref.watch(tracearrStreamsProvider(instance));
+    ref.listen<int>(
+      tracearrHomeScrollToTopProvider((widget.instance, 1)),
+      (previous, next) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      },
+    );
+
+    final streamsAsync = ref.watch(tracearrStreamsProvider(widget.instance));
 
     return Scaffold(
       appBar: AppBar(
@@ -45,7 +71,7 @@ class ActivityTab extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              instance.name,
+              widget.instance.name,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -70,28 +96,65 @@ class ActivityTab extends ConsumerWidget {
           failedText: 'Failed',
           messageText: 'Last updated at %T',
         ),
-        onRefresh: () => _refreshAll(ref),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(
-            horizontal: Insets.lg,
-            vertical: Insets.md,
-          ),
-          children: [
-            // 1. Live Active Streams Section
-            ActiveStreamsSection(
-              instance: instance,
-              streamsAsync: streamsAsync,
-              onRetry: () => ref.invalidate(tracearrStreamsProvider(instance)),
+        footer: const ClassicFooter(
+          infiniteOffset: 200.0,
+          dragText: 'Pull to load more',
+          armedText: 'Release to load more',
+          readyText: 'Loading more history...',
+          processingText: 'Loading more history...',
+          processedText: 'Loaded',
+          failedText: 'Failed to load',
+          noMoreText: 'All history loaded',
+        ),
+        onRefresh: _refreshAll,
+        onLoad: () async {
+          await ref
+              .read(tracearrHistoryPaginatedProvider(widget.instance).notifier)
+              .loadMore();
+          // See media_tab: loadMore's bool conflates exhausted with no-op and
+          // failed, so hasMore is the only trustworthy end-of-list signal.
+          return ref.read(tracearrHistoryPaginatedProvider(widget.instance)).hasMore
+              ? IndicatorResult.success
+              : IndicatorResult.noMore;
+        },
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification.metrics.pixels >=
+                notification.metrics.maxScrollExtent - 250) {
+              ref
+                  .read(tracearrHistoryPaginatedProvider(widget.instance).notifier)
+                  .loadMore();
+            }
+            return false;
+          },
+          child: ListView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Insets.lg,
+              vertical: Insets.md,
             ),
-            const SizedBox(height: Insets.xl),
+            children: [
+              // 1. Live Active Streams Section
+              RepaintBoundary(
+                child: ActiveStreamsSection(
+                  instance: widget.instance,
+                  streamsAsync: streamsAsync,
+                  onRetry: () =>
+                      ref.invalidate(tracearrStreamsProvider(widget.instance)),
+                ),
+              ),
+              const SizedBox(height: Insets.xl),
 
-            // 2. Continuous Watch History Section
-            WatchHistorySection(
-              instance: instance,
-            ),
-            const SizedBox(height: Insets.xl),
-          ],
+              // 2. Continuous Watch History Section
+              RepaintBoundary(
+                child: WatchHistorySection(
+                  instance: widget.instance,
+                ),
+              ),
+              const SizedBox(height: Insets.xl),
+            ],
+          ),
         ),
       ),
     );

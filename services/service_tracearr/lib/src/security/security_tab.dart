@@ -10,7 +10,7 @@ import 'widgets/security_incident_ledger_section.dart';
 ///
 /// Features Sentinel policy violation ledger, severity filtering,
 /// real-time triage, and incident resolution tracking.
-class SecurityTab extends ConsumerWidget {
+class SecurityTab extends ConsumerStatefulWidget {
   const SecurityTab({
     required this.instance,
     super.key,
@@ -18,16 +18,42 @@ class SecurityTab extends ConsumerWidget {
 
   final Instance instance;
 
-  Future<void> _refreshAll(WidgetRef ref) async {
-    ref.invalidate(tracearrViolationsProvider(instance));
+  @override
+  ConsumerState<SecurityTab> createState() => _SecurityTabState();
+}
+
+class _SecurityTabState extends ConsumerState<SecurityTab> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refreshAll() async {
+    ref.invalidate(tracearrViolationsProvider(widget.instance));
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final violationsAsync = ref.watch(tracearrViolationsProvider(instance));
+    ref.listen<int>(
+      tracearrHomeScrollToTopProvider((widget.instance, 4)),
+      (previous, next) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      },
+    );
+
+    final violationsAsync = ref.watch(tracearrViolationsProvider(widget.instance));
 
     return Scaffold(
       appBar: AppBar(
@@ -41,7 +67,7 @@ class SecurityTab extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              instance.name,
+              widget.instance.name,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -66,8 +92,9 @@ class SecurityTab extends ConsumerWidget {
           failedText: 'Failed',
           messageText: 'Last updated at %T',
         ),
-        onRefresh: () => _refreshAll(ref),
+        onRefresh: _refreshAll,
         child: ListView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(
             horizontal: Insets.lg,
@@ -75,11 +102,13 @@ class SecurityTab extends ConsumerWidget {
           ),
           children: [
             // Sentinel Policy Violation Incident Ledger
-            SecurityIncidentLedgerSection(
-              instance: instance,
-              violationsAsync: violationsAsync,
-              onRetry: () =>
-                  ref.invalidate(tracearrViolationsProvider(instance)),
+            RepaintBoundary(
+              child: SecurityIncidentLedgerSection(
+                instance: widget.instance,
+                violationsAsync: violationsAsync,
+                onRetry: () =>
+                    ref.invalidate(tracearrViolationsProvider(widget.instance)),
+              ),
             ),
             const SizedBox(height: Insets.xl),
           ],

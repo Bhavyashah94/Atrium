@@ -3,6 +3,7 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../models/tracearr_models.dart';
+import '../../tracearr_media_url_resolver.dart';
 
 /// Card rendering multi-server presence and direct media server deep links.
 class MediaAvailabilityCard extends StatelessWidget {
@@ -26,24 +27,38 @@ class MediaAvailabilityCard extends StatelessWidget {
   }
 
   Future<void> _handleDeepLink(
-      BuildContext context, TracearrMediaAvailability item,) async {
+    BuildContext context,
+    TracearrMediaAvailability item,
+  ) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final String? link = item.ratingKey != null && item.ratingKey!.isNotEmpty
-        ? 'https://app.plex.tv/desktop'
+    final bool isPlex = item.serverType.toLowerCase() == 'plex';
+    final String? link = isPlex &&
+            item.ratingKey != null &&
+            item.ratingKey!.isNotEmpty &&
+            item.serverId.isNotEmpty
+        ? TracearrMediaUrlResolver.buildMediaServerItemUrl(
+            serverType: 'plex',
+            baseUrl: '',
+            ratingKey: item.ratingKey!,
+            machineIdentifier: item.serverId,
+          )
         : null;
 
     if (link != null) {
       final uri = Uri.tryParse(link);
-      if (uri != null && await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        return;
+      if (uri != null) {
+        try {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return;
+        } catch (_) {}
       }
     }
 
     scaffoldMessenger.showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text(
-            'Server ${item.serverType.toUpperCase()} item available on server ${item.serverId}',),
+          'Direct web player launching is currently only supported for Plex servers.',
+        ),
         behavior: SnackBarBehavior.floating,
       ),
     );
