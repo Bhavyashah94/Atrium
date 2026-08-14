@@ -43,8 +43,8 @@ class _SonarrReleaseSearchScreenState
   String _searchQuery = '';
   String _selectedProtocol = 'All'; // 'All', 'Torrent', 'Usenet'
   bool _approvedOnly = false;
-  String _sortBy = 'Age'; // 'Age', 'Size', 'Seeders'
-  bool _sortAscending = true;
+  String _sortBy = 'Score'; // 'Score', 'Age', 'Size', 'Seeders'
+  bool _sortAscending = false;
   final Map<String, bool> _downloadingMap = {};
 
   @override
@@ -80,6 +80,28 @@ class _SonarrReleaseSearchScreenState
       i++;
     }
     return '${size.toStringAsFixed(1)} ${suffixes[i]}';
+  }
+
+  int _getCustomFormatScore(Map<String, dynamic> r) {
+    final dynamic raw = r['customFormatScore'];
+    if (raw is num) return raw.toInt();
+    if (raw is String) return int.tryParse(raw) ?? 0;
+    return 0;
+  }
+
+  List<String> _getCustomFormatNames(Map<String, dynamic> r) {
+    final dynamic raw = r['customFormats'];
+    if (raw is! Iterable) return const <String>[];
+    final List<String> names = <String>[];
+    for (final dynamic item in raw) {
+      if (item is Map) {
+        final dynamic name = item['name'];
+        if (name is String && name.isNotEmpty) {
+          names.add(name);
+        }
+      }
+    }
+    return names;
   }
 
   Future<void> _download(
@@ -299,6 +321,10 @@ class _SonarrReleaseSearchScreenState
                             ),
                           ),
                           items: const [
+                            DropdownMenuItem(
+                              value: 'Score',
+                              child: Text('Score'),
+                            ),
                             DropdownMenuItem(value: 'Age', child: Text('Age')),
                             DropdownMenuItem(
                               value: 'Size',
@@ -313,9 +339,10 @@ class _SonarrReleaseSearchScreenState
                             if (val != null) {
                               setState(() {
                                 _sortBy = val;
-                                // Most seeders first by default; newest /
+                                // Highest score / most seeders first by default; newest /
                                 // smallest first for the other keys.
-                                _sortAscending = val != 'Seeders';
+                                _sortAscending =
+                                    val != 'Score' && val != 'Seeders';
                               });
                             }
                           },
@@ -413,7 +440,11 @@ class _SonarrReleaseSearchScreenState
                   // _sortAscending means the same thing for all keys.
                   filtered.sort((a, b) {
                     int result = 0;
-                    if (_sortBy == 'Age') {
+                    if (_sortBy == 'Score') {
+                      final aScore = _getCustomFormatScore(a);
+                      final bScore = _getCustomFormatScore(b);
+                      result = aScore.compareTo(bScore);
+                    } else if (_sortBy == 'Age') {
                       result = _getAgeMinutes(a).compareTo(_getAgeMinutes(b));
                     } else if (_sortBy == 'Size') {
                       final aSize = a['size'] as int? ?? 0;
@@ -424,7 +455,13 @@ class _SonarrReleaseSearchScreenState
                       final bSeeders = b['seeders'] as int? ?? 0;
                       result = aSeeders.compareTo(bSeeders);
                     }
-                    return _sortAscending ? result : -result;
+                    final int directed = _sortAscending ? result : -result;
+                    if (directed != 0) return directed;
+                    // Break ties on age, newest first. Dart's sort is not
+                    // stable, and without custom formats configured every
+                    // score is 0, so on the default Score sort the whole
+                    // list would otherwise come back in arbitrary order.
+                    return _getAgeMinutes(a).compareTo(_getAgeMinutes(b));
                   });
 
                   if (filtered.isEmpty) {
@@ -480,6 +517,10 @@ class _SonarrReleaseSearchScreenState
                               .join(', ')
                           : '';
 
+                      // Extract custom format score and custom formats safely
+                      final int customFormatScore = _getCustomFormatScore(r);
+                      final List<String> formatNames = _getCustomFormatNames(r);
+
                       return Card(
                         margin: const EdgeInsets.only(bottom: Insets.sm),
                         clipBehavior: Clip.antiAlias,
@@ -507,7 +548,9 @@ class _SonarrReleaseSearchScreenState
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 6),
-                              Row(
+                              Wrap(
+                                spacing: Insets.xs,
+                                runSpacing: Insets.xs,
                                 children: [
                                   // Quality badge
                                   Container(
@@ -531,8 +574,7 @@ class _SonarrReleaseSearchScreenState
                                       ),
                                     ),
                                   ),
-                                  if (langText.isNotEmpty) ...[
-                                    const SizedBox(width: Insets.xs),
+                                  if (langText.isNotEmpty)
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 6,
@@ -554,7 +596,69 @@ class _SonarrReleaseSearchScreenState
                                         ),
                                       ),
                                     ),
-                                  ],
+                                  // Custom Format Score badge. Only shown when
+                                  // it carries information: a profile with no
+                                  // custom formats scores every release 0, and
+                                  // a "Score: 0" on every row is just noise.
+                                  if (customFormatScore != 0 ||
+                                      formatNames.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: customFormatScore > 0
+                                            ? colors.tertiaryContainer
+                                                .withValues(alpha: 0.6)
+                                            : customFormatScore < 0
+                                                ? colors.errorContainer
+                                                    .withValues(alpha: 0.6)
+                                                : colors
+                                                    .surfaceContainerHighest
+                                                    .withValues(alpha: 0.6),
+                                        borderRadius:
+                                            BorderRadius.circular(Radii.sm),
+                                      ),
+                                      child: Text(
+                                        customFormatScore > 0
+                                            ? 'Score: +$customFormatScore'
+                                            : 'Score: $customFormatScore',
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
+                                          color: customFormatScore > 0
+                                              ? colors.onTertiaryContainer
+                                              : customFormatScore < 0
+                                                  ? colors.onErrorContainer
+                                                  : colors.onSurfaceVariant,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  // Matched Custom Format chips
+                                  for (final String formatName in formatNames)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: colors.surfaceContainerHighest
+                                            .withValues(alpha: 0.6),
+                                        borderRadius:
+                                            BorderRadius.circular(Radii.sm),
+                                      ),
+                                      child: Text(
+                                        formatName,
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
+                                          color: colors.onSurfaceVariant,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
                                 ],
                               ),
                               const SizedBox(height: 6),

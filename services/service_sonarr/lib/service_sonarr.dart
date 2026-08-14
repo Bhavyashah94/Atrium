@@ -20,6 +20,7 @@ export 'src/sonarr_add_series_sheet.dart';
 export 'src/sonarr_api.dart';
 export 'src/sonarr_home.dart';
 export 'src/sonarr_providers.dart';
+export 'src/sonarr_release_search_screen.dart';
 
 final sonarrActiveTabBarIndexProvider =
     StateProvider.family<int, Instance>((ref, instance) => 0);
