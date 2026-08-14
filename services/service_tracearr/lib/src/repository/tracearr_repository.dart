@@ -76,7 +76,10 @@ class TracearrRepository {
     final workerCount = items.length < concurrency ? items.length : concurrency;
     final workers = List.generate(workerCount, (_) => runWorker());
     await Future.wait(workers);
-    return results.cast<R>();
+    // Drop the failures rather than cast over them. `cast<R>()` is lazy, so a
+    // null left by a failed worker would not throw here but later, while the
+    // UI iterated the list, taking the whole page down over one bad item.
+    return results.whereType<R>().toList();
   }
 
   void _harvestStreamArtwork(List<ActiveStream> data) {
