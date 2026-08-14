@@ -420,7 +420,13 @@ class _RadarrReleaseSearchScreenState
                       final bSeeders = b['seeders'] as int? ?? 0;
                       result = aSeeders.compareTo(bSeeders);
                     }
-                    return _sortAscending ? result : -result;
+                    final int directed = _sortAscending ? result : -result;
+                    if (directed != 0) return directed;
+                    // Break ties on age, newest first. Dart's sort is not
+                    // stable, and without custom formats configured every
+                    // score is 0, so on the default Score sort the whole
+                    // list would otherwise come back in arbitrary order.
+                    return _getAgeMinutes(a).compareTo(_getAgeMinutes(b));
                   });
 
                   if (filtered.isEmpty) {
@@ -552,40 +558,46 @@ class _RadarrReleaseSearchScreenState
                                         ),
                                       ),
                                     ),
-                                  // Custom Format Score badge
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: customFormatScore > 0
-                                          ? colors.tertiaryContainer
-                                              .withValues(alpha: 0.6)
-                                          : customFormatScore < 0
-                                              ? colors.errorContainer
-                                                  .withValues(alpha: 0.6)
-                                              : colors.surfaceContainerHighest
-                                                  .withValues(alpha: 0.6),
-                                      borderRadius:
-                                          BorderRadius.circular(Radii.sm),
-                                    ),
-                                    child: Text(
-                                      customFormatScore > 0
-                                          ? 'Score: +$customFormatScore'
-                                          : 'Score: $customFormatScore',
-                                      style:
-                                          theme.textTheme.labelSmall?.copyWith(
+                                  // Custom Format Score badge. Only shown when
+                                  // it carries information: a profile with no
+                                  // custom formats scores every release 0, and
+                                  // a "Score: 0" on every row is just noise.
+                                  if (customFormatScore != 0 ||
+                                      formatNames.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
                                         color: customFormatScore > 0
-                                            ? colors.onTertiaryContainer
+                                            ? colors.tertiaryContainer
+                                                .withValues(alpha: 0.6)
                                             : customFormatScore < 0
-                                                ? colors.onErrorContainer
-                                                : colors.onSurfaceVariant,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
+                                                ? colors.errorContainer
+                                                    .withValues(alpha: 0.6)
+                                                : colors
+                                                    .surfaceContainerHighest
+                                                    .withValues(alpha: 0.6),
+                                        borderRadius:
+                                            BorderRadius.circular(Radii.sm),
+                                      ),
+                                      child: Text(
+                                        customFormatScore > 0
+                                            ? 'Score: +$customFormatScore'
+                                            : 'Score: $customFormatScore',
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
+                                          color: customFormatScore > 0
+                                              ? colors.onTertiaryContainer
+                                              : customFormatScore < 0
+                                                  ? colors.onErrorContainer
+                                                  : colors.onSurfaceVariant,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
-                                  ),
                                   // Matched Custom Format chips
                                   for (final String formatName in formatNames)
                                     Container(
