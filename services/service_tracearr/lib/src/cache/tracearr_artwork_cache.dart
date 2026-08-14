@@ -17,13 +17,29 @@ class TracearrArtworkCache {
   TracearrArtworkCache({
     int maxEntries = 500,
     Box<String>? box,
+    int maxPersistedEntries = 2000,
   })  : _memCache = TracearrMemoryCache<String, String>(maxEntries: maxEntries),
-        _box = box;
+        _box = box,
+        _maxPersistedEntries = maxPersistedEntries;
 
   static const String boxName = 'service.tracearr.artwork_cache';
 
+  /// Fraction of the box discarded once it fills.
+  ///
+  /// Trimming a batch rather than one key per write keeps the cost off the hot
+  /// path: eviction runs on roughly one write in [_maxPersistedEntries] * 0.25
+  /// instead of every single one.
+  static const double _evictionRatio = 0.25;
+
   final TracearrMemoryCache<String, String> _memCache;
   final Box<String>? _box;
+
+  /// Upper bound on rows kept on disk.
+  ///
+  /// The memory tier is an LRU and bounds itself, but the box has no such
+  /// limit: every distinct poster and avatar ever seen would stay on disk
+  /// forever, growing without end on a busy server.
+  final int _maxPersistedEntries;
 
   /// Read through the memory tier, falling back to the persistent box.
   ///
@@ -47,11 +63,31 @@ class TracearrArtworkCache {
   Future<void> _write(String key, String value) async {
     if (_memCache.get(key) == value) return;
     _memCache.put(key, value);
+
+    final Box<String>? box = _box;
+    if (box == null) return;
+
     try {
-      await _box?.put(key, value);
+      if (!box.containsKey(key) && box.length >= _maxPersistedEntries) {
+        await _evictOldest(box);
+      }
+      await box.put(key, value);
     } catch (_) {
       // A failed persist must never break rendering; the memory tier still holds it.
     }
+  }
+
+  /// Drops the oldest slice of the box to make room.
+  ///
+  /// Hive hands back keys in insertion order, so this is first-in-first-out
+  /// rather than true LRU. That is the right trade here: a strict LRU would
+  /// mean writing an access timestamp on every read, turning cheap cache hits
+  /// into disk writes, and the entries are cheap to re-harvest either way.
+  Future<void> _evictOldest(Box<String> box) async {
+    final int target = (_maxPersistedEntries * _evictionRatio).ceil();
+    final List<dynamic> doomed = box.keys.take(target).toList();
+    if (doomed.isEmpty) return;
+    await box.deleteAll(doomed);
   }
 
   /// Compute cache key for media items.

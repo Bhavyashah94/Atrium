@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:service_tracearr/src/cache/tracearr_artwork_cache.dart';
 
 void main() {
@@ -66,6 +69,72 @@ void main() {
           'https://tr.betelgeuse.fun/api/v1/images/proxy?server=be8aa256-17a1-4135-9044-b8f3cca268e0&url=%2FItems%2F20374%2FImages%2FPrimary&width=300&height=450&fallback=poster',
         ),
       );
+    });
+
+    group('persistence and bounding', () {
+      late Directory tempDir;
+      late Box<String> box;
+
+      setUp(() async {
+        tempDir = await Directory.systemTemp.createTemp('tracearr_cache_test');
+        Hive.init(tempDir.path);
+        box = await Hive.openBox<String>('artwork_test');
+      });
+
+      tearDown(() async {
+        await box.deleteFromDisk();
+        await Hive.close();
+        if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
+      });
+
+      test('survives a new cache instance sharing the same box', () async {
+        final first = TracearrArtworkCache(box: box);
+        await first.putThumbPath(
+          serverId: 's1',
+          thumbPath: '/Items/1/Images/Primary',
+          ratingKey: 'rk1',
+        );
+
+        // A fresh instance stands in for a cold start: empty memory tier,
+        // same box on disk.
+        final second = TracearrArtworkCache(box: box);
+        expect(
+          second.getThumbPath('s1', 'rk1'),
+          equals('/Items/1/Images/Primary'),
+        );
+      });
+
+      test('keeps the box bounded once it fills', () async {
+        const max = 8;
+        final cache = TracearrArtworkCache(box: box, maxPersistedEntries: max);
+
+        for (var i = 0; i < max * 3; i++) {
+          await cache.putThumbPath(
+            serverId: 's1',
+            thumbPath: '/thumb/$i',
+            ratingKey: 'rk$i',
+          );
+          expect(
+            box.length,
+            lessThanOrEqualTo(max),
+            reason: 'box exceeded its cap at write $i',
+          );
+        }
+
+        expect(box.isNotEmpty, isTrue, reason: 'eviction should not empty it');
+      });
+
+      test('rewriting the same value does not grow the box', () async {
+        final cache = TracearrArtworkCache(box: box);
+        for (var i = 0; i < 5; i++) {
+          await cache.putThumbPath(
+            serverId: 's1',
+            thumbPath: '/same',
+            ratingKey: 'rk1',
+          );
+        }
+        expect(box.length, 1);
+      });
     });
   });
 }
