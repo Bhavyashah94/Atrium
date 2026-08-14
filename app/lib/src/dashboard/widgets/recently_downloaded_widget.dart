@@ -12,6 +12,17 @@ import '../../arr_artwork.dart';
 import '../dashboard_widget_card.dart';
 import '../dashboard_widget_kind.dart';
 
+const Set<String> _importEventTypes = <String>{
+  'downloadfolderimported',
+  'downloadimported',
+  'imported',
+};
+
+bool _isImportEvent(String? eventType) {
+  if (eventType == null) return false;
+  return _importEventTypes.contains(eventType.toLowerCase());
+}
+
 class _SeasonGroup {
   _SeasonGroup({
     required this.series,
@@ -136,9 +147,15 @@ class _DashboardRecentlyDownloadedWidgetState
           continue;
         }
 
-        final String batchKey = (h.downloadId != null && h.downloadId!.isNotEmpty)
-            ? h.downloadId!
-            : '${date.year}_${date.month}_${date.day}';
+        // Only include events representing an actual file import on disk
+        if (!_isImportEvent(h.eventType)) {
+          continue;
+        }
+
+        final String batchKey =
+            (h.downloadId != null && h.downloadId!.isNotEmpty)
+                ? h.downloadId!
+                : '${date.year}_${date.month}_${date.day}';
         final String groupKey =
             '${i.id}_sonarr_${h.seriesId}_S${h.episode!.seasonNumber}_$batchKey';
 
@@ -201,6 +218,12 @@ class _DashboardRecentlyDownloadedWidgetState
         if (date == null || h.movie == null) {
           continue;
         }
+
+        // Only include events representing an actual file import on disk
+        if (!_isImportEvent(h.eventType)) {
+          continue;
+        }
+
         final String key = '${i.id}_radarr_${h.movieId ?? h.movie!.id}';
         if (seenKeys.contains(key)) {
           continue;
@@ -255,7 +278,8 @@ class _DashboardRecentlyDownloadedWidgetState
       if (_needsReset) {
         _needsReset = false;
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients && _scrollController.position.hasContentDimensions) {
+          if (_scrollController.hasClients &&
+              _scrollController.position.hasContentDimensions) {
             _scrollController.jumpTo(0.0);
           }
         });

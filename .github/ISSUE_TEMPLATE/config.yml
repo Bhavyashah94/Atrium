@@ -1,6 +1,8 @@
-# Discussions are not enabled on this repo, so nothing links to them here.
 blank_issues_enabled: false
 contact_links:
+  - name: Question or setup help
+    url: https://github.com/retransmit/Atrium/discussions/categories/q-a
+    about: Not sure it is a bug? Ask in Discussions and we will work it out with you.
   - name: Security vulnerability
     url: https://github.com/retransmit/Atrium/blob/main/SECURITY.md
     about: Report privately. Please do not open a public issue for these.

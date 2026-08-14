@@ -7,6 +7,7 @@ import 'package:dio/io.dart';
 import 'auth_interceptor.dart';
 import 'connection_resolver.dart';
 import 'headers.dart';
+import 'rate_limit_interceptor.dart';
 
 /// Builds [Dio] clients pre-configured for an [Instance].
 ///
@@ -63,6 +64,10 @@ class DioFactory {
     dio.interceptors.add(
       AuthInterceptor(kind: instance.kind, auth: instance.auth),
     );
+
+    // After auth, so a replayed request is re-signed rather than reusing a
+    // header that may have expired while we waited out the rate limit.
+    dio.interceptors.add(RateLimitInterceptor(dio));
 
     return dio;
   }

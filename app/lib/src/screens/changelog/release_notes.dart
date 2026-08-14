@@ -27,6 +27,26 @@ class ReleaseNote {
 /// Newest first. Update alongside appVersion and the pubspec at each release.
 const List<ReleaseNote> releaseNotes = <ReleaseNote>[
   ReleaseNote(
+    version: '1.4.1',
+    date: '2026-08-15',
+    groups: <ChangeGroup>[
+      ChangeGroup(ChangeCategory.added, <String>[
+        'Interactive search in Sonarr and Radarr now shows the custom format score and the formats each release matched, sorted best match first.',
+      ]),
+      ChangeGroup(ChangeCategory.improved, <String>[
+        'Tracearr has been rebuilt: an overview of your whole fleet, live streams with playback diagnostics, a media catalog with per-server availability, user profiles, and a security ledger.',
+        'Tracearr is no longer marked beta.',
+        'When a server asks you to slow down, Atrium now waits the time it asked for and retries instead of showing an error.',
+        'Lists that load more as you scroll now tell you when you have reached the end.',
+      ]),
+      ChangeGroup(ChangeCategory.fixed, <String>[
+        'Tracearr no longer keeps polling a screen you have left, and its artwork cache no longer grows without limit.',
+        'Marking a Tracearr security incident as reviewed now says plainly that it is only stored on this device.',
+        'One unreadable item no longer blanks a whole Tracearr list.',
+      ]),
+    ],
+  ),
+  ReleaseNote(
     version: '1.4.0',
     date: '2026-08-13',
     groups: <ChangeGroup>[

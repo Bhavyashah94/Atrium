@@ -1,0 +1,10 @@
+Tracearr has been rebuilt. It now opens on an overview of your whole fleet, with
+live streams and playback diagnostics, a media catalog showing which server holds
+each copy, user profiles, and a security ledger. It is no longer marked beta.
+
+Interactive search in Sonarr and Radarr shows the custom format score and the
+formats each release matched, sorted best match first.
+
+When a server asks you to slow down, Atrium waits the time it asked for and
+retries rather than showing an error. Lists that load as you scroll now tell you
+when you have reached the end.

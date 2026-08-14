@@ -60,12 +60,13 @@ void main() {
   });
 
   test('newer integrations are flagged beta; stable ones are not', () {
-    expect(ServiceKind.tracearr.isBeta, isTrue);
     expect(ServiceKind.transmission.isBeta, isTrue);
     expect(ServiceKind.deluge.isBeta, isTrue);
     expect(ServiceKind.rtorrent.isBeta, isTrue);
     expect(ServiceKind.sonarr.isBeta, isFalse);
     expect(ServiceKind.qbittorrent.isBeta, isFalse);
+    // Tracearr graduated out of beta once its rebuild landed.
+    expect(ServiceKind.tracearr.isBeta, isFalse);
   });
 
   test('existing services retain their default ports', () {
