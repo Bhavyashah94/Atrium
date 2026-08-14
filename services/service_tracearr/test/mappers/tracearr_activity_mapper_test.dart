@@ -15,12 +15,10 @@ void main() {
           {
             'date': '2026-08-07T00:00:00Z',
             'count': 14,
-            'durationMs': 3600000,
           },
           {
             'date': '2026-08-08T00:00:00Z',
             'count': 22,
-            'durationMs': 7200000,
           },
         ],
       );
@@ -32,7 +30,6 @@ void main() {
       expect(domain.rangeEnd, DateTime.parse('2026-08-14T00:00:00Z'));
       expect(domain.plays.length, 2);
       expect(domain.plays[0].count, 14);
-      expect(domain.plays[0].durationMs, 3600000);
       expect(domain.plays[0].date, DateTime.parse('2026-08-07T00:00:00Z'));
       expect(domain.plays[1].count, 22);
     });

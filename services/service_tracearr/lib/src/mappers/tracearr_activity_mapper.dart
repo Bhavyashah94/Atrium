@@ -13,14 +13,9 @@ class TracearrActivityMapper {
     final count = item['count'] is num
         ? (item['count'] as num).toInt()
         : int.tryParse(item['count']?.toString() ?? '') ?? 0;
-    final durationMs = item['durationMs'] is num
-        ? (item['durationMs'] as num).toInt()
-        : int.tryParse(item['durationMs']?.toString() ?? '') ?? 0;
-
     return TracearrActivityBucket(
       date: dateStr != null ? DateTime.tryParse(dateStr) : null,
       count: count,
-      durationMs: durationMs,
     );
   }
 

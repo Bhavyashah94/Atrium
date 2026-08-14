@@ -40,8 +40,10 @@ class StreamDiagnosticsSheet extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final String videoDecision = stream.videoDecision?.toUpperCase() ??
-        (stream.isTranscode ? 'TRANSCODE' : 'DIRECT PLAY');
+    final String videoDecision = stream.videoDecision?.toLowerCase() == 'copy'
+        ? 'DIRECT STREAM (COPY)'
+        : stream.videoDecision?.toUpperCase() ??
+            (stream.isTranscode ? 'TRANSCODE' : 'DIRECT PLAY');
     final String audioDecision = stream.audioDecision?.toUpperCase() ??
         (stream.isTranscode ? 'TRANSCODE' : 'DIRECT PLAY');
 

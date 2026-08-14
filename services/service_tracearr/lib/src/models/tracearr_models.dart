@@ -137,6 +137,16 @@ class TracearrHistoryItem {
     this.transcodeReasons = const <String>[],
     this.subtitleLanguage,
     this.subtitleCodec,
+    this.subtitleDecision,
+    this.transcodeSpeed,
+    this.isThrottled,
+    this.sourceDynamicRange,
+    this.streamDynamicRange,
+    this.sourceResolution,
+    this.streamResolution,
+    this.sourceContainer,
+    this.streamContainer,
+    this.containerDecision,
     this.userId,
     this.serverUserId,
     this.segmentCount,
@@ -180,6 +190,16 @@ class TracearrHistoryItem {
   final List<String> transcodeReasons;
   final String? subtitleLanguage;
   final String? subtitleCodec;
+  final String? subtitleDecision;
+  final double? transcodeSpeed;
+  final bool? isThrottled;
+  final String? sourceDynamicRange;
+  final String? streamDynamicRange;
+  final String? sourceResolution;
+  final String? streamResolution;
+  final String? sourceContainer;
+  final String? streamContainer;
+  final String? containerDecision;
   final String? userId;
   final String? serverUserId;
   final int? segmentCount;
@@ -285,11 +305,14 @@ class TracearrRecentlyAddedItem {
     this.seasonNumber,
     this.episodeNumber,
     this.addedAt,
+    this.removedAt,
     this.mediaId,
     this.imdbId,
     this.tmdbId,
     this.tvdbId,
     this.ratingKey,
+    this.parentRatingKey,
+    this.grandparentRatingKey,
     this.resolvedPosterUrl,
   });
 
@@ -303,11 +326,14 @@ class TracearrRecentlyAddedItem {
   final int? seasonNumber;
   final int? episodeNumber;
   final DateTime? addedAt;
+  final DateTime? removedAt;
   final String? mediaId;
   final String? imdbId;
   final String? tmdbId;
   final String? tvdbId;
   final String? ratingKey;
+  final String? parentRatingKey;
+  final String? grandparentRatingKey;
   final String? resolvedPosterUrl;
 }
 
@@ -378,6 +404,7 @@ class TracearrMediaChild {
     required this.id,
     required this.mediaType,
     required this.title,
+    this.showMediaId,
     this.seasonNumber,
     this.episodeNumber,
     this.episodeCount,
@@ -386,6 +413,7 @@ class TracearrMediaChild {
   final String id;
   final String mediaType;
   final String title;
+  final String? showMediaId;
   final int? seasonNumber;
   final int? episodeNumber;
   final int? episodeCount;
@@ -554,12 +582,10 @@ class TracearrActivityBucket {
   const TracearrActivityBucket({
     this.date,
     this.count = 0,
-    this.durationMs = 0,
   });
 
   final DateTime? date;
   final int count;
-  final int durationMs;
 }
 
 /// Playback activity trends across the fleet.

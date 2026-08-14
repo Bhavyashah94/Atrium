@@ -91,19 +91,55 @@ void main() {
       const childrenDto = [
         MediaChild(
           id: 'child_1',
+          mediaType: 'episode',
           title: 'Pilot',
+          showMediaId: 'show_uuid_bb',
           seasonNumber: 1,
           episodeNumber: 1,
-          imdbId: 'tt123456',
+          episodeCount: 10,
         ),
       ];
 
       final children = TracearrMediaMapper.mapChildren(childrenDto);
       expect(children.length, equals(1));
+      expect(children.first.id, equals('child_1'));
+      expect(children.first.mediaType, equals('episode'));
       expect(children.first.title, equals('Pilot'));
+      expect(children.first.showMediaId, equals('show_uuid_bb'));
       expect(children.first.seasonNumber, equals(1));
       expect(children.first.episodeNumber, equals(1));
-      expect(children.first.imdbId, equals('tt123456'));
+      expect(children.first.episodeCount, equals(10));
+    });
+
+    test('detailFromDto includes mapped children and showMediaId for episodes',
+        () {
+      const resource = MediaResource(
+        id: 'ep_1',
+        mediaType: 'episode',
+        title: 'Pilot',
+        showMediaId: 'show_uuid_bb',
+      );
+      const childrenDto = [
+        MediaChild(
+          id: 'ep_1',
+          mediaType: 'episode',
+          title: 'Pilot',
+          showMediaId: 'show_uuid_bb',
+          seasonNumber: 1,
+          episodeNumber: 1,
+        ),
+      ];
+
+      final detail = TracearrMediaMapper.detailFromDto(
+        item: resource,
+        childrenList: childrenDto,
+        baseUrl: baseUrl,
+      );
+
+      expect(detail.showMediaId, equals('show_uuid_bb'));
+      expect(detail.children.length, equals(1));
+      expect(detail.children.first.title, equals('Pilot'));
+      expect(detail.children.first.showMediaId, equals('show_uuid_bb'));
     });
   });
 }

@@ -36,10 +36,14 @@ extension PollingRef on Ref {
   Future<T> polled<T>(Duration interval, Future<T> Function() body) async {
     try {
       final T value = await body();
-      _schedulePoll(interval);
+      if (mounted) {
+        _schedulePoll(interval);
+      }
       return value;
     } catch (_) {
-      _schedulePoll(interval * _errorBackoffFactor);
+      if (mounted) {
+        _schedulePoll(interval * _errorBackoffFactor);
+      }
       rethrow;
     }
   }
@@ -50,22 +54,29 @@ extension PollingRef on Ref {
   /// Kept for providers that have not moved to [polled] yet. This ticks on a
   /// blind timer, so it can invalidate a run that is still in flight; see
   /// [polled] for why that matters and prefer it for new code.
-  void pollEvery(Duration interval) => _schedulePoll(interval);
+  void pollEvery(Duration interval) {
+    if (mounted) {
+      _schedulePoll(interval);
+    }
+  }
 
   /// Arms a single tick [delay] from now, skipping it while the app is
   /// backgrounded - a hidden app should not keep hitting servers or burning
   /// mobile data. The first tick after the app resumes refreshes as normal.
   void _schedulePoll(Duration delay) {
+    if (!mounted) return;
     Timer? timer;
     bool disposed = false;
 
     void arm(Duration d) {
       timer = Timer(d, () {
-        if (disposed) return;
+        if (disposed || !mounted) return;
         final AppLifecycleState? state =
             SchedulerBinding.instance.lifecycleState;
         if (state == null || state == AppLifecycleState.resumed) {
-          invalidateSelf();
+          if (mounted && !disposed) {
+            invalidateSelf();
+          }
         } else {
           // Backgrounded: leave the network alone and look again later. Re-arm
           // rather than recursing into _schedulePoll, which would register a

@@ -11,7 +11,7 @@ import 'widgets/recently_added_grid.dart';
 ///
 /// Features fleet storage capacity summary, resolution breakdown, library filter chips,
 /// responsive multi-column poster catalog, grid/list view toggle, and pagination.
-class MediaTab extends ConsumerWidget {
+class MediaTab extends ConsumerStatefulWidget {
   const MediaTab({
     required this.instance,
     super.key,
@@ -19,19 +19,45 @@ class MediaTab extends ConsumerWidget {
 
   final Instance instance;
 
-  Future<void> _refreshAll(WidgetRef ref) async {
-    ref.invalidate(tracearrLibrariesProvider(instance));
+  @override
+  ConsumerState<MediaTab> createState() => _MediaTabState();
+}
+
+class _MediaTabState extends ConsumerState<MediaTab> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refreshAll() async {
+    ref.invalidate(tracearrLibrariesProvider(widget.instance));
     await ref
-        .read(tracearrRecentPaginatedProvider(instance).notifier)
+        .read(tracearrRecentPaginatedProvider(widget.instance).notifier)
         .refresh();
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final librariesAsync = ref.watch(tracearrLibrariesProvider(instance));
+    ref.listen<int>(
+      tracearrHomeScrollToTopProvider((widget.instance, 2)),
+      (previous, next) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      },
+    );
+
+    final librariesAsync = ref.watch(tracearrLibrariesProvider(widget.instance));
 
     return Scaffold(
       appBar: AppBar(
@@ -45,7 +71,7 @@ class MediaTab extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              instance.name,
+              widget.instance.name,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -70,29 +96,60 @@ class MediaTab extends ConsumerWidget {
           failedText: 'Failed',
           messageText: 'Last updated at %T',
         ),
-        onRefresh: () => _refreshAll(ref),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(
-            horizontal: Insets.lg,
-            vertical: Insets.md,
-          ),
-          children: [
-            // 1. Storage & Resolution Summary Bar with Library Filters
-            MediaStorageSummaryBar(
-              instance: instance,
-              librariesAsync: librariesAsync,
-              onRetry: () =>
-                  ref.invalidate(tracearrLibrariesProvider(instance)),
+        footer: const ClassicFooter(
+          infiniteOffset: 200.0,
+          dragText: 'Pull to load more',
+          armedText: 'Release to load more',
+          readyText: 'Loading more media...',
+          processingText: 'Loading more media...',
+          processedText: 'Loaded',
+          failedText: 'Failed to load',
+          noMoreText: 'All media loaded',
+        ),
+        onRefresh: _refreshAll,
+        onLoad: () async {
+          await ref
+              .read(tracearrRecentPaginatedProvider(widget.instance).notifier)
+              .loadMore();
+        },
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification.metrics.pixels >=
+                notification.metrics.maxScrollExtent - 250) {
+              ref
+                  .read(tracearrRecentPaginatedProvider(widget.instance).notifier)
+                  .loadMore();
+            }
+            return false;
+          },
+          child: ListView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Insets.lg,
+              vertical: Insets.md,
             ),
-            const SizedBox(height: Insets.lg),
+            children: [
+              // 1. Storage & Resolution Summary Bar with Library Filters
+              RepaintBoundary(
+                child: MediaStorageSummaryBar(
+                  instance: widget.instance,
+                  librariesAsync: librariesAsync,
+                  onRetry: () =>
+                      ref.invalidate(tracearrLibrariesProvider(widget.instance)),
+                ),
+              ),
+              const SizedBox(height: Insets.lg),
 
-            // 2. Recently Added Media Grid / List Catalog
-            RecentlyAddedGrid(
-              instance: instance,
-            ),
-            const SizedBox(height: Insets.xl),
-          ],
+              // 2. Recently Added Media Grid / List Catalog
+              RepaintBoundary(
+                child: RecentlyAddedGrid(
+                  instance: widget.instance,
+                ),
+              ),
+              const SizedBox(height: Insets.xl),
+            ],
+          ),
         ),
       ),
     );

@@ -155,27 +155,29 @@ class TracearrHistoryPaginatedNotifier
     }
   }
 
-  Future<void> loadMore() async {
+  Future<bool> loadMore() async {
     if (state.isLoadingMore ||
         state.isLoadingInitial ||
         state.nextCursor == null) {
-      return;
+      return false;
     }
     final currentGen = ++_loadGeneration;
     try {
       state = state.copyWith(isLoadingMore: true);
       final repo = await ref.read(tracearrRepositoryProvider(instance).future);
       final page = await repo.getHistoryPage(cursor: state.nextCursor);
-      if (!mounted || currentGen != _loadGeneration) return;
+      if (!mounted || currentGen != _loadGeneration) return false;
       state = state.copyWith(
         items: [...state.items, ...page.items],
         nextCursor: page.nextCursor,
         clearNextCursor: page.nextCursor == null,
         isLoadingMore: false,
       );
+      return page.nextCursor != null;
     } catch (e) {
-      if (!mounted || currentGen != _loadGeneration) return;
+      if (!mounted || currentGen != _loadGeneration) return false;
       state = state.copyWith(isLoadingMore: false);
+      return false;
     }
   }
 
@@ -264,11 +266,11 @@ class TracearrRecentPaginatedNotifier
     }
   }
 
-  Future<void> loadMore() async {
+  Future<bool> loadMore() async {
     if (state.isLoadingMore ||
         state.isLoadingInitial ||
         state.nextCursor == null) {
-      return;
+      return false;
     }
     final currentGen = ++_loadGeneration;
     try {
@@ -280,16 +282,21 @@ class TracearrRecentPaginatedNotifier
         cursor: state.nextCursor,
         libraryId: selectedLib == 'all' ? null : selectedLib,
       );
-      if (!mounted || currentGen != _loadGeneration) return;
+      if (!mounted || currentGen != _loadGeneration) return false;
+      final existingIds = state.items.map((i) => i.id).toSet();
+      final uniqueNewItems =
+          page.items.where((i) => !existingIds.contains(i.id)).toList();
       state = state.copyWith(
-        items: [...state.items, ...page.items],
+        items: [...state.items, ...uniqueNewItems],
         nextCursor: page.nextCursor,
         clearNextCursor: page.nextCursor == null,
         isLoadingMore: false,
       );
+      return page.nextCursor != null;
     } catch (e) {
-      if (!mounted || currentGen != _loadGeneration) return;
+      if (!mounted || currentGen != _loadGeneration) return false;
       state = state.copyWith(isLoadingMore: false);
+      return false;
     }
   }
 
@@ -361,7 +368,7 @@ final tracearrMediaDetailProvider =
 
 /// Family provider for media children (seasons/episodes) per (Instance, refKey).
 final tracearrMediaChildrenProvider =
-    FutureProvider.autoDispose.family<List<TracearrRecentlyAddedItem>, (Instance, String)>(
+    FutureProvider.autoDispose.family<List<TracearrMediaChild>, (Instance, String)>(
         (ref, arg) async {
   final repo = await ref.watch(tracearrRepositoryProvider(arg.$1).future);
   return repo.getMediaChildren(arg.$2);

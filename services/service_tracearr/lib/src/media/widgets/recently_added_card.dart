@@ -33,17 +33,20 @@ class RecentlyAddedCard extends StatelessWidget {
 
     final posterUrl = item.resolvedPosterUrl;
     final timeStr = _formatAddedTime(item.addedAt);
+    final isTv = item.mediaType == 'show' || item.mediaType == 'episode';
 
     return InkWell(
       borderRadius: BorderRadius.circular(Radii.md),
       onTap: () {
-        final mediaRef = item.ratingKey ?? item.id;
+        final mediaRef = item.mediaId ?? item.ratingKey ?? item.id;
         TracearrMediaDetailScreen.navigate(
           context,
           instance: instance,
           mediaRef: mediaRef,
           initialTitle: item.title,
           initialPosterUrl: posterUrl,
+          initialSeasonNumber: item.seasonNumber,
+          initialEpisodeNumber: item.episodeNumber,
         );
       },
       child: Container(
@@ -69,12 +72,20 @@ class RecentlyAddedCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         errorWidget: (c, u, e) => Container(
                           color: colorScheme.surfaceContainerHighest,
-                          child: const Icon(Icons.movie_outlined, size: 24),
+                          child: Icon(
+                            isTv ? Icons.tv : Icons.movie_outlined,
+                            size: 24,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       )
                     : Container(
                         color: colorScheme.surfaceContainerHighest,
-                        child: const Icon(Icons.movie_outlined, size: 24),
+                        child: Icon(
+                          isTv ? Icons.tv : Icons.movie_outlined,
+                          size: 24,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
               ),
             ),
@@ -86,7 +97,9 @@ class RecentlyAddedCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.title,
+                    (item.seasonNumber != null && item.episodeNumber != null)
+                        ? 'S${item.seasonNumber}:E${item.episodeNumber} • ${item.title}'
+                        : item.title,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),

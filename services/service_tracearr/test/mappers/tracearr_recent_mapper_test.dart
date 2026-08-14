@@ -15,11 +15,14 @@ void main() {
         title: 'Dune: Part Two',
         year: 2024,
         addedAt: '2026-01-01T12:00:00.000Z',
+        removedAt: '2026-01-02T15:30:00.000Z',
         mediaId: 'med_dune',
         imdbId: 'tt15239678',
         tmdbId: 693134,
         tvdbId: 89432,
         ratingKey: 'rk_123',
+        parentRatingKey: 'prk_456',
+        grandparentRatingKey: 'gprk_789',
       );
 
       final domain = TracearrRecentMapper.fromDto(
@@ -32,6 +35,9 @@ void main() {
       expect(domain.year, equals(2024));
       expect(domain.tmdbId, equals('693134'));
       expect(domain.tvdbId, equals('89432'));
+      expect(domain.parentRatingKey, equals('prk_456'));
+      expect(domain.grandparentRatingKey, equals('gprk_789'));
+      expect(domain.removedAt, isNotNull);
       expect(
         domain.resolvedPosterUrl,
         equals('https://proxy.example.com/poster.jpg'),
