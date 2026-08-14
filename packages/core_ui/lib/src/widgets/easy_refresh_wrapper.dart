@@ -10,7 +10,14 @@ class EasyRefresh extends material.StatelessWidget {
   final er.Footer? footer;
   final er.EasyRefreshController? controller;
   final FutureOr<void> Function()? onRefresh;
-  final FutureOr<void> Function()? onLoad;
+
+  /// Load-more callback.
+  ///
+  /// Deliberately not `FutureOr<void>`: EasyRefresh inspects this callback's
+  /// return value at runtime and only stops asking for more pages when it gets
+  /// an [er.IndicatorResult.noMore] back. Typing it as void discards that
+  /// signal, which leaves a footer's `noMoreText` permanently unreachable.
+  final FutureOr<dynamic> Function()? onLoad;
   final material.Widget child;
 
   const EasyRefresh({
