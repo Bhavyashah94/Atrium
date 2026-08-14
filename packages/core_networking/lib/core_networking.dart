@@ -14,5 +14,6 @@ export 'src/network_exception.dart';
 export 'src/network_fingerprint.dart';
 export 'src/networking_providers.dart';
 export 'src/polling.dart';
+export 'src/rate_limit_interceptor.dart';
 export 'src/service_health.dart';
 export 'src/wol.dart';
