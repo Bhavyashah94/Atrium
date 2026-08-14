@@ -59,7 +59,7 @@ each one covers:
 | Bazarr                 | series/movies, wanted, manual subtitle search, system                 |
 | Seerr                  | discover, search, requests management                                 |
 | Tautulli               | activity, history, stats, users, terminate                            |
-| Tracearr               | live sessions, watch and library stats, history, streaming-location map |
+| Tracearr               | fleet overview, live streams, media catalog, user profiles, policy incidents |
 | Jellyfin               | libraries, detail, seasons, music, sessions with remote control       |
 | Emby                   | same depth as Jellyfin                                                |
 | Plex                   | libraries, detail, seasons, music, genres, now-playing controller     |
