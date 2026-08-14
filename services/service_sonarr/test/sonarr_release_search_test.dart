@@ -106,7 +106,10 @@ void main() {
 
       // Verify Score badges and Custom Format pills are rendered
       expect(find.text('Score: +1500'), findsOneWidget);
-      expect(find.text('Score: 0'), findsOneWidget);
+      // A zero score with no matched formats carries no information, so the
+      // badge is suppressed rather than putting "Score: 0" on every row of
+      // every profile that has no custom formats configured.
+      expect(find.text('Score: 0'), findsNothing);
       expect(find.text('HDR10'), findsOneWidget);
       expect(find.text('TrueHD Atmos'), findsOneWidget);
     },
@@ -177,7 +180,11 @@ void main() {
 
       // String score '500' parsed correctly and renders score badge
       expect(find.text('Score: +500'), findsOneWidget);
-      expect(find.text('Score: 0'), findsNWidgets(2));
+      // The null and 'invalid_number' releases both fall back to 0 with no
+      // formats, so their badges are suppressed. The rows still render (see
+      // the ExpansionTile count above), which is what proves the malformed
+      // payloads were absorbed rather than thrown on.
+      expect(find.text('Score: 0'), findsNothing);
       expect(find.text('ValidFormat'), findsOneWidget);
     },
   );
