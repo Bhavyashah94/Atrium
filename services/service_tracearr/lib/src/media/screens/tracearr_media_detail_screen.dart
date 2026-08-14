@@ -33,14 +33,13 @@ class TracearrMediaDetailScreen extends ConsumerWidget {
     String? initialTitle,
     String? initialPosterUrl,
   }) {
-    return Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => TracearrMediaDetailScreen(
-          instance: instance,
-          mediaRef: mediaRef,
-          initialTitle: initialTitle,
-          initialPosterUrl: initialPosterUrl,
-        ),
+    return pushScreen<void>(
+      context,
+      TracearrMediaDetailScreen(
+        instance: instance,
+        mediaRef: mediaRef,
+        initialTitle: initialTitle,
+        initialPosterUrl: initialPosterUrl,
       ),
     );
   }
@@ -85,7 +84,7 @@ class TracearrMediaDetailScreen extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.broken_image_outlined,
-                      size: 48, color: colorScheme.error),
+                      size: 48, color: colorScheme.error,),
                   const SizedBox(height: Insets.md),
                   Text(
                     'Failed to load media details',

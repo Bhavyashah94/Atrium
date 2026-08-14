@@ -88,9 +88,9 @@ void main() {
 
       // Filter chips
       expect(find.text('All (3)'), findsOneWidget);
-      expect(find.text('Unresolved (2)'), findsOneWidget);
+      expect(find.text('Not reviewed (2)'), findsOneWidget);
       expect(find.text('Critical / High'), findsOneWidget);
-      expect(find.text('Resolved'), findsOneWidget);
+      expect(find.text('Reviewed'), findsOneWidget);
 
       // Incident 1
       expect(find.text('CRITICAL'), findsOneWidget);
@@ -114,8 +114,8 @@ void main() {
       await tester.pumpWidget(createSecurityTabWidget());
       await tester.pumpAndSettle();
 
-      // Filter: Unresolved
-      await tester.tap(find.text('Unresolved (2)'));
+      // Filter: Not reviewed
+      await tester.tap(find.text('Not reviewed (2)'));
       await tester.pumpAndSettle();
 
       expect(find.byType(SecurityIncidentCard), findsNWidgets(2));
@@ -132,7 +132,7 @@ void main() {
       expect(find.text('GeoLocationMismatch'), findsNothing);
 
       // Filter: Resolved
-      await tester.tap(find.text('Resolved'));
+      await tester.tap(find.text('Reviewed'));
       await tester.pumpAndSettle();
 
       expect(find.byType(SecurityIncidentCard), findsOneWidget);
@@ -156,7 +156,7 @@ void main() {
 
       // Now 2 should show Acknowledged status
       expect(find.text('Acknowledged'), findsNWidgets(2));
-      expect(find.text('Unresolved (1)'), findsOneWidget);
+      expect(find.text('Not reviewed (1)'), findsOneWidget);
     });
 
     testWidgets('dismisses incident locally and allows undo', (tester) async {

@@ -42,7 +42,7 @@ class _RecentlyAddedGridState extends ConsumerState<RecentlyAddedGrid> {
         Row(
           children: [
             Icon(Icons.video_library_outlined,
-                size: 18, color: colorScheme.primary),
+                size: 18, color: colorScheme.primary,),
             const SizedBox(width: Insets.xs),
             Text(
               'RECENTLY ADDED',

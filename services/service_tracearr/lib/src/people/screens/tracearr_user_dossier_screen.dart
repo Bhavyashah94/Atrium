@@ -31,14 +31,13 @@ class TracearrUserDossierScreen extends ConsumerWidget {
     required String username,
     String? initialAvatarUrl,
   }) {
-    return Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => TracearrUserDossierScreen(
-          instance: instance,
-          userId: userId,
-          username: username,
-          initialAvatarUrl: initialAvatarUrl,
-        ),
+    return pushScreen<void>(
+      context,
+      TracearrUserDossierScreen(
+        instance: instance,
+        userId: userId,
+        username: username,
+        initialAvatarUrl: initialAvatarUrl,
       ),
     );
   }
@@ -75,7 +74,7 @@ class TracearrUserDossierScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.person_off_outlined,
-                    size: 48, color: colorScheme.error),
+                    size: 48, color: colorScheme.error,),
                 const SizedBox(height: Insets.md),
                 Text(
                   'Failed to load user profile',

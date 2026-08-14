@@ -62,22 +62,27 @@ final tracearrRepositoryProvider =
   );
 });
 
-/// Provider for active streams bound to an [Instance] (auto-polled every 10s).
+/// Provider for active streams bound to an [Instance].
+///
+/// Polls on the instance's own configured interval through [PollingRef.polled],
+/// which arms the next tick only after the current run settles, backs off on
+/// error and stops while the app is backgrounded. A bare `Timer.periodic` here
+/// would keep hitting the server forever, because a non-autoDispose family
+/// provider is never disposed and its `onDispose` never runs.
 final tracearrStreamsProvider =
-    FutureProvider.family<List<TracearrStream>, Instance>(
-        (ref, instance) async {
-  final timer = Timer.periodic(const Duration(seconds: 10), (_) {
-    ref.invalidateSelf();
-  });
-  ref.onDispose(timer.cancel);
-
-  final repo = await ref.watch(tracearrRepositoryProvider(instance).future);
-  return repo.getStreams();
-});
+    FutureProvider.autoDispose.family<List<TracearrStream>, Instance>(
+  (ref, instance) => ref.polled(
+    Duration(seconds: instance.pollingIntervalSeconds),
+    () async {
+      final repo = await ref.watch(tracearrRepositoryProvider(instance).future);
+      return repo.getStreams();
+    },
+  ),
+);
 
 /// Provider for watch history bound to an [Instance].
 final tracearrHistoryProvider =
-    FutureProvider.family<List<TracearrHistoryItem>, Instance>(
+    FutureProvider.autoDispose.family<List<TracearrHistoryItem>, Instance>(
         (ref, instance) async {
   final repo = await ref.watch(tracearrRepositoryProvider(instance).future);
   return repo.getHistory();
@@ -300,7 +305,7 @@ final tracearrRecentPaginatedProvider = StateNotifierProvider.family<
 
 /// Provider for recently added items bound to an [Instance].
 final tracearrRecentlyAddedProvider =
-    FutureProvider.family<List<TracearrRecentlyAddedItem>, Instance>(
+    FutureProvider.autoDispose.family<List<TracearrRecentlyAddedItem>, Instance>(
         (ref, instance) async {
   final repo = await ref.watch(tracearrRepositoryProvider(instance).future);
   final selectedLibrary =
@@ -312,7 +317,7 @@ final tracearrRecentlyAddedProvider =
 
 /// Provider for per-library rollups bound to an [Instance].
 final tracearrLibrariesProvider =
-    FutureProvider.family<List<TracearrLibrary>, Instance>(
+    FutureProvider.autoDispose.family<List<TracearrLibrary>, Instance>(
         (ref, instance) async {
   final repo = await ref.watch(tracearrRepositoryProvider(instance).future);
   return repo.getLibraries();
@@ -324,7 +329,7 @@ final tracearrSelectedLibraryFilterProvider =
 
 /// Provider for registered user directory bound to an [Instance].
 final tracearrUsersProvider =
-    FutureProvider.family<List<TracearrUserSummary>, Instance>(
+    FutureProvider.autoDispose.family<List<TracearrUserSummary>, Instance>(
         (ref, instance) async {
   final repo = await ref.watch(tracearrRepositoryProvider(instance).future);
   return repo.getUsers();
@@ -332,7 +337,7 @@ final tracearrUsersProvider =
 
 /// Provider for security rule violations audit log bound to an [Instance].
 final tracearrViolationsProvider =
-    FutureProvider.family<List<TracearrViolationItem>, Instance>(
+    FutureProvider.autoDispose.family<List<TracearrViolationItem>, Instance>(
         (ref, instance) async {
   final repo = await ref.watch(tracearrRepositoryProvider(instance).future);
   return repo.getViolations();
@@ -340,7 +345,7 @@ final tracearrViolationsProvider =
 
 /// Family provider for user details per (Instance, userId).
 final tracearrUserDetailProvider =
-    FutureProvider.family<TracearrUserDetail, (Instance, String)>(
+    FutureProvider.autoDispose.family<TracearrUserDetail, (Instance, String)>(
         (ref, arg) async {
   final repo = await ref.watch(tracearrRepositoryProvider(arg.$1).future);
   return repo.getUserDetail(arg.$2);
@@ -348,7 +353,7 @@ final tracearrUserDetailProvider =
 
 /// Family provider for media details per (Instance, refKey).
 final tracearrMediaDetailProvider =
-    FutureProvider.family<TracearrMediaDetail, (Instance, String)>(
+    FutureProvider.autoDispose.family<TracearrMediaDetail, (Instance, String)>(
         (ref, arg) async {
   final repo = await ref.watch(tracearrRepositoryProvider(arg.$1).future);
   return repo.getMediaDetail(arg.$2);
@@ -356,7 +361,7 @@ final tracearrMediaDetailProvider =
 
 /// Family provider for media children (seasons/episodes) per (Instance, refKey).
 final tracearrMediaChildrenProvider =
-    FutureProvider.family<List<TracearrRecentlyAddedItem>, (Instance, String)>(
+    FutureProvider.autoDispose.family<List<TracearrRecentlyAddedItem>, (Instance, String)>(
         (ref, arg) async {
   final repo = await ref.watch(tracearrRepositoryProvider(arg.$1).future);
   return repo.getMediaChildren(arg.$2);
@@ -364,7 +369,7 @@ final tracearrMediaChildrenProvider =
 
 /// Provider for server health and connectivity bound to an [Instance].
 final tracearrHealthProvider =
-    FutureProvider.family<TracearrHealthResponse, Instance>(
+    FutureProvider.autoDispose.family<TracearrHealthResponse, Instance>(
         (ref, instance) async {
   final repo = await ref.watch(tracearrRepositoryProvider(instance).future);
   return repo.getHealth();
@@ -372,14 +377,14 @@ final tracearrHealthProvider =
 
 /// Provider for 24h fleet dashboard statistics per (Instance, serverId?, timezone?).
 final tracearrTodayStatsProvider =
-    FutureProvider.family<TracearrTodayStats, (Instance, String?, String?)>(
+    FutureProvider.autoDispose.family<TracearrTodayStats, (Instance, String?, String?)>(
         (ref, arg) async {
   final repo = await ref.watch(tracearrRepositoryProvider(arg.$1).future);
   return repo.getStatsToday(serverId: arg.$2, timezone: arg.$3);
 });
 
 /// Provider for playback activity trends per (Instance, period?, serverId?, timezone?).
-final tracearrActivityProvider = FutureProvider.family<TracearrActivityTrend,
+final tracearrActivityProvider = FutureProvider.autoDispose.family<TracearrActivityTrend,
     (Instance, String?, String?, String?)>((ref, arg) async {
   final repo = await ref.watch(tracearrRepositoryProvider(arg.$1).future);
   return repo.getActivity(
@@ -391,7 +396,7 @@ final tracearrActivityProvider = FutureProvider.family<TracearrActivityTrend,
 
 /// Provider for 30-day dashboard aggregate stats per (Instance, serverId?).
 final tracearrAggregateStatsProvider =
-    FutureProvider.family<TracearrAggregateStats, (Instance, String?)>(
+    FutureProvider.autoDispose.family<TracearrAggregateStats, (Instance, String?)>(
         (ref, arg) async {
   final repo = await ref.watch(tracearrRepositoryProvider(arg.$1).future);
   return repo.getStats(serverId: arg.$2);
@@ -399,7 +404,7 @@ final tracearrAggregateStatsProvider =
 
 /// Family provider for dedicated media watch history per (Instance, refKey).
 final tracearrMediaHistoryProvider =
-    FutureProvider.family<TracearrHistoryPage, (Instance, String)>(
+    FutureProvider.autoDispose.family<TracearrHistoryPage, (Instance, String)>(
         (ref, arg) async {
   final repo = await ref.watch(tracearrRepositoryProvider(arg.$1).future);
   return repo.getMediaHistoryPage(ref: arg.$2);

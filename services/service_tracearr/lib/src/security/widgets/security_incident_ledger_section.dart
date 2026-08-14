@@ -79,8 +79,10 @@ class _SecurityIncidentLedgerSectionState
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content:
-            Text('Acknowledged violation: ${item.rule} (@${item.username})'),
+        content: Text(
+          'Marked reviewed on this device: ${item.rule} (@${item.username}). '
+          'Tracearr still lists it as unresolved.',
+        ),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -93,7 +95,9 @@ class _SecurityIncidentLedgerSectionState
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Dismissed incident: ${item.rule} (@${item.username})'),
+        content: Text(
+          'Hidden on this device: ${item.rule} (@${item.username})',
+        ),
         behavior: SnackBarBehavior.floating,
         action: SnackBarAction(
           label: 'Undo',
@@ -184,7 +188,7 @@ class _SecurityIncidentLedgerSectionState
                   const SizedBox(width: Insets.xs),
                   FilterChip(
                     label: Text(
-                      'Unresolved ${unackCount > 0 ? "($unackCount)" : ""}',
+                      'Not reviewed ${unackCount > 0 ? "($unackCount)" : ""}',
                     ),
                     selected:
                         _selectedFilter == SecurityFilterOption.unacknowledged,
@@ -223,7 +227,7 @@ class _SecurityIncidentLedgerSectionState
                   ),
                   const SizedBox(width: Insets.xs),
                   FilterChip(
-                    label: const Text('Resolved'),
+                    label: const Text('Reviewed'),
                     selected: _selectedFilter == SecurityFilterOption.resolved,
                     onSelected: (selected) {
                       if (selected) {

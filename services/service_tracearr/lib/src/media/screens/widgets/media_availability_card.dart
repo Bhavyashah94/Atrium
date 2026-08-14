@@ -26,7 +26,7 @@ class MediaAvailabilityCard extends StatelessWidget {
   }
 
   Future<void> _handleDeepLink(
-      BuildContext context, TracearrMediaAvailability item) async {
+      BuildContext context, TracearrMediaAvailability item,) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final String? link = item.ratingKey != null && item.ratingKey!.isNotEmpty
         ? 'https://app.plex.tv/desktop'
@@ -43,7 +43,7 @@ class MediaAvailabilityCard extends StatelessWidget {
     scaffoldMessenger.showSnackBar(
       SnackBar(
         content: Text(
-            'Server ${item.serverType.toUpperCase()} item available on server ${item.serverId}'),
+            'Server ${item.serverType.toUpperCase()} item available on server ${item.serverId}',),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -101,7 +101,7 @@ class MediaAvailabilityCard extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                          horizontal: 6, vertical: 2,),
                       decoration: BoxDecoration(
                         color: colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(Radii.sm),
