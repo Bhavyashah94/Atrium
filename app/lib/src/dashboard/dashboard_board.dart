@@ -205,7 +205,7 @@ class DashboardBoard extends ConsumerWidget {
       }
     }
     for (final DateTime m in upcomingWindowMonths(DateTime.now())) {
-      ref.invalidate(globalCalendarProvider(m));
+      ref.invalidate(globalCalendarProvider((m, false)));
     }
   }
 }

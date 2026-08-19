@@ -40,7 +40,7 @@ class DashboardUpcomingWidget extends ConsumerWidget {
     bool anyError = false;
     for (final DateTime month in months) {
       final AsyncValue<List<CalendarEvent>> value =
-          ref.watch(globalCalendarProvider(month));
+          ref.watch(globalCalendarProvider((month, false)));
       anyLoading |= value.isLoading && !value.hasValue;
       anyError |= value.hasError;
       for (final CalendarEvent e in value.value ?? const <CalendarEvent>[]) {
@@ -73,7 +73,7 @@ class DashboardUpcomingWidget extends ConsumerWidget {
       body = DashboardErrorRow(
         onRetry: () {
           for (final DateTime m in months) {
-            ref.invalidate(globalCalendarProvider(m));
+            ref.invalidate(globalCalendarProvider((m, false)));
           }
         },
       );

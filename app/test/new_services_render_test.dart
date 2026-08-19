@@ -256,7 +256,7 @@ void main() {
           (Ref ref) async => RadarrApi(Dio(), apiKey: 'k'),
         ),
         radarrCalendarProvider.overrideWith(
-          (Ref ref, (Instance, DateTime) key) async => <RadarrMovie>[
+          (Ref ref, (Instance, DateTime, bool) key) async => <RadarrMovie>[
             RadarrMovie(
               id: 1,
               title: 'Inception',
