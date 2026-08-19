@@ -117,8 +117,13 @@ class SonarrCalendarEvent extends CalendarEvent {
   @override
   bool get hasFile => episode.hasFile;
 
+  /// Sonarr tracks monitoring at two levels and an episode can be monitored
+  /// inside a series that is not. Sonarr will not grab it in that case, so the
+  /// honest answer is the AND of the two rather than the episode's own flag.
+  /// If the series was not embedded there is nothing to narrow it with.
   @override
-  bool get monitored => episode.monitored;
+  bool get monitored =>
+      episode.monitored && (episode.series?.monitored ?? true);
 
   @override
   String get primaryTitle => episode.series?.title ?? 'Unknown Series';
