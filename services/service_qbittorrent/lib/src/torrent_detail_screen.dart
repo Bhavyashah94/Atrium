@@ -1283,13 +1283,27 @@ class _TrackersTab extends ConsumerWidget {
                               label,
                               if (t.numSeeds >= 0) '${t.numSeeds} seeds',
                               if (t.numPeers >= 0) '${t.numPeers} peers',
-                              if (t.msg.isNotEmpty) t.msg,
                             ].join(' • '),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodySmall
                                 ?.copyWith(color: cs.onSurfaceVariant),
                           ),
+                          // The tracker's own message gets its own line and is
+                          // allowed to wrap. It is the only thing here that
+                          // explains *why* a tracker is not working, and
+                          // trackers write long sentences: truncating it after
+                          // the counts left the reason unreadable.
+                          if (t.msg.isNotEmpty) ...<Widget>[
+                            const SizedBox(height: 2),
+                            Text(
+                              t.msg,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color:
+                                    t.status == 4 ? c : cs.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
