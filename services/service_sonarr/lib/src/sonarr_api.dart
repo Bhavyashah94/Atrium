@@ -55,10 +55,14 @@ class SonarrApi {
     }
   }
 
+  /// [unmonitored] mirrors Sonarr's own calendar flag. It defaults to false
+  /// there too, so without it the response silently omits unmonitored
+  /// episodes rather than returning them for the client to filter.
   Future<List<SonarrEpisode>> getCalendar({
     required DateTime start,
     required DateTime end,
     bool includeSeries = true,
+    bool unmonitored = false,
   }) async {
     try {
       final Response<dynamic> resp = await _dio.get<dynamic>(
@@ -67,6 +71,7 @@ class SonarrApi {
           'start': start.toUtc().toIso8601String(),
           'end': end.toUtc().toIso8601String(),
           'includeSeries': includeSeries,
+          'unmonitored': unmonitored,
         },
       );
       return (resp.data as List<dynamic>)
