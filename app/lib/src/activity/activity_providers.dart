@@ -677,6 +677,15 @@ List<ActivityDownload> _sonarrDownloads(
         progress: _sizeProgress(item.size ?? 0, item.sizeleft ?? 0),
         eta: (item.timeleft ?? '').isEmpty ? null : item.timeleft,
         status: _arrStatusLabel(item.status, item.trackedDownloadState),
+        // A queue item is an episode of something, so the useful destination
+        // is the series. Sonarr only embeds it on some queue payloads; without
+        // it there is nothing to open, so the tap falls back to the service.
+        onOpenBuilder: item.series == null
+            ? null
+            : (BuildContext _) => SeriesDetailScreen(
+                  instance: instance,
+                  series: item.series!,
+                ),
       ),
   ];
 }
@@ -695,6 +704,15 @@ List<ActivityDownload> _radarrDownloads(
         progress: _sizeProgress(item.size ?? 0, item.sizeleft ?? 0),
         eta: (item.timeleft ?? '').isEmpty ? null : item.timeleft,
         status: _arrStatusLabel(item.status, item.trackedDownloadState),
+        // The detail screen refetches by id, so the embedded movie is only a
+        // head start on the first frame and may be absent without harm.
+        onOpenBuilder: item.movieId == null
+            ? null
+            : (BuildContext _) => MovieDetailScreen(
+                  instance: instance,
+                  movieId: item.movieId!,
+                  movie: item.movie,
+                ),
       ),
   ];
 }
