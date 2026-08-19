@@ -72,6 +72,7 @@ class ActivityDownload {
     this.speedBps,
     this.upSpeedBps,
     this.eta,
+    this.onOpenBuilder,
   });
 
   /// Stable identity across polls: `<instanceId>:<id/hash/nzoId>`.
@@ -91,6 +92,9 @@ class ActivityDownload {
 
   /// Short status label ('Downloading', 'Queued', 'Importing', ...).
   final String status;
+
+  /// Screen to push on tap; null means the tap opens the service screen.
+  final Widget Function(BuildContext)? onOpenBuilder;
 }
 
 /// A source instance whose feed could not be fetched at all (no cached data).
@@ -482,6 +486,12 @@ List<ActivityDownload> _qbitDownloads(
           upSpeedBps: t.upspeed > 0 ? t.upspeed : null,
           eta: _fmtEtaSeconds(t.eta),
           status: _qbitStatusLabel(t.state),
+          // Tapping a transfer should land on that torrent, not on the
+          // client's torrent list with the user hunting for it again.
+          onOpenBuilder: (BuildContext _) => TorrentDetailScreen(
+            instance: instance,
+            torrent: t,
+          ),
         ),
   ];
 }
