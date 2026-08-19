@@ -591,6 +591,11 @@ List<ActivityDownload> _delugeDownloads(
           eta: t.eta > 0 ? _fmtEtaSeconds(t.eta) : null,
           // Deluge's state strings are already display-ready.
           status: t.state,
+          onOpenBuilder: (BuildContext _) => DelugeTorrentDetailScreen(
+            instance: instance,
+            torrentId: t.id,
+            initialName: t.name,
+          ),
         ),
   ];
 }
@@ -615,6 +620,11 @@ List<ActivityDownload> _transmissionDownloads(
           // eta is a negative sentinel when unavailable, never a duration.
           eta: t.hasEta ? _fmtEtaSeconds(t.eta) : null,
           status: t.statusLabel,
+          onOpenBuilder: (BuildContext _) => TransmissionDetailScreen(
+            instance: instance,
+            hashString: t.hashString,
+            initialName: t.name,
+          ),
         ),
   ];
 }
@@ -642,6 +652,11 @@ List<ActivityDownload> _rtorrentDownloads(
               ? _fmtEtaSeconds(t.leftBytes ~/ t.downRate)
               : null,
           status: t.status.label,
+          onOpenBuilder: (BuildContext _) => RtorrentDetailScreen(
+            instance: instance,
+            hash: t.hash,
+            initialName: t.name,
+          ),
         ),
   ];
 }
