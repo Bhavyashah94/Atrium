@@ -1,0 +1,48 @@
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:service_sonarr/service_sonarr.dart';
+
+SonarrApi _apiFor(String baseUrl) =>
+    SonarrApi(Dio(BaseOptions(baseUrl: baseUrl)), apiKey: 'test-key');
+
+void main() {
+  group('posterUrl targets the API route, not the web frontend', () {
+    test('plain Sonarr with no URL Base', () {
+      final url = _apiFor('https://example.com/').posterUrl(
+        const SonarrImage(
+          coverType: 'poster',
+          url: '/MediaCover/87/poster.jpg?lastWrite=639',
+        ),
+      );
+      expect(url, contains('/api/v3/mediacover/87/'));
+      expect(url, isNot(contains('/MediaCover/')));
+    });
+
+    test('Sonarr with a URL Base configured (issue #64)', () {
+      // With UrlBase set, Sonarr prefixes it onto images[].url, so the value
+      // arrives as /sonarr/MediaCover/... rather than /MediaCover/...
+      final url = _apiFor('https://example.com/sonarr/').posterUrl(
+        const SonarrImage(
+          coverType: 'poster',
+          url: '/sonarr/MediaCover/87/poster.jpg?lastWrite=639',
+        ),
+      );
+      // Must hit the API route; the frontend /MediaCover/ route ignores the
+      // api key and 302s to the login page.
+      expect(url, isNot(contains('/MediaCover/')));
+      expect(url, contains('/sonarr/api/v3/mediacover/87/'));
+    });
+
+    test('width resizing still applies with a URL Base', () {
+      final url = _apiFor('https://example.com/sonarr/').posterUrl(
+        const SonarrImage(
+          coverType: 'poster',
+          url: '/sonarr/MediaCover/87/poster.jpg?lastWrite=639',
+        ),
+        width: 500,
+      );
+      expect(url, contains('poster-500.jpg'));
+      expect(url, contains('/sonarr/api/v3/mediacover/87/'));
+    });
+  });
+}
