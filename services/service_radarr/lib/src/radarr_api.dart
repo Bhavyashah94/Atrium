@@ -156,9 +156,16 @@ class RadarrApi {
         pathOrUrl = '$basePart-$targetWidth$extPart$queryPart';
       }
 
-      if (pathOrUrl.startsWith('/MediaCover/')) {
-        pathOrUrl =
-            '$_base/mediacover${pathOrUrl.substring('/MediaCover'.length)}';
+      // Radarr prefixes its configured URL Base onto images[].url, so this
+      // arrives as either /MediaCover/... or /base/MediaCover/.... Match
+      // the segment wherever it starts and rebuild relative to the API:
+      // the frontend /MediaCover route is served by the web UI, which
+      // ignores the api key and 302s to the login page.
+      final int coverIdx = pathOrUrl.indexOf('/MediaCover/');
+      if (coverIdx != -1) {
+        final String tail =
+            pathOrUrl.substring(coverIdx + '/MediaCover'.length);
+        pathOrUrl = '$_base/mediacover$tail';
       }
       final String separator = pathOrUrl.contains('?') ? '&' : '?';
       return base.resolve('$pathOrUrl${separator}apikey=$apiKey').toString();
