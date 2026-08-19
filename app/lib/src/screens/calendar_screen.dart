@@ -4,6 +4,7 @@ import 'package:core_models/core_models.dart';
 import 'package:core_router/core_router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:core_profile/core_profile.dart';
+import '../preferences.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -225,10 +226,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   late DateTime _selectedDay;
   bool _showListView = false;
 
-  /// Whether unmonitored episodes and movies are shown alongside
-  /// monitored ones. Placement is being trialled in two spots.
-  bool _showUnmonitored = false;
-
   @override
   void initState() {
     super.initState();
@@ -238,24 +235,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Future<void> _handleRefresh() async {
+    final bool showUnmonitored =
+        ref.read(preferencesProvider).calendarShowUnmonitored;
     final List<Instance> instances = ref.read(activeInstancesProvider);
     final List<Future<void>> futures = [];
     for (final Instance instance in instances) {
       if (instance.kind == ServiceKind.radarr) {
-        ref.invalidate(radarrCalendarProvider((instance, _visibleMonth, _showUnmonitored)));
+        ref.invalidate(radarrCalendarProvider((instance, _visibleMonth, showUnmonitored)));
         futures.add(
-            ref.read(radarrCalendarProvider((instance, _visibleMonth, _showUnmonitored)).future));
+            ref.read(radarrCalendarProvider((instance, _visibleMonth, showUnmonitored)).future));
       } else if (instance.kind == ServiceKind.sonarr) {
-        ref.invalidate(sonarrCalendarProvider((instance, _visibleMonth, _showUnmonitored)));
+        ref.invalidate(sonarrCalendarProvider((instance, _visibleMonth, showUnmonitored)));
         futures.add(
-            ref.read(sonarrCalendarProvider((instance, _visibleMonth, _showUnmonitored)).future));
+            ref.read(sonarrCalendarProvider((instance, _visibleMonth, showUnmonitored)).future));
       }
     }
     if (futures.isNotEmpty) {
       await Future.wait(futures).catchError((_) => []);
     }
     await ref
-        .read(globalCalendarProvider((_visibleMonth, _showUnmonitored)).future)
+        .read(globalCalendarProvider((_visibleMonth, showUnmonitored)).future)
         .catchError((_) => <CalendarEvent>[]);
   }
 
@@ -413,16 +412,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool showUnmonitored = ref.watch(
+      preferencesProvider
+          .select((Preferences p) => p.calendarShowUnmonitored),
+    );
     final AsyncValue<List<CalendarEvent>> calendar =
-        ref.watch(globalCalendarProvider((_visibleMonth, _showUnmonitored)));
+        ref.watch(globalCalendarProvider((_visibleMonth, showUnmonitored)));
 
     // Prefetch and cache adjacent months to ensure instant navigation transitions
     final DateTime nextMonth =
         DateTime(_visibleMonth.year, _visibleMonth.month + 1);
     final DateTime prevMonth =
         DateTime(_visibleMonth.year, _visibleMonth.month - 1);
-    ref.watch(globalCalendarProvider((nextMonth, _showUnmonitored)));
-    ref.watch(globalCalendarProvider((prevMonth, _showUnmonitored)));
+    ref.watch(globalCalendarProvider((nextMonth, showUnmonitored)));
+    ref.watch(globalCalendarProvider((prevMonth, showUnmonitored)));
 
     final bool hasCalendarServices = ref.watch(activeInstancesProvider).any(
           (Instance i) =>
@@ -482,16 +485,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         actions: <Widget>[
           IconButton(
             icon: Icon(
-              _showUnmonitored ? Icons.bookmark_border : Icons.bookmark,
+              showUnmonitored ? Icons.bookmark_border : Icons.bookmark,
             ),
-            tooltip: _showUnmonitored
+            tooltip: showUnmonitored
                 ? 'Showing monitored and unmonitored'
                 : 'Showing monitored only',
-            onPressed: () {
-              setState(() {
-                _showUnmonitored = !_showUnmonitored;
-              });
-            },
+            onPressed: () => ref
+                .read(preferencesProvider.notifier)
+                .setCalendarShowUnmonitored(!showUnmonitored),
           ),
           IconButton(
             icon: Icon(
