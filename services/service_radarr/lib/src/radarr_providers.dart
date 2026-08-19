@@ -362,12 +362,15 @@ final radarrWantedCutoffProvider =
 });
 
 /// The calendar entries for an instance for a given month.
-final radarrCalendarProvider =
-    FutureProvider.autoDispose.family<List<RadarrMovie>, (Instance, DateTime)>((
+/// Keyed on the unmonitored flag as well as the month: Radarr decides what to
+/// return server-side, so the two modes are genuinely different responses and
+/// each deserves its own cache entry.
+final radarrCalendarProvider = FutureProvider.autoDispose
+    .family<List<RadarrMovie>, (Instance, DateTime, bool)>((
   Ref ref,
-  (Instance, DateTime) key,
+  (Instance, DateTime, bool) key,
 ) async {
-  final (Instance instance, DateTime month) = key;
+  final (Instance instance, DateTime month, bool unmonitored) = key;
   final RadarrApi api = await ref.watch(radarrApiProvider(instance).future);
 
   // Calculate local month boundaries
@@ -375,7 +378,7 @@ final radarrCalendarProvider =
   final DateTime end = DateTime(month.year, month.month + 1)
       .subtract(const Duration(seconds: 1));
 
-  return api.getCalendar(start: start, end: end);
+  return api.getCalendar(start: start, end: end, unmonitored: unmonitored);
 });
 
 /// Search query for the Wanted tab.
