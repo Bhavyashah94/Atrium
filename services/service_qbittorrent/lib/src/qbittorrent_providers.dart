@@ -142,6 +142,8 @@ final qbitFilterCategoryProvider = StateProvider.autoDispose
     .family<String?, Instance>((ref, instance) => null);
 final qbitFilterTagProvider = StateProvider.autoDispose
     .family<String?, Instance>((ref, instance) => null);
+final qbitFilterTrackerProvider = StateProvider.autoDispose
+    .family<String?, Instance>((ref, instance) => null);
 
 /// Whether a torrent belongs to the given status filter bucket.
 ///
@@ -208,6 +210,29 @@ bool qbitTagMatches(String tag, QbitTorrent t) {
   return tags.contains(tag);
 }
 
+/// Host of a tracker announce URL, or '' when there is nothing usable.
+///
+/// Only the host is ever surfaced. Private tracker announce URLs carry a
+/// passkey in the path or query, so rendering the raw URL would put a
+/// credential on screen and into any screenshot of the filter drawer.
+String qbitTrackerHost(String announceUrl) {
+  if (announceUrl.isEmpty) return '';
+  final Uri? uri = Uri.tryParse(announceUrl.trim());
+  return uri?.host.toLowerCase() ?? '';
+}
+
+/// Whether a torrent belongs to the given tracker filter bucket.
+///
+/// 'none' covers torrents qBittorrent reports no working tracker for; any
+/// other value matches that tracker host exactly.
+bool qbitTrackerMatches(String tracker, QbitTorrent t) {
+  final String host = qbitTrackerHost(t.tracker);
+  if (tracker == 'none') {
+    return host.isEmpty;
+  }
+  return host == tracker;
+}
+
 /// All torrents for an instance, sorted by the active [qbitSortProvider].
 /// Polls every [qbitListPollInterval] while watched; stops when the screen
 /// goes away (autoDispose).
@@ -239,6 +264,8 @@ final qbitTorrentsProvider = Provider.autoDispose
   final String? categoryFilter =
       ref.watch(qbitFilterCategoryProvider(instance));
   final String? tagFilter = ref.watch(qbitFilterTagProvider(instance));
+  final String? trackerFilter =
+      ref.watch(qbitFilterTrackerProvider(instance));
 
   return rawAsync.whenData((List<QbitTorrent> raw) {
     final List<QbitTorrent> torrents = List<QbitTorrent>.of(raw);
@@ -265,6 +292,12 @@ final qbitTorrentsProvider = Provider.autoDispose
 
     if (tagFilter != null) {
       torrents.retainWhere((QbitTorrent t) => qbitTagMatches(tagFilter, t));
+    }
+
+    if (trackerFilter != null) {
+      torrents.retainWhere(
+        (QbitTorrent t) => qbitTrackerMatches(trackerFilter, t),
+      );
     }
 
     torrents.sort((QbitTorrent a, QbitTorrent b) {

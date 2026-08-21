@@ -102,12 +102,7 @@ class ActivityScreen extends ConsumerWidget {
                   key: ValueKey<String>(download.key),
                   download: download,
                   instanceLabel: labelFor(download.instance),
-                  onTap: () => context.go(
-                    AtriumRoutes.servicePath(
-                      download.instance.kind.name,
-                      download.instance.id,
-                    ),
-                  ),
+                  onTap: () => _openDownload(context, download),
                 ),
             ],
           ],
@@ -138,6 +133,22 @@ class ActivityScreen extends ConsumerWidget {
         body: body,
       ),
     );
+  }
+
+  /// Transfers whose client has a detail screen push it full-screen; the rest
+  /// jump to the source service, same as streams.
+  void _openDownload(BuildContext context, ActivityDownload download) {
+    final Widget Function(BuildContext)? builder = download.onOpenBuilder;
+    if (builder != null) {
+      pushScreen<void>(context, builder(context));
+    } else {
+      context.go(
+        AtriumRoutes.servicePath(
+          download.instance.kind.name,
+          download.instance.id,
+        ),
+      );
+    }
   }
 
   /// Streams with a dedicated screen push it full-screen; the rest (Tautulli)

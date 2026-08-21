@@ -1,0 +1,13 @@
+qBittorrent can now skip the hash check when you add a torrent whose files are
+already on disk, rather than rechecking the whole thing. Its torrent list can
+also be filtered by tracker, with a count beside each one.
+
+The calendar can show unmonitored releases alongside monitored ones, and
+remembers which you picked.
+
+Tapping a transfer in Activity now opens that torrent, movie or series directly
+instead of dropping you on the service to find it again.
+
+Fixed: cover art was blank when Sonarr or Radarr is served from a subpath, a
+tracker's message was cut off mid sentence, and the calendar could label an
+episode as monitored when its series was not.

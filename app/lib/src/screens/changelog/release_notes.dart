@@ -27,6 +27,25 @@ class ReleaseNote {
 /// Newest first. Update alongside appVersion and the pubspec at each release.
 const List<ReleaseNote> releaseNotes = <ReleaseNote>[
   ReleaseNote(
+    version: '1.4.2',
+    date: '2026-08-21',
+    groups: <ChangeGroup>[
+      ChangeGroup(ChangeCategory.added, <String>[
+        'qBittorrent can skip the hash check when you add a torrent whose files are already on disk, instead of rechecking the whole thing.',
+        'qBittorrent torrents can be filtered by tracker, with a count next to each one.',
+        'The calendar can show unmonitored releases as well as monitored ones, and remembers which you chose.',
+      ]),
+      ChangeGroup(ChangeCategory.improved, <String>[
+        'Tapping a transfer in Activity opens that torrent, movie or series directly instead of dropping you on the service to find it again. Works for qBittorrent, Deluge, Transmission, rTorrent, Sonarr and Radarr.',
+        'A tracker message in qBittorrent now wraps instead of being cut off, so you can read why a tracker is not working.',
+      ]),
+      ChangeGroup(ChangeCategory.fixed, <String>[
+        'Cover art is no longer blank when Sonarr or Radarr is served from a subpath with a URL Base configured.',
+        'The calendar no longer labels an episode as monitored when the series it belongs to is not.',
+      ]),
+    ],
+  ),
+  ReleaseNote(
     version: '1.4.1',
     date: '2026-08-15',
     groups: <ChangeGroup>[

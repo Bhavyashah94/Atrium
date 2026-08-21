@@ -31,6 +31,7 @@ class Preferences {
     this.customSeedColorHex,
     this.customImagePath,
     this.customImageColorsCsv,
+    this.calendarShowUnmonitored = false,
   });
 
   final ThemeMode themeMode;
@@ -42,6 +43,10 @@ class Preferences {
   final String? customImagePath;
   final String? customImageColorsCsv;
 
+  /// Whether the calendar asks Sonarr and Radarr for unmonitored releases
+  /// as well as monitored ones.
+  final bool calendarShowUnmonitored;
+
   Preferences copyWith({
     ThemeMode? themeMode,
     bool? biometricEnabled,
@@ -51,6 +56,7 @@ class Preferences {
     String? Function()? customSeedColorHex,
     String? Function()? customImagePath,
     String? Function()? customImageColorsCsv,
+    bool? calendarShowUnmonitored,
   }) =>
       Preferences(
         themeMode: themeMode ?? this.themeMode,
@@ -66,6 +72,8 @@ class Preferences {
         customImageColorsCsv: customImageColorsCsv != null
             ? customImageColorsCsv()
             : this.customImageColorsCsv,
+        calendarShowUnmonitored:
+            calendarShowUnmonitored ?? this.calendarShowUnmonitored,
       );
 }
 
@@ -90,6 +98,8 @@ class PreferencesController extends Notifier<Preferences> {
   static const String _customImagePathKey = 'pref.customImagePath';
   static const String _customImageColorsCsvKey = 'pref.customImageColorsCsv';
   static const String _paletteStyleKey = 'pref.paletteStyle';
+  static const String _calendarShowUnmonitoredKey =
+      'pref.calendarShowUnmonitored';
 
   Box<String> get _box => ref.read(settingsBoxProvider);
 
@@ -122,7 +132,14 @@ class PreferencesController extends Notifier<Preferences> {
       customSeedColorHex: _box.get(_customSeedColorHexKey),
       customImagePath: _box.get(_customImagePathKey),
       customImageColorsCsv: _box.get(_customImageColorsCsvKey),
+      calendarShowUnmonitored:
+          _box.get(_calendarShowUnmonitoredKey) == 'true',
     );
+  }
+
+  Future<void> setCalendarShowUnmonitored(bool show) async {
+    await _box.put(_calendarShowUnmonitoredKey, '$show');
+    state = state.copyWith(calendarShowUnmonitored: show);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {

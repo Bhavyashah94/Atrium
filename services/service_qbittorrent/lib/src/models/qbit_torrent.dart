@@ -46,6 +46,12 @@ abstract class QbitTorrent with _$QbitTorrent {
     @JsonKey(name: 'completion_on') @Default(0) int completionOn,
     @JsonKey(name: 'downloaded_session') @Default(0) int downloadedSession,
     @JsonKey(name: 'uploaded_session') @Default(0) int uploadedSession,
+
+    /// The first tracker with working status, or empty when none are working.
+    /// That is qBittorrent's own definition, so an empty value means "no
+    /// tracker currently answering" rather than "this torrent has no
+    /// trackers".
+    @Default('') String tracker,
   }) = _QbitTorrent;
 
   factory QbitTorrent.fromJson(Map<String, dynamic> json) =>

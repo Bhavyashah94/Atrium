@@ -86,6 +86,7 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
   String? _category;
   bool _paused = false;
   bool _sequential = false;
+  bool _skipHashCheck = false;
   bool _busy = false;
   String? _error;
 
@@ -171,6 +172,7 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
           savePath: savePath,
           paused: _paused,
           sequential: _sequential,
+          skipHashCheck: _skipHashCheck,
         );
       } else {
         // One failure does not abandon the rest of the batch.
@@ -184,6 +186,7 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
               savePath: savePath,
               paused: _paused,
               sequential: _sequential,
+              skipHashCheck: _skipHashCheck,
             );
           } catch (_) {
             failed++;
@@ -290,6 +293,17 @@ class _AddTorrentSheetState extends ConsumerState<AddTorrentSheet> {
               title: const Text('Download in sequential order'),
               value: _sequential,
               onChanged: (bool v) => setState(() => _sequential = v),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Skip hash check'),
+              subtitle: const Text(
+                'Assume the files are already complete and correct. '
+                'qBittorrent rechecks the whole torrent if a piece later '
+                'fails.',
+              ),
+              value: _skipHashCheck,
+              onChanged: (bool v) => setState(() => _skipHashCheck = v),
             ),
             if (_error != null) ...<Widget>[
               const SizedBox(height: Insets.sm),

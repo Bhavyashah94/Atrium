@@ -72,6 +72,7 @@ class ActivityDownload {
     this.speedBps,
     this.upSpeedBps,
     this.eta,
+    this.onOpenBuilder,
   });
 
   /// Stable identity across polls: `<instanceId>:<id/hash/nzoId>`.
@@ -91,6 +92,9 @@ class ActivityDownload {
 
   /// Short status label ('Downloading', 'Queued', 'Importing', ...).
   final String status;
+
+  /// Screen to push on tap; null means the tap opens the service screen.
+  final Widget Function(BuildContext)? onOpenBuilder;
 }
 
 /// A source instance whose feed could not be fetched at all (no cached data).
@@ -482,6 +486,12 @@ List<ActivityDownload> _qbitDownloads(
           upSpeedBps: t.upspeed > 0 ? t.upspeed : null,
           eta: _fmtEtaSeconds(t.eta),
           status: _qbitStatusLabel(t.state),
+          // Tapping a transfer should land on that torrent, not on the
+          // client's torrent list with the user hunting for it again.
+          onOpenBuilder: (BuildContext _) => TorrentDetailScreen(
+            instance: instance,
+            torrent: t,
+          ),
         ),
   ];
 }
@@ -581,6 +591,11 @@ List<ActivityDownload> _delugeDownloads(
           eta: t.eta > 0 ? _fmtEtaSeconds(t.eta) : null,
           // Deluge's state strings are already display-ready.
           status: t.state,
+          onOpenBuilder: (BuildContext _) => DelugeTorrentDetailScreen(
+            instance: instance,
+            torrentId: t.id,
+            initialName: t.name,
+          ),
         ),
   ];
 }
@@ -605,6 +620,11 @@ List<ActivityDownload> _transmissionDownloads(
           // eta is a negative sentinel when unavailable, never a duration.
           eta: t.hasEta ? _fmtEtaSeconds(t.eta) : null,
           status: t.statusLabel,
+          onOpenBuilder: (BuildContext _) => TransmissionDetailScreen(
+            instance: instance,
+            hashString: t.hashString,
+            initialName: t.name,
+          ),
         ),
   ];
 }
@@ -632,6 +652,11 @@ List<ActivityDownload> _rtorrentDownloads(
               ? _fmtEtaSeconds(t.leftBytes ~/ t.downRate)
               : null,
           status: t.status.label,
+          onOpenBuilder: (BuildContext _) => RtorrentDetailScreen(
+            instance: instance,
+            hash: t.hash,
+            initialName: t.name,
+          ),
         ),
   ];
 }
@@ -652,6 +677,15 @@ List<ActivityDownload> _sonarrDownloads(
         progress: _sizeProgress(item.size ?? 0, item.sizeleft ?? 0),
         eta: (item.timeleft ?? '').isEmpty ? null : item.timeleft,
         status: _arrStatusLabel(item.status, item.trackedDownloadState),
+        // A queue item is an episode of something, so the useful destination
+        // is the series. Sonarr only embeds it on some queue payloads; without
+        // it there is nothing to open, so the tap falls back to the service.
+        onOpenBuilder: item.series == null
+            ? null
+            : (BuildContext _) => SeriesDetailScreen(
+                  instance: instance,
+                  series: item.series!,
+                ),
       ),
   ];
 }
@@ -670,6 +704,15 @@ List<ActivityDownload> _radarrDownloads(
         progress: _sizeProgress(item.size ?? 0, item.sizeleft ?? 0),
         eta: (item.timeleft ?? '').isEmpty ? null : item.timeleft,
         status: _arrStatusLabel(item.status, item.trackedDownloadState),
+        // The detail screen refetches by id, so the embedded movie is only a
+        // head start on the first frame and may be absent without harm.
+        onOpenBuilder: item.movieId == null
+            ? null
+            : (BuildContext _) => MovieDetailScreen(
+                  instance: instance,
+                  movieId: item.movieId!,
+                  movie: item.movie,
+                ),
       ),
   ];
 }

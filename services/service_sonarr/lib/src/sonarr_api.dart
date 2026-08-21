@@ -55,10 +55,14 @@ class SonarrApi {
     }
   }
 
+  /// [unmonitored] mirrors Sonarr's own calendar flag. It defaults to false
+  /// there too, so without it the response silently omits unmonitored
+  /// episodes rather than returning them for the client to filter.
   Future<List<SonarrEpisode>> getCalendar({
     required DateTime start,
     required DateTime end,
     bool includeSeries = true,
+    bool unmonitored = false,
   }) async {
     try {
       final Response<dynamic> resp = await _dio.get<dynamic>(
@@ -67,6 +71,7 @@ class SonarrApi {
           'start': start.toUtc().toIso8601String(),
           'end': end.toUtc().toIso8601String(),
           'includeSeries': includeSeries,
+          'unmonitored': unmonitored,
         },
       );
       return (resp.data as List<dynamic>)
@@ -173,9 +178,16 @@ class SonarrApi {
         }
       }
 
-      if (pathOrUrl.startsWith('/MediaCover/')) {
-        pathOrUrl =
-            '$_base/mediacover${pathOrUrl.substring('/MediaCover'.length)}';
+      // Sonarr prefixes its configured URL Base onto images[].url, so this
+      // arrives as either /MediaCover/... or /base/MediaCover/.... Match
+      // the segment wherever it starts and rebuild relative to the API:
+      // the frontend /MediaCover route is served by the web UI, which
+      // ignores the api key and 302s to the login page.
+      final int coverIdx = pathOrUrl.indexOf('/MediaCover/');
+      if (coverIdx != -1) {
+        final String tail =
+            pathOrUrl.substring(coverIdx + '/MediaCover'.length);
+        pathOrUrl = '$_base/mediacover$tail';
       }
       final String separator = pathOrUrl.contains('?') ? '&' : '?';
       return base.resolve('$pathOrUrl${separator}apikey=$apiKey').toString();

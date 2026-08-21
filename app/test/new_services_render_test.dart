@@ -12,6 +12,7 @@ import 'package:service_plex/service_plex.dart';
 import 'package:service_radarr/service_radarr.dart';
 import 'package:service_sabnzbd/service_sabnzbd.dart';
 import 'package:service_tautulli/service_tautulli.dart';
+import 'package:atrium/src/preferences.dart';
 import 'package:atrium/src/screens/calendar_screen.dart';
 
 /// Deterministic render tests for the service modules added in the final pass.
@@ -53,6 +54,12 @@ Future<void> _pump(
   for (int i = 0; i < pumps; i++) {
     await tester.pump();
   }
+}
+
+/// Keeps CalendarScreen from reaching for the real settings box.
+class _FakePreferencesController extends PreferencesController {
+  @override
+  Preferences build() => const Preferences();
 }
 
 void main() {
@@ -249,6 +256,7 @@ void main() {
     await _pump(
       tester,
       <Override>[
+        preferencesProvider.overrideWith(_FakePreferencesController.new),
         activeInstancesProvider.overrideWith(
           (Ref ref) => <Instance>[radarr],
         ),
@@ -256,7 +264,7 @@ void main() {
           (Ref ref) async => RadarrApi(Dio(), apiKey: 'k'),
         ),
         radarrCalendarProvider.overrideWith(
-          (Ref ref, (Instance, DateTime) key) async => <RadarrMovie>[
+          (Ref ref, (Instance, DateTime, bool) key) async => <RadarrMovie>[
             RadarrMovie(
               id: 1,
               title: 'Inception',

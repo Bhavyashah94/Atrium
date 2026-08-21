@@ -14,6 +14,7 @@ class QbittorrentFilterDrawer extends ConsumerWidget {
     final statusFilter = ref.watch(qbitFilterStatusProvider(instance));
     final categoryFilter = ref.watch(qbitFilterCategoryProvider(instance));
     final tagFilter = ref.watch(qbitFilterTagProvider(instance));
+    final trackerFilter = ref.watch(qbitFilterTrackerProvider(instance));
 
     final AsyncValue<List<String>> categoriesAsync =
         ref.watch(qbitCategoriesProvider(instance));
@@ -37,6 +38,28 @@ class QbittorrentFilterDrawer extends ConsumerWidget {
 
     int getTagCount(String tag, List<QbitTorrent> torrents) {
       return torrents.where((QbitTorrent t) => qbitTagMatches(tag, t)).length;
+    }
+
+    int getTrackerCount(String tracker, List<QbitTorrent> torrents) {
+      return torrents
+          .where((QbitTorrent t) => qbitTrackerMatches(tracker, t))
+          .length;
+    }
+
+    /// Tracker hosts present in the current list, busiest first so the
+    /// trackers holding most of the library stay near the top.
+    List<String> trackerHosts(List<QbitTorrent> torrents) {
+      final Map<String, int> counts = <String, int>{};
+      for (final QbitTorrent t in torrents) {
+        final String host = qbitTrackerHost(t.tracker);
+        if (host.isEmpty) continue;
+        counts[host] = (counts[host] ?? 0) + 1;
+      }
+      return counts.keys.toList()
+        ..sort((String a, String b) {
+          final int byCount = counts[b]!.compareTo(counts[a]!);
+          return byCount != 0 ? byCount : a.compareTo(b);
+        });
     }
 
     return Drawer(
@@ -234,6 +257,53 @@ class QbittorrentFilterDrawer extends ConsumerWidget {
                       ),
                     ),
                     orElse: () => [],
+                  ),
+                ],
+              ),
+              ExpansionTile(
+                initiallyExpanded: true,
+                title: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Text('Trackers'),
+                ),
+                shape: const Border(),
+                collapsedShape: const Border(),
+                children: [
+                  _FilterTile(
+                    title: 'All Trackers',
+                    count: torrents.length,
+                    icon: Icons.dns,
+                    isSelected: trackerFilter == null,
+                    onTap: () {
+                      ref
+                          .read(qbitFilterTrackerProvider(instance).notifier)
+                          .state = null;
+                    },
+                  ),
+                  if (getTrackerCount('none', torrents) > 0)
+                    _FilterTile(
+                      title: 'No working tracker',
+                      count: getTrackerCount('none', torrents),
+                      icon: Icons.cloud_off,
+                      isSelected: trackerFilter == 'none',
+                      onTap: () {
+                        ref
+                            .read(qbitFilterTrackerProvider(instance).notifier)
+                            .state = 'none';
+                      },
+                    ),
+                  ...trackerHosts(torrents).map(
+                    (String host) => _FilterTile(
+                      title: host,
+                      count: getTrackerCount(host, torrents),
+                      icon: Icons.dns_outlined,
+                      isSelected: trackerFilter == host,
+                      onTap: () {
+                        ref
+                            .read(qbitFilterTrackerProvider(instance).notifier)
+                            .state = host;
+                      },
+                    ),
                   ),
                 ],
               ),

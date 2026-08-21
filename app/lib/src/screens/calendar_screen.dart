@@ -4,6 +4,7 @@ import 'package:core_models/core_models.dart';
 import 'package:core_router/core_router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:core_profile/core_profile.dart';
+import '../preferences.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -117,8 +118,13 @@ class SonarrCalendarEvent extends CalendarEvent {
   @override
   bool get hasFile => episode.hasFile;
 
+  /// Sonarr tracks monitoring at two levels and an episode can be monitored
+  /// inside a series that is not. Sonarr will not grab it in that case, so the
+  /// honest answer is the AND of the two rather than the episode's own flag.
+  /// If the series was not embedded there is nothing to narrow it with.
   @override
-  bool get monitored => episode.monitored;
+  bool get monitored =>
+      episode.monitored && (episode.series?.monitored ?? true);
 
   @override
   String get primaryTitle => episode.series?.title ?? 'Unknown Series';
@@ -132,11 +138,12 @@ class SonarrCalendarEvent extends CalendarEvent {
 }
 
 /// Aggregated calendar provider for all active Sonarr and Radarr instances.
-final globalCalendarProvider =
-    FutureProvider.autoDispose.family<List<CalendarEvent>, DateTime>((
+final globalCalendarProvider = FutureProvider.autoDispose
+    .family<List<CalendarEvent>, (DateTime, bool)>((
   Ref ref,
-  DateTime month,
+  (DateTime, bool) key,
 ) async {
+  final (DateTime month, bool unmonitored) = key;
   final List<Instance> instances = ref.watch(activeInstancesProvider);
   final List<CalendarEvent> allEvents = [];
   final List<Future<void>> futures = [];
@@ -144,7 +151,7 @@ final globalCalendarProvider =
   for (final Instance instance in instances) {
     if (instance.kind == ServiceKind.radarr) {
       final AsyncValue<List<RadarrMovie>> state =
-          ref.watch(radarrCalendarProvider((instance, month)));
+          ref.watch(radarrCalendarProvider((instance, month, unmonitored)));
       final RadarrApi? api = ref.watch(radarrApiProvider(instance)).value;
 
       RadarrCalendarEvent build(RadarrMovie m) => RadarrCalendarEvent(
@@ -158,7 +165,7 @@ final globalCalendarProvider =
       if (state is AsyncLoading) {
         futures.add(
           ref
-              .read(radarrCalendarProvider((instance, month)).future)
+              .read(radarrCalendarProvider((instance, month, unmonitored)).future)
               .then((List<RadarrMovie> movies) {
             allEvents.addAll(movies.map(build));
           }).catchError((Object e) {
@@ -170,7 +177,7 @@ final globalCalendarProvider =
       }
     } else if (instance.kind == ServiceKind.sonarr) {
       final AsyncValue<List<SonarrEpisode>> state =
-          ref.watch(sonarrCalendarProvider((instance, month)));
+          ref.watch(sonarrCalendarProvider((instance, month, unmonitored)));
       final SonarrApi? api = ref.watch(sonarrApiProvider(instance)).value;
 
       SonarrCalendarEvent build(SonarrEpisode e) => SonarrCalendarEvent(
@@ -185,7 +192,7 @@ final globalCalendarProvider =
       if (state is AsyncLoading) {
         futures.add(
           ref
-              .read(sonarrCalendarProvider((instance, month)).future)
+              .read(sonarrCalendarProvider((instance, month, unmonitored)).future)
               .then((List<SonarrEpisode> episodes) {
             allEvents.addAll(episodes.map(build));
           }).catchError((Object e) {
@@ -228,24 +235,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Future<void> _handleRefresh() async {
+    final bool showUnmonitored =
+        ref.read(preferencesProvider).calendarShowUnmonitored;
     final List<Instance> instances = ref.read(activeInstancesProvider);
     final List<Future<void>> futures = [];
     for (final Instance instance in instances) {
       if (instance.kind == ServiceKind.radarr) {
-        ref.invalidate(radarrCalendarProvider((instance, _visibleMonth)));
+        ref.invalidate(radarrCalendarProvider((instance, _visibleMonth, showUnmonitored)));
         futures.add(
-            ref.read(radarrCalendarProvider((instance, _visibleMonth)).future));
+            ref.read(radarrCalendarProvider((instance, _visibleMonth, showUnmonitored)).future));
       } else if (instance.kind == ServiceKind.sonarr) {
-        ref.invalidate(sonarrCalendarProvider((instance, _visibleMonth)));
+        ref.invalidate(sonarrCalendarProvider((instance, _visibleMonth, showUnmonitored)));
         futures.add(
-            ref.read(sonarrCalendarProvider((instance, _visibleMonth)).future));
+            ref.read(sonarrCalendarProvider((instance, _visibleMonth, showUnmonitored)).future));
       }
     }
     if (futures.isNotEmpty) {
       await Future.wait(futures).catchError((_) => []);
     }
     await ref
-        .read(globalCalendarProvider(_visibleMonth).future)
+        .read(globalCalendarProvider((_visibleMonth, showUnmonitored)).future)
         .catchError((_) => <CalendarEvent>[]);
   }
 
@@ -403,16 +412,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool showUnmonitored = ref.watch(
+      preferencesProvider
+          .select((Preferences p) => p.calendarShowUnmonitored),
+    );
     final AsyncValue<List<CalendarEvent>> calendar =
-        ref.watch(globalCalendarProvider(_visibleMonth));
+        ref.watch(globalCalendarProvider((_visibleMonth, showUnmonitored)));
 
     // Prefetch and cache adjacent months to ensure instant navigation transitions
     final DateTime nextMonth =
         DateTime(_visibleMonth.year, _visibleMonth.month + 1);
     final DateTime prevMonth =
         DateTime(_visibleMonth.year, _visibleMonth.month - 1);
-    ref.watch(globalCalendarProvider(nextMonth));
-    ref.watch(globalCalendarProvider(prevMonth));
+    ref.watch(globalCalendarProvider((nextMonth, showUnmonitored)));
+    ref.watch(globalCalendarProvider((prevMonth, showUnmonitored)));
 
     final bool hasCalendarServices = ref.watch(activeInstancesProvider).any(
           (Instance i) =>
@@ -470,6 +483,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
         title: const Text('Calendar'),
         actions: <Widget>[
+          IconButton(
+            icon: Icon(
+              showUnmonitored ? Icons.bookmark_border : Icons.bookmark,
+            ),
+            tooltip: showUnmonitored
+                ? 'Showing monitored and unmonitored'
+                : 'Showing monitored only',
+            onPressed: () => ref
+                .read(preferencesProvider.notifier)
+                .setCalendarShowUnmonitored(!showUnmonitored),
+          ),
           IconButton(
             icon: Icon(
               _showListView ? Icons.calendar_month : Icons.format_list_bulleted,

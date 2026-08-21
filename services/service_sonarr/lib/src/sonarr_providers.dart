@@ -493,12 +493,15 @@ final sonarrWantedCutoffProvider =
 });
 
 /// The calendar entries for an instance for a given month.
+/// Keyed on the unmonitored flag as well as the month: Sonarr decides what to
+/// return server-side, so the two modes are genuinely different responses and
+/// each deserves its own cache entry.
 final sonarrCalendarProvider = FutureProvider.autoDispose
-    .family<List<SonarrEpisode>, (Instance, DateTime)>((
+    .family<List<SonarrEpisode>, (Instance, DateTime, bool)>((
   Ref ref,
-  (Instance, DateTime) key,
+  (Instance, DateTime, bool) key,
 ) async {
-  final (Instance instance, DateTime month) = key;
+  final (Instance instance, DateTime month, bool unmonitored) = key;
   final SonarrApi api = await ref.watch(sonarrApiProvider(instance).future);
 
   // Calculate local month boundaries
@@ -509,6 +512,7 @@ final sonarrCalendarProvider = FutureProvider.autoDispose
   final List<SonarrEpisode> episodes = await api.getCalendar(
     start: start,
     end: end,
+    unmonitored: unmonitored,
   );
 
   return episodes;

@@ -182,15 +182,17 @@ class QbittorrentClient {
   /// Adds one or more torrents from magnet links or http(s) `.torrent` URLs.
   ///
   /// [urlsOrMagnets] may contain multiple entries (qBittorrent accepts them
-  /// newline-separated). Optional [category], [savePath], [paused], and
-  /// [sequential] map to the matching `/torrents/add` form fields. Returns
-  /// nothing - call `getTorrents()` afterwards to refresh.
+  /// newline-separated). Optional [category], [savePath], [paused],
+  /// [sequential] and [skipHashCheck] map to the matching `/torrents/add`
+  /// form fields. Returns nothing - call `getTorrents()` afterwards to
+  /// refresh.
   Future<void> addUrls(
     List<String> urlsOrMagnets, {
     String? category,
     String? savePath,
     bool paused = false,
     bool sequential = false,
+    bool skipHashCheck = false,
   }) =>
       _guarded(() async {
         final FormData form = FormData.fromMap(<String, dynamic>{
@@ -199,6 +201,12 @@ class QbittorrentClient {
           if (savePath != null && savePath.isNotEmpty) 'savepath': savePath,
           'paused': paused ? 'true' : 'false',
           'sequentialDownload': sequential ? 'true' : 'false',
+          // Same feature under two names. Every released qBittorrent up to
+          // 5.2 reads skip_checking; unreleased master renamed it seedMode.
+          // Unknown form fields are ignored, so sending both is correct on
+          // either side of that rename.
+          'skip_checking': skipHashCheck ? 'true' : 'false',
+          'seedMode': skipHashCheck ? 'true' : 'false',
         });
         await _dio.post<dynamic>('api/v2/torrents/add', data: form);
       });
@@ -214,6 +222,7 @@ class QbittorrentClient {
     String? savePath,
     bool paused = false,
     bool sequential = false,
+    bool skipHashCheck = false,
   }) =>
       _guarded(() async {
         final FormData form = FormData.fromMap(<String, dynamic>{
@@ -226,6 +235,12 @@ class QbittorrentClient {
           if (savePath != null && savePath.isNotEmpty) 'savepath': savePath,
           'paused': paused ? 'true' : 'false',
           'sequentialDownload': sequential ? 'true' : 'false',
+          // Same feature under two names. Every released qBittorrent up to
+          // 5.2 reads skip_checking; unreleased master renamed it seedMode.
+          // Unknown form fields are ignored, so sending both is correct on
+          // either side of that rename.
+          'skip_checking': skipHashCheck ? 'true' : 'false',
+          'seedMode': skipHashCheck ? 'true' : 'false',
         });
         await _dio.post<dynamic>('api/v2/torrents/add', data: form);
       });
