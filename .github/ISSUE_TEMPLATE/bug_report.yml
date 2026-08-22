@@ -51,16 +51,23 @@ body:
         - Settings and profiles
         - Sonarr
         - Radarr
+        - Lidarr
         - Prowlarr
         - Bazarr
         - Seerr (Overseerr or Jellyseerr)
         - Tautulli
+        - Tracearr
         - Jellyfin
         - Emby
         - Plex
         - qBittorrent
+        - Deluge
+        - Transmission
+        - rTorrent
         - SABnzbd
+        - NZBGet
         - Glances
+        - Speedtest Tracker
         - Beszel
         - dashdot
         - Something else

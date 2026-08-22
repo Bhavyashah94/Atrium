@@ -1,6 +1,6 @@
 # Atrium - Status
 
-> Snapshot of what genuinely works and what is left, as of 2026-07-31.
+> Snapshot of what genuinely works and what is left, as of 2026-08-23.
 > Atrium is published on F-Droid and on the GitHub releases page. It is
 > still in early development and every module is work in progress; nothing
 > here is a release promise.
@@ -37,8 +37,14 @@ Atrium is a **controller** app. Video playback was removed by design
 - Core foundation: profiles, multi-instance, dual-URL routing, secure
   key storage, import/export, per-service health dots, theming
 - **qBittorrent**: cookie login (qBit 5.x 204 fix), 3s realtime polling,
-  add magnet/file, categories, pause/resume/delete/recheck/queue moves,
-  torrent detail (overview/files/trackers), per-file priority
+  add magnet/file (with skip hash check), categories, tag and tracker
+  filters, pause/resume/delete/recheck, queue moves and reordering
+  (top/up/down/bottom) with sort by queue position, torrent detail
+  (overview/files/trackers), per-file priority, and a settings screen
+  mirroring the web UI across nine tabs. The four settings that would cut
+  Atrium off from the server - web UI address and port, CSRF and
+  clickjacking protection - confirm before applying, because once the
+  address moves the app can no longer reach the server to undo it
 - **Sonarr** (the canonical *arr module): poster/banner grid with
   client-side sort & filter (status, network, airing, added, size on
   disk) and per-series disk sizes, series detail (fanart backdrop,
@@ -46,6 +52,16 @@ Atrium is a **controller** app. Video playback was removed by design
   blocklist/system tabs, and a full Settings editor (17 panels) -
   settings writes live-verified
 - **Radarr**: same depth as Sonarr, movie flavored
+- **Lidarr** (beta, added in 1.5.0): artists and discography with grid and
+  list views and bulk actions, artist detail with release-type filters,
+  album and track detail with a file inspector and single-track search,
+  album studio, track file rename/retag previews and manual import, wanted
+  (missing and cutoff unmet), queue/history/blocklist, the full settings
+  tree (profiles, download clients, indexers, import lists, notifications,
+  metadata, media management, quality definitions), system diagnostics and
+  an in-app log viewer with level filtering and search. Album releases also
+  appear in the shared calendar. Marked beta: it has not been exercised
+  against a live Lidarr for long
 - **Prowlarr**: indexers (add/edit/test from schema), manual search
   across indexers with grab-to-client, history, full settings menu,
   system
