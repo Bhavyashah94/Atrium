@@ -455,3 +455,75 @@ final qbitPeersProvider =
       await ref.watch(qbittorrentClientProvider(instance).future);
   return client.getPeers(hash);
 });
+
+/// Active bottom tab index for qBittorrent home (0: Home, 1: Settings).
+final qbitActiveTabBarIndexProvider =
+    StateProvider.family<int, Instance>((Ref ref, Instance instance) => 0);
+
+/// Bottom nav bar visibility for qBittorrent home.
+final qbitBottomNavVisibleProvider =
+    StateProvider.family<bool, Instance>((Ref ref, Instance instance) => true);
+
+/// Scroll-to-top trigger for qBittorrent tabs.
+final qbitHomeScrollToTopProvider = StateProvider.family<int, (Instance, int)>(
+  (Ref ref, (Instance, int) key) => 0,
+);
+
+/// qBittorrent application version provider.
+final qbitAppVersionProvider =
+    FutureProvider.family<String, Instance>((Ref ref, Instance instance) async {
+  final QbittorrentClient client =
+      await ref.watch(qbittorrentClientProvider(instance).future);
+  return client.getAppVersion();
+});
+
+/// qBittorrent web API version provider.
+final qbitApiVersionProvider =
+    FutureProvider.family<String, Instance>((Ref ref, Instance instance) async {
+  final QbittorrentClient client =
+      await ref.watch(qbittorrentClientProvider(instance).future);
+  return client.getApiVersion();
+});
+
+/// qBittorrent global preferences provider.
+final qbitPreferencesProvider =
+    FutureProvider.family<Map<String, dynamic>, Instance>((
+  Ref ref,
+  Instance instance,
+) async {
+  final QbittorrentClient client =
+      await ref.watch(qbittorrentClientProvider(instance).future);
+  return client.getPreferences();
+});
+
+/// qBittorrent alternative speed limits enabled provider.
+final qbitAltSpeedModeProvider =
+    FutureProvider.family<bool, Instance>((Ref ref, Instance instance) async {
+  final QbittorrentClient client =
+      await ref.watch(qbittorrentClientProvider(instance).future);
+  final int mode = await client.getSpeedLimitsMode();
+  return mode == 1;
+});
+
+/// qBittorrent available network interfaces provider.
+final qbitNetworkInterfacesProvider =
+    FutureProvider.family<List<Map<String, String>>, Instance>((
+  Ref ref,
+  Instance instance,
+) async {
+  final QbittorrentClient client =
+      await ref.watch(qbittorrentClientProvider(instance).future);
+  return client.getNetworkInterfaces();
+});
+
+/// qBittorrent available network interface addresses provider.
+final qbitNetworkInterfaceAddressesProvider =
+    FutureProvider.family<List<String>, (Instance, String?)>((
+  Ref ref,
+  (Instance, String?) arg,
+) async {
+  final (Instance instance, String? iface) = arg;
+  final QbittorrentClient client =
+      await ref.watch(qbittorrentClientProvider(instance).future);
+  return client.getNetworkInterfaceAddresses(iface: iface);
+});
