@@ -10,7 +10,8 @@ class OmbiRequestService {
 
   /// Retrieves details for a specific movie request by ID.
   Future<MovieRequests?> getMovieRequestInfo(String requestId) async {
-    final response = await _rawRequestApi.getRequestMovieInfoByRequestId(requestId: requestId);
+    final response = await _rawRequestApi.getRequestMovieInfoByRequestId(
+        requestId: requestId);
     if (response.isSuccess) {
       return response.data;
     }
@@ -21,6 +22,7 @@ class OmbiRequestService {
         error: response.error,
       );
     }
-    throw OmbiException('Movie request info failed', statusCode: response.statusCode);
+    throw OmbiException('Movie request info failed',
+        statusCode: response.statusCode);
   }
 }

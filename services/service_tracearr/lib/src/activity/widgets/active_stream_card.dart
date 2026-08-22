@@ -57,9 +57,9 @@ class ActiveStreamCard extends StatelessWidget {
         (stream.isTranscode &&
             stream.audioDecision?.toLowerCase() == 'transcode' &&
             vDec != 'transcode');
-    final bool isDirectPlay = (vDec == 'directplay' ||
-            (vDec.isEmpty && !stream.isTranscode)) &&
-        !isDirectStream;
+    final bool isDirectPlay =
+        (vDec == 'directplay' || (vDec.isEmpty && !stream.isTranscode)) &&
+            !isDirectStream;
 
     final String transcodeLabel = isDirectPlay
         ? 'Direct Play'

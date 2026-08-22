@@ -67,9 +67,8 @@ final activeDownloadCountProvider = Provider.autoDispose<int>((Ref ref) {
       final List<RtorrentTorrent> torrents =
           ref.watch(rtorrentRawTorrentsProvider(i)).value ??
               const <RtorrentTorrent>[];
-      count += torrents
-          .where((RtorrentTorrent t) => t.status.isDownloading)
-          .length;
+      count +=
+          torrents.where((RtorrentTorrent t) => t.status.isDownloading).length;
     }
   }
   return count;
@@ -184,8 +183,7 @@ class DashboardDownloadsWidget extends ConsumerWidget {
           ref.watch(delugeRawTorrentsProvider(i));
       anyLoading |= torrents.isLoading && !torrents.hasValue;
       anyError |= torrents.hasError;
-      for (final DelugeTorrent t
-          in torrents.value ?? const <DelugeTorrent>[]) {
+      for (final DelugeTorrent t in torrents.value ?? const <DelugeTorrent>[]) {
         // Seeding torrents are not downloads; listing them here would make a
         // finished library look like live activity.
         if (t.isDownloading) {

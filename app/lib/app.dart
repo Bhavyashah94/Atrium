@@ -90,10 +90,12 @@ class AtriumApp extends ConsumerWidget {
           builder: (BuildContext context, Widget? child) {
             final bool isDark = themeMode == ThemeMode.dark ||
                 (themeMode == ThemeMode.system &&
-                    MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+                    MediaQuery.platformBrightnessOf(context) ==
+                        Brightness.dark);
             final ThemeData activeTheme = isDark ? darkTheme : lightTheme;
-            final Color navColor = activeTheme.navigationBarTheme.backgroundColor ??
-                activeTheme.colorScheme.surfaceContainer;
+            final Color navColor =
+                activeTheme.navigationBarTheme.backgroundColor ??
+                    activeTheme.colorScheme.surfaceContainer;
             return AnnotatedRegion<SystemUiOverlayStyle>(
               value: SystemUiOverlayStyle(
                 systemNavigationBarColor: navColor,

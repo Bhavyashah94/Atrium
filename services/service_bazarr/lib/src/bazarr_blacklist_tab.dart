@@ -20,47 +20,48 @@ class BazarrBlacklistTab extends ConsumerWidget {
     final AsyncValue<List<BazarrBlacklistItem>> blacklist =
         ref.watch(bazarrBlacklistProvider(instance));
     return AsyncValueView<List<BazarrBlacklistItem>>(
-          value: blacklist,
-        onRetry: () => ref.invalidate(bazarrBlacklistProvider(instance)),
-          data: (List<BazarrBlacklistItem> items) {
-            
-          if (items.isEmpty) {
-            return EasyRefresh(
-        header: const ClassicHeader(
-          dragText: 'Pull to refresh',
-          armedText: 'Release ready',
-          readyText: 'Refreshing...',
-          processingText: 'Refreshing...',
-          processedText: 'Succeeded',
-          failedText: 'Failed',
-          messageText: 'Last updated at %T',
-        ),
-        onRefresh: () async => ref.invalidate(bazarrBlacklistProvider(instance)),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const <Widget>[
-            SizedBox(height: 100),
-            EmptyView(
-              icon: Icons.block,
-              title: 'Blacklist empty',
-              message: 'Blacklisted subtitles will appear here.',
-            ),
-          ],
-        ),
-      );
-          }
+      value: blacklist,
+      onRetry: () => ref.invalidate(bazarrBlacklistProvider(instance)),
+      data: (List<BazarrBlacklistItem> items) {
+        if (items.isEmpty) {
           return EasyRefresh(
-      header: const ClassicHeader(
-        dragText: 'Pull to refresh',
-        armedText: 'Release ready',
-        readyText: 'Refreshing...',
-        processingText: 'Refreshing...',
-        processedText: 'Succeeded',
-        failedText: 'Failed',
-        messageText: 'Last updated at %T',
-      ),
-      onRefresh: () async => ref.invalidate(bazarrBlacklistProvider(instance)),
-      child: ListView.separated(
+            header: const ClassicHeader(
+              dragText: 'Pull to refresh',
+              armedText: 'Release ready',
+              readyText: 'Refreshing...',
+              processingText: 'Refreshing...',
+              processedText: 'Succeeded',
+              failedText: 'Failed',
+              messageText: 'Last updated at %T',
+            ),
+            onRefresh: () async =>
+                ref.invalidate(bazarrBlacklistProvider(instance)),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const <Widget>[
+                SizedBox(height: 100),
+                EmptyView(
+                  icon: Icons.block,
+                  title: 'Blacklist empty',
+                  message: 'Blacklisted subtitles will appear here.',
+                ),
+              ],
+            ),
+          );
+        }
+        return EasyRefresh(
+          header: const ClassicHeader(
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
+          onRefresh: () async =>
+              ref.invalidate(bazarrBlacklistProvider(instance)),
+          child: ListView.separated(
             padding: Insets.pageH,
             itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(height: Insets.sm),
@@ -69,10 +70,9 @@ class BazarrBlacklistTab extends ConsumerWidget {
               item: items[i],
             ),
           ),
-    );
-        
-          },
         );
+      },
+    );
   }
 }
 

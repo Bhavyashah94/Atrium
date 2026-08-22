@@ -62,51 +62,50 @@ class _SeerrIssuesScreenState extends ConsumerState<SeerrIssuesScreen> {
         ),
         Expanded(
           child: AsyncValueView<List<SeerrIssue>>(
-          value: issues,
-              onRetry: () => ref.invalidate(seerrIssuesProvider(args)),
-          data: (List<SeerrIssue> list) {
-            
-                if (list.isEmpty) {
-                  return EasyRefresh(
-        header: const ClassicHeader(
-          dragText: 'Pull to refresh',
-          armedText: 'Release ready',
-          readyText: 'Refreshing...',
-          processingText: 'Refreshing...',
-          processedText: 'Succeeded',
-          failedText: 'Failed',
-          messageText: 'Last updated at %T',
-        ),
-        onRefresh: () async {
-              ref.invalidate(seerrIssuesProvider(args));
-            },
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const <Widget>[
-            SizedBox(height: 100),
-            EmptyView(
-                    icon: Icons.report_off_outlined,
-                    title: 'No issues',
-                    message: 'Nothing has been reported.',
-                  ),
-          ],
-        ),
-      );
-                }
+            value: issues,
+            onRetry: () => ref.invalidate(seerrIssuesProvider(args)),
+            data: (List<SeerrIssue> list) {
+              if (list.isEmpty) {
                 return EasyRefresh(
-      header: const ClassicHeader(
-        dragText: 'Pull to refresh',
-        armedText: 'Release ready',
-        readyText: 'Refreshing...',
-        processingText: 'Refreshing...',
-        processedText: 'Succeeded',
-        failedText: 'Failed',
-        messageText: 'Last updated at %T',
-      ),
-      onRefresh: () async {
-              ref.invalidate(seerrIssuesProvider(args));
-            },
-      child: ListView.separated(
+                  header: const ClassicHeader(
+                    dragText: 'Pull to refresh',
+                    armedText: 'Release ready',
+                    readyText: 'Refreshing...',
+                    processingText: 'Refreshing...',
+                    processedText: 'Succeeded',
+                    failedText: 'Failed',
+                    messageText: 'Last updated at %T',
+                  ),
+                  onRefresh: () async {
+                    ref.invalidate(seerrIssuesProvider(args));
+                  },
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: const <Widget>[
+                      SizedBox(height: 100),
+                      EmptyView(
+                        icon: Icons.report_off_outlined,
+                        title: 'No issues',
+                        message: 'Nothing has been reported.',
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return EasyRefresh(
+                header: const ClassicHeader(
+                  dragText: 'Pull to refresh',
+                  armedText: 'Release ready',
+                  readyText: 'Refreshing...',
+                  processingText: 'Refreshing...',
+                  processedText: 'Succeeded',
+                  failedText: 'Failed',
+                  messageText: 'Last updated at %T',
+                ),
+                onRefresh: () async {
+                  ref.invalidate(seerrIssuesProvider(args));
+                },
+                child: ListView.separated(
                   padding: Insets.page,
                   itemCount: list.length,
                   separatorBuilder: (_, __) =>
@@ -116,10 +115,9 @@ class _SeerrIssuesScreenState extends ConsumerState<SeerrIssuesScreen> {
                     issue: list[index],
                   ),
                 ),
-    );
-              
-          },
-        ),
+              );
+            },
+          ),
         ),
       ],
     );

@@ -138,8 +138,7 @@ abstract class TransmissionDetail with _$TransmissionDetail {
       files: files,
       peers: ((json['peers'] as List<dynamic>?) ?? const <dynamic>[])
           .map(
-            (dynamic e) =>
-                TransmissionPeer.fromJson(e as Map<String, dynamic>),
+            (dynamic e) => TransmissionPeer.fromJson(e as Map<String, dynamic>),
           )
           .toList(),
       trackers: ((json['trackerStats'] as List<dynamic>?) ?? const <dynamic>[])

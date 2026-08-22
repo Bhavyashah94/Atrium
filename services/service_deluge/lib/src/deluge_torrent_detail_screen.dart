@@ -212,7 +212,9 @@ class _TrackersTab extends StatelessWidget {
           ),
           title: Text(tr.url, maxLines: 2),
           subtitle: Text(
-            tr.message.isEmpty ? 'Tier ${tr.tier}' : '${tr.message} - tier ${tr.tier}',
+            tr.message.isEmpty
+                ? 'Tier ${tr.tier}'
+                : '${tr.message} - tier ${tr.tier}',
           ),
         );
       },
@@ -241,7 +243,8 @@ class _PeersTab extends StatelessWidget {
         final DelugePeer p = detail.peers[i];
         return ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: Icon(p.seed ? Icons.upload_outlined : Icons.download_outlined),
+          leading:
+              Icon(p.seed ? Icons.upload_outlined : Icons.download_outlined),
           title: Text(p.ip),
           subtitle: Text(
             '${p.client.isEmpty ? 'Unknown client' : p.client} - '

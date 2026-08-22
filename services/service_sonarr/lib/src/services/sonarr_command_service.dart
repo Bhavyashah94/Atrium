@@ -17,7 +17,8 @@ class SonarrCommandService {
   }
 
   /// Triggers an automatic search for monitored missing episodes in a specific season.
-  Future<CommandResource?> searchSeasonEpisodes(int seriesId, int seasonNumber) async {
+  Future<CommandResource?> searchSeasonEpisodes(
+      int seriesId, int seasonNumber) async {
     return _postCommand({
       'name': 'SeasonSearch',
       'seriesId': seriesId,
@@ -52,6 +53,7 @@ class SonarrCommandService {
         error: response.error,
       );
     }
-    throw SonarrException('Command execution failed', statusCode: response.statusCode);
+    throw SonarrException('Command execution failed',
+        statusCode: response.statusCode);
   }
 }

@@ -3,12 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 
 void main(List<String> args) {
-  final inputPath = args.isNotEmpty
-      ? args[0]
-      : '${Directory.current.path}/tool/openapi.json';
-  final outputDir = args.length > 1
-      ? args[1]
-      : '${Directory.current.path}/lib/src/generated';
+  final inputPath =
+      args.isNotEmpty ? args[0] : '${Directory.current.path}/tool/openapi.json';
+  final outputDir =
+      args.length > 1 ? args[1] : '${Directory.current.path}/lib/src/generated';
 
   final file = File(inputPath);
   if (!file.existsSync()) {
@@ -22,7 +20,8 @@ void main(List<String> args) {
 
   final parser = OmbiOpenApiParser(spec, outputDir);
   parser.generateAll();
-  print('Successfully generated all Ombi Dart models and API clients in: $outputDir');
+  print(
+      'Successfully generated all Ombi Dart models and API clients in: $outputDir');
 }
 
 class OmbiOpenApiParser {
@@ -59,7 +58,8 @@ class OmbiOpenApiParser {
         if (!['get', 'post', 'put', 'delete', 'patch'].contains(verb)) continue;
 
         final op = methodEntry.value as Map<String, dynamic>;
-        final tags = (op['tags'] as List<dynamic>?)?.cast<String>() ?? ['Default'];
+        final tags =
+            (op['tags'] as List<dynamic>?)?.cast<String>() ?? ['Default'];
         final tag = tags.first;
 
         tagEndpoints.putIfAbsent(tag, () => []).add({
@@ -89,37 +89,93 @@ class OmbiOpenApiParser {
       camel = 'val$camel';
     }
     const keywords = {
-      'abstract', 'as', 'assert', 'async', 'await', 'break', 'case', 'catch',
-      'class', 'const', 'continue', 'covariant', 'default', 'deferred', 'do',
-      'dynamic', 'else', 'enum', 'export', 'extends', 'extension', 'external',
-      'factory', 'false', 'finally', 'for', 'function', 'get', 'hide',
-      'if', 'implements', 'import', 'in', 'interface', 'is', 'late', 'library',
-      'mixin', 'new', 'null', 'on', 'operator', 'part', 'required', 'rethrow',
-      'return', 'set', 'show', 'static', 'super', 'switch', 'sync', 'this',
-      'throw', 'true', 'try', 'typedef', 'var', 'void', 'while', 'with', 'yield'
+      'abstract',
+      'as',
+      'assert',
+      'async',
+      'await',
+      'break',
+      'case',
+      'catch',
+      'class',
+      'const',
+      'continue',
+      'covariant',
+      'default',
+      'deferred',
+      'do',
+      'dynamic',
+      'else',
+      'enum',
+      'export',
+      'extends',
+      'extension',
+      'external',
+      'factory',
+      'false',
+      'finally',
+      'for',
+      'function',
+      'get',
+      'hide',
+      'if',
+      'implements',
+      'import',
+      'in',
+      'interface',
+      'is',
+      'late',
+      'library',
+      'mixin',
+      'new',
+      'null',
+      'on',
+      'operator',
+      'part',
+      'required',
+      'rethrow',
+      'return',
+      'set',
+      'show',
+      'static',
+      'super',
+      'switch',
+      'sync',
+      'this',
+      'throw',
+      'true',
+      'try',
+      'typedef',
+      'var',
+      'void',
+      'while',
+      'with',
+      'yield'
     };
     return keywords.contains(camel) ? '${camel}Val' : camel;
   }
 
   String _toSnakeCase(String name) {
     return name
-        .replaceAllMapped(RegExp(r'([A-Z])'), (m) => '_${m.group(1)!.toLowerCase()}')
+        .replaceAllMapped(
+            RegExp(r'([A-Z])'), (m) => '_${m.group(1)!.toLowerCase()}')
         .replaceAll(RegExp(r'^_'), '')
         .replaceAll(RegExp(r'_+'), '_');
   }
 
   String _resolveClassName(String fullKey, Map<String, dynamic> rawSchemas) {
-    final genericMatch = RegExp(r'`\d+\[\[(?:[^\.,]+\.)*([^\.,]+),').firstMatch(fullKey);
-    final genericSuffix = genericMatch != null
-        ? _sanitizeIdentifier(genericMatch.group(1)!)
-        : '';
+    final genericMatch =
+        RegExp(r'`\d+\[\[(?:[^\.,]+\.)*([^\.,]+),').firstMatch(fullKey);
+    final genericSuffix =
+        genericMatch != null ? _sanitizeIdentifier(genericMatch.group(1)!) : '';
 
     final cleanBase = fullKey.replaceAll(RegExp(r'`\d+\[\[.*'), '');
     final parts = cleanBase.split('.');
     final short = parts.last;
 
     final collisions = rawSchemas.keys
-        .where((k) => k.replaceAll(RegExp(r'`\d+\[\[.*'), '').split('.').last == short)
+        .where((k) =>
+            k.replaceAll(RegExp(r'`\d+\[\[.*'), '').split('.').last == short)
         .toList();
 
     String baseName;
@@ -127,7 +183,8 @@ class OmbiOpenApiParser {
       baseName = _sanitizeIdentifier(short);
     } else {
       final meaningful = parts
-          .where((p) => !['Ombi', 'Api', 'External', 'Models', 'Core', 'V1'].contains(p))
+          .where((p) =>
+              !['Ombi', 'Api', 'External', 'Models', 'Core', 'V1'].contains(p))
           .toList();
       final effective = meaningful.isEmpty ? parts : meaningful;
       baseName = effective.map(_sanitizeIdentifier).join('');
@@ -299,7 +356,8 @@ class OmbiException implements Exception {
     final fileName = _toSnakeCase(className);
     final buffer = StringBuffer();
     buffer.writeln("// ignore_for_file: unused_import");
-    buffer.writeln("import 'package:freezed_annotation/freezed_annotation.dart';");
+    buffer.writeln(
+        "import 'package:freezed_annotation/freezed_annotation.dart';");
     for (final imp in imports) {
       if (imp != className) {
         final impFileName = _toSnakeCase(imp);
@@ -335,15 +393,19 @@ class OmbiException implements Exception {
           }
         }
         if (f.isDeprecated) {
-          buffer.writeln("    @Deprecated('Marked deprecated in OpenAPI spec')");
+          buffer
+              .writeln("    @Deprecated('Marked deprecated in OpenAPI spec')");
         }
-        final typeStr = f.dartType.endsWith('?') ? f.dartType : '${f.dartType}?';
-        buffer.writeln("    @JsonKey(name: '${f.jsonKey}') $typeStr ${f.fieldName},");
+        final typeStr =
+            f.dartType.endsWith('?') ? f.dartType : '${f.dartType}?';
+        buffer.writeln(
+            "    @JsonKey(name: '${f.jsonKey}') $typeStr ${f.fieldName},");
       }
       buffer.writeln('  }) = _$className;');
     }
     buffer.writeln();
-    buffer.writeln('  factory $className.fromJson(Map<String, dynamic> json) =>');
+    buffer
+        .writeln('  factory $className.fromJson(Map<String, dynamic> json) =>');
     buffer.writeln('      _\$${className}FromJson(json);');
     buffer.writeln('}');
 
@@ -356,7 +418,8 @@ class OmbiException implements Exception {
     final fileName = _toSnakeCase(className);
 
     buffer.writeln("// ignore_for_file: unused_import");
-    buffer.writeln("import 'package:freezed_annotation/freezed_annotation.dart';");
+    buffer.writeln(
+        "import 'package:freezed_annotation/freezed_annotation.dart';");
     buffer.writeln();
     buffer.writeln("part '$fileName.g.dart';");
     buffer.writeln();
@@ -375,15 +438,17 @@ class OmbiException implements Exception {
     return buffer.toString();
   }
 
-  _TypeInfo _parseType(
-      Map<String, dynamic> schema, Set<String> imports) {
+  _TypeInfo _parseType(Map<String, dynamic> schema, Set<String> imports) {
     if (schema.containsKey('\$ref')) {
       final ref = schema['\$ref'] as String;
       final key = ref.replaceFirst('#/components/schemas/', '');
       final cls = schemaClassNames[key] ?? 'dynamic';
       imports.add(cls);
       return _TypeInfo(
-          dartType: cls, isNullable: true, isCustomClass: true, customClassName: cls);
+          dartType: cls,
+          isNullable: true,
+          isCustomClass: true,
+          customClassName: cls);
     }
 
     final type = schema['type'] as String?;
@@ -395,7 +460,8 @@ class OmbiException implements Exception {
         dartType: listDartType,
         isNullable: true,
         isList: true,
-        customClassName: itemType.isCustomClass ? itemType.customClassName : null,
+        customClassName:
+            itemType.isCustomClass ? itemType.customClassName : null,
       );
     }
 
@@ -507,7 +573,9 @@ class OmbiException implements Exception {
 
       buffer.writeln('  Future<ApiResponse<$returnType>> $methodName(');
 
-      final params = (op['parameters'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+      final params =
+          (op['parameters'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ??
+              [];
       final pathParams = params.where((p) => p['in'] == 'path').toList();
       final queryParams = params.where((p) => p['in'] == 'query').toList();
       final bodySchema = _getRequestBodySchema(op);
@@ -534,11 +602,13 @@ class OmbiException implements Exception {
       for (final p in pathParams) {
         final rawName = p['name'] as String;
         final pName = _toCamelCase(rawName);
-        interpolatedPath = interpolatedPath.replaceAll('{$rawName}', '\$$pName');
+        interpolatedPath =
+            interpolatedPath.replaceAll('{$rawName}', '\$$pName');
       }
 
       buffer.writeln('    try {');
-      buffer.writeln('      final Response<dynamic> resp = await _dio.$verb<dynamic>(');
+      buffer.writeln(
+          '      final Response<dynamic> resp = await _dio.$verb<dynamic>(');
       buffer.writeln("        '$interpolatedPath',");
       if (queryParams.isNotEmpty) {
         buffer.writeln('        queryParameters: <String, dynamic>{');
@@ -555,9 +625,11 @@ class OmbiException implements Exception {
       buffer.writeln('      );');
 
       buffer.writeln('      ${_buildDeserializationCode(returnTypeInfo)}');
-      buffer.writeln('      return ApiResponse.success(data, statusCode: resp.statusCode);');
+      buffer.writeln(
+          '      return ApiResponse.success(data, statusCode: resp.statusCode);');
       buffer.writeln('    } on DioException catch (e) {');
-      buffer.writeln('      return ApiResponse.error(OmbiError.fromDio(e), statusCode: e.response?.statusCode);');
+      buffer.writeln(
+          '      return ApiResponse.error(OmbiError.fromDio(e), statusCode: e.response?.statusCode);');
       buffer.writeln('    }');
       buffer.writeln('  }');
       buffer.writeln();
@@ -568,13 +640,20 @@ class OmbiException implements Exception {
   }
 
   _ReturnTypeInfo _getReturnTypeInfo(Map<String, dynamic>? schema) {
-    if (schema == null) return _ReturnTypeInfo(type: 'void', isList: false, isCustomClass: false);
+    if (schema == null)
+      return _ReturnTypeInfo(type: 'void', isList: false, isCustomClass: false);
     if (schema.containsKey('\$ref')) {
       final ref = schema['\$ref'] as String;
       final key = ref.replaceFirst('#/components/schemas/', '');
       final cls = schemaClassNames[key] ?? 'dynamic';
-      final isEnum = schemas[key] != null && (schemas[key] as Map<String, dynamic>).containsKey('enum');
-      return _ReturnTypeInfo(type: cls, isList: false, isCustomClass: !isEnum, isEnum: isEnum, className: cls);
+      final isEnum = schemas[key] != null &&
+          (schemas[key] as Map<String, dynamic>).containsKey('enum');
+      return _ReturnTypeInfo(
+          type: cls,
+          isList: false,
+          isCustomClass: !isEnum,
+          isEnum: isEnum,
+          className: cls);
     }
     if (schema['type'] == 'array') {
       final items = schema['items'] as Map<String, dynamic>?;
@@ -582,12 +661,20 @@ class OmbiException implements Exception {
         final ref = items['\$ref'] as String;
         final key = ref.replaceFirst('#/components/schemas/', '');
         final cls = schemaClassNames[key] ?? 'dynamic';
-        final isEnum = schemas[key] != null && (schemas[key] as Map<String, dynamic>).containsKey('enum');
-        return _ReturnTypeInfo(type: 'List<$cls>', isList: true, isCustomClass: !isEnum, isEnum: isEnum, className: cls);
+        final isEnum = schemas[key] != null &&
+            (schemas[key] as Map<String, dynamic>).containsKey('enum');
+        return _ReturnTypeInfo(
+            type: 'List<$cls>',
+            isList: true,
+            isCustomClass: !isEnum,
+            isEnum: isEnum,
+            className: cls);
       }
-      return _ReturnTypeInfo(type: 'List<dynamic>', isList: true, isCustomClass: false);
+      return _ReturnTypeInfo(
+          type: 'List<dynamic>', isList: true, isCustomClass: false);
     }
-    return _ReturnTypeInfo(type: 'dynamic', isList: false, isCustomClass: false);
+    return _ReturnTypeInfo(
+        type: 'dynamic', isList: false, isCustomClass: false);
   }
 
   String _buildDeserializationCode(_ReturnTypeInfo info) {

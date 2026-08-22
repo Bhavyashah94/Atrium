@@ -15,7 +15,8 @@ class _IdleUpdateChecker extends UpdateChecker {
 }
 
 void main() {
-  testWidgets('renders release cards with the Installed pill on the current version',
+  testWidgets(
+      'renders release cards with the Installed pill on the current version',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1000, 3000);
     tester.view.devicePixelRatio = 1.0;
@@ -32,8 +33,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byType(AvailableReleaseCard, skipOffstage: false),
-        findsOneWidget);
+    expect(
+        find.byType(AvailableReleaseCard, skipOffstage: false), findsOneWidget);
     expect(find.text('v1.3.3'), findsOneWidget);
     // appVersion is 1.3.3, so exactly one card is Installed.
     expect(find.text('Installed'), findsOneWidget);

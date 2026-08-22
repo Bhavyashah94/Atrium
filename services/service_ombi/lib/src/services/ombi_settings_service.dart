@@ -20,6 +20,7 @@ class OmbiSettingsService {
         error: response.error,
       );
     }
-    throw OmbiException('Failed to fetch Ombi settings', statusCode: response.statusCode);
+    throw OmbiException('Failed to fetch Ombi settings',
+        statusCode: response.statusCode);
   }
 }

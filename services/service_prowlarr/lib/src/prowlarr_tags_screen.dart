@@ -30,55 +30,56 @@ class ProwlarrTagsScreen extends ConsumerWidget {
         label: const Text('Add'),
       ),
       body: AsyncValueView<List<Map<String, dynamic>>>(
-          value: tags,
-          onRetry: () => ref.invalidate(prowlarrProvidersProvider(_args)),
-          data: (List<Map<String, dynamic>> items) {
-            
-            if (items.isEmpty) {
-              return EasyRefresh(
-        header: const ClassicHeader(
-          dragText: 'Pull to refresh',
-          armedText: 'Release ready',
-          readyText: 'Refreshing...',
-          processingText: 'Refreshing...',
-          processedText: 'Succeeded',
-          failedText: 'Failed',
-          messageText: 'Last updated at %T',
-        ),
-        onRefresh: () async => ref.invalidate(prowlarrProvidersProvider(_args)),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const <Widget>[
-            SizedBox(height: 100),
-            EmptyView(
-                icon: Icons.label_outline,
-                title: 'No tags',
-                message: 'Tap Add to create a tag.',
-              ),
-          ],
-        ),
-      );
-            }
-            final List<Map<String, dynamic>> sorted = <Map<String, dynamic>>[
-              ...items,
-            ]..sort(
-                (Map<String, dynamic> a, Map<String, dynamic> b) =>
-                    ((a['label'] ?? '') as String).toLowerCase().compareTo(
-                          ((b['label'] ?? '') as String).toLowerCase(),
-                        ),
-              );
+        value: tags,
+        onRetry: () => ref.invalidate(prowlarrProvidersProvider(_args)),
+        data: (List<Map<String, dynamic>> items) {
+          if (items.isEmpty) {
             return EasyRefresh(
-      header: const ClassicHeader(
-        dragText: 'Pull to refresh',
-        armedText: 'Release ready',
-        readyText: 'Refreshing...',
-        processingText: 'Refreshing...',
-        processedText: 'Succeeded',
-        failedText: 'Failed',
-        messageText: 'Last updated at %T',
-      ),
-      onRefresh: () async => ref.invalidate(prowlarrProvidersProvider(_args)),
-      child: ListView.builder(
+              header: const ClassicHeader(
+                dragText: 'Pull to refresh',
+                armedText: 'Release ready',
+                readyText: 'Refreshing...',
+                processingText: 'Refreshing...',
+                processedText: 'Succeeded',
+                failedText: 'Failed',
+                messageText: 'Last updated at %T',
+              ),
+              onRefresh: () async =>
+                  ref.invalidate(prowlarrProvidersProvider(_args)),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const <Widget>[
+                  SizedBox(height: 100),
+                  EmptyView(
+                    icon: Icons.label_outline,
+                    title: 'No tags',
+                    message: 'Tap Add to create a tag.',
+                  ),
+                ],
+              ),
+            );
+          }
+          final List<Map<String, dynamic>> sorted = <Map<String, dynamic>>[
+            ...items,
+          ]..sort(
+              (Map<String, dynamic> a, Map<String, dynamic> b) =>
+                  ((a['label'] ?? '') as String).toLowerCase().compareTo(
+                        ((b['label'] ?? '') as String).toLowerCase(),
+                      ),
+            );
+          return EasyRefresh(
+            header: const ClassicHeader(
+              dragText: 'Pull to refresh',
+              armedText: 'Release ready',
+              readyText: 'Refreshing...',
+              processingText: 'Refreshing...',
+              processedText: 'Succeeded',
+              failedText: 'Failed',
+              messageText: 'Last updated at %T',
+            ),
+            onRefresh: () async =>
+                ref.invalidate(prowlarrProvidersProvider(_args)),
+            child: ListView.builder(
               padding: Insets.pageH,
               itemCount: sorted.length,
               itemBuilder: (BuildContext context, int i) {
@@ -95,10 +96,9 @@ class ProwlarrTagsScreen extends ConsumerWidget {
                 );
               },
             ),
-    );
-          
-          },
-        ),
+          );
+        },
+      ),
     );
   }
 

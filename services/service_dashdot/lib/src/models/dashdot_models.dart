@@ -26,12 +26,7 @@ class DashdotInfo {
 
 @JsonSerializable(createToJson: false)
 class DashdotOsInfo {
-  const DashdotOsInfo({
-    this.distro,
-    this.release,
-    this.arch,
-    this.uptime,
-  });
+  const DashdotOsInfo({this.distro, this.release, this.arch, this.uptime});
 
   factory DashdotOsInfo.fromJson(Map<String, dynamic> json) =>
       _$DashdotOsInfoFromJson(json);
@@ -44,12 +39,7 @@ class DashdotOsInfo {
 
 @JsonSerializable(createToJson: false)
 class DashdotCpuInfo {
-  const DashdotCpuInfo({
-    this.cpuBrand,
-    this.cores,
-    this.threads,
-    this.freq,
-  });
+  const DashdotCpuInfo({this.cpuBrand, this.cores, this.threads, this.freq});
 
   factory DashdotCpuInfo.fromJson(Map<String, dynamic> json) =>
       _$DashdotCpuInfoFromJson(json);
@@ -63,10 +53,7 @@ class DashdotCpuInfo {
 
 @JsonSerializable(createToJson: false)
 class DashdotRamInfo {
-  const DashdotRamInfo({
-    this.totalCapacity,
-    this.sticks,
-  });
+  const DashdotRamInfo({this.totalCapacity, this.sticks});
 
   factory DashdotRamInfo.fromJson(Map<String, dynamic> json) =>
       _$DashdotRamInfoFromJson(json);
@@ -78,11 +65,7 @@ class DashdotRamInfo {
 
 @JsonSerializable(createToJson: false)
 class DashdotRamStick {
-  const DashdotRamStick({
-    this.ramBrand,
-    this.type,
-    this.frequency,
-  });
+  const DashdotRamStick({this.ramBrand, this.type, this.frequency});
 
   factory DashdotRamStick.fromJson(Map<String, dynamic> json) =>
       _$DashdotRamStickFromJson(json);
@@ -135,9 +118,7 @@ class DashdotNetworkInfo {
 
 @JsonSerializable(createToJson: false)
 class DashdotConfig {
-  const DashdotConfig({
-    required this.widgetList,
-  });
+  const DashdotConfig({required this.widgetList});
 
   factory DashdotConfig.fromJson(Map<String, dynamic> json) =>
       _$DashdotConfigFromJson(json);

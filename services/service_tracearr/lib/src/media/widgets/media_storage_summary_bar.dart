@@ -214,10 +214,10 @@ class MediaStorageSummaryBar extends StatelessWidget {
                             typeName = '';
                           }
 
-                          final String serverPrefix = (isMultiServer &&
-                                  lib.serverType.isNotEmpty)
-                              ? '${lib.serverType.toUpperCase()} '
-                              : '';
+                          final String serverPrefix =
+                              (isMultiServer && lib.serverType.isNotEmpty)
+                                  ? '${lib.serverType.toUpperCase()} '
+                                  : '';
                           final String label = typeName.isNotEmpty
                               ? '$serverPrefix$typeName (${lib.itemCount})'
                               : '${lib.serverType.toUpperCase()} (${lib.itemCount})';

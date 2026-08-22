@@ -27,6 +27,7 @@ class SonarrEpisodeService {
         error: response.error,
       );
     }
-    throw SonarrException('Failed to fetch episodes', statusCode: response.statusCode);
+    throw SonarrException('Failed to fetch episodes',
+        statusCode: response.statusCode);
   }
 }

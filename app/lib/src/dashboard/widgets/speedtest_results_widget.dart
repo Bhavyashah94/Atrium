@@ -24,9 +24,8 @@ class DashboardSpeedtestResultsWidget extends ConsumerWidget {
     return DashboardWidgetCard(
       kind: DashboardWidgetKind.speedtestResults,
       accent: accent,
-      onTap: instances.length == 1
-          ? () => _open(context, instances.first)
-          : null,
+      onTap:
+          instances.length == 1 ? () => _open(context, instances.first) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[

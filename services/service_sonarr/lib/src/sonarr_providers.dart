@@ -937,4 +937,3 @@ final sonarrSeriesHistoryProvider = FutureProvider.autoDispose
   final SonarrApi api = await ref.watch(sonarrApiProvider(instance).future);
   return api.getHistory(seriesId: seriesId, pageSize: 150);
 });
-

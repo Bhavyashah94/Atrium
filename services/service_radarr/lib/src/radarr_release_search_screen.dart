@@ -576,8 +576,7 @@ class _RadarrReleaseSearchScreenState
                                             : customFormatScore < 0
                                                 ? colors.errorContainer
                                                     .withValues(alpha: 0.6)
-                                                : colors
-                                                    .surfaceContainerHighest
+                                                : colors.surfaceContainerHighest
                                                     .withValues(alpha: 0.6),
                                         borderRadius:
                                             BorderRadius.circular(Radii.sm),

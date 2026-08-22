@@ -41,7 +41,8 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
     ref.invalidate(tracearrStreamsProvider(widget.instance));
     ref.invalidate(tracearrTodayStatsProvider((widget.instance, null, null)));
     ref.invalidate(tracearrViolationsProvider(widget.instance));
-    ref.invalidate(tracearrActivityProvider((widget.instance, 'week', null, null)));
+    ref.invalidate(
+        tracearrActivityProvider((widget.instance, 'week', null, null)));
   }
 
   @override
@@ -66,9 +67,10 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
     final streamsAsync = ref.watch(tracearrStreamsProvider(widget.instance));
     final todayStatsAsync =
         ref.watch(tracearrTodayStatsProvider((widget.instance, null, null)));
-    final violationsAsync = ref.watch(tracearrViolationsProvider(widget.instance));
-    final activityAsync =
-        ref.watch(tracearrActivityProvider((widget.instance, 'week', null, null)));
+    final violationsAsync =
+        ref.watch(tracearrViolationsProvider(widget.instance));
+    final activityAsync = ref
+        .watch(tracearrActivityProvider((widget.instance, 'week', null, null)));
 
     return Scaffold(
       appBar: AppBar(
@@ -171,7 +173,8 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
               child: OverviewActivityChart(
                 activityAsync: activityAsync,
                 onRetry: () => ref.invalidate(
-                  tracearrActivityProvider((widget.instance, 'week', null, null)),
+                  tracearrActivityProvider(
+                      (widget.instance, 'week', null, null)),
                 ),
               ),
             ),

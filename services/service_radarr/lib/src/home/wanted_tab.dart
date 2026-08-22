@@ -433,9 +433,7 @@ class _WantedListView extends ConsumerWidget {
                           onPressed: onBulkSearch,
                           icon: const Icon(Icons.search, size: 18),
                           label: Text(
-                            isCutoffTab
-                                ? 'Search Cutoff'
-                                : 'Search All',
+                            isCutoffTab ? 'Search Cutoff' : 'Search All',
                           ),
                         ),
                       ),

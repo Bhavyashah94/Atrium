@@ -42,193 +42,195 @@ class SettingsScreen extends ConsumerWidget {
       },
       child: Scaffold(
         appBar: AppBar(
-        leading: Builder(
-          builder: (BuildContext context) {
-            return IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () {
-                openDrawer(context);
-              },
-            );
-          },
-        ),
-        title: const Text('Settings'),
-      ),
-      body: ListView(
-        children: <Widget>[
-          const _SectionHeader('Appearance'),
-          RadioGroup<ThemeMode>(
-            groupValue: prefs.themeMode,
-            onChanged: (ThemeMode? m) {
-              if (m != null) {
-                controller.setThemeMode(m);
-              }
+          leading: Builder(
+            builder: (BuildContext context) {
+              return IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () {
+                  openDrawer(context);
+                },
+              );
             },
-            child: const Column(
-              children: <Widget>[
-                RadioListTile<ThemeMode>(
-                  value: ThemeMode.system,
-                  title: Text('System default'),
-                ),
-                RadioListTile<ThemeMode>(
-                  value: ThemeMode.light,
-                  title: Text('Light'),
-                ),
-                RadioListTile<ThemeMode>(
-                  value: ThemeMode.dark,
-                  title: Text('Dark'),
-                ),
-              ],
-            ),
           ),
-          const Divider(),
-          const _SectionHeader('Theme Styling'),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: Insets.lg),
-            child: _ThemeSettingsSection(),
-          ),
-          const Divider(),
-          const _SectionHeader('Font'),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: Insets.lg, vertical: Insets.xs),
-            child: DropdownMenu<String?>(
-              initialSelection: prefs.fontFamily,
-              expandedInsets: EdgeInsets.zero,
-              inputDecorationTheme: InputDecorationTheme(
-                filled: true,
-                fillColor: Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHighest
-                    .withValues(alpha: 0.3),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                  ),
-                ),
-              ),
-              dropdownMenuEntries: const <DropdownMenuEntry<String?>>[
-                DropdownMenuEntry<String?>(
-                  value: null,
-                  label: 'System default',
-                ),
-                DropdownMenuEntry<String?>(
-                  value: 'JetBrainsMono Nerd Font',
-                  label: 'JetBrains Mono',
-                ),
-              ],
-              onSelected: (String? f) {
-                controller.setFontFamily(f);
+          title: const Text('Settings'),
+        ),
+        body: ListView(
+          children: <Widget>[
+            const _SectionHeader('Appearance'),
+            RadioGroup<ThemeMode>(
+              groupValue: prefs.themeMode,
+              onChanged: (ThemeMode? m) {
+                if (m != null) {
+                  controller.setThemeMode(m);
+                }
               },
+              child: const Column(
+                children: <Widget>[
+                  RadioListTile<ThemeMode>(
+                    value: ThemeMode.system,
+                    title: Text('System default'),
+                  ),
+                  RadioListTile<ThemeMode>(
+                    value: ThemeMode.light,
+                    title: Text('Light'),
+                  ),
+                  RadioListTile<ThemeMode>(
+                    value: ThemeMode.dark,
+                    title: Text('Dark'),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: Insets.sm),
-          const Divider(),
-          const _SectionHeader('Security'),
-          _BiometricTile(
-            enabled: prefs.biometricEnabled,
-            onChanged: controller.setBiometricEnabled,
-          ),
-          const Divider(),
-          const _SectionHeader('Network'),
-          ListTile(
-            leading: const Icon(Icons.bolt_outlined),
-            title: const Text('Wake-on-LAN'),
-            subtitle: Text(
-              wolCount == 0
-                  ? 'No devices configured'
-                  : '$wolCount device${wolCount == 1 ? '' : 's'} configured',
+            const Divider(),
+            const _SectionHeader('Theme Styling'),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: Insets.lg),
+              child: _ThemeSettingsSection(),
             ),
-            onTap: () => pushScreen<void>(context, const WakeOnLanScreen()),
-          ),
-          ListTile(
-            leading: const Icon(Icons.language_outlined),
-            title: const Text('Custom Headers'),
-            subtitle: const Text('Add headers for reverse-proxy auth'),
-            onTap: () => pushScreen<void>(context, const CustomHeadersScreen()),
-          ),
-          const Divider(),
-          const _SectionHeader('Data'),
-          ListTile(
-            leading: const Icon(Icons.upload_file_outlined),
-            title: const Text('Export active profile'),
-            subtitle: const Text(
-              'Save the active profile to a JSON file. Optionally include '
-              'secrets.',
+            const Divider(),
+            const _SectionHeader('Font'),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: Insets.lg, vertical: Insets.xs),
+              child: DropdownMenu<String?>(
+                initialSelection: prefs.fontFamily,
+                expandedInsets: EdgeInsets.zero,
+                inputDecorationTheme: InputDecorationTheme(
+                  filled: true,
+                  fillColor: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHighest
+                      .withValues(alpha: 0.3),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                ),
+                dropdownMenuEntries: const <DropdownMenuEntry<String?>>[
+                  DropdownMenuEntry<String?>(
+                    value: null,
+                    label: 'System default',
+                  ),
+                  DropdownMenuEntry<String?>(
+                    value: 'JetBrainsMono Nerd Font',
+                    label: 'JetBrains Mono',
+                  ),
+                ],
+                onSelected: (String? f) {
+                  controller.setFontFamily(f);
+                },
+              ),
             ),
-            onTap: () => ProfileIo.exportActiveProfile(context, ref),
-          ),
-          ListTile(
-            leading: const Icon(Icons.file_download_outlined),
-            title: const Text('Import profile'),
-            subtitle: const Text(
-              'Add a profile from a JSON file. Your existing profiles are '
-              'kept.',
+            const SizedBox(height: Insets.sm),
+            const Divider(),
+            const _SectionHeader('Security'),
+            _BiometricTile(
+              enabled: prefs.biometricEnabled,
+              onChanged: controller.setBiometricEnabled,
             ),
-            onTap: () => ProfileIo.importProfile(context, ref),
-          ),
-          const Divider(),
-          const _SectionHeader('Sidebar'),
-          ListTile(
-            leading: const Icon(Icons.reorder_rounded),
-            title: const Text('Reorder sidebar services'),
-            subtitle:
-                const Text('Drag to change the order services appear in.'),
-            onTap: () =>
-                pushScreen<void>(context, const ReorderSidebarScreen()),
-          ),
-          const Divider(),
-          const _SectionHeader('About'),
-          const ListTile(
-            leading: Icon(Icons.info_outline),
-            title: Text('Atrium'),
-            subtitle: Text('Version $appVersion • GPL-3.0-or-later'),
-          ),
-          const UpdateCheckTile(),
-          ListTile(
-            leading: const Icon(Icons.code),
-            title: const Text('GitHub'),
-            subtitle: const Text('github.com/retransmit/Atrium'),
-            trailing: const Icon(Icons.open_in_new, size: 18),
-            onTap: () =>
-                openExternal(ScaffoldMessenger.of(context), AtriumLinks.repo),
-          ),
-          ListTile(
-            leading: const Icon(Icons.bug_report_outlined),
-            title: const Text('Report a bug'),
-            subtitle: const Text('Open an issue on GitHub'),
-            trailing: const Icon(Icons.open_in_new, size: 18),
-            onTap: () => openExternal(
-              ScaffoldMessenger.of(context),
-              AtriumLinks.bugReport,
+            const Divider(),
+            const _SectionHeader('Network'),
+            ListTile(
+              leading: const Icon(Icons.bolt_outlined),
+              title: const Text('Wake-on-LAN'),
+              subtitle: Text(
+                wolCount == 0
+                    ? 'No devices configured'
+                    : '$wolCount device${wolCount == 1 ? '' : 's'} configured',
+              ),
+              onTap: () => pushScreen<void>(context, const WakeOnLanScreen()),
             ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.lightbulb_outline),
-            title: const Text('Request a feature'),
-            subtitle: const Text('Suggest an idea on GitHub'),
-            trailing: const Icon(Icons.open_in_new, size: 18),
-            onTap: () => openExternal(
-              ScaffoldMessenger.of(context),
-              AtriumLinks.featureRequest,
+            ListTile(
+              leading: const Icon(Icons.language_outlined),
+              title: const Text('Custom Headers'),
+              subtitle: const Text('Add headers for reverse-proxy auth'),
+              onTap: () =>
+                  pushScreen<void>(context, const CustomHeadersScreen()),
             ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.history),
-            title: const Text('Change log'),
-            subtitle: const Text("What's new in each version"),
-            onTap: () => pushScreen<void>(context, const ChangelogScreen()),
-          ),
-        ],
+            const Divider(),
+            const _SectionHeader('Data'),
+            ListTile(
+              leading: const Icon(Icons.upload_file_outlined),
+              title: const Text('Export active profile'),
+              subtitle: const Text(
+                'Save the active profile to a JSON file. Optionally include '
+                'secrets.',
+              ),
+              onTap: () => ProfileIo.exportActiveProfile(context, ref),
+            ),
+            ListTile(
+              leading: const Icon(Icons.file_download_outlined),
+              title: const Text('Import profile'),
+              subtitle: const Text(
+                'Add a profile from a JSON file. Your existing profiles are '
+                'kept.',
+              ),
+              onTap: () => ProfileIo.importProfile(context, ref),
+            ),
+            const Divider(),
+            const _SectionHeader('Sidebar'),
+            ListTile(
+              leading: const Icon(Icons.reorder_rounded),
+              title: const Text('Reorder sidebar services'),
+              subtitle:
+                  const Text('Drag to change the order services appear in.'),
+              onTap: () =>
+                  pushScreen<void>(context, const ReorderSidebarScreen()),
+            ),
+            const Divider(),
+            const _SectionHeader('About'),
+            const ListTile(
+              leading: Icon(Icons.info_outline),
+              title: Text('Atrium'),
+              subtitle: Text('Version $appVersion • GPL-3.0-or-later'),
+            ),
+            const UpdateCheckTile(),
+            ListTile(
+              leading: const Icon(Icons.code),
+              title: const Text('GitHub'),
+              subtitle: const Text('github.com/retransmit/Atrium'),
+              trailing: const Icon(Icons.open_in_new, size: 18),
+              onTap: () =>
+                  openExternal(ScaffoldMessenger.of(context), AtriumLinks.repo),
+            ),
+            ListTile(
+              leading: const Icon(Icons.bug_report_outlined),
+              title: const Text('Report a bug'),
+              subtitle: const Text('Open an issue on GitHub'),
+              trailing: const Icon(Icons.open_in_new, size: 18),
+              onTap: () => openExternal(
+                ScaffoldMessenger.of(context),
+                AtriumLinks.bugReport,
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.lightbulb_outline),
+              title: const Text('Request a feature'),
+              subtitle: const Text('Suggest an idea on GitHub'),
+              trailing: const Icon(Icons.open_in_new, size: 18),
+              onTap: () => openExternal(
+                ScaffoldMessenger.of(context),
+                AtriumLinks.featureRequest,
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.history),
+              title: const Text('Change log'),
+              subtitle: const Text("What's new in each version"),
+              onTap: () => pushScreen<void>(context, const ChangelogScreen()),
+            ),
+          ],
+        ),
       ),
-    ),);
+    );
   }
 }
 
@@ -995,26 +997,33 @@ class _ThemePalettePreviewGrid extends StatelessWidget {
       [
         _SwatchData('Primary', cs.primary, cs.onPrimary),
         _SwatchData('onPrimary', cs.onPrimary, cs.primary),
-        _SwatchData('Primary\nContainer', cs.primaryContainer, cs.onPrimaryContainer),
-        _SwatchData('onPrimary\nContainer', cs.onPrimaryContainer, cs.primaryContainer),
+        _SwatchData(
+            'Primary\nContainer', cs.primaryContainer, cs.onPrimaryContainer),
+        _SwatchData(
+            'onPrimary\nContainer', cs.onPrimaryContainer, cs.primaryContainer),
       ],
       [
         _SwatchData('Secondary', cs.secondary, cs.onSecondary),
         _SwatchData('onSecondary', cs.onSecondary, cs.secondary),
-        _SwatchData('Secondary\nContainer', cs.secondaryContainer, cs.onSecondaryContainer),
-        _SwatchData('onSecondary\nContainer', cs.onSecondaryContainer, cs.secondaryContainer),
+        _SwatchData('Secondary\nContainer', cs.secondaryContainer,
+            cs.onSecondaryContainer),
+        _SwatchData('onSecondary\nContainer', cs.onSecondaryContainer,
+            cs.secondaryContainer),
       ],
       [
         _SwatchData('Tertiary', cs.tertiary, cs.onTertiary),
         _SwatchData('onTertiary', cs.onTertiary, cs.tertiary),
-        _SwatchData('Tertiary\nContainer', cs.tertiaryContainer, cs.onTertiaryContainer),
-        _SwatchData('onTertiary\nContainer', cs.onTertiaryContainer, cs.tertiaryContainer),
+        _SwatchData('Tertiary\nContainer', cs.tertiaryContainer,
+            cs.onTertiaryContainer),
+        _SwatchData('onTertiary\nContainer', cs.onTertiaryContainer,
+            cs.tertiaryContainer),
       ],
       [
         _SwatchData('Error', cs.error, cs.onError),
         _SwatchData('onError', cs.onError, cs.error),
         _SwatchData('Error\nContainer', cs.errorContainer, cs.onErrorContainer),
-        _SwatchData('onError\nContainer', cs.onErrorContainer, cs.errorContainer),
+        _SwatchData(
+            'onError\nContainer', cs.onErrorContainer, cs.errorContainer),
       ],
       [
         _SwatchData('Surface', cs.surface, cs.onSurface),
@@ -1023,20 +1032,24 @@ class _ThemePalettePreviewGrid extends StatelessWidget {
         _SwatchData('Surface\nBright', cs.surfaceBright, cs.onSurface),
       ],
       [
-        _SwatchData('Surf Cont\nLowest', cs.surfaceContainerLowest, cs.onSurface),
+        _SwatchData(
+            'Surf Cont\nLowest', cs.surfaceContainerLowest, cs.onSurface),
         _SwatchData('Surf Cont\nLow', cs.surfaceContainerLow, cs.onSurface),
         _SwatchData('Surface\nContainer', cs.surfaceContainer, cs.onSurface),
         _SwatchData('Surf Cont\nHigh', cs.surfaceContainerHigh, cs.onSurface),
       ],
       [
-        _SwatchData('Surf Cont\nHighest', cs.surfaceContainerHighest, cs.onSurface),
-        _SwatchData('onSurface\nVariant', cs.onSurfaceVariant, cs.surfaceContainerHighest),
+        _SwatchData(
+            'Surf Cont\nHighest', cs.surfaceContainerHighest, cs.onSurface),
+        _SwatchData('onSurface\nVariant', cs.onSurfaceVariant,
+            cs.surfaceContainerHighest),
         _SwatchData('Outline', cs.outline, cs.surface),
         _SwatchData('Outline\nVariant', cs.outlineVariant, cs.onSurface),
       ],
       [
         _SwatchData('Inverse\nSurface', cs.inverseSurface, cs.onInverseSurface),
-        _SwatchData('onInverse\nSurface', cs.onInverseSurface, cs.inverseSurface),
+        _SwatchData(
+            'onInverse\nSurface', cs.onInverseSurface, cs.inverseSurface),
         _SwatchData('Inverse\nPrimary', cs.inversePrimary, cs.inverseSurface),
         _SwatchData('Scrim', cs.scrim, Colors.white),
       ],
@@ -1171,9 +1184,7 @@ class _ColorMiniGrid extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? activeColorScheme.primary
-                : Colors.transparent,
+            color: isSelected ? activeColorScheme.primary : Colors.transparent,
             width: 3,
           ),
         ),

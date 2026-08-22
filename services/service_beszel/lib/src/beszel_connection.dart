@@ -42,14 +42,14 @@ Future<void> verifyBeszelConnection(Dio dio, InstanceAuth auth) async {
   }
 
   try {
-    final Response<Map<String, dynamic>> resp =
-        await dio.post<Map<String, dynamic>>(
-      '/api/collections/users/auth-with-password',
-      data: <String, String>{
-        'identity': auth.username,
-        'password': auth.password,
-      },
-    );
+    final Response<Map<String, dynamic>> resp = await dio
+        .post<Map<String, dynamic>>(
+          '/api/collections/users/auth-with-password',
+          data: <String, String>{
+            'identity': auth.username,
+            'password': auth.password,
+          },
+        );
     final String? token = resp.data?['token'] as String?;
     if (token == null || token.isEmpty) {
       throw const NetworkAuthException(

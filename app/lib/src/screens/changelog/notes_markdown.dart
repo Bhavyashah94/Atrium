@@ -33,8 +33,8 @@ List<NoteSpan> parseInline(String text) {
 /// only text and bold are produced, never links or HTML.
 List<Widget> buildNotes(String notes, ThemeData theme) {
   final ColorScheme scheme = theme.colorScheme;
-  final TextStyle base =
-      (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(color: scheme.onSurface);
+  final TextStyle base = (theme.textTheme.bodyMedium ?? const TextStyle())
+      .copyWith(color: scheme.onSurface);
 
   TextSpan lineSpan(String line) => TextSpan(
         style: base,
@@ -42,7 +42,8 @@ List<Widget> buildNotes(String notes, ThemeData theme) {
           for (final NoteSpan s in parseInline(line))
             TextSpan(
               text: s.text,
-              style: s.bold ? const TextStyle(fontWeight: FontWeight.w700) : null,
+              style:
+                  s.bold ? const TextStyle(fontWeight: FontWeight.w700) : null,
             ),
         ],
       );

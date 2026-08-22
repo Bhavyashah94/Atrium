@@ -107,8 +107,7 @@ abstract class TransmissionTorrent with _$TransmissionTorrent {
   bool get hasEta => eta > 0;
 
   /// Bytes actually on disk for the wanted files.
-  int get doneBytes =>
-      (sizeWhenDone - leftUntilDone).clamp(0, sizeWhenDone);
+  int get doneBytes => (sizeWhenDone - leftUntilDone).clamp(0, sizeWhenDone);
 
   /// Ratio for display, treating Transmission's -1 as zero.
   double get ratio => uploadRatio < 0 ? 0 : uploadRatio;

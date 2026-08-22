@@ -24,50 +24,49 @@ class ProwlarrAppsTab extends ConsumerWidget {
     final AsyncValue<List<ProwlarrApplication>> apps =
         ref.watch(prowlarrApplicationsProvider(instance));
     return AsyncValueView<List<ProwlarrApplication>>(
-          value: apps,
-        onRetry: () => ref.invalidate(prowlarrApplicationsProvider(instance)),
-          data: (List<ProwlarrApplication> list) {
-            
-          if (list.isEmpty) {
-            return EasyRefresh(
-        header: const ClassicHeader(
-          dragText: 'Pull to refresh',
-          armedText: 'Release ready',
-          readyText: 'Refreshing...',
-          processingText: 'Refreshing...',
-          processedText: 'Succeeded',
-          failedText: 'Failed',
-          messageText: 'Last updated at %T',
-        ),
-        onRefresh: () async =>
-          ref.invalidate(prowlarrApplicationsProvider(instance)),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const <Widget>[
-            SizedBox(height: 100),
-            EmptyView(
-              icon: Icons.apps_outlined,
-              title: 'No applications',
-              message:
-                  'Tap "Add application" to connect Sonarr, Radarr, and more.',
-            ),
-          ],
-        ),
-      );
-          }
+      value: apps,
+      onRetry: () => ref.invalidate(prowlarrApplicationsProvider(instance)),
+      data: (List<ProwlarrApplication> list) {
+        if (list.isEmpty) {
           return EasyRefresh(
-      header: const ClassicHeader(
-        dragText: 'Pull to refresh',
-        armedText: 'Release ready',
-        readyText: 'Refreshing...',
-        processingText: 'Refreshing...',
-        processedText: 'Succeeded',
-        failedText: 'Failed',
-        messageText: 'Last updated at %T',
-      ),
-      onRefresh: () async =>
-          ref.invalidate(prowlarrApplicationsProvider(instance)),
-      child: ListView.builder(
+            header: const ClassicHeader(
+              dragText: 'Pull to refresh',
+              armedText: 'Release ready',
+              readyText: 'Refreshing...',
+              processingText: 'Refreshing...',
+              processedText: 'Succeeded',
+              failedText: 'Failed',
+              messageText: 'Last updated at %T',
+            ),
+            onRefresh: () async =>
+                ref.invalidate(prowlarrApplicationsProvider(instance)),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const <Widget>[
+                SizedBox(height: 100),
+                EmptyView(
+                  icon: Icons.apps_outlined,
+                  title: 'No applications',
+                  message:
+                      'Tap "Add application" to connect Sonarr, Radarr, and more.',
+                ),
+              ],
+            ),
+          );
+        }
+        return EasyRefresh(
+          header: const ClassicHeader(
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
+          onRefresh: () async =>
+              ref.invalidate(prowlarrApplicationsProvider(instance)),
+          child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(
               Insets.lg,
               Insets.sm,
@@ -147,10 +146,9 @@ class ProwlarrAppsTab extends ConsumerWidget {
               );
             },
           ),
-    );
-        
-          },
         );
+      },
+    );
   }
 }
 

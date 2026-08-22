@@ -138,7 +138,15 @@ class NzbgetApi {
     bool addPaused = false,
   }) async {
     final dynamic result = await _call('append', <dynamic>[
-      name, content, category, priority, false, addPaused, '', 0, 'SCORE',
+      name,
+      content,
+      category,
+      priority,
+      false,
+      addPaused,
+      '',
+      0,
+      'SCORE',
     ]);
     final int id = result is int ? result : -1;
     if (id <= 0) {

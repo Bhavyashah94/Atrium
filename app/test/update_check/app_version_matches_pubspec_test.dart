@@ -23,8 +23,7 @@ void main() {
     expect(
       appVersion,
       pubspecVersion,
-      reason:
-          'appVersion ($appVersion) must equal the pubspec version '
+      reason: 'appVersion ($appVersion) must equal the pubspec version '
           '($pubspecVersion). Bump the appVersion constant in '
           'app/lib/src/update_check/app_version.dart in lockstep with the '
           'pubspec version at release time (see docs/RELEASING.md). It is the '

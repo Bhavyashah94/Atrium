@@ -187,16 +187,16 @@ class _MoviesTabState extends ConsumerState<MoviesTab>
           onRetry: () => ref.invalidate(radarrMoviesProvider(widget.instance)),
           data: (List<RadarrMovie> list) {
             return EasyRefresh(
-          header: const ClassicHeader(
-            position: IndicatorPosition.locator,
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
+              header: const ClassicHeader(
+                position: IndicatorPosition.locator,
+                dragText: 'Pull to refresh',
+                armedText: 'Release ready',
+                readyText: 'Refreshing...',
+                processingText: 'Refreshing...',
+                processedText: 'Succeeded',
+                failedText: 'Failed',
+                messageText: 'Last updated at %T',
+              ),
               onRefresh: () async {
                 ref.invalidate(radarrMoviesProvider(widget.instance));
                 await ref.read(radarrMoviesProvider(widget.instance).future);
@@ -1222,13 +1222,13 @@ class _BulkDeleteDialogState extends ConsumerState<_BulkDeleteDialog> {
                   title: const Text('Also delete files from disk'),
                   value: _deleteFiles,
                   contentPadding: EdgeInsets.zero,
-                  onChanged: (val) => setState(() => _deleteFiles = val ?? false),
+                  onChanged: (val) =>
+                      setState(() => _deleteFiles = val ?? false),
                 ),
               ),
             const RadioListTile<_DeleteMode>(
               title: Text('Delete files only'),
-              subtitle:
-                  Text('Keep entry in Radarr library to free disk space'),
+              subtitle: Text('Keep entry in Radarr library to free disk space'),
               value: _DeleteMode.deleteFilesOnly,
               contentPadding: EdgeInsets.zero,
             ),
@@ -1330,13 +1330,15 @@ class _BulkDeleteDialogState extends ConsumerState<_BulkDeleteDialog> {
 
             final String msg;
             if (_mode == _DeleteMode.deleteEntry) {
-              msg = 'Successfully deleted ${widget.selectedIds.length} movie(s)';
+              msg =
+                  'Successfully deleted ${widget.selectedIds.length} movie(s)';
             } else if (failedCount == 0) {
               msg = _unmonitor
                   ? 'Successfully deleted files and unmonitored $successCount movie(s)'
                   : 'Successfully deleted files for $successCount movie(s)';
             } else {
-              msg = 'Deleted files for $successCount movie(s). Failed for $failedCount movie(s)';
+              msg =
+                  'Deleted files for $successCount movie(s). Failed for $failedCount movie(s)';
             }
 
             ScaffoldMessenger.of(context).showSnackBar(

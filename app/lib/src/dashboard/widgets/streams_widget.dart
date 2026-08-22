@@ -132,7 +132,9 @@ class DashboardStreamsWidget extends ConsumerWidget {
       anyError |= sessions.hasError;
       for (final jf.ActiveSession s
           in sessions.value ?? const <jf.ActiveSession>[]) {
-        final String t = s.episodeName == null ? s.showTitle : '${s.showTitle} - ${s.episodeName}';
+        final String t = s.episodeName == null
+            ? s.showTitle
+            : '${s.showTitle} - ${s.episodeName}';
         if (!tryAdd(s.user, t, s.device)) continue;
         jellyfinRows.add(_StreamRow(
           user: s.user,
@@ -154,7 +156,9 @@ class DashboardStreamsWidget extends ConsumerWidget {
       anyError |= sessions.hasError;
       for (final emby.ActiveSession s
           in sessions.value ?? const <emby.ActiveSession>[]) {
-        final String t = s.episodeName == null ? s.showTitle : '${s.showTitle} - ${s.episodeName}';
+        final String t = s.episodeName == null
+            ? s.showTitle
+            : '${s.showTitle} - ${s.episodeName}';
         if (!tryAdd(s.user, t, s.device)) continue;
         embyRows.add(_StreamRow(
           user: s.user,
@@ -169,8 +173,9 @@ class DashboardStreamsWidget extends ConsumerWidget {
         ));
       }
     }
-    
-    final int totalCount = embyRows.length + plexRows.length + jellyfinRows.length;
+
+    final int totalCount =
+        embyRows.length + plexRows.length + jellyfinRows.length;
 
     Widget buildGroup(String title, List<_StreamRow> groupRows) {
       if (groupRows.isEmpty) return const SizedBox.shrink();
@@ -217,11 +222,12 @@ class DashboardStreamsWidget extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           buildGroup('Emby Servers', embyRows),
-          if (embyRows.isNotEmpty && (plexRows.isNotEmpty || jellyfinRows.isNotEmpty))
-             const SizedBox(height: Insets.md),
+          if (embyRows.isNotEmpty &&
+              (plexRows.isNotEmpty || jellyfinRows.isNotEmpty))
+            const SizedBox(height: Insets.md),
           buildGroup('Plex Servers', plexRows),
           if (plexRows.isNotEmpty && jellyfinRows.isNotEmpty)
-             const SizedBox(height: Insets.md),
+            const SizedBox(height: Insets.md),
           buildGroup('JellyFin Servers', jellyfinRows),
         ],
       );

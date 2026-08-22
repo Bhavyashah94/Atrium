@@ -63,7 +63,7 @@ abstract final class AtriumTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         clipBehavior: Clip.antiAlias,
-        color: resolvedScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        color: resolvedScheme.surfaceContainerLow,
         shape: const RoundedRectangleBorder(borderRadius: Radii.card),
         margin: EdgeInsets.zero,
       ),
@@ -72,8 +72,7 @@ abstract final class AtriumTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor:
-            resolvedScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        fillColor: resolvedScheme.surfaceContainerHigh,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(Radii.md),
           borderSide: BorderSide.none,

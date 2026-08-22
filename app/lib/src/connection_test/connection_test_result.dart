@@ -61,7 +61,9 @@ ConnectionTestResult connectionResultFromError(Object error) {
       'Reachable, but rate limit exceeded on server',
     );
   }
-  if (errStr.contains('401') || errStr.contains('403') || errStr.contains('unauthorized')) {
+  if (errStr.contains('401') ||
+      errStr.contains('403') ||
+      errStr.contains('unauthorized')) {
     return const ConnectionTestResult(
       ConnectionOutcome.authFailed,
       'Reachable, but the credentials were rejected',

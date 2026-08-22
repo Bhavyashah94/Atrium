@@ -253,7 +253,10 @@ class FakeRawPublicAPIV2Api implements RawPublicAPIV2Api {
       MediaStatsResponse(
         windows: <String, dynamic>{
           'all_time': <String, dynamic>{
-            'combined': <String, dynamic>{'plays': 100, 'watch_time_ms': 360000000},
+            'combined': <String, dynamic>{
+              'plays': 100,
+              'watch_time_ms': 360000000
+            },
           },
         },
       ),

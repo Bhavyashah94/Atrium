@@ -432,7 +432,8 @@ void main() {
       expect(detailScreens.last.mediaRef, equals('ep_1'));
     });
 
-    testWidgets('renders Series ActionChip on episode detail and navigates to show',
+    testWidgets(
+        'renders Series ActionChip on episode detail and navigates to show',
         (tester) async {
       const testEpisodeDetail = TracearrMediaDetail(
         id: 'ep_101',
@@ -533,7 +534,8 @@ void main() {
       expect(find.text('2 Episodes'), findsOneWidget);
     });
 
-    testWidgets('RecentlyAddedPosterTile prioritizes mediaId over ratingKey and id',
+    testWidgets(
+        'RecentlyAddedPosterTile prioritizes mediaId over ratingKey and id',
         (tester) async {
       const itemWithMediaId = TracearrRecentlyAddedItem(
         id: 'rec_db_row_1',
@@ -578,12 +580,13 @@ void main() {
       await tester.tap(find.text('Oppenheimer'));
       await tester.pumpAndSettle();
 
-      final detailScreen = tester
-          .widget<TracearrMediaDetailScreen>(find.byType(TracearrMediaDetailScreen));
+      final detailScreen = tester.widget<TracearrMediaDetailScreen>(
+          find.byType(TracearrMediaDetailScreen));
       expect(detailScreen.mediaRef, equals('canonical_media_uuid_opp'));
     });
 
-    testWidgets('RecentlyAddedPosterTile falls back to ratingKey when mediaId is null',
+    testWidgets(
+        'RecentlyAddedPosterTile falls back to ratingKey when mediaId is null',
         (tester) async {
       const itemWithRatingKey = TracearrRecentlyAddedItem(
         id: 'rec_db_row_2',
@@ -627,8 +630,8 @@ void main() {
       await tester.tap(find.text('Barbie'));
       await tester.pumpAndSettle();
 
-      final detailScreen = tester
-          .widget<TracearrMediaDetailScreen>(find.byType(TracearrMediaDetailScreen));
+      final detailScreen = tester.widget<TracearrMediaDetailScreen>(
+          find.byType(TracearrMediaDetailScreen));
       expect(detailScreen.mediaRef, equals('plex_rating_key_46000'));
     });
 
@@ -806,7 +809,8 @@ void main() {
       expect(hierarchyTop, lessThan(availabilityTop));
     });
 
-    testWidgets('Non-Plex launcher displays clean notice without raw server IDs',
+    testWidgets(
+        'Non-Plex launcher displays clean notice without raw server IDs',
         (tester) async {
       const nonPlexAvailability = [
         TracearrMediaAvailability(

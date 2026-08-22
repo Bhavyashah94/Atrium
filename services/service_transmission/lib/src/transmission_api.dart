@@ -182,7 +182,8 @@ class TransmissionApi {
     String? downloadDir,
     bool paused = false,
   }) async {
-    final Map<String, dynamic> args = await _rpc('torrent-add', <String, Object?>{
+    final Map<String, dynamic> args =
+        await _rpc('torrent-add', <String, Object?>{
       'filename': urlOrMagnet,
       'paused': paused,
       if (downloadDir != null && downloadDir.isNotEmpty)
@@ -198,7 +199,8 @@ class TransmissionApi {
     String? downloadDir,
     bool paused = false,
   }) async {
-    final Map<String, dynamic> args = await _rpc('torrent-add', <String, Object?>{
+    final Map<String, dynamic> args =
+        await _rpc('torrent-add', <String, Object?>{
       'metainfo': base64Encode(bytes),
       'paused': paused,
       if (downloadDir != null && downloadDir.isNotEmpty)

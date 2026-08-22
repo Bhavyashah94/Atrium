@@ -128,8 +128,8 @@ void main() {
       await tester.tap(find.text('Dune'));
       await tester.pumpAndSettle();
 
-      final detailScreen =
-          tester.widget<TracearrMediaDetailScreen>(find.byType(TracearrMediaDetailScreen));
+      final detailScreen = tester.widget<TracearrMediaDetailScreen>(
+          find.byType(TracearrMediaDetailScreen));
       expect(detailScreen.mediaRef, equals('canonical_media_uuid'));
     });
 
@@ -151,12 +151,13 @@ void main() {
       await tester.tap(find.text('Interstellar'));
       await tester.pumpAndSettle();
 
-      final detailScreen =
-          tester.widget<TracearrMediaDetailScreen>(find.byType(TracearrMediaDetailScreen));
+      final detailScreen = tester.widget<TracearrMediaDetailScreen>(
+          find.byType(TracearrMediaDetailScreen));
       expect(detailScreen.mediaRef, equals('plex_rating_key'));
     });
 
-    testWidgets('tapping username/avatar navigates to TracearrUserDossierScreen',
+    testWidgets(
+        'tapping username/avatar navigates to TracearrUserDossierScreen',
         (tester) async {
       await tester.pumpWidget(createCardWidget());
       await tester.pumpAndSettle();
@@ -184,7 +185,8 @@ void main() {
   });
 
   group('HistoryItemCard Playback Quality Classification', () {
-    testWidgets('labels video copy as Direct Stream even when isTranscode is true',
+    testWidgets(
+        'labels video copy as Direct Stream even when isTranscode is true',
         (tester) async {
       const copyItem = TracearrHistoryItem(
         id: 'h1',
@@ -204,7 +206,8 @@ void main() {
       expect(find.text('Direct Stream'), findsOneWidget);
     });
 
-    testWidgets('labels video transcode with hardware acceleration as HW Transcode',
+    testWidgets(
+        'labels video transcode with hardware acceleration as HW Transcode',
         (tester) async {
       const hwItem = TracearrHistoryItem(
         id: 'h2',
@@ -224,7 +227,8 @@ void main() {
       expect(find.text('HW Transcode'), findsOneWidget);
     });
 
-    testWidgets('labels video transcode without hardware acceleration as CPU Transcode',
+    testWidgets(
+        'labels video transcode without hardware acceleration as CPU Transcode',
         (tester) async {
       const cpuItem = TracearrHistoryItem(
         id: 'h3',
@@ -243,8 +247,7 @@ void main() {
       expect(find.text('CPU Transcode'), findsOneWidget);
     });
 
-    testWidgets('labels directplay as Direct Play',
-        (tester) async {
+    testWidgets('labels directplay as Direct Play', (tester) async {
       const dpItem = TracearrHistoryItem(
         id: 'h4',
         serverId: 'srv_1',

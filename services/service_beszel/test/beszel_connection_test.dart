@@ -41,24 +41,30 @@ void main() {
     expect((req.data as Map<String, dynamic>)['password'], 'hunter2');
   });
 
-  test('rejects a wrong password (PocketBase answers 400) as auth failure',
-      () async {
-    final ({Dio dio, FakeHttpClientAdapter adapter}) h = _harness(
-      (RequestOptions o) => (
-        status: 400,
-        data: <String, dynamic>{'code': 400, 'message': 'Failed to authenticate.'},
-      ),
-    );
+  test(
+    'rejects a wrong password (PocketBase answers 400) as auth failure',
+    () async {
+      final ({Dio dio, FakeHttpClientAdapter adapter}) h = _harness(
+        (RequestOptions o) => (
+          status: 400,
+          data: <String, dynamic>{
+            'code': 400,
+            'message': 'Failed to authenticate.',
+          },
+        ),
+      );
 
-    await expectLater(
-      verifyBeszelConnection(h.dio, _creds),
-      throwsA(isA<NetworkAuthException>()),
-    );
-  });
+      await expectLater(
+        verifyBeszelConnection(h.dio, _creds),
+        throwsA(isA<NetworkAuthException>()),
+      );
+    },
+  );
 
   test('treats a 401 as an auth failure', () async {
-    final ({Dio dio, FakeHttpClientAdapter adapter}) h =
-        _harness((RequestOptions o) => (status: 401, data: <String, dynamic>{}));
+    final ({Dio dio, FakeHttpClientAdapter adapter}) h = _harness(
+      (RequestOptions o) => (status: 401, data: <String, dynamic>{}),
+    );
 
     await expectLater(
       verifyBeszelConnection(h.dio, _creds),
@@ -79,8 +85,9 @@ void main() {
   });
 
   test('a server error surfaces as a non-auth NetworkException', () async {
-    final ({Dio dio, FakeHttpClientAdapter adapter}) h =
-        _harness((RequestOptions o) => (status: 500, data: <String, dynamic>{}));
+    final ({Dio dio, FakeHttpClientAdapter adapter}) h = _harness(
+      (RequestOptions o) => (status: 500, data: <String, dynamic>{}),
+    );
 
     await expectLater(
       verifyBeszelConnection(h.dio, _creds),
@@ -90,14 +97,17 @@ void main() {
     );
   });
 
-  test('without user/pass, an auth-gated 403 is still a credential failure',
-      () async {
-    final ({Dio dio, FakeHttpClientAdapter adapter}) h =
-        _harness((RequestOptions o) => (status: 403, data: <String, dynamic>{}));
+  test(
+    'without user/pass, an auth-gated 403 is still a credential failure',
+    () async {
+      final ({Dio dio, FakeHttpClientAdapter adapter}) h = _harness(
+        (RequestOptions o) => (status: 403, data: <String, dynamic>{}),
+      );
 
-    await expectLater(
-      verifyBeszelConnection(h.dio, const InstanceAuth.apiKey(apiKey: 'x')),
-      throwsA(isA<NetworkAuthException>()),
-    );
-  });
+      await expectLater(
+        verifyBeszelConnection(h.dio, const InstanceAuth.apiKey(apiKey: 'x')),
+        throwsA(isA<NetworkAuthException>()),
+      );
+    },
+  );
 }

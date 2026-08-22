@@ -52,7 +52,8 @@ void main() {
       (WidgetTester tester) async {
     await _pump(
       tester,
-      const UpdateCheckState(status: UpdateStatus.upToDate, latestVersion: '1.3.3'),
+      const UpdateCheckState(
+          status: UpdateStatus.upToDate, latestVersion: '1.3.3'),
     );
     expect(find.text('Available'), findsNothing);
     expect(find.text('See full release'), findsNothing);

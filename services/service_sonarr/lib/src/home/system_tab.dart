@@ -242,15 +242,15 @@ class _StatusTab extends ConsumerWidget {
     final diskAsync = ref.watch(sonarrDiskSpaceProvider(instance));
 
     return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
       onRefresh: () async {
         ref.invalidate(sonarrSystemStatusProvider(instance));
         ref.invalidate(sonarrHealthProvider(instance));
@@ -686,15 +686,15 @@ class _TasksTab extends ConsumerWidget {
     final tasksAsync = ref.watch(sonarrTasksProvider(instance));
 
     return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
       onRefresh: () async {
         ref.invalidate(sonarrTasksProvider(instance));
         await ref.read(sonarrTasksProvider(instance).future);
@@ -836,15 +836,15 @@ class _UpdatesTab extends ConsumerWidget {
     final updatesAsync = ref.watch(sonarrUpdatesProvider(instance));
 
     return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
       onRefresh: () async {
         ref.invalidate(sonarrUpdatesProvider(instance));
         await ref.read(sonarrUpdatesProvider(instance).future);
@@ -1182,7 +1182,8 @@ class _LogsTabState extends ConsumerState<_LogsTab> {
               ListTile(
                 leading: const Icon(Icons.info_outline),
                 title: const Text('Info'),
-                trailing: _levelFilter == 'info' ? const Icon(Icons.check) : null,
+                trailing:
+                    _levelFilter == 'info' ? const Icon(Icons.check) : null,
                 onTap: () {
                   Navigator.pop(context);
                   _levelFilter = 'info';
@@ -1192,7 +1193,8 @@ class _LogsTabState extends ConsumerState<_LogsTab> {
               ListTile(
                 leading: const Icon(Icons.warning_amber_outlined),
                 title: const Text('Warning'),
-                trailing: _levelFilter == 'warn' ? const Icon(Icons.check) : null,
+                trailing:
+                    _levelFilter == 'warn' ? const Icon(Icons.check) : null,
                 onTap: () {
                   Navigator.pop(context);
                   _levelFilter = 'warn';
@@ -1202,7 +1204,8 @@ class _LogsTabState extends ConsumerState<_LogsTab> {
               ListTile(
                 leading: const Icon(Icons.error_outline),
                 title: const Text('Error'),
-                trailing: _levelFilter == 'error' ? const Icon(Icons.check) : null,
+                trailing:
+                    _levelFilter == 'error' ? const Icon(Icons.check) : null,
                 onTap: () {
                   Navigator.pop(context);
                   _levelFilter = 'error';
@@ -1448,15 +1451,15 @@ class _BackupsTab extends ConsumerWidget {
     final backupsAsync = ref.watch(sonarrBackupsProvider(instance));
 
     return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
       onRefresh: () async {
         ref.invalidate(sonarrBackupsProvider(instance));
         await ref.read(sonarrBackupsProvider(instance).future);

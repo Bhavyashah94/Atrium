@@ -113,7 +113,9 @@ class _ActivityTabState extends ConsumerState<ActivityTab> {
               .loadMore();
           // See media_tab: loadMore's bool conflates exhausted with no-op and
           // failed, so hasMore is the only trustworthy end-of-list signal.
-          return ref.read(tracearrHistoryPaginatedProvider(widget.instance)).hasMore
+          return ref
+                  .read(tracearrHistoryPaginatedProvider(widget.instance))
+                  .hasMore
               ? IndicatorResult.success
               : IndicatorResult.noMore;
         },
@@ -122,7 +124,8 @@ class _ActivityTabState extends ConsumerState<ActivityTab> {
             if (notification.metrics.pixels >=
                 notification.metrics.maxScrollExtent - 250) {
               ref
-                  .read(tracearrHistoryPaginatedProvider(widget.instance).notifier)
+                  .read(tracearrHistoryPaginatedProvider(widget.instance)
+                      .notifier)
                   .loadMore();
             }
             return false;

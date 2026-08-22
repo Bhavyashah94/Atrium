@@ -12,36 +12,43 @@ class BeszelApi {
 
   Future<List<BeszelSystem>> getSystems() async {
     try {
-      final Response<Map<String, dynamic>> response = await _dio.get<Map<String, dynamic>>('/api/collections/systems/records');
+      final Response<Map<String, dynamic>> response = await _dio
+          .get<Map<String, dynamic>>('/api/collections/systems/records');
       final items = (response.data?['items'] as List<dynamic>?) ?? [];
-      return items.map((e) => BeszelSystem.fromJson(e as Map<String, dynamic>)).toList();
+      return items
+          .map((e) => BeszelSystem.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       return [];
     }
   }
 
-  Future<List<BeszelStats>> getSystemStats(String systemId, [ChartTime chartTime = ChartTime.hour1]) async {
+  Future<List<BeszelStats>> getSystemStats(
+    String systemId, [
+    ChartTime chartTime = ChartTime.hour1,
+  ]) async {
     try {
       final filter = _buildTimeFilter('system', systemId, chartTime);
-      final Response<Map<String, dynamic>> response = await _dio.get<Map<String, dynamic>>(
-        '/api/collections/system_stats/records',
-        queryParameters: {
-          'filter': filter,
-          'sort': '-created',
-          'perPage': 2000,
-        },
-      );
+      final Response<Map<String, dynamic>> response = await _dio
+          .get<Map<String, dynamic>>(
+            '/api/collections/system_stats/records',
+            queryParameters: {
+              'filter': filter,
+              'sort': '-created',
+              'perPage': 2000,
+            },
+          );
       final items = (response.data?['items'] as List<dynamic>?) ?? [];
-      
+
       return items.map((e) {
         final data = e as Map<String, dynamic>;
         final stats = data['stats'] as Map<String, dynamic>? ?? {};
-        
+
         DateTime? created;
         if (data['created'] != null) {
           created = DateTime.tryParse(data['created'] as String);
         }
-        
+
         // Parse disk I/O
         double diskReadIo = 0.0;
         double diskWriteIo = 0.0;
@@ -51,7 +58,8 @@ class BeszelApi {
           if (dio.length > 1) diskWriteIo = (dio[1] as num).toDouble();
         } else {
           diskReadIo = ((stats['dr'] as num?)?.toDouble() ?? 0.0) * 1024 * 1024;
-          diskWriteIo = ((stats['dw'] as num?)?.toDouble() ?? 0.0) * 1024 * 1024;
+          diskWriteIo =
+              ((stats['dw'] as num?)?.toDouble() ?? 0.0) * 1024 * 1024;
         }
 
         // Parse bandwidth
@@ -62,8 +70,10 @@ class BeszelApi {
           if (b.isNotEmpty) networkSent = (b[0] as num).toDouble();
           if (b.length > 1) networkRecv = (b[1] as num).toDouble();
         } else {
-          networkSent = ((stats['ns'] as num?)?.toDouble() ?? 0.0) * 1024 * 1024;
-          networkRecv = ((stats['nr'] as num?)?.toDouble() ?? 0.0) * 1024 * 1024;
+          networkSent =
+              ((stats['ns'] as num?)?.toDouble() ?? 0.0) * 1024 * 1024;
+          networkRecv =
+              ((stats['nr'] as num?)?.toDouble() ?? 0.0) * 1024 * 1024;
         }
 
         // Parse load average
@@ -118,57 +128,66 @@ class BeszelApi {
 
   Future<List<BeszelContainer>> getContainers(String systemId) async {
     try {
-      final Response<Map<String, dynamic>> response = await _dio.get<Map<String, dynamic>>(
-        '/api/collections/containers/records',
-        queryParameters: {
-          'filter': "system='$systemId'",
-          'perPage': 2000,
-        },
-      );
+      final Response<Map<String, dynamic>> response = await _dio
+          .get<Map<String, dynamic>>(
+            '/api/collections/containers/records',
+            queryParameters: {'filter': "system='$systemId'", 'perPage': 2000},
+          );
       final items = (response.data?['items'] as List<dynamic>?) ?? [];
-      return items.map((e) => BeszelContainer.fromJson(e as Map<String, dynamic>)).toList();
+      return items
+          .map((e) => BeszelContainer.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       return [];
     }
   }
 
-  Future<List<BeszelStats>> getContainerStats(String systemId, String containerName, [ChartTime chartTime = ChartTime.hour1]) async {
+  Future<List<BeszelStats>> getContainerStats(
+    String systemId,
+    String containerName, [
+    ChartTime chartTime = ChartTime.hour1,
+  ]) async {
     try {
       final filter = _buildTimeFilter('system', systemId, chartTime);
-      final Response<Map<String, dynamic>> response = await _dio.get<Map<String, dynamic>>(
-        '/api/collections/container_stats/records',
-        queryParameters: {
-          'filter': filter,
-          'sort': '-created',
-          'perPage': 2000,
-        },
-      );
+      final Response<Map<String, dynamic>> response = await _dio
+          .get<Map<String, dynamic>>(
+            '/api/collections/container_stats/records',
+            queryParameters: {
+              'filter': filter,
+              'sort': '-created',
+              'perPage': 2000,
+            },
+          );
       final items = (response.data?['items'] as List<dynamic>?) ?? [];
-      
+
       final result = <BeszelStats>[];
       for (final e in items) {
         final data = e as Map<String, dynamic>;
         final statsList = data['stats'] as List<dynamic>? ?? [];
-        
+
         final containerStatObj = statsList.firstWhere(
           (s) => (s as Map<String, dynamic>)['n'] == containerName,
           orElse: () => null,
         );
-        
+
         if (containerStatObj == null) continue;
-        
+
         final stats = containerStatObj as Map<String, dynamic>;
-        
+
         DateTime? created;
         if (data['created'] != null) {
           created = DateTime.tryParse(data['created'] as String);
         }
-        
-        result.add(BeszelStats(
-          cpuUsage: (stats['c'] as num?)?.toDouble() ?? 0.0,
-          memoryUsage: ((stats['m'] as num?)?.toDouble() ?? 0.0) * 1024, // Convert GB to MB
-          created: created,
-        ));
+
+        result.add(
+          BeszelStats(
+            cpuUsage: (stats['c'] as num?)?.toDouble() ?? 0.0,
+            memoryUsage:
+                ((stats['m'] as num?)?.toDouble() ?? 0.0) *
+                1024, // Convert GB to MB
+            created: created,
+          ),
+        );
       }
       return result;
     } catch (e) {
@@ -178,13 +197,11 @@ class BeszelApi {
 
   Future<List<BeszelSystemdService>> getSystemdServices(String systemId) async {
     try {
-      final Response<Map<String, dynamic>> response = await _dio.get<Map<String, dynamic>>(
-        '/api/collections/systemd_services/records',
-        queryParameters: {
-          'filter': "system='$systemId'",
-          'perPage': 2000,
-        },
-      );
+      final Response<Map<String, dynamic>> response = await _dio
+          .get<Map<String, dynamic>>(
+            '/api/collections/systemd_services/records',
+            queryParameters: {'filter': "system='$systemId'", 'perPage': 2000},
+          );
       final items = (response.data?['items'] as List<dynamic>?) ?? [];
       return items
           .map((e) => BeszelSystemdService.fromJson(e as Map<String, dynamic>))
@@ -194,17 +211,21 @@ class BeszelApi {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getAllContainerStats(String systemId, [ChartTime chartTime = ChartTime.hour1]) async {
+  Future<List<Map<String, dynamic>>> getAllContainerStats(
+    String systemId, [
+    ChartTime chartTime = ChartTime.hour1,
+  ]) async {
     try {
       final filter = _buildTimeFilter('system', systemId, chartTime);
-      final Response<Map<String, dynamic>> response = await _dio.get<Map<String, dynamic>>(
-        '/api/collections/container_stats/records',
-        queryParameters: {
-          'filter': filter,
-          'sort': '-created',
-          'perPage': 2000,
-        },
-      );
+      final Response<Map<String, dynamic>> response = await _dio
+          .get<Map<String, dynamic>>(
+            '/api/collections/container_stats/records',
+            queryParameters: {
+              'filter': filter,
+              'sort': '-created',
+              'perPage': 2000,
+            },
+          );
       final items = (response.data?['items'] as List<dynamic>?) ?? [];
       return items.map((e) => e as Map<String, dynamic>).toList();
     } catch (e) {
@@ -212,7 +233,11 @@ class BeszelApi {
     }
   }
 
-  String _buildTimeFilter(String entityField, String entityId, ChartTime chartTime) {
+  String _buildTimeFilter(
+    String entityField,
+    String entityId,
+    ChartTime chartTime,
+  ) {
     final now = DateTime.now().toUtc();
     late DateTime createdGt;
     late String type;

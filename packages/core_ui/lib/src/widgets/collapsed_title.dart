@@ -49,7 +49,8 @@ class _CollapsedTitleState extends State<CollapsedTitle> {
 
     final progress = (offset / collapseThreshold).clamp(0.0, 1.0);
     // Fade in over the last 20% of collapse
-    final newOpacity = (progress > 0.8 ? (progress - 0.8) / 0.2 : 0.0).clamp(0.0, 1.0);
+    final newOpacity =
+        (progress > 0.8 ? (progress - 0.8) / 0.2 : 0.0).clamp(0.0, 1.0);
     if (newOpacity != _opacity) {
       setState(() {
         _opacity = newOpacity;

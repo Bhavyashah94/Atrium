@@ -37,8 +37,11 @@ class UserGenreBreakdownCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.category_outlined,
-                  size: 16, color: colorScheme.primary,),
+              Icon(
+                Icons.category_outlined,
+                size: 16,
+                color: colorScheme.primary,
+              ),
               const SizedBox(width: Insets.xs),
               Text(
                 'TOP GENRES & HABITS',

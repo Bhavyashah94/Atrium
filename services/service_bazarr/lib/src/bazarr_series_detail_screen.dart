@@ -32,47 +32,47 @@ class BazarrSeriesDetailScreen extends ConsumerWidget {
       appBar:
           AppBar(title: Text(series.title, overflow: TextOverflow.ellipsis)),
       body: AsyncValueView<List<BazarrEpisode>>(
-          value: episodes,
-          onRetry: () => ref.invalidate(bazarrEpisodesProvider(args)),
-          data: (List<BazarrEpisode> eps) {
-            
-            if (eps.isEmpty) {
-              return EasyRefresh(
-        header: const ClassicHeader(
-          dragText: 'Pull to refresh',
-          armedText: 'Release ready',
-          readyText: 'Refreshing...',
-          processingText: 'Refreshing...',
-          processedText: 'Succeeded',
-          failedText: 'Failed',
-          messageText: 'Last updated at %T',
-        ),
-        onRefresh: () async => ref.invalidate(bazarrEpisodesProvider(args)),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const <Widget>[
-            SizedBox(height: 100),
-            EmptyView(
-                icon: Icons.subtitles_outlined,
-                title: 'No episodes',
-                message: 'This series has no episode files in Bazarr.',
-              ),
-          ],
-        ),
-      );
-            }
+        value: episodes,
+        onRetry: () => ref.invalidate(bazarrEpisodesProvider(args)),
+        data: (List<BazarrEpisode> eps) {
+          if (eps.isEmpty) {
             return EasyRefresh(
-      header: const ClassicHeader(
-        dragText: 'Pull to refresh',
-        armedText: 'Release ready',
-        readyText: 'Refreshing...',
-        processingText: 'Refreshing...',
-        processedText: 'Succeeded',
-        failedText: 'Failed',
-        messageText: 'Last updated at %T',
-      ),
-      onRefresh: () async => ref.invalidate(bazarrEpisodesProvider(args)),
-      child: ListView.builder(
+              header: const ClassicHeader(
+                dragText: 'Pull to refresh',
+                armedText: 'Release ready',
+                readyText: 'Refreshing...',
+                processingText: 'Refreshing...',
+                processedText: 'Succeeded',
+                failedText: 'Failed',
+                messageText: 'Last updated at %T',
+              ),
+              onRefresh: () async =>
+                  ref.invalidate(bazarrEpisodesProvider(args)),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const <Widget>[
+                  SizedBox(height: 100),
+                  EmptyView(
+                    icon: Icons.subtitles_outlined,
+                    title: 'No episodes',
+                    message: 'This series has no episode files in Bazarr.',
+                  ),
+                ],
+              ),
+            );
+          }
+          return EasyRefresh(
+            header: const ClassicHeader(
+              dragText: 'Pull to refresh',
+              armedText: 'Release ready',
+              readyText: 'Refreshing...',
+              processingText: 'Refreshing...',
+              processedText: 'Succeeded',
+              failedText: 'Failed',
+              messageText: 'Last updated at %T',
+            ),
+            onRefresh: () async => ref.invalidate(bazarrEpisodesProvider(args)),
+            child: ListView.builder(
               padding: Insets.page,
               itemCount: eps.length + 1,
               itemBuilder: (BuildContext context, int index) {
@@ -91,10 +91,9 @@ class BazarrSeriesDetailScreen extends ConsumerWidget {
                 );
               },
             ),
-    );
-          
-          },
-        ),
+          );
+        },
+      ),
     );
   }
 }

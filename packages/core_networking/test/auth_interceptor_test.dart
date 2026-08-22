@@ -30,7 +30,8 @@ void main() {
     expect(request.uri.toString(), isNot(contains(token)));
   });
 
-  test('Tracearr token is sent only as a Bearer header without x-api-key', () async {
+  test('Tracearr token is sent only as a Bearer header without x-api-key',
+      () async {
     const String token = 'placeholder-tracearr-token';
     final _RecordingAdapter adapter = _RecordingAdapter();
     final Dio dio = Dio(BaseOptions(baseUrl: 'https://tracearr.example.test/'))

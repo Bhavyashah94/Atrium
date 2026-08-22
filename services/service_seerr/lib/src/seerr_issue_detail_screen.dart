@@ -221,15 +221,15 @@ class _SeerrIssueDetailScreenState
           children: <Widget>[
             Expanded(
               child: EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
+                header: const ClassicHeader(
+                  dragText: 'Pull to refresh',
+                  armedText: 'Release ready',
+                  readyText: 'Refreshing...',
+                  processingText: 'Refreshing...',
+                  processedText: 'Succeeded',
+                  failedText: 'Failed',
+                  messageText: 'Last updated at %T',
+                ),
                 onRefresh: () async {
                   _refreshIssue();
                 },

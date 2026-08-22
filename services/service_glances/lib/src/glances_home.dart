@@ -21,15 +21,15 @@ class GlancesHome extends ConsumerWidget {
 
     return statsAsync.when(
       data: (GlancesStats stats) => EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
+        header: const ClassicHeader(
+          dragText: 'Pull to refresh',
+          armedText: 'Release ready',
+          readyText: 'Refreshing...',
+          processingText: 'Refreshing...',
+          processedText: 'Succeeded',
+          failedText: 'Failed',
+          messageText: 'Last updated at %T',
+        ),
         onRefresh: () async =>
             ref.refresh(glancesStatsProvider(instance).future),
         child: ListView(
@@ -318,7 +318,8 @@ class GlancesHome extends ConsumerWidget {
             padding: const EdgeInsets.all(Insets.md),
             child: Row(
               children: <Widget>[
-                Icon(Icons.swap_horiz_outlined, color: Theme.of(context).colorScheme.tertiary),
+                Icon(Icons.swap_horiz_outlined,
+                    color: Theme.of(context).colorScheme.tertiary),
                 const SizedBox(width: Insets.md),
                 Expanded(
                   child: Column(
@@ -332,8 +333,10 @@ class GlancesHome extends ConsumerWidget {
                       LinearProgressIndicatorM3E(
                         shape: ProgressM3EShape.flat,
                         value: (stats.swap.percentage / 100.0).clamp(0.0, 1.0),
-                        trackColor:
-                            Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.15),
+                        trackColor: Theme.of(context)
+                            .colorScheme
+                            .tertiary
+                            .withValues(alpha: 0.15),
                         activeColor: Theme.of(context).colorScheme.tertiary,
                       ),
                     ],

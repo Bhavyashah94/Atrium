@@ -18,57 +18,57 @@ class BazarrHistoryTab extends ConsumerWidget {
     final AsyncValue<List<BazarrHistoryItem>> history =
         ref.watch(bazarrHistoryProvider(instance));
     return AsyncValueView<List<BazarrHistoryItem>>(
-          value: history,
-        onRetry: () => ref.invalidate(bazarrHistoryProvider(instance)),
-          data: (List<BazarrHistoryItem> items) {
-            
-          if (items.isEmpty) {
-            return EasyRefresh(
-        header: const ClassicHeader(
-          dragText: 'Pull to refresh',
-          armedText: 'Release ready',
-          readyText: 'Refreshing...',
-          processingText: 'Refreshing...',
-          processedText: 'Succeeded',
-          failedText: 'Failed',
-          messageText: 'Last updated at %T',
-        ),
-        onRefresh: () async => ref.invalidate(bazarrHistoryProvider(instance)),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const <Widget>[
-            SizedBox(height: 100),
-            EmptyView(
-              icon: Icons.history,
-              title: 'No history',
-              message: 'Subtitle downloads and changes will appear here.',
-            ),
-          ],
-        ),
-      );
-          }
+      value: history,
+      onRetry: () => ref.invalidate(bazarrHistoryProvider(instance)),
+      data: (List<BazarrHistoryItem> items) {
+        if (items.isEmpty) {
           return EasyRefresh(
-      header: const ClassicHeader(
-        dragText: 'Pull to refresh',
-        armedText: 'Release ready',
-        readyText: 'Refreshing...',
-        processingText: 'Refreshing...',
-        processedText: 'Succeeded',
-        failedText: 'Failed',
-        messageText: 'Last updated at %T',
-      ),
-      onRefresh: () async => ref.invalidate(bazarrHistoryProvider(instance)),
-      child: ListView.separated(
+            header: const ClassicHeader(
+              dragText: 'Pull to refresh',
+              armedText: 'Release ready',
+              readyText: 'Refreshing...',
+              processingText: 'Refreshing...',
+              processedText: 'Succeeded',
+              failedText: 'Failed',
+              messageText: 'Last updated at %T',
+            ),
+            onRefresh: () async =>
+                ref.invalidate(bazarrHistoryProvider(instance)),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const <Widget>[
+                SizedBox(height: 100),
+                EmptyView(
+                  icon: Icons.history,
+                  title: 'No history',
+                  message: 'Subtitle downloads and changes will appear here.',
+                ),
+              ],
+            ),
+          );
+        }
+        return EasyRefresh(
+          header: const ClassicHeader(
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
+          onRefresh: () async =>
+              ref.invalidate(bazarrHistoryProvider(instance)),
+          child: ListView.separated(
             padding: Insets.pageH,
             itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(height: Insets.sm),
             itemBuilder: (BuildContext context, int i) =>
                 _HistoryTile(item: items[i]),
           ),
-    );
-        
-          },
         );
+      },
+    );
   }
 }
 

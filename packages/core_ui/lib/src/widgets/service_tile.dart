@@ -29,8 +29,19 @@ class ServiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme cs = theme.colorScheme;
     final Color accent = ServiceVisuals.accent(instance.kind);
     return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      color: cs.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.md),
+        side: BorderSide(
+          color: cs.outlineVariant.withValues(alpha: 0.45),
+        ),
+      ),
       child: ListTile(
         leading: Container(
           width: Sizes.serviceBadge,

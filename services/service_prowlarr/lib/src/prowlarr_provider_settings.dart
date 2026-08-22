@@ -69,47 +69,48 @@ class ProwlarrProviderScreen extends ConsumerWidget {
         label: const Text('Add'),
       ),
       body: AsyncValueView<List<Map<String, dynamic>>>(
-          value: list,
-          onRetry: () => ref.invalidate(prowlarrProvidersProvider(_args)),
-          data: (List<Map<String, dynamic>> items) {
-            
-            if (items.isEmpty) {
-              return EasyRefresh(
-        header: const ClassicHeader(
-          dragText: 'Pull to refresh',
-          armedText: 'Release ready',
-          readyText: 'Refreshing...',
-          processingText: 'Refreshing...',
-          processedText: 'Succeeded',
-          failedText: 'Failed',
-          messageText: 'Last updated at %T',
-        ),
-        onRefresh: () async => ref.invalidate(prowlarrProvidersProvider(_args)),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: <Widget>[
-            const SizedBox(height: 100),
-            EmptyView(
-                icon: config.icon,
-                title: 'No ${config.title.toLowerCase()}',
-                message: 'Tap Add to configure a ${config.resourceLabel}.',
-              ),
-          ],
-        ),
-      );
-            }
+        value: list,
+        onRetry: () => ref.invalidate(prowlarrProvidersProvider(_args)),
+        data: (List<Map<String, dynamic>> items) {
+          if (items.isEmpty) {
             return EasyRefresh(
-      header: const ClassicHeader(
-        dragText: 'Pull to refresh',
-        armedText: 'Release ready',
-        readyText: 'Refreshing...',
-        processingText: 'Refreshing...',
-        processedText: 'Succeeded',
-        failedText: 'Failed',
-        messageText: 'Last updated at %T',
-      ),
-      onRefresh: () async => ref.invalidate(prowlarrProvidersProvider(_args)),
-      child: ListView.builder(
+              header: const ClassicHeader(
+                dragText: 'Pull to refresh',
+                armedText: 'Release ready',
+                readyText: 'Refreshing...',
+                processingText: 'Refreshing...',
+                processedText: 'Succeeded',
+                failedText: 'Failed',
+                messageText: 'Last updated at %T',
+              ),
+              onRefresh: () async =>
+                  ref.invalidate(prowlarrProvidersProvider(_args)),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: <Widget>[
+                  const SizedBox(height: 100),
+                  EmptyView(
+                    icon: config.icon,
+                    title: 'No ${config.title.toLowerCase()}',
+                    message: 'Tap Add to configure a ${config.resourceLabel}.',
+                  ),
+                ],
+              ),
+            );
+          }
+          return EasyRefresh(
+            header: const ClassicHeader(
+              dragText: 'Pull to refresh',
+              armedText: 'Release ready',
+              readyText: 'Refreshing...',
+              processingText: 'Refreshing...',
+              processedText: 'Succeeded',
+              failedText: 'Failed',
+              messageText: 'Last updated at %T',
+            ),
+            onRefresh: () async =>
+                ref.invalidate(prowlarrProvidersProvider(_args)),
+            child: ListView.builder(
               padding: Insets.pageH,
               itemCount: items.length,
               itemBuilder: (BuildContext context, int i) {
@@ -135,10 +136,9 @@ class ProwlarrProviderScreen extends ConsumerWidget {
                 );
               },
             ),
-    );
-          
-          },
-        ),
+          );
+        },
+      ),
     );
   }
 

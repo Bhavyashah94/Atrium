@@ -57,7 +57,8 @@ class _MediaTabState extends ConsumerState<MediaTab> {
       },
     );
 
-    final librariesAsync = ref.watch(tracearrLibrariesProvider(widget.instance));
+    final librariesAsync =
+        ref.watch(tracearrLibrariesProvider(widget.instance));
 
     return Scaffold(
       appBar: AppBar(
@@ -117,7 +118,9 @@ class _MediaTabState extends ConsumerState<MediaTab> {
           // a transient error. hasMore also stays true while the first page is
           // still in flight, which a bare cursor check would misread as the
           // end of the catalog.
-          return ref.read(tracearrRecentPaginatedProvider(widget.instance)).hasMore
+          return ref
+                  .read(tracearrRecentPaginatedProvider(widget.instance))
+                  .hasMore
               ? IndicatorResult.success
               : IndicatorResult.noMore;
         },
@@ -126,7 +129,8 @@ class _MediaTabState extends ConsumerState<MediaTab> {
             if (notification.metrics.pixels >=
                 notification.metrics.maxScrollExtent - 250) {
               ref
-                  .read(tracearrRecentPaginatedProvider(widget.instance).notifier)
+                  .read(
+                      tracearrRecentPaginatedProvider(widget.instance).notifier)
                   .loadMore();
             }
             return false;
@@ -144,8 +148,8 @@ class _MediaTabState extends ConsumerState<MediaTab> {
                 child: MediaStorageSummaryBar(
                   instance: widget.instance,
                   librariesAsync: librariesAsync,
-                  onRetry: () =>
-                      ref.invalidate(tracearrLibrariesProvider(widget.instance)),
+                  onRetry: () => ref
+                      .invalidate(tracearrLibrariesProvider(widget.instance)),
                 ),
               ),
               const SizedBox(height: Insets.lg),

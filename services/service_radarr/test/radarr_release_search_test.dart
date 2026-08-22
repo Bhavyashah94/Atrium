@@ -97,8 +97,7 @@ void main() {
 
       final highScorePos =
           tester.getTopLeft(find.textContaining('2160p.UHD.Remux'));
-      final lowScorePos =
-          tester.getTopLeft(find.textContaining('720p.HDTV'));
+      final lowScorePos = tester.getTopLeft(find.textContaining('720p.HDTV'));
       expect(highScorePos.dy, lessThan(lowScorePos.dy));
 
       // Verify Score badges and Custom Format pills are rendered

@@ -110,7 +110,8 @@ void main() {
     });
 
     test('reads an HTTP date', () {
-      final DateTime soon = DateTime.now().toUtc().add(const Duration(minutes: 1));
+      final DateTime soon =
+          DateTime.now().toUtc().add(const Duration(minutes: 1));
       final Duration? parsed = RateLimitInterceptor.parseRetryAfter(
         _httpDate(soon),
       );
@@ -119,8 +120,10 @@ void main() {
     });
 
     test('clamps a past date to zero rather than going negative', () {
-      final DateTime past = DateTime.now().toUtc().subtract(const Duration(hours: 1));
-      expect(RateLimitInterceptor.parseRetryAfter(_httpDate(past)), Duration.zero);
+      final DateTime past =
+          DateTime.now().toUtc().subtract(const Duration(hours: 1));
+      expect(
+          RateLimitInterceptor.parseRetryAfter(_httpDate(past)), Duration.zero);
     });
 
     test('returns null for absent or unparseable values', () {
@@ -148,11 +151,27 @@ class _CallbackAdapter implements HttpClientAdapter {
 }
 
 const List<String> _days = <String>[
-  'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun',
+  'Mon',
+  'Tue',
+  'Wed',
+  'Thu',
+  'Fri',
+  'Sat',
+  'Sun',
 ];
 const List<String> _months = <String>[
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 String _two(int v) => v.toString().padLeft(2, '0');

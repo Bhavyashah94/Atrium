@@ -24,7 +24,8 @@ abstract class Profile with _$Profile {
     required String id,
     required String name,
     @JsonKey(toJson: _instancesToJson)
-    @Default(<Instance>[]) List<Instance> instances,
+    @Default(<Instance>[])
+    List<Instance> instances,
 
     /// HTTP headers sent with every request from every instance in this
     /// profile (an instance's own [Instance.customHeaders] win on key
@@ -33,7 +34,8 @@ abstract class Profile with _$Profile {
 
     /// Wake-on-LAN targets configured for this profile.
     @JsonKey(toJson: _wolDevicesToJson)
-    @Default(<WolDevice>[]) List<WolDevice> wolDevices,
+    @Default(<WolDevice>[])
+    List<WolDevice> wolDevices,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, dynamic> json) =>

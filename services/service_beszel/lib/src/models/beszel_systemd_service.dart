@@ -22,24 +22,37 @@ abstract class BeszelSystemdService with _$BeszelSystemdService {
 extension BeszelSystemdServiceX on BeszelSystemdService {
   String get stateStr {
     switch (state) {
-      case 0: return 'Active';
-      case 1: return 'Inactive';
-      case 2: return 'Failed';
-      case 3: return 'Activating';
-      case 4: return 'Deactivating';
-      case 5: return 'Reloading';
-      default: return 'Unknown';
+      case 0:
+        return 'Active';
+      case 1:
+        return 'Inactive';
+      case 2:
+        return 'Failed';
+      case 3:
+        return 'Activating';
+      case 4:
+        return 'Deactivating';
+      case 5:
+        return 'Reloading';
+      default:
+        return 'Unknown';
     }
   }
 
   String get subStr {
     switch (sub) {
-      case 0: return 'Dead';
-      case 1: return 'Running';
-      case 2: return 'Exited';
-      case 3: return 'Failed';
-      case 4: return 'Unknown';
-      default: return 'Unknown';
+      case 0:
+        return 'Dead';
+      case 1:
+        return 'Running';
+      case 2:
+        return 'Exited';
+      case 3:
+        return 'Failed';
+      case 4:
+        return 'Unknown';
+      default:
+        return 'Unknown';
     }
   }
 }

@@ -41,8 +41,7 @@ abstract class DelugeFile with _$DelugeFile {
       _$DelugeFileFromJson(json);
 
   /// Last path segment, for a compact list row.
-  String get displayName =>
-      path.contains('/') ? path.split('/').last : path;
+  String get displayName => path.contains('/') ? path.split('/').last : path;
 }
 
 /// One tracker of a torrent. `last_error` is deliberately not modeled - it is
