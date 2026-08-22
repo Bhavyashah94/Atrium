@@ -150,7 +150,7 @@ class ProfileIo {
     } catch (_) {
       if (file.path != null) {
         try {
-          return File(file.path!).readAsString();
+          return await File(file.path!).readAsString();
         } on FileSystemException {
           return null;
         }

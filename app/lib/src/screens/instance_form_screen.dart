@@ -274,6 +274,7 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
           padding: Insets.page,
           children: <Widget>[
             DropdownMenu<ServiceKind>(
+              key: ValueKey<ServiceKind>(_kind),
               initialSelection: _kind,
               label: const Text('Service'),
               expandedInsets: EdgeInsets.zero,
@@ -282,7 +283,10 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
                 child: _buildServiceIcon(_kind, size: 24),
               ),
               dropdownMenuEntries: <DropdownMenuEntry<ServiceKind>>[
-                for (final ServiceKind k in ServiceKind.values.toList()..sort((a, b) => a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase())))
+                for (final ServiceKind k in ServiceKind.values.toList()
+                  ..sort((a, b) => a.displayName
+                      .toLowerCase()
+                      .compareTo(b.displayName.toLowerCase())))
                   DropdownMenuEntry<ServiceKind>(
                     value: k,
                     label: k.isBeta
@@ -638,6 +642,9 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
       'assets/service_icons/${kind.name}.png',
       width: size,
       height: size,
+      errorBuilder:
+          (BuildContext context, Object error, StackTrace? stackTrace) =>
+              Icon(Icons.dns_outlined, size: size),
     );
   }
 }

@@ -24,6 +24,7 @@ enum ServiceKind {
   tracearr,
   beszel,
   dashdot,
+  lidarr,
 }
 
 /// Static metadata about a [ServiceKind] - display name, default port, the
@@ -53,6 +54,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.tracearr => 'Tracearr',
         ServiceKind.beszel => 'Beszel',
         ServiceKind.dashdot => 'Dashdot',
+        ServiceKind.lidarr => 'Lidarr',
       };
 
   /// One-line role description.
@@ -77,6 +79,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.tracearr => 'Stream monitoring',
         ServiceKind.beszel => 'System monitor',
         ServiceKind.dashdot => 'System monitor',
+        ServiceKind.lidarr => 'Music',
       };
 
   /// Whether this service's integration is still in beta. Surfaced as a
@@ -85,7 +88,8 @@ extension ServiceKindX on ServiceKind {
   bool get isBeta => switch (this) {
         ServiceKind.transmission ||
         ServiceKind.deluge ||
-        ServiceKind.rtorrent =>
+        ServiceKind.rtorrent ||
+        ServiceKind.lidarr =>
           true,
         _ => false,
       };
@@ -116,6 +120,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.tracearr => 3000,
         ServiceKind.beszel => 8090,
         ServiceKind.dashdot => 3001,
+        ServiceKind.lidarr => 8686,
       };
 
   /// What auth flow the service uses by default. Some services (Jellyfin) can
@@ -128,7 +133,8 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.seerr ||
         ServiceKind.tautulli ||
         ServiceKind.sabnzbd ||
-        ServiceKind.tracearr =>
+        ServiceKind.tracearr ||
+        ServiceKind.lidarr =>
           AuthStyle.apiKey,
         // Transmission and rTorrent both use HTTP Basic, and for both it is
         // *optional* - rTorrent's XML-RPC has no auth of its own and is only
@@ -156,7 +162,8 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.sonarr ||
         ServiceKind.radarr ||
         ServiceKind.prowlarr ||
-        ServiceKind.bazarr =>
+        ServiceKind.bazarr ||
+        ServiceKind.lidarr =>
           ServiceRole.automation,
         ServiceKind.seerr => ServiceRole.requests,
         ServiceKind.tautulli || ServiceKind.tracearr => ServiceRole.analytics,
