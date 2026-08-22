@@ -62,7 +62,65 @@ class _QbittorrentSettingsTabState
     ref.invalidate(qbitNetworkInterfacesProvider(instance));
   }
 
+  /// Settings that can cut Atrium off from this server, or switch off a
+  /// protection the Web UI relies on.
+  ///
+  /// All four are a single tap on a phone and awkward to undo afterwards: once
+  /// the address or port moves, this app can no longer reach the server to put
+  /// it back.
+  static const Map<String, String> _riskyPrefs = <String, String>{
+    'web_ui_address':
+        'Atrium reaches this server at its current address. Changing it will '
+            'break this connection until you update the instance URL in '
+            'Atrium.',
+    'web_ui_port':
+        'Atrium reaches this server on its current port. Changing it will '
+            'break this connection until you update the instance URL in '
+            'Atrium.',
+    'web_ui_csrf_protection_enabled':
+        'CSRF protection stops another site acting on your qBittorrent '
+            'session. Leaving it on is recommended.',
+    'web_ui_clickjacking_protection_enabled':
+        'Clickjacking protection stops the Web UI being embedded in another '
+            'page. Leaving it on is recommended.',
+  };
+
+  /// Whether a change to [key] may go ahead.
+  ///
+  /// A protection toggle only asks on the way off; switching one back on needs
+  /// no ceremony.
+  Future<bool> _confirmIfRisky(String key, dynamic value) async {
+    final String? message = _riskyPrefs[key];
+    if (message == null) return true;
+    if (value is bool && value) return true;
+
+    final bool? proceed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: const Text('Change this setting?'),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Change it'),
+          ),
+        ],
+      ),
+    );
+    return proceed ?? false;
+  }
+
   Future<void> _updatePref(String key, dynamic value) async {
+    if (!await _confirmIfRisky(key, value)) {
+      // Nothing was sent, so the stored value still stands. Rebuild so a
+      // switch that already moved under the user's finger snaps back to it.
+      if (mounted) setState(() {});
+      return;
+    }
     try {
       final QbittorrentClient client = await ref.read(
         qbittorrentClientProvider(widget.instance).future,
