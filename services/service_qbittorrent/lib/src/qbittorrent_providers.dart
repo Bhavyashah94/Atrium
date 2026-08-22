@@ -72,7 +72,7 @@ enum QbitSortField {
   upSpeed,
   eta,
   ratio,
-  priority,
+  queue,
   category,
   completedOn,
   sessionDl,
@@ -104,8 +104,8 @@ extension QbitSortFieldExt on QbitSortField {
         return 'ETA';
       case QbitSortField.ratio:
         return 'Ratio';
-      case QbitSortField.priority:
-        return 'Priority';
+      case QbitSortField.queue:
+        return 'Queue Position';
       case QbitSortField.category:
         return 'Category';
       case QbitSortField.completedOn:
@@ -264,8 +264,7 @@ final qbitTorrentsProvider = Provider.autoDispose
   final String? categoryFilter =
       ref.watch(qbitFilterCategoryProvider(instance));
   final String? tagFilter = ref.watch(qbitFilterTagProvider(instance));
-  final String? trackerFilter =
-      ref.watch(qbitFilterTrackerProvider(instance));
+  final String? trackerFilter = ref.watch(qbitFilterTrackerProvider(instance));
 
   return rawAsync.whenData((List<QbitTorrent> raw) {
     final List<QbitTorrent> torrents = List<QbitTorrent>.of(raw);
@@ -300,51 +299,66 @@ final qbitTorrentsProvider = Provider.autoDispose
       );
     }
 
-    torrents.sort((QbitTorrent a, QbitTorrent b) {
-      int cmp = 0;
-      switch (sortConfig.field) {
-        case QbitSortField.addedOn:
-          cmp = a.addedOn.compareTo(b.addedOn);
-        case QbitSortField.name:
-          cmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
-        case QbitSortField.size:
-          cmp = a.size.compareTo(b.size);
-        case QbitSortField.progress:
-          cmp = a.progress.compareTo(b.progress);
-        case QbitSortField.status:
-          cmp = a.state.compareTo(b.state);
-        case QbitSortField.seeds:
-          cmp = a.numSeeds.compareTo(b.numSeeds);
-        case QbitSortField.peers:
-          cmp = a.numLeechs.compareTo(b.numLeechs);
-        case QbitSortField.dlSpeed:
-          cmp = a.dlspeed.compareTo(b.dlspeed);
-        case QbitSortField.upSpeed:
-          cmp = a.upspeed.compareTo(b.upspeed);
-        case QbitSortField.eta:
-          cmp = a.eta.compareTo(b.eta);
-        case QbitSortField.ratio:
-          cmp = a.ratio.compareTo(b.ratio);
-        case QbitSortField.priority:
-          cmp = a.priority.compareTo(b.priority);
-        case QbitSortField.category:
-          cmp = a.category.compareTo(b.category);
-        case QbitSortField.completedOn:
-          cmp = a.completionOn.compareTo(b.completionOn);
-        case QbitSortField.sessionDl:
-          cmp = a.downloadedSession.compareTo(b.downloadedSession);
-        case QbitSortField.sessionUp:
-          cmp = a.uploadedSession.compareTo(b.uploadedSession);
-      }
-      if (cmp == 0) {
-        cmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      }
-      return sortConfig.ascending ? cmp : -cmp;
-    });
-
-    return torrents;
+    return sortQbitTorrents(torrents, sortConfig);
   });
 });
+
+/// Unqueued torrents report priority <= 0 (qBittorrent uses 1-based queue
+/// priorities when queueing is enabled; <= 0 means not queued or queueing
+/// disabled). We push them to the end of a queue sort so that active queue
+/// positions (1, 2, 3...) appear first.
+int qbitQueueRank(QbitTorrent t) => t.priority <= 0 ? 1 << 30 : t.priority;
+
+/// Sorts a qBittorrent torrent list according to [sortConfig].
+/// Extracted from provider for direct unit testing.
+List<QbitTorrent> sortQbitTorrents(
+  List<QbitTorrent> torrents,
+  QbitSortConfig sortConfig,
+) {
+  final List<QbitTorrent> out = List<QbitTorrent>.of(torrents);
+  out.sort((QbitTorrent a, QbitTorrent b) {
+    int cmp = 0;
+    switch (sortConfig.field) {
+      case QbitSortField.addedOn:
+        cmp = a.addedOn.compareTo(b.addedOn);
+      case QbitSortField.name:
+        cmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      case QbitSortField.size:
+        cmp = a.size.compareTo(b.size);
+      case QbitSortField.progress:
+        cmp = a.progress.compareTo(b.progress);
+      case QbitSortField.status:
+        cmp = a.state.compareTo(b.state);
+      case QbitSortField.seeds:
+        cmp = a.numSeeds.compareTo(b.numSeeds);
+      case QbitSortField.peers:
+        cmp = a.numLeechs.compareTo(b.numLeechs);
+      case QbitSortField.dlSpeed:
+        cmp = a.dlspeed.compareTo(b.dlspeed);
+      case QbitSortField.upSpeed:
+        cmp = a.upspeed.compareTo(b.upspeed);
+      case QbitSortField.eta:
+        cmp = a.eta.compareTo(b.eta);
+      case QbitSortField.ratio:
+        cmp = a.ratio.compareTo(b.ratio);
+      case QbitSortField.queue:
+        cmp = qbitQueueRank(a).compareTo(qbitQueueRank(b));
+      case QbitSortField.category:
+        cmp = a.category.compareTo(b.category);
+      case QbitSortField.completedOn:
+        cmp = a.completionOn.compareTo(b.completionOn);
+      case QbitSortField.sessionDl:
+        cmp = a.downloadedSession.compareTo(b.downloadedSession);
+      case QbitSortField.sessionUp:
+        cmp = a.uploadedSession.compareTo(b.uploadedSession);
+    }
+    if (cmp == 0) {
+      cmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    }
+    return sortConfig.ascending ? cmp : -cmp;
+  });
+  return out;
+}
 
 /// Global transfer stats for an instance. Polls with the list.
 final qbitTransferProvider =
