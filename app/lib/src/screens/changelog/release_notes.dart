@@ -27,6 +27,24 @@ class ReleaseNote {
 /// Newest first. Update alongside appVersion and the pubspec at each release.
 const List<ReleaseNote> releaseNotes = <ReleaseNote>[
   ReleaseNote(
+    version: '1.5.0',
+    date: '2026-08-23',
+    groups: <ChangeGroup>[
+      ChangeGroup(ChangeCategory.added, <String>[
+        'Lidarr is now a supported service: artists and discography, album and track detail, wanted, queue and history, the full settings tree, an in-app log reader, and album releases in the calendar. It is marked beta while it settles in.',
+        'qBittorrent gained a settings page covering what its own web interface offers, across system, behaviour, downloads, connection, speed, BitTorrent, RSS, web UI and advanced.',
+        'qBittorrent torrents can be moved around the queue, to the top, up, down or to the bottom, one at a time or several at once, and the list can be sorted by queue position.',
+        'The app icon now follows your system palette when Android themed icons are switched on.',
+      ]),
+      ChangeGroup(ChangeCategory.improved, <String>[
+        'The qBittorrent screen leads with your totals, active downloads and what is seeding, with search and start or stop everything to hand, and splits the torrent list and settings across two tabs.',
+      ]),
+      ChangeGroup(ChangeCategory.fixed, <String>[
+        'Changing a qBittorrent setting that would cut Atrium off from the server now asks first. Moving the web UI address or port leaves the app unable to reach it, and turning off CSRF or clickjacking protection weakens the server, so each explains what it will do before going ahead.',
+      ]),
+    ],
+  ),
+  ReleaseNote(
     version: '1.4.2',
     date: '2026-08-21',
     groups: <ChangeGroup>[
