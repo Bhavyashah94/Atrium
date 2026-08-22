@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -366,18 +367,45 @@ class QbittorrentClient {
         );
       });
 
-  /// Bumps a torrent's queue priority up or down one slot.
-  Future<void> setPriority(String hash, {required bool increase}) =>
-      _guarded(() async {
-        final String path = increase
-            ? 'api/v2/torrents/increasePrio'
-            : 'api/v2/torrents/decreasePrio';
+  /// Moves torrents up in queue (increases priority).
+  Future<void> queueUp(List<String> hashes) => _guarded(() async {
         await _dio.post<dynamic>(
-          path,
-          data: <String, dynamic>{'hashes': hash},
+          'api/v2/torrents/increasePrio',
+          data: <String, dynamic>{'hashes': hashes.join('|')},
           options: Options(contentType: Headers.formUrlEncodedContentType),
         );
       });
+
+  /// Moves torrents down in queue (decreases priority).
+  Future<void> queueDown(List<String> hashes) => _guarded(() async {
+        await _dio.post<dynamic>(
+          'api/v2/torrents/decreasePrio',
+          data: <String, dynamic>{'hashes': hashes.join('|')},
+          options: Options(contentType: Headers.formUrlEncodedContentType),
+        );
+      });
+
+  /// Moves torrents to top of queue (maximal priority).
+  Future<void> queueTop(List<String> hashes) => _guarded(() async {
+        await _dio.post<dynamic>(
+          'api/v2/torrents/topPrio',
+          data: <String, dynamic>{'hashes': hashes.join('|')},
+          options: Options(contentType: Headers.formUrlEncodedContentType),
+        );
+      });
+
+  /// Moves torrents to bottom of queue (minimal priority).
+  Future<void> queueBottom(List<String> hashes) => _guarded(() async {
+        await _dio.post<dynamic>(
+          'api/v2/torrents/bottomPrio',
+          data: <String, dynamic>{'hashes': hashes.join('|')},
+          options: Options(contentType: Headers.formUrlEncodedContentType),
+        );
+      });
+
+  /// Bumps a torrent's queue priority up or down one slot.
+  Future<void> setPriority(String hash, {required bool increase}) =>
+      increase ? queueUp(<String>[hash]) : queueDown(<String>[hash]);
 
   Future<void> reannounce(List<String> hashes) => _guarded(() async {
         await _dio.post<dynamic>(
