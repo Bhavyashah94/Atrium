@@ -29,8 +29,16 @@ void main() {
         'tracearr',
         'beszel',
         'dashdot',
+        'lidarr',
       ],
     );
+  });
+
+  test('Lidarr is registered as apiKey automation service', () {
+    expect(ServiceKind.lidarr.displayName, 'Lidarr');
+    expect(ServiceKind.lidarr.role, ServiceRole.automation);
+    expect(ServiceKind.lidarr.authStyle, AuthStyle.apiKey);
+    expect(ServiceKind.lidarr.defaultPort, 8686);
   });
 
   test('Speedtest Tracker is registered as bearer-auth Analytics service', () {

@@ -3,12 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 
 void main(List<String> args) {
-  final inputPath = args.isNotEmpty
-      ? args[0]
-      : '${Directory.current.path}/tool/openapi.json';
-  final outputDir = args.length > 1
-      ? args[1]
-      : '${Directory.current.path}/lib/src/generated';
+  final inputPath =
+      args.isNotEmpty ? args[0] : '${Directory.current.path}/tool/openapi.json';
+  final outputDir =
+      args.length > 1 ? args[1] : '${Directory.current.path}/lib/src/generated';
 
   final file = File(inputPath);
   if (!file.existsSync()) {
@@ -22,7 +20,6 @@ void main(List<String> args) {
 
   final parser = LidarrOpenApiParser(spec, outputDir);
   parser.generateAll();
-  print('Successfully generated all Lidarr Dart models and API clients in: $outputDir');
 }
 
 class LidarrOpenApiParser {
@@ -32,6 +29,13 @@ class LidarrOpenApiParser {
   final Map<String, String> schemaClassNames = {};
   final Map<String, dynamic> schemas = {};
   final Map<String, List<Map<String, dynamic>>> tagEndpoints = {};
+  final Set<String> _writtenFilePaths = {};
+  final List<String> _warnings = [];
+
+  int _modelsWritten = 0;
+  int _modelsSkippedUnchanged = 0;
+  int _apisWritten = 0;
+  int _apisSkippedUnchanged = 0;
 
   LidarrOpenApiParser(this.spec, this.outputDir) {
     _initSchemas();
@@ -40,7 +44,7 @@ class LidarrOpenApiParser {
 
   void _initSchemas() {
     final rawSchemas =
-        (spec['components']?['schemas'] as Map<String, dynamic>?) ?? {};
+        (spec['components']?['schemas'] as Map?)?.cast<String, dynamic>() ?? {};
     schemas.addAll(rawSchemas);
 
     for (final fullKey in schemas.keys) {
@@ -49,17 +53,20 @@ class LidarrOpenApiParser {
   }
 
   void _initEndpoints() {
-    final paths = (spec['paths'] as Map<String, dynamic>?) ?? {};
+    final paths = (spec['paths'] as Map?)?.cast<String, dynamic>() ?? {};
     for (final pathEntry in paths.entries) {
       final path = pathEntry.key;
-      final methods = pathEntry.value as Map<String, dynamic>;
+      final methods = (pathEntry.value as Map?)?.cast<String, dynamic>() ?? {};
 
       for (final methodEntry in methods.entries) {
         final verb = methodEntry.key.toLowerCase();
-        if (!['get', 'post', 'put', 'delete', 'patch'].contains(verb)) continue;
+        if (!['get', 'post', 'put', 'delete', 'patch', 'head'].contains(verb)) {
+          continue;
+        }
 
-        final op = methodEntry.value as Map<String, dynamic>;
-        final tags = (op['tags'] as List<dynamic>?)?.cast<String>() ?? ['Default'];
+        final op = (methodEntry.value as Map?)?.cast<String, dynamic>() ?? {};
+        final tags =
+            (op['tags'] as List<dynamic>?)?.cast<String>() ?? ['Default'];
         final tag = tags.first;
 
         tagEndpoints.putIfAbsent(tag, () => []).add({
@@ -89,37 +96,93 @@ class LidarrOpenApiParser {
       camel = 'val$camel';
     }
     const keywords = {
-      'abstract', 'as', 'assert', 'async', 'await', 'break', 'case', 'catch',
-      'class', 'const', 'continue', 'covariant', 'default', 'deferred', 'do',
-      'dynamic', 'else', 'enum', 'export', 'extends', 'extension', 'external',
-      'factory', 'false', 'finally', 'for', 'function', 'get', 'hide',
-      'if', 'implements', 'import', 'in', 'interface', 'is', 'late', 'library',
-      'mixin', 'new', 'null', 'on', 'operator', 'part', 'required', 'rethrow',
-      'return', 'set', 'show', 'static', 'super', 'switch', 'sync', 'this',
-      'throw', 'true', 'try', 'typedef', 'var', 'void', 'while', 'with', 'yield'
+      'abstract',
+      'as',
+      'assert',
+      'async',
+      'await',
+      'break',
+      'case',
+      'catch',
+      'class',
+      'const',
+      'continue',
+      'covariant',
+      'default',
+      'deferred',
+      'do',
+      'dynamic',
+      'else',
+      'enum',
+      'export',
+      'extends',
+      'extension',
+      'external',
+      'factory',
+      'false',
+      'finally',
+      'for',
+      'function',
+      'get',
+      'hide',
+      'if',
+      'implements',
+      'import',
+      'in',
+      'interface',
+      'is',
+      'late',
+      'library',
+      'mixin',
+      'new',
+      'null',
+      'on',
+      'operator',
+      'part',
+      'required',
+      'rethrow',
+      'return',
+      'set',
+      'show',
+      'static',
+      'super',
+      'switch',
+      'sync',
+      'this',
+      'throw',
+      'true',
+      'try',
+      'typedef',
+      'var',
+      'void',
+      'while',
+      'with',
+      'yield'
     };
     return keywords.contains(camel) ? '${camel}Val' : camel;
   }
 
   String _toSnakeCase(String name) {
     return name
-        .replaceAllMapped(RegExp(r'([A-Z])'), (m) => '_${m.group(1)!.toLowerCase()}')
+        .replaceAllMapped(
+            RegExp(r'([A-Z])'), (m) => '_${m.group(1)!.toLowerCase()}')
         .replaceAll(RegExp(r'^_'), '')
         .replaceAll(RegExp(r'_+'), '_');
   }
 
   String _resolveClassName(String fullKey, Map<String, dynamic> rawSchemas) {
-    final genericMatch = RegExp(r'`\d+\[\[(?:[^\.,]+\.)*([^\.,]+),').firstMatch(fullKey);
-    final genericSuffix = genericMatch != null
-        ? _sanitizeIdentifier(genericMatch.group(1)!)
-        : '';
+    final genericMatch =
+        RegExp(r'`\d+\[\[(?:[^\.,]+\.)*([^\.,]+),').firstMatch(fullKey);
+    final genericSuffix =
+        genericMatch != null ? _sanitizeIdentifier(genericMatch.group(1)!) : '';
 
     final cleanBase = fullKey.replaceAll(RegExp(r'`\d+\[\[.*'), '');
     final parts = cleanBase.split('.');
     final short = parts.last;
 
     final collisions = rawSchemas.keys
-        .where((k) => k.replaceAll(RegExp(r'`\d+\[\[.*'), '').split('.').last == short)
+        .where((k) =>
+            k.replaceAll(RegExp(r'`\d+\[\[.*'), '').split('.').last == short)
         .toList();
 
     String baseName;
@@ -127,7 +190,8 @@ class LidarrOpenApiParser {
       baseName = _sanitizeIdentifier(short);
     } else {
       final meaningful = parts
-          .where((p) => !['Lidarr', 'Api', 'External', 'Models', 'Core', 'V1'].contains(p))
+          .where((p) => !['Lidarr', 'Api', 'External', 'Models', 'Core', 'V1']
+              .contains(p))
           .toList();
       final effective = meaningful.isEmpty ? parts : meaningful;
       baseName = effective.map(_sanitizeIdentifier).join('');
@@ -142,16 +206,68 @@ class LidarrOpenApiParser {
     _generateModelFiles();
     _generateApiFiles();
     _generateExportFile();
+    _cleanOrphanFiles();
+
+    print(
+        'Generated Lidarr OpenAPI Dart models and API clients in: $outputDir');
+    print(
+        '  - Models: $_modelsWritten written, $_modelsSkippedUnchanged up-to-date');
+    print('  - APIs: $_apisWritten written, $_apisSkippedUnchanged up-to-date');
+    if (_warnings.isNotEmpty) {
+      print('  - Warnings (${_warnings.length}):');
+      for (final w in _warnings.take(10)) {
+        print('    * $w');
+      }
+      if (_warnings.length > 10) {
+        print('    * ... and ${_warnings.length - 10} more');
+      }
+    }
   }
 
   void _createDirectories() {
-    final dir = Directory(outputDir);
-    if (dir.existsSync()) {
-      dir.deleteSync(recursive: true);
-    }
     Directory('$outputDir/models').createSync(recursive: true);
     Directory('$outputDir/responses').createSync(recursive: true);
     Directory('$outputDir/api').createSync(recursive: true);
+  }
+
+  String _normalizePath(String path) {
+    return File(path).absolute.path.replaceAll(r'\', '/').toLowerCase();
+  }
+
+  void _writeFileIfChanged(String path, String content,
+      {bool isModel = false, bool isApi = false}) {
+    final normalizedPath = _normalizePath(path);
+    _writtenFilePaths.add(normalizedPath);
+    final file = File(path);
+    if (file.existsSync()) {
+      final existing = file.readAsStringSync();
+      if (existing == content) {
+        if (isModel) _modelsSkippedUnchanged++;
+        if (isApi) _apisSkippedUnchanged++;
+        return;
+      }
+    }
+    file.writeAsStringSync(content);
+    if (isModel) _modelsWritten++;
+    if (isApi) _apisWritten++;
+  }
+
+  void _cleanOrphanFiles() {
+    final dir = Directory(outputDir);
+    if (!dir.existsSync()) return;
+
+    for (final entity in dir.listSync(recursive: true, followLinks: false)) {
+      if (entity is File) {
+        final path = _normalizePath(entity.path);
+        if (!_writtenFilePaths.contains(path) &&
+            !path.endsWith('.freezed.dart') &&
+            !path.endsWith('.g.dart')) {
+          try {
+            entity.deleteSync();
+          } catch (_) {}
+        }
+      }
+    }
   }
 
   void _generateResponseFiles() {
@@ -174,8 +290,8 @@ class ApiResponse<T> {
         isSuccess = false;
 }
 ''';
-    File('$outputDir/responses/api_response.dart')
-        .writeAsStringSync(apiResponseContent);
+    _writeFileIfChanged(
+        '$outputDir/responses/api_response.dart', apiResponseContent);
 
     final errorContent = '''
 import 'package:dio/dio.dart';
@@ -192,32 +308,103 @@ class LidarrError {
     this.errors = const [],
   });
 
-  factory LidarrError.fromJson(Map<String, dynamic> json) {
-    final errList = (json['errors'] as List<dynamic>?)
-            ?.map((e) => e.toString())
-            .toList() ??
-        [];
-    return LidarrError(
-      message: json['message'] as String? ?? json['error'] as String?,
-      description: json['description'] as String?,
-      errors: errList,
-    );
+  factory LidarrError.fromJson(dynamic data) {
+    if (data == null) {
+      return const LidarrError();
+    }
+
+    if (data is String) {
+      return LidarrError(message: data);
+    }
+
+    if (data is List) {
+      final List<String> errList = [];
+      for (final item in data) {
+        if (item is Map) {
+          final String? err = item['errorMessage']?.toString() ??
+              item['message']?.toString() ??
+              item['propertyName']?.toString();
+          if (err != null && err.isNotEmpty) {
+            errList.add(err);
+          }
+        } else if (item != null) {
+          errList.add(item.toString());
+        }
+      }
+      return LidarrError(
+        message: errList.isNotEmpty ? errList.first : 'Validation error',
+        errors: errList,
+      );
+    }
+
+    if (data is Map<String, dynamic> || data is Map) {
+      final map = data as Map;
+      final List<String> errList = [];
+
+      final rawErrors = map['errors'];
+      if (rawErrors is Map) {
+        // ASP.NET ValidationProblemDetails: {"errors": {"Field": ["Error 1", "Error 2"]}}
+        for (final entry in rawErrors.entries) {
+          final field = entry.key?.toString() ?? '';
+          final val = entry.value;
+          if (val is List) {
+            for (final msg in val) {
+              errList.add(field.isNotEmpty ? '\$field: \$msg' : msg.toString());
+            }
+          } else if (val != null) {
+            errList.add(field.isNotEmpty ? '\$field: \$val' : val.toString());
+          }
+        }
+      } else if (rawErrors is List) {
+        for (final item in rawErrors) {
+          if (item is Map) {
+            final String? err = item['errorMessage']?.toString() ??
+                item['message']?.toString();
+            if (err != null && err.isNotEmpty) {
+              errList.add(err);
+            }
+          } else if (item != null) {
+            errList.add(item.toString());
+          }
+        }
+      } else if (rawErrors is String && rawErrors.isNotEmpty) {
+        errList.add(rawErrors);
+      }
+
+      final String? msg = (errList.isNotEmpty ? errList.join('\\n') : null) ??
+          map['message']?.toString() ??
+          map['title']?.toString() ??
+          map['error']?.toString();
+
+      final String? desc = map['description']?.toString() ??
+          map['detail']?.toString();
+
+      return LidarrError(
+        message: msg,
+        description: desc,
+        errors: errList,
+      );
+    }
+
+    return LidarrError(message: data.toString());
   }
 
   factory LidarrError.fromDio(DioException exception) {
-    if (exception.response?.data is Map<String, dynamic>) {
-      return LidarrError.fromJson(
-          exception.response!.data as Map<String, dynamic>);
+    if (exception.response?.data != null) {
+      final parsed = LidarrError.fromJson(exception.response!.data);
+      if (parsed.message != null && parsed.message!.isNotEmpty) {
+        return parsed;
+      }
     }
     return LidarrError(
-      message: exception.message ?? 'HTTP Error \${exception.response?.statusCode}',
+      message: exception.message ??
+          'HTTP Error \${exception.response?.statusCode}',
       description: exception.type.toString(),
     );
   }
 }
 ''';
-    File('$outputDir/responses/lidarr_error.dart')
-        .writeAsStringSync(errorContent);
+    _writeFileIfChanged('$outputDir/responses/lidarr_error.dart', errorContent);
 
     final exceptionContent = '''
 import 'lidarr_error.dart';
@@ -239,20 +426,57 @@ class LidarrException implements Exception {
       'LidarrException(statusCode: \$statusCode, message: \$message, error: \$error)';
 }
 ''';
-    File('$outputDir/responses/lidarr_exception.dart')
-        .writeAsStringSync(exceptionContent);
+    _writeFileIfChanged(
+        '$outputDir/responses/lidarr_exception.dart', exceptionContent);
   }
 
   void _generateModelFiles() {
     for (final entry in schemas.entries) {
       final fullKey = entry.key;
-      final schema = entry.value as Map<String, dynamic>;
+      final schema = (entry.value as Map).cast<String, dynamic>();
       final className = schemaClassNames[fullKey]!;
       final fileName = _toSnakeCase(className);
 
       final code = _buildModelCode(fullKey, className, schema);
-      File('$outputDir/models/$fileName.dart').writeAsStringSync(code);
+      _writeFileIfChanged('$outputDir/models/$fileName.dart', code,
+          isModel: true);
     }
+  }
+
+  Map<String, dynamic> _flattenProperties(
+      Map<String, dynamic> schema, Set<String> requiredSet) {
+    final properties = <String, dynamic>{};
+
+    if (schema.containsKey('properties') && schema['properties'] is Map) {
+      properties.addAll((schema['properties'] as Map).cast<String, dynamic>());
+    }
+
+    if (schema.containsKey('required') && schema['required'] is List) {
+      final reqList = schema['required'] as List<dynamic>;
+      requiredSet.addAll(reqList.map((e) => e.toString()));
+    }
+
+    if (schema.containsKey('allOf') && schema['allOf'] is List) {
+      final allOfList = schema['allOf'] as List<dynamic>;
+      for (final sub in allOfList) {
+        if (sub is Map) {
+          final subMap = sub.cast<String, dynamic>();
+          if (subMap.containsKey(r'$ref')) {
+            final refKey = (subMap[r'$ref'] as String)
+                .replaceFirst('#/components/schemas/', '');
+            final refSchema = schemas[refKey];
+            if (refSchema is Map) {
+              properties.addAll(_flattenProperties(
+                  refSchema.cast<String, dynamic>(), requiredSet));
+            }
+          } else {
+            properties.addAll(_flattenProperties(subMap, requiredSet));
+          }
+        }
+      }
+    }
+
+    return properties;
   }
 
   String _buildModelCode(
@@ -262,7 +486,8 @@ class LidarrException implements Exception {
       return _buildEnumCode(className, schema);
     }
 
-    final properties = (schema['properties'] as Map<String, dynamic>?) ?? {};
+    final requiredSet = <String>{};
+    final properties = _flattenProperties(schema, requiredSet);
     final title = schema['title'] as String?;
     final description = schema['description'] as String?;
 
@@ -272,26 +497,38 @@ class LidarrException implements Exception {
 
     for (final propEntry in properties.entries) {
       final propKey = propEntry.key;
-      final propSchema = propEntry.value as Map<String, dynamic>;
+      final propSchema = propEntry.value is Map
+          ? (propEntry.value as Map).cast<String, dynamic>()
+          : <String, dynamic>{};
       var fieldName = _toCamelCase(propKey);
-      if (usedFieldNames.contains(fieldName)) {
+      while (usedFieldNames.contains(fieldName)) {
         fieldName = '${fieldName}Alt';
       }
       usedFieldNames.add(fieldName);
 
       final fieldTypeInfo = _parseType(propSchema, imports);
       final propDesc = propSchema['description'] as String?;
+      final format = propSchema['format'] as String?;
       final isDeprecated = propSchema['deprecated'] == true;
+      final readOnly = propSchema['readOnly'] == true;
+      final defaultVal = propSchema['default'];
+
+      final isExplicitlyNullable = propSchema['nullable'] == true;
+      final isRequired = requiredSet.contains(propKey);
+      final isNullable = isExplicitlyNullable || !isRequired;
 
       fields.add(_ModelField(
         jsonKey: propKey,
         fieldName: fieldName,
         dartType: fieldTypeInfo.dartType,
-        isNullable: fieldTypeInfo.isNullable,
+        isNullable: isNullable,
         isList: fieldTypeInfo.isList,
         isCustomClass: fieldTypeInfo.isCustomClass,
         customClassName: fieldTypeInfo.customClassName,
         description: propDesc,
+        format: format,
+        readOnly: readOnly,
+        defaultValue: defaultVal,
         isDeprecated: isDeprecated,
       ));
     }
@@ -299,7 +536,8 @@ class LidarrException implements Exception {
     final fileName = _toSnakeCase(className);
     final buffer = StringBuffer();
     buffer.writeln("// ignore_for_file: unused_import");
-    buffer.writeln("import 'package:freezed_annotation/freezed_annotation.dart';");
+    buffer.writeln(
+        "import 'package:freezed_annotation/freezed_annotation.dart';");
     for (final imp in imports) {
       if (imp != className) {
         final impFileName = _toSnakeCase(imp);
@@ -329,21 +567,39 @@ class LidarrException implements Exception {
     } else {
       buffer.writeln('  const factory $className({');
       for (final f in fields) {
+        final docParts = <String>[];
         if (f.description != null && f.description!.isNotEmpty) {
-          for (final line in f.description!.split('\n')) {
+          docParts.add(f.description!.trim());
+        }
+        final metaTags = <String>[];
+        if (f.format != null) metaTags.add('format: ${f.format}');
+        if (f.readOnly) metaTags.add('readOnly: true');
+        if (f.defaultValue != null) metaTags.add('default: ${f.defaultValue}');
+        if (metaTags.isNotEmpty) {
+          docParts.add('(${metaTags.join(', ')})');
+        }
+
+        if (docParts.isNotEmpty) {
+          for (final line in docParts.join(' ').split('\n')) {
             buffer.writeln('    /// ${line.trim()}');
           }
         }
         if (f.isDeprecated) {
-          buffer.writeln("    @Deprecated('Marked deprecated in OpenAPI spec')");
+          buffer
+              .writeln("    @Deprecated('Marked deprecated in OpenAPI spec')");
         }
-        final typeStr = f.dartType.endsWith('?') ? f.dartType : '${f.dartType}?';
-        buffer.writeln("    @JsonKey(name: '${f.jsonKey}') $typeStr ${f.fieldName},");
+        final typeStr = f.isNullable
+            ? (f.dartType.endsWith('?') ? f.dartType : '${f.dartType}?')
+            : f.dartType;
+        final prefix = f.isNullable ? '' : 'required ';
+        buffer.writeln(
+            "    @JsonKey(name: '${f.jsonKey}') $prefix$typeStr ${f.fieldName},");
       }
       buffer.writeln('  }) = _$className;');
     }
     buffer.writeln();
-    buffer.writeln('  factory $className.fromJson(Map<String, dynamic> json) =>');
+    buffer
+        .writeln('  factory $className.fromJson(Map<String, dynamic> json) =>');
     buffer.writeln('      _\$${className}FromJson(json);');
     buffer.writeln('}');
 
@@ -356,7 +612,8 @@ class LidarrException implements Exception {
     final fileName = _toSnakeCase(className);
 
     buffer.writeln("// ignore_for_file: unused_import");
-    buffer.writeln("import 'package:freezed_annotation/freezed_annotation.dart';");
+    buffer.writeln(
+        "import 'package:freezed_annotation/freezed_annotation.dart';");
     buffer.writeln();
     buffer.writeln("part '$fileName.g.dart';");
     buffer.writeln();
@@ -364,26 +621,50 @@ class LidarrException implements Exception {
     buffer.writeln('@JsonEnum(alwaysCreate: true)');
     buffer.writeln('enum $className {');
 
-    for (final item in enumList) {
-      final strVal = item.toString();
-      final identifier = _toCamelCase(strVal);
-      buffer.writeln("  @JsonValue('$strVal')");
-      buffer.writeln('  $identifier,');
-    }
+    final isIntEnum = enumList.isNotEmpty && enumList.first is int;
+    final usedIdentifiers = <String>{};
 
+    for (final item in enumList) {
+      if (item is int) {
+        var identifier = 'val$item';
+        while (usedIdentifiers.contains(identifier)) {
+          identifier = '${identifier}Alt';
+        }
+        usedIdentifiers.add(identifier);
+        buffer.writeln("  @JsonValue($item)");
+        buffer.writeln('  $identifier($item),');
+      } else {
+        final strVal = item.toString();
+        var identifier = _toCamelCase(strVal);
+        while (usedIdentifiers.contains(identifier)) {
+          identifier = '${identifier}Alt';
+        }
+        usedIdentifiers.add(identifier);
+        final escaped = strVal.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
+        buffer.writeln("  @JsonValue('$escaped')");
+        buffer.writeln("  $identifier('$escaped'),");
+      }
+    }
+    buffer.writeln(';');
+    buffer.writeln();
+    final valType = isIntEnum ? 'int' : 'String';
+    buffer.writeln('  final $valType value;');
+    buffer.writeln('  const $className(this.value);');
     buffer.writeln('}');
     return buffer.toString();
   }
 
-  _TypeInfo _parseType(
-      Map<String, dynamic> schema, Set<String> imports) {
+  _TypeInfo _parseType(Map<String, dynamic> schema, Set<String> imports) {
     if (schema.containsKey('\$ref')) {
       final ref = schema['\$ref'] as String;
       final key = ref.replaceFirst('#/components/schemas/', '');
       final cls = schemaClassNames[key] ?? 'dynamic';
-      imports.add(cls);
+      if (cls != 'dynamic') imports.add(cls);
       return _TypeInfo(
-          dartType: cls, isNullable: true, isCustomClass: true, customClassName: cls);
+          dartType: cls,
+          isNullable: true,
+          isCustomClass: true,
+          customClassName: cls);
     }
 
     final type = schema['type'] as String?;
@@ -395,8 +676,30 @@ class LidarrException implements Exception {
         dartType: listDartType,
         isNullable: true,
         isList: true,
-        customClassName: itemType.isCustomClass ? itemType.customClassName : null,
+        customClassName:
+            itemType.isCustomClass ? itemType.customClassName : null,
       );
+    }
+
+    if (type == 'object') {
+      if (schema.containsKey('additionalProperties')) {
+        final addProps = schema['additionalProperties'];
+        if (addProps is Map<String, dynamic> && addProps.isNotEmpty) {
+          final valType = _parseType(addProps, imports);
+          final isValNullable = addProps['nullable'] == true;
+          final valueTypeStr =
+              isValNullable ? '${valType.dartType}?' : valType.dartType;
+          return _TypeInfo(
+            dartType: 'Map<String, $valueTypeStr>',
+            isNullable: true,
+          );
+        }
+        return _TypeInfo(
+          dartType: 'Map<String, dynamic>',
+          isNullable: true,
+        );
+      }
+      return _TypeInfo(dartType: 'Map<String, dynamic>', isNullable: true);
     }
 
     if (type == 'integer') {
@@ -412,6 +715,20 @@ class LidarrException implements Exception {
       return _TypeInfo(dartType: 'String', isNullable: true);
     }
 
+    if (schema.containsKey('allOf')) {
+      final allOf = schema['allOf'] as List<dynamic>;
+      if (allOf.isNotEmpty &&
+          allOf.first is Map<String, dynamic> &&
+          (allOf.first as Map<String, dynamic>).containsKey('\$ref')) {
+        return _parseType(allOf.first as Map<String, dynamic>, imports);
+      }
+    }
+
+    if (schema.containsKey('oneOf') || schema.containsKey('anyOf')) {
+      _warnings.add('Encountered oneOf/anyOf union: mapping to dynamic');
+      return _TypeInfo(dartType: 'dynamic', isNullable: true);
+    }
+
     return _TypeInfo(dartType: 'dynamic', isNullable: true);
   }
 
@@ -423,7 +740,7 @@ class LidarrException implements Exception {
       final fileName = _toSnakeCase(className);
 
       final code = _buildApiCode(tag, className, endpoints);
-      File('$outputDir/api/$fileName.dart').writeAsStringSync(code);
+      _writeFileIfChanged('$outputDir/api/$fileName.dart', code, isApi: true);
     }
   }
 
@@ -449,6 +766,15 @@ class LidarrException implements Exception {
       final bodySchema = _getRequestBodySchema(op);
       if (bodySchema != null) {
         _extractModelImports(bodySchema, modelImports);
+      }
+      final params =
+          (op['parameters'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ??
+              [];
+      for (final p in params) {
+        final pSchema = p['schema'] as Map<String, dynamic>?;
+        if (pSchema != null) {
+          _extractModelImports(pSchema, modelImports);
+        }
       }
     }
 
@@ -501,28 +827,48 @@ class LidarrException implements Exception {
         buffer.writeln("  @Deprecated('Marked deprecated in OpenAPI spec')");
       }
 
-      final respSchema = _getSuccessResponseSchema(op);
+      final respSchema = verb == 'head' ? null : _getSuccessResponseSchema(op);
       final returnTypeInfo = _getReturnTypeInfo(respSchema);
       final returnType = returnTypeInfo.type;
 
       buffer.writeln('  Future<ApiResponse<$returnType>> $methodName(');
 
-      final params = (op['parameters'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+      final params =
+          (op['parameters'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ??
+              [];
       final pathParams = params.where((p) => p['in'] == 'path').toList();
       final queryParams = params.where((p) => p['in'] == 'query').toList();
       final bodySchema = _getRequestBodySchema(op);
 
       final methodParams = <String>[];
       for (final p in pathParams) {
-        final pName = _toCamelCase(p['name'] as String);
-        methodParams.add('required String $pName');
+        final rawName = p['name'] as String;
+        final pName = _toCamelCase(rawName);
+        final pSchema = p['schema'] as Map<String, dynamic>? ?? {};
+        final pType = _parseParameterType(pSchema);
+        methodParams.add('required $pType $pName');
       }
       for (final q in queryParams) {
-        final qName = _toCamelCase(q['name'] as String);
-        methodParams.add('String? $qName');
+        final qRaw = q['name'] as String;
+        final qName = _toCamelCase(qRaw);
+        final qSchema = q['schema'] as Map<String, dynamic>? ?? {};
+        final isRequired = q['required'] == true;
+        final qType = _parseParameterType(qSchema);
+        if (isRequired) {
+          methodParams.add('required $qType $qName');
+        } else {
+          methodParams.add('$qType? $qName');
+        }
       }
       if (bodySchema != null) {
-        methodParams.add('dynamic body');
+        final bodyTypeInfo = _getReturnTypeInfo(bodySchema);
+        final isBodyRequired = op['requestBody']?['required'] == true;
+        final bodyType = bodyTypeInfo.type;
+        if (isBodyRequired) {
+          methodParams.add('required $bodyType body');
+        } else {
+          methodParams.add('$bodyType? body');
+        }
       }
 
       if (methodParams.isNotEmpty) {
@@ -534,30 +880,60 @@ class LidarrException implements Exception {
       for (final p in pathParams) {
         final rawName = p['name'] as String;
         final pName = _toCamelCase(rawName);
-        interpolatedPath = interpolatedPath.replaceAll('{$rawName}', '\$$pName');
+        interpolatedPath = interpolatedPath.replaceAll(
+            '{$rawName}', '\${Uri.encodeComponent(\'\$$pName\')}');
       }
 
       buffer.writeln('    try {');
-      buffer.writeln('      final Response<dynamic> resp = await _dio.$verb<dynamic>(');
+      buffer.writeln(
+          '      final Response<dynamic> resp = await _dio.$verb<dynamic>(');
       buffer.writeln("        '$interpolatedPath',");
       if (queryParams.isNotEmpty) {
         buffer.writeln('        queryParameters: <String, dynamic>{');
         for (final q in queryParams) {
           final qRaw = q['name'] as String;
           final qName = _toCamelCase(qRaw);
-          buffer.writeln("          if ($qName != null) '$qRaw': $qName,");
+          final qSchema = q['schema'] as Map<String, dynamic>? ?? {};
+          final isEnum = _isEnumSchema(qSchema);
+          final isArray = qSchema['type'] == 'array';
+          final arrayItems = isArray
+              ? (qSchema['items'] as Map<String, dynamic>? ?? {})
+              : null;
+          final isEnumArray = arrayItems != null && _isEnumSchema(arrayItems);
+
+          if (isEnum) {
+            buffer.writeln(
+                "          if ($qName != null) '$qRaw': $qName.value,");
+          } else if (isEnumArray) {
+            buffer.writeln(
+                "          if ($qName != null) '$qRaw': $qName.map((e) => e.value).toList(),");
+          } else {
+            buffer.writeln("          if ($qName != null) '$qRaw': $qName,");
+          }
         }
         buffer.writeln('        },');
       }
       if (bodySchema != null) {
-        buffer.writeln('        data: body,');
+        final bodyTypeInfo = _getReturnTypeInfo(bodySchema);
+        if (bodyTypeInfo.isCustomClass && !bodyTypeInfo.isList) {
+          buffer.writeln('        data: body?.toJson(),');
+        } else if (bodyTypeInfo.isCustomClass && bodyTypeInfo.isList) {
+          buffer
+              .writeln('        data: body?.map((e) => e.toJson()).toList(),');
+        } else if (_isEnumSchema(bodySchema)) {
+          buffer.writeln('        data: body?.value,');
+        } else {
+          buffer.writeln('        data: body,');
+        }
       }
       buffer.writeln('      );');
 
       buffer.writeln('      ${_buildDeserializationCode(returnTypeInfo)}');
-      buffer.writeln('      return ApiResponse.success(data, statusCode: resp.statusCode);');
+      buffer.writeln(
+          '      return ApiResponse.success(data, statusCode: resp.statusCode);');
       buffer.writeln('    } on DioException catch (e) {');
-      buffer.writeln('      return ApiResponse.error(LidarrError.fromDio(e), statusCode: e.response?.statusCode);');
+      buffer.writeln(
+          '      return ApiResponse.error(LidarrError.fromDio(e), statusCode: e.response?.statusCode);');
       buffer.writeln('    }');
       buffer.writeln('  }');
       buffer.writeln();
@@ -567,13 +943,46 @@ class LidarrException implements Exception {
     return buffer.toString();
   }
 
+  bool _isEnumSchema(Map<String, dynamic> schema) {
+    if (schema.containsKey('enum')) return true;
+    if (schema.containsKey(r'$ref')) {
+      final ref = schema[r'$ref'] as String;
+      final key = ref.replaceFirst('#/components/schemas/', '');
+      final target = schemas[key];
+      if (target is Map && target.containsKey('enum')) return true;
+    }
+    return false;
+  }
+
+  String _parseParameterType(Map<String, dynamic> schema) {
+    if (schema.containsKey('\$ref')) {
+      final ref = schema['\$ref'] as String;
+      final key = ref.replaceFirst('#/components/schemas/', '');
+      return schemaClassNames[key] ?? 'dynamic';
+    }
+    final type = schema['type'] as String?;
+    if (type == 'integer') return 'int';
+    if (type == 'number') return 'double';
+    if (type == 'boolean') return 'bool';
+    if (type == 'string') return 'String';
+    if (type == 'array') {
+      final items = schema['items'] as Map<String, dynamic>? ?? {};
+      final itemType = _parseParameterType(items);
+      return 'List<$itemType>';
+    }
+    return 'dynamic';
+  }
+
   _ReturnTypeInfo _getReturnTypeInfo(Map<String, dynamic>? schema) {
-    if (schema == null) return _ReturnTypeInfo(type: 'void', isList: false, isCustomClass: false);
+    if (schema == null) {
+      return _ReturnTypeInfo(type: 'void', isList: false, isCustomClass: false);
+    }
     if (schema.containsKey('\$ref')) {
       final ref = schema['\$ref'] as String;
       final key = ref.replaceFirst('#/components/schemas/', '');
       final cls = schemaClassNames[key] ?? 'dynamic';
-      return _ReturnTypeInfo(type: cls, isList: false, isCustomClass: true, className: cls);
+      return _ReturnTypeInfo(
+          type: cls, isList: false, isCustomClass: true, className: cls);
     }
     if (schema['type'] == 'array') {
       final items = schema['items'] as Map<String, dynamic>?;
@@ -581,11 +990,41 @@ class LidarrException implements Exception {
         final ref = items['\$ref'] as String;
         final key = ref.replaceFirst('#/components/schemas/', '');
         final cls = schemaClassNames[key] ?? 'dynamic';
-        return _ReturnTypeInfo(type: 'List<$cls>', isList: true, isCustomClass: true, className: cls);
+        return _ReturnTypeInfo(
+            type: 'List<$cls>',
+            isList: true,
+            isCustomClass: true,
+            className: cls);
       }
-      return _ReturnTypeInfo(type: 'List<dynamic>', isList: true, isCustomClass: false);
+      if (items != null && items['type'] != null) {
+        final prim = _parseParameterType(items);
+        return _ReturnTypeInfo(
+            type: 'List<$prim>', isList: true, isCustomClass: false);
+      }
+      return _ReturnTypeInfo(
+          type: 'List<dynamic>', isList: true, isCustomClass: false);
     }
-    return _ReturnTypeInfo(type: 'dynamic', isList: false, isCustomClass: false);
+    if (schema['type'] == 'integer') {
+      return _ReturnTypeInfo(type: 'int', isList: false, isCustomClass: false);
+    }
+    if (schema['type'] == 'number') {
+      return _ReturnTypeInfo(
+          type: 'double', isList: false, isCustomClass: false);
+    }
+    if (schema['type'] == 'boolean') {
+      return _ReturnTypeInfo(type: 'bool', isList: false, isCustomClass: false);
+    }
+    if (schema['type'] == 'string') {
+      return _ReturnTypeInfo(
+          type: 'String', isList: false, isCustomClass: false);
+    }
+    if (schema['type'] == 'object') {
+      return _ReturnTypeInfo(
+          type: 'Map<String, dynamic>', isList: false, isCustomClass: false);
+    }
+
+    return _ReturnTypeInfo(
+        type: 'dynamic', isList: false, isCustomClass: false);
   }
 
   String _buildDeserializationCode(_ReturnTypeInfo info) {
@@ -595,8 +1034,36 @@ class LidarrException implements Exception {
     if (info.isList && info.isCustomClass) {
       return 'final List<${info.className}> data = (resp.data as List<dynamic>?)?.map((e) => ${info.className}.fromJson(e as Map<String, dynamic>)).toList() ?? <${info.className}>[];';
     }
+    if (info.isList && !info.isCustomClass) {
+      final innerType = info.type.replaceAll(RegExp(r'^List<|>[\?]?$'), '');
+      if (innerType == 'int') {
+        return 'final List<int> data = (resp.data as List<dynamic>?)?.map((e) => (e as num).toInt()).toList() ?? <int>[];';
+      }
+      if (innerType == 'double') {
+        return 'final List<double> data = (resp.data as List<dynamic>?)?.map((e) => (e as num).toDouble()).toList() ?? <double>[];';
+      }
+      if (innerType == 'bool') {
+        return 'final List<bool> data = (resp.data as List<dynamic>?)?.map((e) => e as bool).toList() ?? <bool>[];';
+      }
+      if (innerType == 'String') {
+        return 'final List<String> data = (resp.data as List<dynamic>?)?.map((e) => e.toString()).toList() ?? <String>[];';
+      }
+      return 'final ${info.type} data = (resp.data as List<dynamic>?)?.map((e) => e as $innerType).toList() ?? <$innerType>[];';
+    }
     if (info.isCustomClass) {
       return 'final ${info.className}? data = resp.data is Map<String, dynamic> ? ${info.className}.fromJson(resp.data as Map<String, dynamic>) : null;';
+    }
+    if (info.type == 'int') {
+      return 'final int? data = resp.data is num ? (resp.data as num).toInt() : (resp.data is String ? int.tryParse(resp.data as String) : null);';
+    }
+    if (info.type == 'double') {
+      return 'final double? data = resp.data is num ? (resp.data as num).toDouble() : (resp.data is String ? double.tryParse(resp.data as String) : null);';
+    }
+    if (info.type == 'bool') {
+      return 'final bool? data = resp.data as bool?;';
+    }
+    if (info.type == 'String') {
+      return 'final String? data = resp.data?.toString();';
     }
     return 'final dynamic data = resp.data;';
   }
@@ -639,8 +1106,15 @@ class LidarrException implements Exception {
   Map<String, dynamic>? _getRequestBodySchema(Map<String, dynamic> op) {
     final reqBody = op['requestBody'] as Map<String, dynamic>?;
     final content = reqBody?['content'] as Map<String, dynamic>?;
-    final jsonContent = content?['application/json'] ?? content?['text/json'];
-    return jsonContent?['schema'] as Map<String, dynamic>?;
+    if (content == null || content.isEmpty) return null;
+    final jsonContent = content['application/json'] ?? content['text/json'];
+    if (jsonContent != null) {
+      return jsonContent['schema'] as Map<String, dynamic>?;
+    }
+    final otherTypes = content.keys.join(', ');
+    _warnings.add(
+        'Unsupported requestBody content-type ($otherTypes) for operation "${op['operationId'] ?? 'unknown'}"');
+    return null;
   }
 
   void _extractModelImports(
@@ -675,7 +1149,7 @@ class LidarrException implements Exception {
       buffer.writeln("export 'api/$fileName.dart';");
     }
 
-    File('$outputDir/generated.dart').writeAsStringSync(buffer.toString());
+    _writeFileIfChanged('$outputDir/generated.dart', buffer.toString());
   }
 }
 
@@ -688,6 +1162,9 @@ class _ModelField {
   final bool isCustomClass;
   final String? customClassName;
   final String? description;
+  final String? format;
+  final bool readOnly;
+  final dynamic defaultValue;
   final bool isDeprecated;
 
   _ModelField({
@@ -699,6 +1176,9 @@ class _ModelField {
     this.isCustomClass = false,
     this.customClassName,
     this.description,
+    this.format,
+    this.readOnly = false,
+    this.defaultValue,
     this.isDeprecated = false,
   });
 }

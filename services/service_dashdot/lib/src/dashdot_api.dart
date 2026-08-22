@@ -10,7 +10,7 @@ class DashdotApi {
       final response = await _dio.get<Map<String, dynamic>>('/info');
       if (response.data != null) {
         final data = response.data!;
-        
+
         final rawCpu = data['cpu'] as Map<String, dynamic>? ?? {};
         final rawRam = data['ram'] as Map<String, dynamic>? ?? {};
         final rawStorage = data['storage'] as List<dynamic>? ?? [];
@@ -26,41 +26,62 @@ class DashdotApi {
             'uptime': rawOs['uptime'],
           },
           'cpu': {
-            'cpu_brand': '${rawCpu['brand'] ?? ''} ${rawCpu['model'] ?? ''}'.trim(),
+            'cpu_brand': '${rawCpu['brand'] ?? ''} ${rawCpu['model'] ?? ''}'
+                .trim(),
             'cores': rawCpu['cores'],
             'threads': rawCpu['threads'],
             'freq': rawCpu['frequency'],
           },
           'ram': {
-            'total_capacity': rawRam['size'] != null 
-                ? ((rawRam['size'] / 1024 / 1024 / 1024) * 100).truncate() / 100 
+            'total_capacity': rawRam['size'] != null
+                ? ((rawRam['size'] / 1024 / 1024 / 1024) * 100).truncate() / 100
                 : 0,
-            'sticks': (rawRam['layout'] as List<dynamic>? ?? []).map((stick) => {
-              'ram_brand': stick['brand'],
-              'type': stick['type'],
-              'frequency': stick['frequency'],
-            }).toList(),
+            'sticks': (rawRam['layout'] as List<dynamic>? ?? [])
+                .map(
+                  (stick) => {
+                    'ram_brand': stick['brand'],
+                    'type': stick['type'],
+                    'frequency': stick['frequency'],
+                  },
+                )
+                .toList(),
           },
-          'storage': rawStorage.map((s) {
-            final size = s['size'];
-            final disks = s['disks'] as List<dynamic>? ?? [];
-            return disks.map((disk) => {
-              'storage_brand': disk['brand'],
-              'device': disk['device'],
-              'type': disk['type'],
-              'capacity': size != null ? ((size / 1024 / 1024 / 1024) * 100).truncate() / 100 : 0,
-            });
-          }).expand((e) => e).toList(),
+          'storage': rawStorage
+              .map((s) {
+                final size = s['size'];
+                final disks = s['disks'] as List<dynamic>? ?? [];
+                return disks.map(
+                  (disk) => {
+                    'storage_brand': disk['brand'],
+                    'device': disk['device'],
+                    'type': disk['type'],
+                    'capacity': size != null
+                        ? ((size / 1024 / 1024 / 1024) * 100).truncate() / 100
+                        : 0,
+                  },
+                );
+              })
+              .expand((e) => e)
+              .toList(),
           'network': {
             'type': rawNetwork['type'],
             'interface_speed': rawNetwork['interfaceSpeed'],
-            'down_MBps': rawNetwork['speedDown'] != null ? ((rawNetwork['speedDown'] / 1024 / 1024) * 100).truncate() / 100 : 0,
-            'up_MBps': rawNetwork['speedUp'] != null ? ((rawNetwork['speedUp'] / 1024 / 1024) * 100).truncate() / 100 : 0,
+            'down_MBps': rawNetwork['speedDown'] != null
+                ? ((rawNetwork['speedDown'] / 1024 / 1024) * 100).truncate() /
+                      100
+                : 0,
+            'up_MBps': rawNetwork['speedUp'] != null
+                ? ((rawNetwork['speedUp'] / 1024 / 1024) * 100).truncate() / 100
+                : 0,
           },
-          'gpu': (rawGpu['layout'] as List<dynamic>? ?? []).map((g) => {
-            'name': '${g['brand']} ${g['model']}',
-            'memory': g['memory']
-          }).toList()
+          'gpu': (rawGpu['layout'] as List<dynamic>? ?? [])
+              .map(
+                (g) => {
+                  'name': '${g['brand']} ${g['model']}',
+                  'memory': g['memory'],
+                },
+              )
+              .toList(),
         };
 
         return DashdotInfo.fromJson(mappedData);
@@ -98,7 +119,7 @@ class DashdotApi {
       if (response.data != null) {
         final load = response.data!['load'];
         if (load != null) {
-           return {'load': ((load / 1024 / 1024 / 1024) * 100).truncate() / 100};
+          return {'load': ((load / 1024 / 1024 / 1024) * 100).truncate() / 100};
         }
       }
       return null;
@@ -139,8 +160,7 @@ class DashdotApi {
         };
       }
       return data;
-    } catch (e, st) {
-      print('NETWORK ERROR: $e\n$st');
+    } catch (_) {
       return null;
     }
   }
