@@ -7,14 +7,14 @@ servers; it does not stream video.
 
 Supported services:
 
-* Sonarr and Radarr - library, queue, wanted, history, blocklist, system status
-  and the full settings tree
+* Sonarr, Radarr and Lidarr - library, queue, wanted, history, blocklist,
+  system status and the full settings tree
 * Prowlarr - indexers, search and grab
 * Bazarr - subtitle status, search and download
 * Seerr (Overseerr and Jellyseerr) - discover, request and manage requests
 * Tautulli - active streams, history, statistics and users
 * Tracearr - who is streaming across Plex, Jellyfin and Emby, watch and
-  library statistics, history and a streaming-location map
+  library statistics, history, a media catalog and policy incidents
 * qBittorrent, Deluge, Transmission and rTorrent - torrent lists, transfers
   and per-torrent files, peers and trackers
 * SABnzbd and NZBGet - usenet queue control and history
