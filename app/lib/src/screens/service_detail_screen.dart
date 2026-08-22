@@ -25,6 +25,7 @@ import 'package:service_tautulli/service_tautulli.dart';
 import 'package:service_rtorrent/service_rtorrent.dart';
 import 'package:service_transmission/service_transmission.dart';
 import 'package:service_tracearr/service_tracearr.dart';
+import 'package:service_lidarr/service_lidarr.dart';
 
 import 'dashboard_screen.dart';
 
@@ -73,8 +74,26 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
         ),
       );
     }
+    if (instance.kind == ServiceKind.lidarr) {
+      return LidarrHome(
+        instance: instance,
+        drawer: ServicesDrawer(
+          instances: ref.watch(activeInstancesProvider),
+          profile: ref.watch(activeProfileProvider),
+        ),
+      );
+    }
     if (instance.kind == ServiceKind.tracearr) {
       return TracearrHomeScreen(
+        instance: instance,
+        drawer: ServicesDrawer(
+          instances: ref.watch(activeInstancesProvider),
+          profile: ref.watch(activeProfileProvider),
+        ),
+      );
+    }
+    if (instance.kind == ServiceKind.qbittorrent) {
+      return QbittorrentHome(
         instance: instance,
         drawer: ServicesDrawer(
           instances: ref.watch(activeInstancesProvider),
@@ -213,9 +232,10 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
 
   Widget _bodyFor(Instance instance) {
     return switch (instance.kind) {
-      // Sonarr, Radarr, and Tracearr never reach here: build() returns early.
+      // Sonarr, Radarr, Lidarr, and Tracearr never reach here: build() returns early.
       ServiceKind.sonarr => const SizedBox.shrink(),
       ServiceKind.radarr => const SizedBox.shrink(),
+      ServiceKind.lidarr => const SizedBox.shrink(),
       ServiceKind.tracearr => const SizedBox.shrink(),
       ServiceKind.prowlarr => ProwlarrHome(instance: instance),
       ServiceKind.bazarr => BazarrHome(instance: instance),

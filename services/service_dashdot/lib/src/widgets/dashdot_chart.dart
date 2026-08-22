@@ -26,23 +26,29 @@ class DashdotLineChart extends StatelessWidget {
         minY: 0,
         maxY: maxY == 0 ? 1 : maxY,
         gridData: FlGridData(
-          show: true,
-          drawVerticalLine: true,
           horizontalInterval: maxY > 0 ? maxY / 4 : 1,
           verticalInterval: 10,
           getDrawingHorizontalLine: (value) => FlLine(
-            color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.3),
+            color: Theme.of(
+              context,
+            ).colorScheme.outlineVariant.withValues(alpha: 0.3),
             strokeWidth: 1,
           ),
           getDrawingVerticalLine: (value) => FlLine(
-            color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.3),
+            color: Theme.of(
+              context,
+            ).colorScheme.outlineVariant.withValues(alpha: 0.3),
             strokeWidth: 1,
           ),
         ),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(
           show: true,
-          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
+          border: Border.all(
+            color: Theme.of(
+              context,
+            ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
         ),
         lineBarsData: [
           LineChartBarData(
@@ -50,14 +56,12 @@ class DashdotLineChart extends StatelessWidget {
               values.length,
               (index) => FlSpot(index.toDouble(), values[index]),
             ),
-            isCurved: false,
             color: lineColor,
             barWidth: 1.5,
-            isStrokeCapRound: false,
             dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(
               show: true,
-              color: lineColor.withOpacity(0.15),
+              color: lineColor.withValues(alpha: 0.15),
             ),
           ),
           if (secondaryValues != null && secondaryLineColor != null)
@@ -66,14 +70,12 @@ class DashdotLineChart extends StatelessWidget {
                 secondaryValues!.length,
                 (index) => FlSpot(index.toDouble(), secondaryValues![index]),
               ),
-              isCurved: false,
               color: secondaryLineColor!,
               barWidth: 1.5,
-              isStrokeCapRound: false,
               dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(
                 show: true,
-                color: secondaryLineColor!.withOpacity(0.15),
+                color: secondaryLineColor!.withValues(alpha: 0.15),
               ),
             ),
         ],

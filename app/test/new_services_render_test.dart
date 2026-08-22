@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_bazarr/service_bazarr.dart';
 import 'package:service_seerr/service_seerr.dart';
+import 'package:service_lidarr/service_lidarr.dart';
 import 'package:service_plex/service_plex.dart';
 import 'package:service_radarr/service_radarr.dart';
 import 'package:service_sabnzbd/service_sabnzbd.dart';
@@ -282,5 +283,54 @@ void main() {
 
     expect(find.text('Inception'), findsOneWidget);
     expect(find.text('Missing'), findsOneWidget);
+  });
+
+  testWidgets('CalendarScreen renders Lidarr aggregated entries',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final Instance lidarr = _instance(ServiceKind.lidarr);
+    final DateTime airDate = DateTime.now();
+
+    await _pump(
+      tester,
+      <Override>[
+        preferencesProvider.overrideWith(_FakePreferencesController.new),
+        activeInstancesProvider.overrideWith(
+          (Ref ref) => <Instance>[lidarr],
+        ),
+        lidarrApiProvider(lidarr).overrideWith(
+          (Ref ref) => LidarrApi(Dio()),
+        ),
+        lidarrCalendarProvider.overrideWith(
+          (Ref ref, (Instance, DateTime) key) async => <AlbumResource>[
+            AlbumResource(
+              id: 42,
+              title: 'A Moon Shaped Pool',
+              releaseDate: airDate.toIso8601String(),
+              albumType: 'Studio',
+              monitored: true,
+              artistId: 10,
+              artist: const ArtistResource(
+                id: 10,
+                artistName: 'Radiohead',
+              ),
+              statistics: const AlbumStatisticsResource(
+                trackFileCount: 11,
+                percentOfTracks: 100.0,
+              ),
+            ),
+          ],
+        ),
+      ],
+      const CalendarScreen(),
+      pumps: 3,
+    );
+
+    expect(find.text('Radiohead - A Moon Shaped Pool'), findsOneWidget);
+    expect(find.text('Downloaded'), findsOneWidget);
   });
 }

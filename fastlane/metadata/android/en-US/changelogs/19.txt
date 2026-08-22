@@ -1,0 +1,13 @@
+Lidarr is now a supported service. Artists and discography, album and track
+detail, wanted, queue and history, the full settings tree, an in-app log reader,
+and album releases in the calendar. It is marked beta while it settles in.
+
+qBittorrent gained a settings page covering what its own web interface offers,
+across system, behaviour, downloads, connection, speed, BitTorrent, RSS, web UI
+and advanced. Torrents can also be moved around the queue and sorted by queue
+position, and the screen now leads with your totals and what is seeding.
+
+The app icon follows your system palette when Android themed icons are on.
+
+Changing a qBittorrent setting that would cut Atrium off from the server now
+asks first, and says what it will do.

@@ -29,6 +29,7 @@ enum _HealthMode {
     case ServiceKind.sonarr:
     case ServiceKind.radarr:
       return (path: 'api/v3/system/status', mode: _HealthMode.authed);
+    case ServiceKind.lidarr:
     case ServiceKind.prowlarr:
       return (path: 'api/v1/system/status', mode: _HealthMode.authed);
     case ServiceKind.bazarr:
