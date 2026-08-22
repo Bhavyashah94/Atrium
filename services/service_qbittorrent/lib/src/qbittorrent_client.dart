@@ -520,6 +520,119 @@ class QbittorrentClient {
         }
       });
 
+  /// Application version string (e.g. `v5.0.0`).
+  Future<String> getAppVersion() => _guarded(() async {
+        final Response<String> res = await _dio.get<String>(
+          'api/v2/app/version',
+          options: Options(responseType: ResponseType.plain),
+        );
+        return res.data?.trim() ?? '';
+      });
+
+  /// Web API version string (e.g. `2.11.0`).
+  Future<String> getApiVersion() => _guarded(() async {
+        final Response<String> res = await _dio.get<String>(
+          'api/v2/app/webapiVersion',
+          options: Options(responseType: ResponseType.plain),
+        );
+        return res.data?.trim() ?? '';
+      });
+
+  /// Global application preferences and configuration map.
+  Future<Map<String, dynamic>> getPreferences() => _guarded(() async {
+        final Response<dynamic> res =
+            await _dio.get<dynamic>('api/v2/app/preferences');
+        if (res.data is Map) {
+          return Map<String, dynamic>.from(res.data as Map);
+        } else if (res.data is String && (res.data as String).isNotEmpty) {
+          try {
+            final dynamic decoded = jsonDecode(res.data as String);
+            if (decoded is Map) {
+              return Map<String, dynamic>.from(decoded);
+            }
+          } catch (_) {}
+        }
+        return <String, dynamic>{};
+      });
+
+  /// Set application preferences.
+  Future<void> setPreferences(Map<String, dynamic> prefs) => _guarded(() async {
+        await _dio.post<dynamic>(
+          'api/v2/app/setPreferences',
+          data: <String, dynamic>{'json': jsonEncode(prefs)},
+          options: Options(contentType: Headers.formUrlEncodedContentType),
+        );
+      });
+
+  /// Toggles the Alternative Speed Limits mode.
+  Future<void> toggleAltSpeedLimits() => _guarded(() async {
+        await _dio.post<dynamic>('api/v2/transfer/toggleSpeedLimitsMode');
+      });
+
+  /// Returns 1 if alt speed mode is enabled, 0 otherwise.
+  Future<int> getSpeedLimitsMode() => _guarded(() async {
+        final Response<String> res = await _dio.get<String>(
+          'api/v2/transfer/speedLimitsMode',
+          options: Options(responseType: ResponseType.plain),
+        );
+        return int.tryParse(res.data?.trim() ?? '0') ?? 0;
+      });
+
+  /// Retrieves list of network interfaces recognized by the qBittorrent host.
+  Future<List<Map<String, String>>> getNetworkInterfaces() =>
+      _guarded(() async {
+        try {
+          final Response<dynamic> res =
+              await _dio.get<dynamic>('api/v2/app/networkInterfacesList');
+          dynamic raw = res.data;
+          if (raw is String && raw.isNotEmpty) {
+            try {
+              raw = jsonDecode(raw);
+            } catch (_) {}
+          }
+          if (raw is List) {
+            return raw.map((dynamic item) {
+              if (item is Map) {
+                final String name = item['name']?.toString() ?? '';
+                final String value = item['value']?.toString() ?? name;
+                return <String, String>{'name': name, 'value': value};
+              } else if (item is String) {
+                return <String, String>{'name': item, 'value': item};
+              }
+              return <String, String>{
+                'name': item.toString(),
+                'value': item.toString(),
+              };
+            }).toList();
+          }
+        } catch (_) {}
+        return <Map<String, String>>[];
+      });
+
+  /// Retrieves list of IP addresses available for a given network interface
+  /// or all available addresses if [iface] is empty or omitted.
+  Future<List<String>> getNetworkInterfaceAddresses({String? iface}) =>
+      _guarded(() async {
+        try {
+          final Response<dynamic> res = await _dio.get<dynamic>(
+            'api/v2/app/networkInterfaceAddressesList',
+            queryParameters: iface != null && iface.isNotEmpty
+                ? <String, dynamic>{'iface': iface}
+                : null,
+          );
+          dynamic raw = res.data;
+          if (raw is String && raw.isNotEmpty) {
+            try {
+              raw = jsonDecode(raw);
+            } catch (_) {}
+          }
+          if (raw is List) {
+            return raw.map((dynamic e) => e.toString()).toList();
+          }
+        } catch (_) {}
+        return <String>[];
+      });
+
   void close() => _dio.close(force: true);
 
   /// qBittorrent 5.0 renamed pause→stop and resume→start. Try the new path,
