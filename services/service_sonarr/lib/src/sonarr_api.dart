@@ -394,8 +394,7 @@ class SonarrApi {
     }
   }
 
-  Future<Map<String, dynamic>> createRootFolder(
-      Map<String, dynamic> payload) async {
+  Future<Map<String, dynamic>> createRootFolder(Map<String, dynamic> payload) async {
     try {
       final Response<dynamic> resp = await _dio.post<dynamic>(
         '$_base/rootfolder',

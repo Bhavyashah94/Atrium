@@ -142,49 +142,50 @@ class PlexEpisodeList extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(season.title)),
       body: AsyncValueView<List<PlexMetadata>>(
-        value: episodes,
-        onRetry: () =>
+          value: episodes,
+          onRetry: () => ref
+              .invalidate(plexChildrenProvider((instance, season.ratingKey))),
+          data: (List<PlexMetadata> list) {
+            
+            if (list.isEmpty) {
+              return EasyRefresh(
+        header: const ClassicHeader(
+          dragText: 'Pull to refresh',
+          armedText: 'Release ready',
+          readyText: 'Refreshing...',
+          processingText: 'Refreshing...',
+          processedText: 'Succeeded',
+          failedText: 'Failed',
+          messageText: 'Last updated at %T',
+        ),
+        onRefresh: () async =>
             ref.invalidate(plexChildrenProvider((instance, season.ratingKey))),
-        data: (List<PlexMetadata> list) {
-          if (list.isEmpty) {
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const <Widget>[
+            SizedBox(height: 100),
+            EmptyView(
+                icon: Icons.tv_outlined,
+                title: 'No episodes',
+                message: 'This season has no episodes yet.',
+              ),
+          ],
+        ),
+      );
+            }
             return EasyRefresh(
-              header: const ClassicHeader(
-                dragText: 'Pull to refresh',
-                armedText: 'Release ready',
-                readyText: 'Refreshing...',
-                processingText: 'Refreshing...',
-                processedText: 'Succeeded',
-                failedText: 'Failed',
-                messageText: 'Last updated at %T',
-              ),
-              onRefresh: () async => ref.invalidate(
-                  plexChildrenProvider((instance, season.ratingKey))),
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: const <Widget>[
-                  SizedBox(height: 100),
-                  EmptyView(
-                    icon: Icons.tv_outlined,
-                    title: 'No episodes',
-                    message: 'This season has no episodes yet.',
-                  ),
-                ],
-              ),
-            );
-          }
-          return EasyRefresh(
-            header: const ClassicHeader(
-              dragText: 'Pull to refresh',
-              armedText: 'Release ready',
-              readyText: 'Refreshing...',
-              processingText: 'Refreshing...',
-              processedText: 'Succeeded',
-              failedText: 'Failed',
-              messageText: 'Last updated at %T',
-            ),
-            onRefresh: () async => ref
-                .invalidate(plexChildrenProvider((instance, season.ratingKey))),
-            child: ListView.builder(
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
+      onRefresh: () async =>
+            ref.invalidate(plexChildrenProvider((instance, season.ratingKey))),
+      child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: Insets.sm),
               itemCount: list.length,
               itemBuilder: (BuildContext context, int index) {
@@ -196,9 +197,10 @@ class PlexEpisodeList extends ConsumerWidget {
                 );
               },
             ),
-          );
-        },
-      ),
+    );
+          
+          },
+        ),
     );
   }
 }

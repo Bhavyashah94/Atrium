@@ -42,10 +42,8 @@ class SonarrClient {
     this.apiKey,
   })  : dio = dio ?? Dio(),
         baseUrl = baseUrl ?? dio?.options.baseUrl ?? '' {
-    final effectiveBase =
-        this.baseUrl.isNotEmpty ? this.baseUrl : this.dio.options.baseUrl;
-    this.dio.options.baseUrl =
-        effectiveBase.endsWith('/') ? effectiveBase : '$effectiveBase/';
+    final effectiveBase = this.baseUrl.isNotEmpty ? this.baseUrl : this.dio.options.baseUrl;
+    this.dio.options.baseUrl = effectiveBase.endsWith('/') ? effectiveBase : '$effectiveBase/';
     if (apiKey != null && apiKey!.isNotEmpty) {
       this.dio.options.headers['X-Api-Key'] = apiKey;
     }
@@ -63,7 +61,6 @@ class SonarrClient {
     seriesService = SonarrSeriesService(rawSeriesApi, rawSeriesLookupApi);
     episodeService = SonarrEpisodeService(rawEpisodeApi);
     commandService = SonarrCommandService(rawCommandApi);
-    queueService =
-        SonarrQueueService(rawQueueApi, rawQueueDetailsApi, rawQueueStatusApi);
+    queueService = SonarrQueueService(rawQueueApi, rawQueueDetailsApi, rawQueueStatusApi);
   }
 }

@@ -23,8 +23,7 @@ class SonarrSeriesService {
         error: response.error,
       );
     }
-    throw SonarrException('Failed to fetch series',
-        statusCode: response.statusCode);
+    throw SonarrException('Failed to fetch series', statusCode: response.statusCode);
   }
 
   /// Retrieves a specific series by ID.
@@ -40,8 +39,7 @@ class SonarrSeriesService {
         error: response.error,
       );
     }
-    throw SonarrException('Failed to fetch series',
-        statusCode: response.statusCode);
+    throw SonarrException('Failed to fetch series', statusCode: response.statusCode);
   }
 
   /// Searches for series by term.
@@ -57,7 +55,6 @@ class SonarrSeriesService {
         error: response.error,
       );
     }
-    throw SonarrException('Series lookup failed',
-        statusCode: response.statusCode);
+    throw SonarrException('Series lookup failed', statusCode: response.statusCode);
   }
 }

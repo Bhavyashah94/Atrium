@@ -41,11 +41,8 @@ class _RecentlyAddedGridState extends ConsumerState<RecentlyAddedGrid> {
         // Section Header with View Toggle
         Row(
           children: [
-            Icon(
-              Icons.video_library_outlined,
-              size: 18,
-              color: colorScheme.primary,
-            ),
+            Icon(Icons.video_library_outlined,
+                size: 18, color: colorScheme.primary,),
             const SizedBox(width: Insets.xs),
             Text(
               'RECENTLY ADDED',

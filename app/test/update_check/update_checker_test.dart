@@ -51,8 +51,7 @@ void main() {
             status: 200,
             data: <String, dynamic>{
               'tag_name': 'v9.9.9',
-              'html_url':
-                  'https://github.com/retransmit/Atrium/releases/tag/v9.9.9',
+              'html_url': 'https://github.com/retransmit/Atrium/releases/tag/v9.9.9',
             },
           )),
     );
@@ -74,8 +73,7 @@ void main() {
     expect(c.read(updateCheckProvider).hasNewer, isFalse);
   });
 
-  test('a server error sets error but keeps a known available banner',
-      () async {
+  test('a server error sets error but keeps a known available banner', () async {
     await box.put('update.latestVersion', '9.9.9');
     final ProviderContainer c = _container(
       box,
@@ -117,11 +115,9 @@ void main() {
             status: 200,
             data: <String, dynamic>{
               'tag_name': 'v9.9.9',
-              'html_url':
-                  'https://github.com/retransmit/Atrium/releases/tag/v9.9.9',
+              'html_url': 'https://github.com/retransmit/Atrium/releases/tag/v9.9.9',
               'published_at': '2026-08-01T10:00:00Z',
-              'body':
-                  'Intro.\n\n## What\'s new\n\n**Nice thing.** Details.\n\n## Which APK\n\narm64.',
+              'body': 'Intro.\n\n## What\'s new\n\n**Nice thing.** Details.\n\n## Which APK\n\narm64.',
             },
           )),
     );

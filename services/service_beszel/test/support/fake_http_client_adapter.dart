@@ -3,8 +3,9 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
-typedef ResponseFactory =
-    ({int status, Object? data}) Function(RequestOptions options);
+typedef ResponseFactory = ({int status, Object? data}) Function(
+  RequestOptions options,
+);
 
 /// Minimal [HttpClientAdapter] that answers every request with a canned status
 /// and JSON body, and records the requests it saw. Lets the Beszel connection

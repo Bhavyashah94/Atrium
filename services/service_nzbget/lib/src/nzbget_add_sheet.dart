@@ -160,7 +160,8 @@ class _AddNzbFormState extends ConsumerState<_AddNzbForm> {
               decoration:
                   const InputDecoration(labelText: 'Category (optional)'),
               items: <DropdownMenuItem<String>>[
-                for (final String name in categories.value ?? const <String>[])
+                for (final String name
+                    in categories.value ?? const <String>[])
                   DropdownMenuItem<String>(value: name, child: Text(name)),
               ],
               onChanged: (String? value) =>
@@ -174,7 +175,8 @@ class _AddNzbFormState extends ConsumerState<_AddNzbForm> {
                 for (final (String label, int value) in priorities)
                   DropdownMenuItem<int>(value: value, child: Text(label)),
               ],
-              onChanged: (int? value) => setState(() => _priority = value ?? 0),
+              onChanged: (int? value) =>
+                  setState(() => _priority = value ?? 0),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,

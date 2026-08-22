@@ -552,13 +552,11 @@ class _MediaManagementSettingsScreenState
                               loading: () => const Center(
                                 child: ExpressiveProgressIndicator(),
                               ),
-                              error: (err, stack) =>
-                                  Text('Error loading root folders: $err'),
+                              error: (err, stack) => Text('Error loading root folders: $err'),
                               data: (folders) {
                                 if (folders.isEmpty) {
                                   return const Padding(
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: Insets.md),
+                                    padding: EdgeInsets.symmetric(vertical: Insets.md),
                                     child: Text('No root folders configured.'),
                                   );
                                 }
@@ -570,20 +568,15 @@ class _MediaManagementSettingsScreenState
                                   itemBuilder: (context, idx) {
                                     final folder = folders[idx];
                                     final id = folder['id'] as int;
-                                    final path =
-                                        folder['path'] as String? ?? 'Unknown';
+                                    final path = folder['path'] as String? ?? 'Unknown';
                                     final freeSpace = folder['freeSpace'];
-                                    final unmapped =
-                                        (folder['unmappedFolders'] as List?)
-                                                ?.length ??
-                                            0;
+                                    final unmapped = (folder['unmappedFolders'] as List?)?.length ?? 0;
 
                                     return ListTile(
                                       contentPadding: EdgeInsets.zero,
                                       title: Text(
                                         path,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold),
+                                        style: const TextStyle(fontWeight: FontWeight.bold),
                                       ),
                                       subtitle: Text(
                                         'Free Space: ${_formatFreeSpace(freeSpace)} • Unmapped Folders: $unmapped',
@@ -593,8 +586,7 @@ class _MediaManagementSettingsScreenState
                                           Icons.close,
                                           color: theme.colorScheme.error,
                                         ),
-                                        onPressed: () =>
-                                            _deleteRootFolder(id, path),
+                                        onPressed: () => _deleteRootFolder(id, path),
                                       ),
                                     );
                                   },

@@ -30,8 +30,7 @@ DelugeTorrent _torrent({
 void main() {
   group('DelugeTorrent.fromStatus', () {
     test('folds the infohash in and reads a 0-100 progress', () {
-      final DelugeTorrent t =
-          DelugeTorrent.fromStatus('abc123', <String, dynamic>{
+      final DelugeTorrent t = DelugeTorrent.fromStatus('abc123', <String, dynamic>{
         'name': 'Sunshine',
         'state': 'Seeding',
         'progress': 100.0,
@@ -135,11 +134,7 @@ void main() {
           DelugeTorrentDetail.fromStatus(<String, dynamic>{
         'private': 1,
         'trackers': <dynamic>[
-          <String, dynamic>{
-            'url': 'udp://t:1/announce',
-            'tier': 0,
-            'verified': 0
-          },
+          <String, dynamic>{'url': 'udp://t:1/announce', 'tier': 0, 'verified': 0},
         ],
         'peers': <dynamic>[
           <String, dynamic>{'ip': '1.2.3.4', 'seed': 1, 'progress': 1.0},
@@ -168,8 +163,7 @@ void main() {
         ],
       });
       expect(tree.states, hasLength(3));
-      expect(
-          tree.states[1], const DelugeFilterBucket(name: 'Seeding', count: 1));
+      expect(tree.states[1], const DelugeFilterBucket(name: 'Seeding', count: 1));
       expect(tree.trackerHosts, hasLength(2));
       expect(tree.labels, isEmpty);
       expect(tree.hasLabels, isFalse);
@@ -198,8 +192,7 @@ void main() {
     ];
 
     test('the default filter keeps everything', () {
-      expect(
-          filterDelugeTorrents(torrents, const DelugeFilter()), hasLength(3));
+      expect(filterDelugeTorrents(torrents, const DelugeFilter()), hasLength(3));
     });
 
     test('"All" is a wildcard, not a literal state', () {

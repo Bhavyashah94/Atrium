@@ -43,16 +43,16 @@ class EmbyAlbumScreen extends ConsumerWidget {
         elevation: 0,
       ),
       body: EasyRefresh(
-        header: const ClassicHeader(
-          position: IndicatorPosition.locator,
-          dragText: 'Pull to refresh',
-          armedText: 'Release ready',
-          readyText: 'Refreshing...',
-          processingText: 'Refreshing...',
-          processedText: 'Succeeded',
-          failedText: 'Failed',
-          messageText: 'Last updated at %T',
-        ),
+          header: const ClassicHeader(
+            position: IndicatorPosition.locator,
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
         onRefresh: () async => ref.invalidate(
           embyAlbumDataFutureProvider((instance, albumId, albumArtist)),
         ),

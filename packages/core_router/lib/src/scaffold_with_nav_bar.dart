@@ -42,83 +42,80 @@ class _ScaffoldWithNavBarState extends State<ScaffoldWithNavBar> {
       },
       child: Scaffold(
         body: NotificationListener<ScrollNotification>(
-          onNotification: (ScrollNotification notification) {
-            if (notification.metrics.axis == Axis.vertical) {
-              if (notification is ScrollUpdateNotification) {
-                final double pixels = notification.metrics.pixels;
-                if (pixels > 10.0) {
-                  final double maxExtent = notification.metrics.maxScrollExtent;
-                  final bool isAtBottom = pixels >= maxExtent - 10.0;
-                  final double? delta = notification.scrollDelta;
-                  if (delta != null && delta != 0.0) {
-                    final bool isScrollingDown = delta > 0.0;
-                    if (isScrollingDown && _isNavbarVisible) {
-                      setState(() {
-                        _isNavbarVisible = false;
-                      });
-                    } else if (!isScrollingDown &&
-                        !_isNavbarVisible &&
-                        !isAtBottom) {
-                      setState(() {
-                        _isNavbarVisible = true;
-                      });
-                    }
-                  }
-                } else if (pixels <= 0.0) {
-                  if (!_isNavbarVisible) {
+        onNotification: (ScrollNotification notification) {
+          if (notification.metrics.axis == Axis.vertical) {
+            if (notification is ScrollUpdateNotification) {
+              final double pixels = notification.metrics.pixels;
+              if (pixels > 10.0) {
+                final double maxExtent = notification.metrics.maxScrollExtent;
+                final bool isAtBottom = pixels >= maxExtent - 10.0;
+                final double? delta = notification.scrollDelta;
+                if (delta != null && delta != 0.0) {
+                  final bool isScrollingDown = delta > 0.0;
+                  if (isScrollingDown && _isNavbarVisible) {
+                    setState(() {
+                      _isNavbarVisible = false;
+                    });
+                  } else if (!isScrollingDown && !_isNavbarVisible && !isAtBottom) {
                     setState(() {
                       _isNavbarVisible = true;
                     });
                   }
                 }
+              } else if (pixels <= 0.0) {
+                if (!_isNavbarVisible) {
+                  setState(() {
+                    _isNavbarVisible = true;
+                  });
+                }
               }
             }
-            return false;
-          },
-          child: widget.navigationShell,
-        ),
-        drawer: widget.drawer,
-        drawerEdgeDragWidth: widget.drawer != null
-            ? MediaQuery.sizeOf(context).width * 0.15
-            : null,
-        bottomNavigationBar: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: _isNavbarVisible ? 80.0 : 0.0,
-          child: SingleChildScrollView(
-            physics: const NeverScrollableScrollPhysics(),
-            child: SizedBox(
-              height: 80.0,
-              child: NavigationBar(
-                selectedIndex: widget.navigationShell.currentIndex,
-                onDestinationSelected: _onTap,
-                destinations: const <NavigationDestination>[
-                  NavigationDestination(
-                    icon: Icon(Icons.dashboard_outlined),
-                    selectedIcon: Icon(Icons.dashboard),
-                    label: 'Dashboard',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.calendar_today_outlined),
-                    selectedIcon: Icon(Icons.calendar_today),
-                    label: 'Calendar',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.swap_vert_outlined),
-                    selectedIcon: Icon(Icons.swap_vert),
-                    label: 'Activity',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.settings_outlined),
-                    selectedIcon: Icon(Icons.settings),
-                    label: 'Settings',
-                  ),
-                ],
-              ),
+          }
+          return false;
+        },
+        child: widget.navigationShell,
+      ),
+      drawer: widget.drawer,
+      drawerEdgeDragWidth: widget.drawer != null
+          ? MediaQuery.sizeOf(context).width * 0.15
+          : null,
+      bottomNavigationBar: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: _isNavbarVisible ? 80.0 : 0.0,
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: SizedBox(
+            height: 80.0,
+            child: NavigationBar(
+              selectedIndex: widget.navigationShell.currentIndex,
+              onDestinationSelected: _onTap,
+              destinations: const <NavigationDestination>[
+                NavigationDestination(
+                  icon: Icon(Icons.dashboard_outlined),
+                  selectedIcon: Icon(Icons.dashboard),
+                  label: 'Dashboard',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.calendar_today_outlined),
+                  selectedIcon: Icon(Icons.calendar_today),
+                  label: 'Calendar',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.swap_vert_outlined),
+                  selectedIcon: Icon(Icons.swap_vert),
+                  label: 'Activity',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings),
+                  label: 'Settings',
+                ),
+              ],
             ),
           ),
         ),
       ),
-    );
+    ),);
   }
 
   void _onTap(int index) {

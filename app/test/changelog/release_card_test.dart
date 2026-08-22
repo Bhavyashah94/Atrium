@@ -13,8 +13,7 @@ const ReleaseNote _note = ReleaseNote(
 );
 
 Future<void> _pump(WidgetTester tester, {required bool installed}) {
-  final ColorScheme scheme =
-      ColorScheme.fromSeed(seedColor: const Color(0xFF6750A4));
+  final ColorScheme scheme = ColorScheme.fromSeed(seedColor: const Color(0xFF6750A4));
   return tester.pumpWidget(
     MaterialApp(
       theme: ThemeData(colorScheme: scheme, useMaterial3: true),

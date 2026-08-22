@@ -132,7 +132,8 @@ class PreferencesController extends Notifier<Preferences> {
       customSeedColorHex: _box.get(_customSeedColorHexKey),
       customImagePath: _box.get(_customImagePathKey),
       customImageColorsCsv: _box.get(_customImageColorsCsvKey),
-      calendarShowUnmonitored: _box.get(_calendarShowUnmonitoredKey) == 'true',
+      calendarShowUnmonitored:
+          _box.get(_calendarShowUnmonitoredKey) == 'true',
     );
   }
 

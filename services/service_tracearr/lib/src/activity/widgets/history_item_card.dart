@@ -69,9 +69,9 @@ class HistoryItemCard extends StatelessWidget {
         (isTranscode &&
             item.audioDecision?.toLowerCase() == 'transcode' &&
             vDec != 'transcode');
-    final bool isDirectPlay =
-        (vDec == 'directplay' || (vDec.isEmpty && !isTranscode)) &&
-            !isDirectStream;
+    final bool isDirectPlay = (vDec == 'directplay' ||
+            (vDec.isEmpty && !isTranscode)) &&
+        !isDirectStream;
 
     final String qualityLabel = isDirectPlay
         ? 'Direct Play'
@@ -168,9 +168,7 @@ class HistoryItemCard extends StatelessWidget {
                               ? () => TracearrMediaDetailScreen.navigate(
                                     context,
                                     instance: instance!,
-                                    mediaRef: item.mediaId ??
-                                        item.ratingKey ??
-                                        item.id,
+                                    mediaRef: item.mediaId ?? item.ratingKey ?? item.id,
                                     initialTitle: item.mediaTitle,
                                     initialShowTitle: item.showTitle,
                                     initialPosterUrl: item.posterUrl,
@@ -179,8 +177,7 @@ class HistoryItemCard extends StatelessWidget {
                                   )
                               : null,
                           child: Text(
-                            (item.seasonNumber != null &&
-                                    item.episodeNumber != null)
+                            (item.seasonNumber != null && item.episodeNumber != null)
                                 ? 'S${item.seasonNumber}:E${item.episodeNumber} • ${item.mediaTitle}'
                                 : item.mediaTitle,
                             style: theme.textTheme.titleSmall?.copyWith(

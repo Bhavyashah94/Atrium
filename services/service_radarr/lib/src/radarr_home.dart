@@ -107,9 +107,7 @@ class RadarrHome extends ConsumerWidget {
                     ref
                         .read(radarrBottomNavVisibleProvider(instance).notifier)
                         .state = false;
-                  } else if (!isScrollingDown &&
-                      !currentVisible &&
-                      !isAtBottom) {
+                  } else if (!isScrollingDown && !currentVisible && !isAtBottom) {
                     ref
                         .read(radarrBottomNavVisibleProvider(instance).notifier)
                         .state = true;
@@ -177,8 +175,7 @@ class RadarrHome extends ConsumerWidget {
                 if (index == currentIndex) {
                   ref
                       .read(
-                        radarrHomeScrollToTopProvider((instance, index))
-                            .notifier,
+                        radarrHomeScrollToTopProvider((instance, index)).notifier,
                       )
                       .update((state) => state + 1);
                 } else {

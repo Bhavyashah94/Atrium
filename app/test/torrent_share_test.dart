@@ -159,10 +159,7 @@ void main() {
       final TorrentShare? share = decodeTorrentShare(<Object?, Object?>{
         'kind': 'files',
         'items': <Object?>[
-          <Object?, Object?>{
-            'name': 'good.torrent',
-            'bytes': Uint8List.fromList(<int>[1])
-          },
+          <Object?, Object?>{'name': 'good.torrent', 'bytes': Uint8List.fromList(<int>[1])},
           <Object?, Object?>{'name': 'empty.torrent', 'bytes': Uint8List(0)},
           'not a map',
         ],
@@ -182,8 +179,7 @@ void main() {
         isNull,
       );
       expect(
-        decodeTorrentShare(
-            <Object?, Object?>{'kind': 'files', 'items': 'nope'}),
+        decodeTorrentShare(<Object?, Object?>{'kind': 'files', 'items': 'nope'}),
         isNull,
       );
     });
@@ -201,8 +197,7 @@ void main() {
       // A launcher tap must raise nothing at all in the UI.
       expect(decodeTorrentShare(null), isNull);
       expect(decodeTorrentShare('not a map'), isNull);
-      expect(
-          decodeTorrentShare(<Object?, Object?>{'kind': 'nonsense'}), isNull);
+      expect(decodeTorrentShare(<Object?, Object?>{'kind': 'nonsense'}), isNull);
       expect(decodeTorrentShare(<Object?, Object?>{'kind': 'magnet'}), isNull);
       expect(
         decodeTorrentShare(<Object?, Object?>{'kind': 'magnet', 'uri': '  '}),

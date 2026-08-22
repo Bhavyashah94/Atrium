@@ -63,7 +63,8 @@ class _TransmissionAddSheet extends ConsumerStatefulWidget {
       _TransmissionAddSheetState();
 }
 
-class _TransmissionAddSheetState extends ConsumerState<_TransmissionAddSheet> {
+class _TransmissionAddSheetState
+    extends ConsumerState<_TransmissionAddSheet> {
   final TextEditingController _link = TextEditingController();
   final TextEditingController _downloadDir = TextEditingController();
 
@@ -151,8 +152,9 @@ class _TransmissionAddSheetState extends ConsumerState<_TransmissionAddSheet> {
     try {
       final TransmissionApi api =
           await ref.read(transmissionApiProvider(widget.instance).future);
-      final String? dir =
-          _downloadDir.text.trim().isEmpty ? null : _downloadDir.text.trim();
+      final String? dir = _downloadDir.text.trim().isEmpty
+          ? null
+          : _downloadDir.text.trim();
       // Both add calls report a duplicate as a *success* under a different key,
       // so say which happened rather than claiming a new torrent either way.
       if (_mode == _AddMode.file) {

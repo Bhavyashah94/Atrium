@@ -790,8 +790,8 @@ final radarrMovieHistoryProvider = FutureProvider.autoDispose
 });
 
 /// Movie-specific active download queue provider. Watches the global queue and filters for movieId.
-final radarrMovieQueueProvider =
-    FutureProvider.autoDispose.family<List<RadarrQueueItem>, (Instance, int)>((
+final radarrMovieQueueProvider = FutureProvider.autoDispose
+    .family<List<RadarrQueueItem>, (Instance, int)>((
   Ref ref,
   (Instance, int) arg,
 ) async {
@@ -799,3 +799,4 @@ final radarrMovieQueueProvider =
   final queue = await ref.watch(radarrQueueProvider(instance).future);
   return queue.where((item) => item.movieId == movieId).toList();
 });
+

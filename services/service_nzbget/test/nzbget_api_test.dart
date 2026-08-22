@@ -67,24 +67,18 @@ void main() {
       () async {
     final List<RequestOptions> log = <RequestOptions>[];
     final NzbgetApi api = _api(
-      (RequestOptions o) =>
-          (status: 200, data: <String, dynamic>{'result': true}),
+      (RequestOptions o) => (status: 200, data: <String, dynamic>{'result': true}),
       log: log,
     );
     await api.setPriority(<int>[3, 4], 100);
     final Map<String, dynamic> body = _rpcBody(log.single);
     expect(body['method'], 'editqueue');
-    expect(body['params'], <dynamic>[
-      'GroupSetPriority',
-      '100',
-      <dynamic>[3, 4]
-    ]);
+    expect(body['params'], <dynamic>['GroupSetPriority', '100', <dynamic>[3, 4]]);
   });
 
   test('a result of false throws NzbgetRpcException', () async {
     final NzbgetApi api = _api(
-      (RequestOptions o) =>
-          (status: 200, data: <String, dynamic>{'result': false}),
+      (RequestOptions o) => (status: 200, data: <String, dynamic>{'result': false}),
     );
     expect(() => api.deleteItems(<int>[1]), throwsA(isA<NzbgetRpcException>()));
   });
@@ -112,8 +106,7 @@ void main() {
   test('append sends the 9-arg envelope and returns the new id', () async {
     final List<RequestOptions> log = <RequestOptions>[];
     final NzbgetApi api = _api(
-      (RequestOptions o) =>
-          (status: 200, data: <String, dynamic>{'result': 42}),
+      (RequestOptions o) => (status: 200, data: <String, dynamic>{'result': 42}),
       log: log,
     );
     final int id = await api.append(
@@ -125,15 +118,7 @@ void main() {
     );
     expect(id, 42);
     expect(_rpcBody(log.single)['params'], <dynamic>[
-      'file.nzb',
-      'aGVsbG8=',
-      'tv',
-      50,
-      false,
-      true,
-      '',
-      0,
-      'SCORE',
+      'file.nzb', 'aGVsbG8=', 'tv', 50, false, true, '', 0, 'SCORE',
     ]);
   });
 

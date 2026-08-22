@@ -74,15 +74,6 @@ class DownloadClientsSection extends ConsumerWidget {
     final List<Map<String, dynamic>> fields =
         (client.fields ?? []).map((Field f) => f.toJson()).toList();
 
-    final String initialName = isNew
-        ? ((client.implementationName?.isNotEmpty == true)
-            ? client.implementationName!
-            : (client.name != 'Client' ? (client.name ?? '') : ''))
-        : (client.name ?? '');
-
-    final TextEditingController nameController =
-        TextEditingController(text: initialName);
-
     await showDialog<void>(
       context: context,
       barrierDismissible: false,

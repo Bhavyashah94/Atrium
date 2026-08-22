@@ -20,11 +20,7 @@ class BeszelSystemCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final args = (
-      instance: instance,
-      systemId: system.id,
-      chartTime: ChartTime.hour1,
-    );
+    final args = (instance: instance, systemId: system.id, chartTime: ChartTime.hour1);
     final statsAsync = ref.watch(beszelSystemStatsProvider(args));
 
     final bool isUp = system.status == 'up';
@@ -35,7 +31,9 @@ class BeszelSystemCard extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: Insets.md),
       shape: RoundedRectangleBorder(
         borderRadius: Radii.card,
-        side: BorderSide(color: colorScheme.outlineVariant),
+        side: BorderSide(
+          color: colorScheme.outlineVariant,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(Insets.md),
@@ -46,9 +44,7 @@ class BeszelSystemCard extends ConsumerWidget {
               children: [
                 Icon(
                   isUp ? Icons.check_circle : Icons.error,
-                  color: isUp
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.error,
+                  color: isUp ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.error,
                   size: 20,
                 ),
                 const SizedBox(width: Insets.sm),
@@ -61,8 +57,8 @@ class BeszelSystemCard extends ConsumerWidget {
                 Text(
                   system.host,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                 ),
               ],
             ),
@@ -74,7 +70,7 @@ class BeszelSystemCard extends ConsumerWidget {
                   return const Center(child: Text('No historical data'));
                 }
                 final latest = statsList.first;
-
+                
                 return GridView.count(
                   crossAxisCount: 3,
                   shrinkWrap: true,
@@ -83,75 +79,21 @@ class BeszelSystemCard extends ConsumerWidget {
                   mainAxisSpacing: Insets.sm,
                   crossAxisSpacing: Insets.sm,
                   children: [
-                    _buildTextStat(
-                      context,
-                      'CPU',
-                      '${latest.cpuUsage.toStringAsFixed(1)}%',
-                      Icons.memory,
-                    ),
-                    _buildTextStat(
-                      context,
-                      'Memory',
-                      '${latest.memoryUsage.toStringAsFixed(1)}%',
-                      Icons.storage,
-                    ),
-                    _buildTextStat(
-                      context,
-                      'Disk',
-                      '${latest.diskUsage.toStringAsFixed(1)}%',
-                      Icons.pie_chart,
-                    ),
+                    _buildTextStat(context, 'CPU', '${latest.cpuUsage.toStringAsFixed(1)}%', Icons.memory),
+                    _buildTextStat(context, 'Memory', '${latest.memoryUsage.toStringAsFixed(1)}%', Icons.storage),
+                    _buildTextStat(context, 'Disk', '${latest.diskUsage.toStringAsFixed(1)}%', Icons.pie_chart),
                     if (system.info['g'] != null || latest.gpuUsage >= 0)
-                      _buildTextStat(
-                        context,
-                        'GPU',
-                        '${(latest.gpuUsage >= 0 ? latest.gpuUsage : (system.info['g'] is num ? (system.info['g'] as num).toDouble() : 0.0)).toStringAsFixed(1)}%',
-                        Icons.developer_board,
-                      ),
-                    _buildTextStat(
-                      context,
-                      'Load Avg',
-                      latest.loadAverage1m.toStringAsFixed(2),
-                      Icons.hourglass_empty,
-                    ),
-                    _buildTextStat(
-                      context,
-                      'Net',
-                      _formatNetworkTraffic(
-                        latest.networkSent + latest.networkRecv,
-                      ),
-                      Icons.network_check,
-                    ),
+                      _buildTextStat(context, 'GPU', '${(latest.gpuUsage >= 0 ? latest.gpuUsage : (system.info['g'] is num ? (system.info['g'] as num).toDouble() : 0.0)).toStringAsFixed(1)}%', Icons.developer_board),
+                    _buildTextStat(context, 'Load Avg', latest.loadAverage1m.toStringAsFixed(2), Icons.hourglass_empty),
+                    _buildTextStat(context, 'Net', _formatNetworkTraffic(latest.networkSent + latest.networkRecv), Icons.network_check),
                     if (latest.temperature > 0)
-                      _buildTextStat(
-                        context,
-                        'Temp',
-                        '${latest.temperature.toStringAsFixed(1)}°C',
-                        Icons.thermostat,
-                      ),
-                    if (system.info['bat'] != null &&
-                        (system.info['bat'] as List).isNotEmpty)
-                      _buildTextStat(
-                        context,
-                        'Bat',
-                        '${((system.info['bat'] as List)[0] as num).toStringAsFixed(1)}%',
-                        Icons.battery_full,
-                      ),
-                    if (system.info['sv'] != null &&
-                        (system.info['sv'] as List).isNotEmpty)
-                      _buildTextStat(
-                        context,
-                        'Services',
-                        '${(system.info['sv'] as List)[0]}',
-                        Icons.miscellaneous_services,
-                      ),
+                      _buildTextStat(context, 'Temp', '${latest.temperature.toStringAsFixed(1)}°C', Icons.thermostat),
+                    if (system.info['bat'] != null && (system.info['bat'] as List).isNotEmpty)
+                      _buildTextStat(context, 'Bat', '${((system.info['bat'] as List)[0] as num).toStringAsFixed(1)}%', Icons.battery_full),
+                    if (system.info['sv'] != null && (system.info['sv'] as List).isNotEmpty)
+                      _buildTextStat(context, 'Services', '${(system.info['sv'] as List)[0]}', Icons.miscellaneous_services),
                     if (system.info['u'] != null)
-                      _buildTextStat(
-                        context,
-                        'Uptime',
-                        _formatUptime((system.info['u'] as num).toInt()),
-                        Icons.timer,
-                      ),
+                      _buildTextStat(context, 'Uptime', _formatUptime((system.info['u'] as num).toInt()), Icons.timer),
                   ],
                 );
               },
@@ -178,14 +120,10 @@ class BeszelSystemCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(Insets.sm),
       decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: Radii.card,
         border: Border.all(
-          color: Theme.of(
-            context,
-          ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+          color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
       ),
       child: Column(
@@ -195,26 +133,22 @@ class BeszelSystemCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                size: 14,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              Icon(icon, size: 14, color: Theme.of(context).colorScheme.primary),
               const SizedBox(width: 4),
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
           ),
         ],
       ),
@@ -263,13 +197,13 @@ class BeszelSystemCard extends ConsumerWidget {
 
     for (int i = 0; i < statsList.length; i++) {
       final stat = statsList[i];
-      final double xValue = stat.created != null
-          ? stat.created!.millisecondsSinceEpoch.toDouble()
+      final double xValue = stat.created != null 
+          ? stat.created!.millisecondsSinceEpoch.toDouble() 
           : i.toDouble();
-
+          
       if (xValue < minX) minX = xValue;
       if (xValue > maxX) maxX = xValue;
-
+      
       final yValue = selector(stat);
       if (yValue > actualMaxY) actualMaxY = yValue;
       spots.add(FlSpot(xValue, yValue));
@@ -294,10 +228,14 @@ class BeszelSystemCard extends ConsumerWidget {
       LineChartData(
         gridData: FlGridData(
           horizontalInterval: intervalY,
-          getDrawingHorizontalLine: (value) =>
-              FlLine(color: Colors.grey.withValues(alpha: 0.2), strokeWidth: 1),
-          getDrawingVerticalLine: (value) =>
-              FlLine(color: Colors.grey.withValues(alpha: 0.2), strokeWidth: 1),
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.grey.withValues(alpha: 0.2),
+            strokeWidth: 1,
+          ),
+          getDrawingVerticalLine: (value) => FlLine(
+            color: Colors.grey.withValues(alpha: 0.2),
+            strokeWidth: 1,
+          ),
         ),
         titlesData: FlTitlesData(
           show: showLabels,
@@ -312,24 +250,22 @@ class BeszelSystemCard extends ConsumerWidget {
                 if (value == minX || value == maxX) {
                   return const SizedBox();
                 }
-
+                
                 final date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
                 String label;
-                if (chartTime == ChartTime.week1 ||
-                    chartTime == ChartTime.month1) {
+                if (chartTime == ChartTime.week1 || chartTime == ChartTime.month1) {
                   label = '${date.month}/${date.day}';
                 } else {
-                  label =
-                      '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+                  label = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
                 }
-
+                
                 return SideTitleWidget(
                   meta: meta,
-                  fitInside: SideTitleFitInsideData.fromTitleMeta(
-                    meta,
-                    distanceFromEdge: 0,
+                  fitInside: SideTitleFitInsideData.fromTitleMeta(meta, distanceFromEdge: 0),
+                  child: Text(
+                    label,
+                    style: const TextStyle(fontSize: 10),
                   ),
-                  child: Text(label, style: const TextStyle(fontSize: 10)),
                 );
               },
             ),
@@ -364,18 +300,11 @@ class BeszelSystemCard extends ConsumerWidget {
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((touchedSpot) {
                 final isFirst = touchedSpots.first == touchedSpot;
-                final date = DateTime.fromMillisecondsSinceEpoch(
-                  touchedSpot.x.toInt(),
-                );
-                final timeStr =
-                    '${date.month}/${date.day} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+                final date = DateTime.fromMillisecondsSinceEpoch(touchedSpot.x.toInt());
+                final timeStr = '${date.month}/${date.day} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
                 return LineTooltipItem(
                   '${isFirst ? '$timeStr\n' : ''}${touchedSpot.y.toStringAsFixed(1)}$tooltipSuffix',
-                  TextStyle(
-                    color:
-                        touchedSpot.bar.gradient?.colors.first ?? Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  TextStyle(color: touchedSpot.bar.gradient?.colors.first ?? Colors.white, fontWeight: FontWeight.bold),
                 );
               }).toList();
             },
@@ -385,7 +314,9 @@ class BeszelSystemCard extends ConsumerWidget {
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            gradient: LinearGradient(colors: [startColor, endColor]),
+            gradient: LinearGradient(
+              colors: [startColor, endColor],
+            ),
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(
@@ -400,10 +331,7 @@ class BeszelSystemCard extends ConsumerWidget {
               ),
             ),
           ),
-          if (secondarySelector != null &&
-              secondarySpots.isNotEmpty &&
-              secondaryStartColor != null &&
-              secondaryEndColor != null)
+          if (secondarySelector != null && secondarySpots.isNotEmpty && secondaryStartColor != null && secondaryEndColor != null)
             LineChartBarData(
               spots: secondarySpots,
               isCurved: true,

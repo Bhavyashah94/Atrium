@@ -206,75 +206,72 @@ class MediaTvHierarchyView extends StatelessWidget {
                                                     ),
                                                     border: Border.all(
                                                       color: colorScheme.primary
-                                                          .withValues(
-                                                              alpha: 0.5),
+                                                          .withValues(alpha: 0.5),
                                                     ),
                                                   )
                                                 : null,
                                             child: ListTile(
-                                              dense: true,
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: Insets.md,
-                                              ),
-                                              leading: Container(
-                                                width: 28,
-                                                height: 28,
-                                                alignment: Alignment.center,
-                                                decoration: BoxDecoration(
-                                                  color: isTargetEpisode
-                                                      ? colorScheme.primary
-                                                      : colorScheme
-                                                          .surfaceContainerHighest,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                    Radii.sm,
-                                                  ),
-                                                ),
-                                                child: Text(
-                                                  '${ep.episodeNumber ?? 0}',
-                                                  style: theme
-                                                      .textTheme.labelSmall
-                                                      ?.copyWith(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: isTargetEpisode
-                                                        ? colorScheme.onPrimary
-                                                        : colorScheme.onSurface,
-                                                  ),
+                                            dense: true,
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                              horizontal: Insets.md,
+                                            ),
+                                            leading: Container(
+                                              width: 28,
+                                              height: 28,
+                                              alignment: Alignment.center,
+                                              decoration: BoxDecoration(
+                                                color: isTargetEpisode
+                                                    ? colorScheme.primary
+                                                    : colorScheme
+                                                        .surfaceContainerHighest,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  Radii.sm,
                                                 ),
                                               ),
-                                              title: Text(
-                                                ep.title,
-                                                style: theme.textTheme.bodySmall
+                                              child: Text(
+                                                '${ep.episodeNumber ?? 0}',
+                                                style: theme
+                                                    .textTheme.labelSmall
                                                     ?.copyWith(
-                                                  fontWeight: isTargetEpisode
-                                                      ? FontWeight.bold
-                                                      : FontWeight.w500,
+                                                  fontWeight: FontWeight.bold,
                                                   color: isTargetEpisode
-                                                      ? colorScheme.primary
-                                                      : null,
+                                                      ? colorScheme.onPrimary
+                                                      : colorScheme.onSurface,
                                                 ),
                                               ),
+                                            ),
+                                            title: Text(
+                                              ep.title,
+                                              style: theme.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                fontWeight: isTargetEpisode
+                                                    ? FontWeight.bold
+                                                    : FontWeight.w500,
+                                                color: isTargetEpisode
+                                                    ? colorScheme.primary
+                                                    : null,
+                                              ),
+                                            ),
                                               trailing: isTargetEpisode
                                                   ? Container(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
                                                         horizontal: 6,
                                                         vertical: 2,
                                                       ),
                                                       decoration: BoxDecoration(
-                                                        color:
-                                                            colorScheme.primary,
+                                                        color: colorScheme.primary,
                                                         borderRadius:
-                                                            BorderRadius
-                                                                .circular(
+                                                            BorderRadius.circular(
                                                           Radii.sm,
                                                         ),
                                                       ),
                                                       child: Text(
                                                         'CURRENT',
-                                                        style: theme.textTheme
-                                                            .labelSmall
+                                                        style: theme
+                                                            .textTheme.labelSmall
                                                             ?.copyWith(
                                                           color: colorScheme
                                                               .onPrimary,
@@ -299,9 +296,9 @@ class MediaTvHierarchyView extends StatelessWidget {
                                                     instance: instance!,
                                                     mediaRef: ep.id,
                                                     initialTitle: ep.title,
-                                                    initialSeasonNumber:
-                                                        ep.seasonNumber ??
-                                                            seasonNum,
+                                                    initialSeasonNumber: ep
+                                                            .seasonNumber ??
+                                                        seasonNum,
                                                     initialEpisodeNumber:
                                                         ep.episodeNumber,
                                                   );

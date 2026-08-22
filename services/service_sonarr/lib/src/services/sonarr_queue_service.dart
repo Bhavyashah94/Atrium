@@ -40,8 +40,7 @@ class SonarrQueueService {
         error: response.error,
       );
     }
-    throw SonarrException('Failed to fetch queue',
-        statusCode: response.statusCode);
+    throw SonarrException('Failed to fetch queue', statusCode: response.statusCode);
   }
 
   /// Retrieves detailed download queue records, optionally filtered by seriesId or episodeIds.
@@ -63,8 +62,7 @@ class SonarrQueueService {
         error: response.error,
       );
     }
-    throw SonarrException('Failed to fetch queue details',
-        statusCode: response.statusCode);
+    throw SonarrException('Failed to fetch queue details', statusCode: response.statusCode);
   }
 
   /// Retrieves status counts for active download queues.
@@ -80,7 +78,6 @@ class SonarrQueueService {
         error: response.error,
       );
     }
-    throw SonarrException('Failed to fetch queue status',
-        statusCode: response.statusCode);
+    throw SonarrException('Failed to fetch queue status', statusCode: response.statusCode);
   }
 }

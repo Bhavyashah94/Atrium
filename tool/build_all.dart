@@ -1,7 +1,6 @@
 // ignore_for_file: avoid_print
 import 'dart:convert';
 import 'dart:io';
-
 class BuildResult {
   const BuildResult({
     required this.relativePath,

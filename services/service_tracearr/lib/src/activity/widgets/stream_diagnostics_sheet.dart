@@ -115,9 +115,7 @@ class StreamDiagnosticsSheet extends StatelessWidget {
 
                   // Video Stream Diagnostics
                   const _SectionHeader(
-                    title: 'VIDEO TELEMETRY',
-                    icon: Icons.videocam_outlined,
-                  ),
+                      title: 'VIDEO TELEMETRY', icon: Icons.videocam_outlined,),
                   const SizedBox(height: Insets.sm),
                   _TelemetryRow(
                     label: 'Decision',
@@ -126,14 +124,11 @@ class StreamDiagnosticsSheet extends StatelessWidget {
                   ),
                   if (stream.videoCodec != null)
                     _TelemetryRow(
-                      label: 'Codec',
-                      value: stream.videoCodec!.toUpperCase(),
-                    ),
+                        label: 'Codec',
+                        value: stream.videoCodec!.toUpperCase(),),
                   if (stream.resolution != null)
                     _TelemetryRow(
-                      label: 'Resolution',
-                      value: stream.resolution!,
-                    ),
+                        label: 'Resolution', value: stream.resolution!,),
                   if (isHw) ...[
                     _TelemetryRow(
                       label: 'Hardware Acceleration',
@@ -183,21 +178,17 @@ class StreamDiagnosticsSheet extends StatelessWidget {
 
                   // Audio Stream Diagnostics
                   const _SectionHeader(
-                    title: 'AUDIO & SUBTITLES',
-                    icon: Icons.audiotrack_outlined,
-                  ),
+                      title: 'AUDIO & SUBTITLES',
+                      icon: Icons.audiotrack_outlined,),
                   const SizedBox(height: Insets.sm),
                   _TelemetryRow(label: 'Audio Decision', value: audioDecision),
                   if (stream.audioCodec != null)
                     _TelemetryRow(
-                      label: 'Audio Codec',
-                      value: stream.audioCodec!.toUpperCase(),
-                    ),
+                        label: 'Audio Codec',
+                        value: stream.audioCodec!.toUpperCase(),),
                   if (stream.audioChannels != null)
                     _TelemetryRow(
-                      label: 'Audio Channels',
-                      value: stream.audioChannels!,
-                    ),
+                        label: 'Audio Channels', value: stream.audioChannels!,),
                   if (stream.subtitleLanguage != null)
                     _TelemetryRow(
                       label: 'Subtitles',
@@ -211,9 +202,8 @@ class StreamDiagnosticsSheet extends StatelessWidget {
 
                   // Client & Bandwidth Telemetry
                   const _SectionHeader(
-                    title: 'CLIENT & BANDWIDTH',
-                    icon: Icons.devices_outlined,
-                  ),
+                      title: 'CLIENT & BANDWIDTH',
+                      icon: Icons.devices_outlined,),
                   const SizedBox(height: Insets.sm),
                   if (stream.player != null)
                     _TelemetryRow(label: 'Player', value: stream.player!),

@@ -264,7 +264,8 @@ final qbitTorrentsProvider = Provider.autoDispose
   final String? categoryFilter =
       ref.watch(qbitFilterCategoryProvider(instance));
   final String? tagFilter = ref.watch(qbitFilterTagProvider(instance));
-  final String? trackerFilter = ref.watch(qbitFilterTrackerProvider(instance));
+  final String? trackerFilter =
+      ref.watch(qbitFilterTrackerProvider(instance));
 
   return rawAsync.whenData((List<QbitTorrent> raw) {
     final List<QbitTorrent> torrents = List<QbitTorrent>.of(raw);

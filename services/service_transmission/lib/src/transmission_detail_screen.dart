@@ -103,7 +103,8 @@ class _OverviewTab extends StatelessWidget {
             trackColor: scheme.surfaceContainerHighest,
           ),
           const SizedBox(height: Insets.md),
-          if (t.hasError) _KeyValue('Error', t.errorString),
+          if (t.hasError)
+            _KeyValue('Error', t.errorString),
           _KeyValue('Status', t.statusLabel),
           _KeyValue('Progress', '${(t.percentDone * 100).toStringAsFixed(1)}%'),
           _KeyValue(
@@ -146,7 +147,8 @@ class _OverviewTab extends StatelessWidget {
             'Pieces',
             '${detail.pieceCount} x ${trFmtBytes(detail.pieceSize)}',
           ),
-        if (detail.creator.isNotEmpty) _KeyValue('Created by', detail.creator),
+        if (detail.creator.isNotEmpty)
+          _KeyValue('Created by', detail.creator),
         if (detail.comment.isNotEmpty) _KeyValue('Comment', detail.comment),
       ],
     );
@@ -212,7 +214,9 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
           controlAffinity: ListTileControlAffinity.leading,
           value: f.wanted,
           // Unchecking tells Transmission to skip the file entirely.
-          onChanged: _busy ? null : (bool? v) => _setWanted(i, v ?? false),
+          onChanged: _busy
+              ? null
+              : (bool? v) => _setWanted(i, v ?? false),
           title: Text(f.displayName),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

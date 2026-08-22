@@ -28,8 +28,7 @@ String nzbgetStatusLabel(String status) => switch (status) {
       'QUEUED' => 'Queued',
       'PAUSED' => 'Paused',
       'FETCHING' => 'Fetching',
-      _
-          when status.startsWith('PP_') ||
+      _ when status.startsWith('PP_') ||
               status == 'UNPACKING' ||
               status == 'MOVING' ||
               status == 'VERIFYING_SOURCES' ||
@@ -110,8 +109,7 @@ class _NzbgetQueueTabState extends ConsumerState<NzbgetQueueTab> {
           onSpeedLimit: () async {
             final int? kb = await showNzbgetSpeedDialog(context);
             if (kb != null && context.mounted) {
-              await _run(
-                  context, ref, (NzbgetApi api) => api.setSpeedLimit(kb));
+              await _run(context, ref, (NzbgetApi api) => api.setSpeedLimit(kb));
             }
           },
           onAdd: () => showNzbgetAddSheet(context, widget.instance),
@@ -431,7 +429,8 @@ class _QueueSummary extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
     final ColorScheme cs = theme.colorScheme;
     final NzbgetStatus status =
-        ref.watch(nzbgetStatusProvider(instance)).value ?? const NzbgetStatus();
+        ref.watch(nzbgetStatusProvider(instance)).value ??
+            const NzbgetStatus();
     final bool paused = status.downloadPaused;
     final Color accent = paused ? cs.outline : cs.primary;
 
@@ -552,7 +551,8 @@ class _GroupCard extends StatelessWidget {
                         size: LinearProgressM3ESize.s,
                         shape: ProgressM3EShape.flat,
                         value: group.progress,
-                        activeColor: group.isPaused ? cs.outline : cs.primary,
+                        activeColor:
+                            group.isPaused ? cs.outline : cs.primary,
                         trackColor: cs.surfaceContainerHighest,
                       ),
                     ),

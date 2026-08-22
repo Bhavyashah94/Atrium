@@ -73,11 +73,8 @@ class TracearrUserDossierScreen extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.person_off_outlined,
-                  size: 48,
-                  color: colorScheme.error,
-                ),
+                Icon(Icons.person_off_outlined,
+                    size: 48, color: colorScheme.error,),
                 const SizedBox(height: Insets.md),
                 Text(
                   'Failed to load user profile',

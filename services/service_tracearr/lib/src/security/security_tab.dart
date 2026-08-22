@@ -53,8 +53,7 @@ class _SecurityTabState extends ConsumerState<SecurityTab> {
       },
     );
 
-    final violationsAsync =
-        ref.watch(tracearrViolationsProvider(widget.instance));
+    final violationsAsync = ref.watch(tracearrViolationsProvider(widget.instance));
 
     return Scaffold(
       appBar: AppBar(

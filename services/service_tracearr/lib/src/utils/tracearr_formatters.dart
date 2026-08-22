@@ -42,6 +42,7 @@ abstract class TracearrFormatters {
     return '${hours}h ${remMinutes}m';
   }
 
+
   /// Formats DateTime to relative string (e.g. "12m ago", "2h ago", "Yesterday", "MMM d").
   static String formatRelativeTime(DateTime? date) {
     if (date == null) return '';

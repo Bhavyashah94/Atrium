@@ -49,7 +49,7 @@ class BeszelHome extends ConsumerWidget {
             ),
           );
         }
-
+        
         return EasyRefresh(
           header: const ClassicHeader(
             position: IndicatorPosition.locator,
@@ -75,28 +75,30 @@ class BeszelHome extends ConsumerWidget {
                   Insets.xxl,
                 ),
                 sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate((
-                    BuildContext context,
-                    int index,
-                  ) {
-                    final system = systems[index];
-                    return InkWell(
-                      onTap: () => pushScreen<void>(
-                        context,
-                        BeszelSystemDetailScreen(
+                  delegate: SliverChildBuilderDelegate(
+                    (BuildContext context, int index) {
+                      final system = systems[index];
+                      return InkWell(
+                        onTap: () => pushScreen<void>(
+                          context,
+                          BeszelSystemDetailScreen(
+                            instance: instance,
+                            system: system,
+                          ),
+                        ),
+                        child: BeszelSystemCard(
                           instance: instance,
                           system: system,
                         ),
-                      ),
-                      child: BeszelSystemCard(
-                        instance: instance,
-                        system: system,
-                      ),
-                    );
-                  }, childCount: systems.length),
+                      );
+                    },
+                    childCount: systems.length,
+                  ),
                 ),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: Insets.xl)),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: Insets.xl),
+              ),
             ],
           ),
         );

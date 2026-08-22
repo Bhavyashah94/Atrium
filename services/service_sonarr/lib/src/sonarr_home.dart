@@ -106,9 +106,7 @@ class SonarrHome extends ConsumerWidget {
                     ref
                         .read(sonarrBottomNavVisibleProvider(instance).notifier)
                         .state = false;
-                  } else if (!isScrollingDown &&
-                      !currentVisible &&
-                      !isAtBottom) {
+                  } else if (!isScrollingDown && !currentVisible && !isAtBottom) {
                     ref
                         .read(sonarrBottomNavVisibleProvider(instance).notifier)
                         .state = true;
@@ -176,8 +174,7 @@ class SonarrHome extends ConsumerWidget {
                 if (index == currentIndex) {
                   ref
                       .read(
-                        sonarrHomeScrollToTopProvider((instance, index))
-                            .notifier,
+                        sonarrHomeScrollToTopProvider((instance, index)).notifier,
                       )
                       .update((state) => state + 1);
                 } else {

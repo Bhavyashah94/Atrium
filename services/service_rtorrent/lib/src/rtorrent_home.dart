@@ -99,7 +99,8 @@ class _RtorrentHomeState extends ConsumerState<RtorrentHome> {
             ListTile(
               selected: value == t.priority,
               title: Text(label),
-              trailing: value == t.priority ? const Icon(Icons.check) : null,
+              trailing:
+                  value == t.priority ? const Icon(Icons.check) : null,
               onTap: () => Navigator.of(context).pop(value),
             ),
         ],
@@ -198,14 +199,15 @@ class _GlobalSummary extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
-    final RtorrentGlobal g =
-        ref.watch(rtorrentGlobalProvider(instance)).value ??
-            const RtorrentGlobal();
+    final RtorrentGlobal g = ref.watch(rtorrentGlobalProvider(instance)).value ??
+        const RtorrentGlobal();
     final List<RtorrentTorrent> all =
         ref.watch(rtorrentRawTorrentsProvider(instance)).value ??
             const <RtorrentTorrent>[];
-    final int active = all.where((RtorrentTorrent t) => t.isActive).length;
-    final int stopped = all.where((RtorrentTorrent t) => t.state == 0).length;
+    final int active =
+        all.where((RtorrentTorrent t) => t.isActive).length;
+    final int stopped =
+        all.where((RtorrentTorrent t) => t.state == 0).length;
 
     return Card(
       child: Padding(
@@ -475,7 +477,8 @@ class _SortMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final RtorrentSortField field =
         ref.watch(rtorrentSortFieldProvider(instance));
-    final bool descending = ref.watch(rtorrentSortDescendingProvider(instance));
+    final bool descending =
+        ref.watch(rtorrentSortDescendingProvider(instance));
     return Row(
       children: <Widget>[
         Expanded(
@@ -604,7 +607,8 @@ class _TorrentRow extends StatelessWidget {
                           TextSpan(
                             text: done
                                 ? 'Ratio ${torrent.ratio.toStringAsFixed(2)}'
-                                : '${(torrent.progress * 100).toStringAsFixed(0)}%',
+                                : '${(torrent.progress * 100)
+                                    .toStringAsFixed(0)}%',
                             style: text.titleSmall
                                 ?.copyWith(color: scheme.onSurface),
                           ),

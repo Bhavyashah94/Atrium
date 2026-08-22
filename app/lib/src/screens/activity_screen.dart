@@ -54,15 +54,15 @@ class ActivityScreen extends ConsumerWidget {
       final bool showDownloads = downloadsState.downloads.isNotEmpty ||
           downloadsState.errors.isNotEmpty;
       body = EasyRefresh(
-        header: const ClassicHeader(
-          dragText: 'Pull to refresh',
-          armedText: 'Release ready',
-          readyText: 'Refreshing...',
-          processingText: 'Refreshing...',
-          processedText: 'Succeeded',
-          failedText: 'Failed',
-          messageText: 'Last updated at %T',
-        ),
+          header: const ClassicHeader(
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
         onRefresh: () async => refreshActivity(ref),
         child: ListView(
           padding: Insets.page,

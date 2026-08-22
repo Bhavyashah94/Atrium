@@ -215,7 +215,8 @@ class DelugeClient {
       });
 
   Future<DelugeFilterTree> getFilterTree() => _guarded(() async {
-        final Object? result = await _rpc('core.get_filter_tree', <Object?>[]);
+        final Object? result =
+            await _rpc('core.get_filter_tree', <Object?>[]);
         if (result is! Map<String, dynamic>) return const DelugeFilterTree();
         return DelugeFilterTree.fromJson(result);
       });
@@ -351,8 +352,8 @@ class DelugeClient {
     required bool paused,
   }) =>
       <String, Object?>{
-        if (savePath != null && savePath.isNotEmpty)
-          'download_location': savePath,
+        if (savePath != null && savePath.isNotEmpty) 'download_location':
+            savePath,
         'add_paused': paused,
       };
 

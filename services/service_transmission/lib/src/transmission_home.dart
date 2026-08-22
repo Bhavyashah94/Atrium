@@ -121,9 +121,11 @@ class _TransmissionHomeState extends ConsumerState<TransmissionHome> {
             children: <Widget>[
               _SessionSummary(
                 instance: widget.instance,
-                onAdd: () => showTransmissionAddSheet(context, widget.instance),
+                onAdd: () =>
+                    showTransmissionAddSheet(context, widget.instance),
                 onToggleTurtle: (bool enabled) => _run(
-                  (TransmissionApi api) => api.setAltSpeed(enabled: enabled),
+                  (TransmissionApi api) =>
+                      api.setAltSpeed(enabled: enabled),
                 ),
                 onSetDown: (int kbps) => _run(
                   (TransmissionApi api) => api.setSpeedLimits(
@@ -653,7 +655,8 @@ class _TorrentRow extends StatelessWidget {
                           TextSpan(
                             text: done
                                 ? 'Ratio ${torrent.ratio.toStringAsFixed(2)}'
-                                : '${(torrent.percentDone * 100).toStringAsFixed(0)}%',
+                                : '${(torrent.percentDone * 100)
+                                    .toStringAsFixed(0)}%',
                             style: text.titleSmall
                                 ?.copyWith(color: scheme.onSurface),
                           ),

@@ -11,8 +11,7 @@ class OmbiSearchService {
 
   /// Performs a multi-search across movies and TV shows.
   Future<List<MultiSearchResult>> searchMulti(String searchTerm) async {
-    final response =
-        await _rawSearchApi.postSearchMultiBySearchTerm(searchTerm: searchTerm);
+    final response = await _rawSearchApi.postSearchMultiBySearchTerm(searchTerm: searchTerm);
     if (response.isSuccess && response.data != null) {
       return response.data!;
     }
@@ -28,8 +27,7 @@ class OmbiSearchService {
 
   /// Retrieves movie details by Movie DB ID.
   Future<MovieFullInfoViewModel?> getMovieInfo(String movieDbId) async {
-    final response =
-        await _rawSearchApi.getSearchMovieByMovieDbId(movieDbId: movieDbId);
+    final response = await _rawSearchApi.getSearchMovieByMovieDbId(movieDbId: movieDbId);
     if (response.isSuccess) {
       return response.data;
     }

@@ -70,7 +70,8 @@ class _DelugeHomeState extends ConsumerState<DelugeHome> {
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 value: withData,
-                onChanged: (bool? v) => setLocal(() => withData = v ?? false),
+                onChanged: (bool? v) =>
+                    setLocal(() => withData = v ?? false),
                 title: const Text('Also delete downloaded files'),
               ),
             ],
@@ -90,7 +91,8 @@ class _DelugeHomeState extends ConsumerState<DelugeHome> {
     );
     if (go != true) return;
     await _run(
-      (DelugeClient c) => c.remove(<String>[torrent.id], removeData: withData),
+      (DelugeClient c) =>
+          c.remove(<String>[torrent.id], removeData: withData),
     );
   }
 
@@ -125,10 +127,10 @@ class _DelugeHomeState extends ConsumerState<DelugeHome> {
               _SessionSummary(
                 instance: widget.instance,
                 onAdd: () => showDelugeAddSheet(context, widget.instance),
-                onTogglePause: (bool paused) => _run(
-                    (DelugeClient c) => c.setSessionPaused(paused: paused)),
-                onSetDownLimit: (double kib) => _run(
-                    (DelugeClient c) => c.setSpeedLimits(downloadKib: kib)),
+                onTogglePause: (bool paused) =>
+                    _run((DelugeClient c) => c.setSessionPaused(paused: paused)),
+                onSetDownLimit: (double kib) =>
+                    _run((DelugeClient c) => c.setSpeedLimits(downloadKib: kib)),
                 onSetUpLimit: (double kib) =>
                     _run((DelugeClient c) => c.setSpeedLimits(uploadKib: kib)),
               ),
@@ -195,9 +197,10 @@ class _SessionSummary extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
-    final DelugeSessionStatus status =
-        ref.watch(delugeSessionStatusProvider(instance)).value ??
-            const DelugeSessionStatus();
+    final DelugeSessionStatus status = ref
+            .watch(delugeSessionStatusProvider(instance))
+            .value ??
+        const DelugeSessionStatus();
     final bool paused =
         ref.watch(delugeSessionPausedProvider(instance)).value ?? false;
     final DelugeSpeedLimits limits =
@@ -331,7 +334,8 @@ class _SpeedReadout extends StatelessWidget {
           padding: const EdgeInsets.only(top: Insets.xs),
           child: Text(
             unit,
-            style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+            style: text.labelSmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ),
       ],

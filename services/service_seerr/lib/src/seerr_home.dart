@@ -58,64 +58,66 @@ class _SeerrRequestsTab extends ConsumerWidget {
         ref.watch(seerrRequestsProvider(instance));
 
     return AsyncValueView<List<SeerrRequest>>(
-      value: requests,
-      onRetry: () {
+          value: requests,
+        onRetry: () {
+          ref.invalidate(seerrRequestsProvider(instance));
+          ref.invalidate(seerrRequestCountsProvider(instance));
+        },
+          data: (List<SeerrRequest> list) {
+            
+          if (list.isEmpty) {
+            return EasyRefresh(
+        header: const ClassicHeader(
+          dragText: 'Pull to refresh',
+          armedText: 'Release ready',
+          readyText: 'Refreshing...',
+          processingText: 'Refreshing...',
+          processedText: 'Succeeded',
+          failedText: 'Failed',
+          messageText: 'Last updated at %T',
+        ),
+        onRefresh: () async {
         ref.invalidate(seerrRequestsProvider(instance));
         ref.invalidate(seerrRequestCountsProvider(instance));
       },
-      data: (List<SeerrRequest> list) {
-        if (list.isEmpty) {
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const <Widget>[
+            SizedBox(height: 100),
+            EmptyView(
+              icon: Icons.playlist_add_check_outlined,
+              title: 'No requests',
+              message: 'No media requests yet.',
+            ),
+          ],
+        ),
+      );
+          }
           return EasyRefresh(
-            header: const ClassicHeader(
-              dragText: 'Pull to refresh',
-              armedText: 'Release ready',
-              readyText: 'Refreshing...',
-              processingText: 'Refreshing...',
-              processedText: 'Succeeded',
-              failedText: 'Failed',
-              messageText: 'Last updated at %T',
-            ),
-            onRefresh: () async {
-              ref.invalidate(seerrRequestsProvider(instance));
-              ref.invalidate(seerrRequestCountsProvider(instance));
-            },
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: const <Widget>[
-                SizedBox(height: 100),
-                EmptyView(
-                  icon: Icons.playlist_add_check_outlined,
-                  title: 'No requests',
-                  message: 'No media requests yet.',
-                ),
-              ],
-            ),
-          );
-        }
-        return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
-          onRefresh: () async {
-            ref.invalidate(seerrRequestsProvider(instance));
-            ref.invalidate(seerrRequestCountsProvider(instance));
-          },
-          child: ListView.separated(
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
+      onRefresh: () async {
+        ref.invalidate(seerrRequestsProvider(instance));
+        ref.invalidate(seerrRequestCountsProvider(instance));
+      },
+      child: ListView.separated(
             padding: Insets.page,
             itemCount: list.length,
             separatorBuilder: (_, __) => const SizedBox(height: Insets.md),
             itemBuilder: (BuildContext context, int index) =>
                 _RequestTile(instance: instance, request: list[index]),
           ),
-        );
-      },
     );
+        
+          },
+        );
   }
 }
 
@@ -210,7 +212,7 @@ class _RequestTileState extends ConsumerState<_RequestTile> {
           borderRadius: BorderRadius.circular(20),
           child: SeerrRequestCard(
             item: item,
-            api: ref.watch(seerrApiProvider(widget.instance)).value,
+              api: ref.watch(seerrApiProvider(widget.instance)).value,
             requestedBy: request.requestedBy?.displayName,
             mediaStatus: request.media?.status,
             requestStatus: request.status,

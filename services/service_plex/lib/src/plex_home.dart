@@ -162,57 +162,57 @@ class _ItemsGridState extends ConsumerState<_ItemsGrid> {
     final PlexApi? api = ref.watch(plexApiProvider(widget.instance)).value;
 
     final Widget grid = AsyncValueView<List<PlexMetadata>>(
-      value: items,
-      onRetry: () => ref.invalidate(_provider),
-      data: (List<PlexMetadata> list) {
-        if (list.isEmpty) {
-          return EasyRefresh(
-            header: const ClassicHeader(
-              dragText: 'Pull to refresh',
-              armedText: 'Release ready',
-              readyText: 'Refreshing...',
-              processingText: 'Refreshing...',
-              processedText: 'Succeeded',
-              failedText: 'Failed',
-              messageText: 'Last updated at %T',
-            ),
-            onRefresh: () async {
-              ref.invalidate(_provider);
-              if (widget.isSection) {
-                ref.invalidate(
-                    plexGenresProvider((widget.instance, widget.id)));
-              }
-            },
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: const <Widget>[
-                SizedBox(height: 100),
-                EmptyView(
-                  icon: Icons.movie_outlined,
-                  title: 'Empty',
-                  message: 'Nothing here yet.',
-                ),
-              ],
-            ),
-          );
+          value: items,
+        onRetry: () => ref.invalidate(_provider),
+          data: (List<PlexMetadata> list) {
+            
+          if (list.isEmpty) {
+            return EasyRefresh(
+        header: const ClassicHeader(
+          dragText: 'Pull to refresh',
+          armedText: 'Release ready',
+          readyText: 'Refreshing...',
+          processingText: 'Refreshing...',
+          processedText: 'Succeeded',
+          failedText: 'Failed',
+          messageText: 'Last updated at %T',
+        ),
+        onRefresh: () async {
+        ref.invalidate(_provider);
+        if (widget.isSection) {
+          ref.invalidate(plexGenresProvider((widget.instance, widget.id)));
         }
-        return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
-          onRefresh: () async {
-            ref.invalidate(_provider);
-            if (widget.isSection) {
-              ref.invalidate(plexGenresProvider((widget.instance, widget.id)));
-            }
-          },
-          child: MasonryGridView.extent(
+      },
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const <Widget>[
+            SizedBox(height: 100),
+            EmptyView(
+              icon: Icons.movie_outlined,
+              title: 'Empty',
+              message: 'Nothing here yet.',
+            ),
+          ],
+        ),
+      );
+          }
+          return EasyRefresh(
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
+      onRefresh: () async {
+        ref.invalidate(_provider);
+        if (widget.isSection) {
+          ref.invalidate(plexGenresProvider((widget.instance, widget.id)));
+        }
+      },
+      child: MasonryGridView.extent(
             padding: Insets.page,
             maxCrossAxisExtent: 140,
             crossAxisSpacing: Insets.md,
@@ -228,9 +228,10 @@ class _ItemsGridState extends ConsumerState<_ItemsGrid> {
               );
             },
           ),
-        );
-      },
     );
+        
+          },
+        );
 
     if (!widget.isSection) {
       return grid;
@@ -359,15 +360,15 @@ class _HomeSections extends ConsumerWidget {
         ref.watch(plexLibrariesProvider(instance)).value ??
             const <PlexLibrary>[];
     return EasyRefresh(
-      header: const ClassicHeader(
-        dragText: 'Pull to refresh',
-        armedText: 'Release ready',
-        readyText: 'Refreshing...',
-        processingText: 'Refreshing...',
-        processedText: 'Succeeded',
-        failedText: 'Failed',
-        messageText: 'Last updated at %T',
-      ),
+          header: const ClassicHeader(
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
       onRefresh: () async {
         ref.invalidate(plexSessionsProvider(instance));
         ref.invalidate(plexOnDeckProvider(instance));

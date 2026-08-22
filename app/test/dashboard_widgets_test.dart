@@ -241,8 +241,7 @@ void main() {
       tester,
       <Override>[
         for (final DateTime m in upcomingWindowMonths(DateTime.now()))
-          globalCalendarProvider((m, false))
-              .overrideWith((Ref ref) async => events),
+          globalCalendarProvider((m, false)).overrideWith((Ref ref) async => events),
       ],
       const DashboardUpcomingWidget(),
     );

@@ -95,8 +95,7 @@ class ConnectSettingsScreen extends ConsumerWidget {
     bool onRename = notification['onRename'] as bool? ?? false;
     bool onMovieAdded = notification['onMovieAdded'] as bool? ?? false;
     bool onMovieDelete = notification['onMovieDelete'] as bool? ?? false;
-    bool onMovieFileDelete =
-        notification['onMovieFileDelete'] as bool? ?? false;
+    bool onMovieFileDelete = notification['onMovieFileDelete'] as bool? ?? false;
     bool onMovieFileDeleteForUpgrade =
         notification['onMovieFileDeleteForUpgrade'] as bool? ?? false;
     bool onHealthIssue = notification['onHealthIssue'] as bool? ?? false;
@@ -139,19 +138,16 @@ class ConnectSettingsScreen extends ConsumerWidget {
                           notification['supportsOnMovieAdded'] == true ||
                           notification['supportsOnMovieDelete'] == true ||
                           notification['supportsOnMovieFileDelete'] == true ||
-                          notification['supportsOnMovieFileDeleteForUpgrade'] ==
-                              true ||
+                          notification['supportsOnMovieFileDeleteForUpgrade'] == true ||
                           notification['supportsOnHealthIssue'] == true ||
                           notification['supportsOnHealthRestored'] == true ||
                           notification['supportsOnApplicationUpdate'] == true ||
-                          notification['supportsOnManualInteractionRequired'] ==
-                              true) ...[
+                          notification['supportsOnManualInteractionRequired'] == true) ...[
                         Card(
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             side: BorderSide(
-                              color:
-                                  Theme.of(context).colorScheme.outlineVariant,
+                              color: Theme.of(context).colorScheme.outlineVariant,
                             ),
                             borderRadius: Radii.card,
                           ),
@@ -203,8 +199,7 @@ class ConnectSettingsScreen extends ConsumerWidget {
                                       () => onRename = val ?? false,
                                     ),
                                   ),
-                                if (notification['supportsOnMovieAdded'] ==
-                                    true)
+                                if (notification['supportsOnMovieAdded'] == true)
                                   CheckboxListTile(
                                     contentPadding: EdgeInsets.zero,
                                     title: const Text('On Movie Added'),
@@ -213,8 +208,7 @@ class ConnectSettingsScreen extends ConsumerWidget {
                                       () => onMovieAdded = val ?? false,
                                     ),
                                   ),
-                                if (notification['supportsOnMovieDelete'] ==
-                                    true)
+                                if (notification['supportsOnMovieDelete'] == true)
                                   CheckboxListTile(
                                     contentPadding: EdgeInsets.zero,
                                     title: const Text('On Movie Delete'),
@@ -223,8 +217,7 @@ class ConnectSettingsScreen extends ConsumerWidget {
                                       () => onMovieDelete = val ?? false,
                                     ),
                                   ),
-                                if (notification['supportsOnMovieFileDelete'] ==
-                                    true)
+                                if (notification['supportsOnMovieFileDelete'] == true)
                                   CheckboxListTile(
                                     contentPadding: EdgeInsets.zero,
                                     title: const Text('On Movie File Delete'),
@@ -233,21 +226,16 @@ class ConnectSettingsScreen extends ConsumerWidget {
                                       () => onMovieFileDelete = val ?? false,
                                     ),
                                   ),
-                                if (notification[
-                                        'supportsOnMovieFileDeleteForUpgrade'] ==
-                                    true)
+                                if (notification['supportsOnMovieFileDeleteForUpgrade'] == true)
                                   CheckboxListTile(
                                     contentPadding: EdgeInsets.zero,
-                                    title: const Text(
-                                        'On Movie File Delete for Upgrade'),
+                                    title: const Text('On Movie File Delete for Upgrade'),
                                     value: onMovieFileDeleteForUpgrade,
                                     onChanged: (val) => setDialogState(
-                                      () => onMovieFileDeleteForUpgrade =
-                                          val ?? false,
+                                      () => onMovieFileDeleteForUpgrade = val ?? false,
                                     ),
                                   ),
-                                if (notification['supportsOnHealthIssue'] ==
-                                    true)
+                                if (notification['supportsOnHealthIssue'] == true)
                                   CheckboxListTile(
                                     contentPadding: EdgeInsets.zero,
                                     title: const Text('On Health Issue'),
@@ -256,8 +244,7 @@ class ConnectSettingsScreen extends ConsumerWidget {
                                       () => onHealthIssue = val ?? false,
                                     ),
                                   ),
-                                if (notification['supportsOnHealthRestored'] ==
-                                    true)
+                                if (notification['supportsOnHealthRestored'] == true)
                                   CheckboxListTile(
                                     contentPadding: EdgeInsets.zero,
                                     title: const Text('On Health Restored'),
@@ -266,9 +253,7 @@ class ConnectSettingsScreen extends ConsumerWidget {
                                       () => onHealthRestored = val ?? false,
                                     ),
                                   ),
-                                if (notification[
-                                        'supportsOnApplicationUpdate'] ==
-                                    true)
+                                if (notification['supportsOnApplicationUpdate'] == true)
                                   CheckboxListTile(
                                     contentPadding: EdgeInsets.zero,
                                     title: const Text('On Application Update'),
@@ -277,17 +262,13 @@ class ConnectSettingsScreen extends ConsumerWidget {
                                       () => onApplicationUpdate = val ?? false,
                                     ),
                                   ),
-                                if (notification[
-                                        'supportsOnManualInteractionRequired'] ==
-                                    true)
+                                if (notification['supportsOnManualInteractionRequired'] == true)
                                   CheckboxListTile(
                                     contentPadding: EdgeInsets.zero,
-                                    title: const Text(
-                                        'On Manual Interaction Required'),
+                                    title: const Text('On Manual Interaction Required'),
                                     value: onManualInteractionRequired,
                                     onChanged: (val) => setDialogState(
-                                      () => onManualInteractionRequired =
-                                          val ?? false,
+                                      () => onManualInteractionRequired = val ?? false,
                                     ),
                                   ),
                               ],
@@ -299,10 +280,9 @@ class ConnectSettingsScreen extends ConsumerWidget {
                       DynamicSchemaForm(
                         fields: fields,
                         onTest: (updatedFields) async {
-                          final api = await ref
-                              .read(radarrApiProvider(instance).future);
-                          final payload =
-                              Map<String, dynamic>.from(notification);
+                          final api =
+                              await ref.read(radarrApiProvider(instance).future);
+                          final payload = Map<String, dynamic>.from(notification);
                           payload['name'] = nameController.text.trim();
                           payload['onGrab'] = onGrab;
                           payload['onDownload'] = onDownload;
@@ -311,22 +291,19 @@ class ConnectSettingsScreen extends ConsumerWidget {
                           payload['onMovieAdded'] = onMovieAdded;
                           payload['onMovieDelete'] = onMovieDelete;
                           payload['onMovieFileDelete'] = onMovieFileDelete;
-                          payload['onMovieFileDeleteForUpgrade'] =
-                              onMovieFileDeleteForUpgrade;
+                          payload['onMovieFileDeleteForUpgrade'] = onMovieFileDeleteForUpgrade;
                           payload['onHealthIssue'] = onHealthIssue;
                           payload['onHealthRestored'] = onHealthRestored;
                           payload['onApplicationUpdate'] = onApplicationUpdate;
-                          payload['onManualInteractionRequired'] =
-                              onManualInteractionRequired;
+                          payload['onManualInteractionRequired'] = onManualInteractionRequired;
                           payload['fields'] = updatedFields;
                           await api.testNotification(payload);
                         },
                         onSave: (updatedFields) async {
                           try {
-                            final api = await ref
-                                .read(radarrApiProvider(instance).future);
-                            final payload =
-                                Map<String, dynamic>.from(notification);
+                            final api =
+                                await ref.read(radarrApiProvider(instance).future);
+                            final payload = Map<String, dynamic>.from(notification);
                             payload['name'] = nameController.text.trim();
                             payload['onGrab'] = onGrab;
                             payload['onDownload'] = onDownload;
@@ -335,14 +312,11 @@ class ConnectSettingsScreen extends ConsumerWidget {
                             payload['onMovieAdded'] = onMovieAdded;
                             payload['onMovieDelete'] = onMovieDelete;
                             payload['onMovieFileDelete'] = onMovieFileDelete;
-                            payload['onMovieFileDeleteForUpgrade'] =
-                                onMovieFileDeleteForUpgrade;
+                            payload['onMovieFileDeleteForUpgrade'] = onMovieFileDeleteForUpgrade;
                             payload['onHealthIssue'] = onHealthIssue;
                             payload['onHealthRestored'] = onHealthRestored;
-                            payload['onApplicationUpdate'] =
-                                onApplicationUpdate;
-                            payload['onManualInteractionRequired'] =
-                                onManualInteractionRequired;
+                            payload['onApplicationUpdate'] = onApplicationUpdate;
+                            payload['onManualInteractionRequired'] = onManualInteractionRequired;
                             payload['fields'] = updatedFields;
 
                             if (isNew) {
@@ -354,8 +328,7 @@ class ConnectSettingsScreen extends ConsumerWidget {
                               );
                             }
 
-                            ref.invalidate(
-                                radarrNotificationsProvider(instance));
+                            ref.invalidate(radarrNotificationsProvider(instance));
                             if (context.mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -370,8 +343,7 @@ class ConnectSettingsScreen extends ConsumerWidget {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content:
-                                      Text('Failed to save notification: $e'),
+                                  content: Text('Failed to save notification: $e'),
                                 ),
                               );
                             }

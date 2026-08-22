@@ -19,7 +19,8 @@ class NzbgetHistoryTab extends ConsumerWidget {
   ) async {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     try {
-      final NzbgetApi api = await ref.read(nzbgetApiProvider(instance).future);
+      final NzbgetApi api =
+          await ref.read(nzbgetApiProvider(instance).future);
       await action(api);
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Action failed: $e')));
@@ -47,8 +48,7 @@ class NzbgetHistoryTab extends ConsumerWidget {
         }
         return EasyRefresh(
           header: const ClassicHeader(),
-          onRefresh: () async =>
-              ref.invalidate(nzbgetHistoryProvider(instance)),
+          onRefresh: () async => ref.invalidate(nzbgetHistoryProvider(instance)),
           child: ListView.builder(
             padding: Insets.page,
             itemCount: entries.length,
@@ -82,7 +82,8 @@ class NzbgetHistoryTab extends ConsumerWidget {
                         onPressed: () => _run(
                           context,
                           ref,
-                          (NzbgetApi api) => api.retryHistoryItem(entry.nzbId),
+                          (NzbgetApi api) =>
+                              api.retryHistoryItem(entry.nzbId),
                         ),
                       ),
                     IconButton(

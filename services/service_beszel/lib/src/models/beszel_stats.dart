@@ -28,4 +28,10 @@ abstract class BeszelStats with _$BeszelStats {
       _$BeszelStatsFromJson(json);
 }
 
-enum ChartTime { hour1, hour12, hour24, week1, month1 }
+enum ChartTime {
+  hour1,
+  hour12,
+  hour24,
+  week1,
+  month1,
+}

@@ -39,55 +39,57 @@ class QbittorrentHome extends ConsumerWidget {
         children: <Widget>[
           Expanded(
             child: AsyncValueView<List<QbitTorrent>>(
-              value: torrents,
-              onRetry: () => ref.invalidate(qbitRawTorrentsProvider(instance)),
-              data: (List<QbitTorrent> list) {
-                if (list.isEmpty) {
+          value: torrents,
+                onRetry: () =>
+                    ref.invalidate(qbitRawTorrentsProvider(instance)),
+          data: (List<QbitTorrent> list) {
+            
+                  if (list.isEmpty) {
+                    return EasyRefresh(
+        header: const ClassicHeader(
+          dragText: 'Pull to refresh',
+          armedText: 'Release ready',
+          readyText: 'Refreshing...',
+          processingText: 'Refreshing...',
+          processedText: 'Succeeded',
+          failedText: 'Failed',
+          messageText: 'Last updated at %T',
+        ),
+        onRefresh: () async => _refresh(ref),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const <Widget>[
+            SizedBox(height: 100),
+            EmptyView(
+                      icon: Icons.cloud_download_outlined,
+                      title: 'No torrents',
+                      message: 'Tap + to add a magnet, URL, or .torrent file.',
+                    ),
+          ],
+        ),
+      );
+                  }
                   return EasyRefresh(
-                    header: const ClassicHeader(
-                      dragText: 'Pull to refresh',
-                      armedText: 'Release ready',
-                      readyText: 'Refreshing...',
-                      processingText: 'Refreshing...',
-                      processedText: 'Succeeded',
-                      failedText: 'Failed',
-                      messageText: 'Last updated at %T',
-                    ),
-                    onRefresh: () async => _refresh(ref),
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: const <Widget>[
-                        SizedBox(height: 100),
-                        EmptyView(
-                          icon: Icons.cloud_download_outlined,
-                          title: 'No torrents',
-                          message:
-                              'Tap + to add a magnet, URL, or .torrent file.',
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                return EasyRefresh(
-                  header: const ClassicHeader(
-                    dragText: 'Pull to refresh',
-                    armedText: 'Release ready',
-                    readyText: 'Refreshing...',
-                    processingText: 'Refreshing...',
-                    processedText: 'Succeeded',
-                    failedText: 'Failed',
-                    messageText: 'Last updated at %T',
-                  ),
-                  onRefresh: () async => _refresh(ref),
-                  child: ListView.builder(
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
+      onRefresh: () async => _refresh(ref),
+      child: ListView.builder(
                     padding: const EdgeInsets.only(bottom: 80),
                     itemCount: list.length,
                     itemBuilder: (BuildContext context, int index) =>
                         _TorrentTile(instance: instance, torrent: list[index]),
                   ),
-                );
-              },
-            ),
+    );
+                
+          },
+        ),
           ),
         ],
       ),

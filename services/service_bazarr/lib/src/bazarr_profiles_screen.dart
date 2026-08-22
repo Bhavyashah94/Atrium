@@ -29,48 +29,47 @@ class BazarrProfilesScreen extends ConsumerWidget {
         label: const Text('Add'),
       ),
       body: AsyncValueView<List<BazarrLanguageProfile>>(
-        value: profiles,
-        onRetry: () => ref.invalidate(bazarrProfilesProvider(instance)),
-        data: (List<BazarrLanguageProfile> list) {
-          if (list.isEmpty) {
+          value: profiles,
+          onRetry: () => ref.invalidate(bazarrProfilesProvider(instance)),
+          data: (List<BazarrLanguageProfile> list) {
+            
+            if (list.isEmpty) {
+              return EasyRefresh(
+        header: const ClassicHeader(
+          dragText: 'Pull to refresh',
+          armedText: 'Release ready',
+          readyText: 'Refreshing...',
+          processingText: 'Refreshing...',
+          processedText: 'Succeeded',
+          failedText: 'Failed',
+          messageText: 'Last updated at %T',
+        ),
+        onRefresh: () async => ref.invalidate(bazarrProfilesProvider(instance)),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const <Widget>[
+            SizedBox(height: 100),
+            EmptyView(
+                icon: Icons.tune_outlined,
+                title: 'No language profiles',
+                message: 'Tap Add to create one (enable languages first).',
+              ),
+          ],
+        ),
+      );
+            }
             return EasyRefresh(
-              header: const ClassicHeader(
-                dragText: 'Pull to refresh',
-                armedText: 'Release ready',
-                readyText: 'Refreshing...',
-                processingText: 'Refreshing...',
-                processedText: 'Succeeded',
-                failedText: 'Failed',
-                messageText: 'Last updated at %T',
-              ),
-              onRefresh: () async =>
-                  ref.invalidate(bazarrProfilesProvider(instance)),
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: const <Widget>[
-                  SizedBox(height: 100),
-                  EmptyView(
-                    icon: Icons.tune_outlined,
-                    title: 'No language profiles',
-                    message: 'Tap Add to create one (enable languages first).',
-                  ),
-                ],
-              ),
-            );
-          }
-          return EasyRefresh(
-            header: const ClassicHeader(
-              dragText: 'Pull to refresh',
-              armedText: 'Release ready',
-              readyText: 'Refreshing...',
-              processingText: 'Refreshing...',
-              processedText: 'Succeeded',
-              failedText: 'Failed',
-              messageText: 'Last updated at %T',
-            ),
-            onRefresh: () async =>
-                ref.invalidate(bazarrProfilesProvider(instance)),
-            child: ListView.builder(
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
+      onRefresh: () async => ref.invalidate(bazarrProfilesProvider(instance)),
+      child: ListView.builder(
               padding: Insets.pageH,
               itemCount: list.length,
               itemBuilder: (BuildContext context, int i) {
@@ -94,9 +93,10 @@ class BazarrProfilesScreen extends ConsumerWidget {
                 );
               },
             ),
-          );
-        },
-      ),
+    );
+          
+          },
+        ),
     );
   }
 

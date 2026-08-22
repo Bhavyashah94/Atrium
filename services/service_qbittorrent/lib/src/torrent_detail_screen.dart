@@ -240,27 +240,28 @@ class _OverviewTab extends ConsumerWidget {
     final double progress = torrent.progress.clamp(0, 1).toDouble();
 
     return AsyncValueView<QbitTorrentProperties>(
-      value: props,
-      onRetry: () =>
+          value: props,
+        onRetry: () =>
+            ref.invalidate(qbitPropertiesProvider((instance, torrent.hash))),
+          data: (QbitTorrentProperties p) {
+            
+          final DateFormat fmt = DateFormat.yMMMd().add_Hm();
+          String date(int secs) => secs <= 0
+              ? '-'
+              : fmt.format(DateTime.fromMillisecondsSinceEpoch(secs * 1000));
+          return EasyRefresh(
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
+      onRefresh: () async =>
           ref.invalidate(qbitPropertiesProvider((instance, torrent.hash))),
-      data: (QbitTorrentProperties p) {
-        final DateFormat fmt = DateFormat.yMMMd().add_Hm();
-        String date(int secs) => secs <= 0
-            ? '-'
-            : fmt.format(DateTime.fromMillisecondsSinceEpoch(secs * 1000));
-        return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
-          onRefresh: () async =>
-              ref.invalidate(qbitPropertiesProvider((instance, torrent.hash))),
-          child: ListView(
+      child: ListView(
             padding: Insets.page,
             children: <Widget>[
               Container(
@@ -632,9 +633,10 @@ class _OverviewTab extends ConsumerWidget {
               const SizedBox(height: Insets.xl),
             ],
           ),
-        );
-      },
     );
+        
+          },
+        );
   }
 }
 
@@ -1007,51 +1009,52 @@ class _FilesTabState extends ConsumerState<_FilesTab>
         ref.watch(qbitFilesProvider((widget.instance, widget.hash)));
 
     return AsyncValueView<List<QbitFile>>(
-      value: files,
-      onRetry: () =>
+          value: files,
+        onRetry: () =>
+            ref.invalidate(qbitFilesProvider((widget.instance, widget.hash))),
+          data: (List<QbitFile> list) {
+            
+          if (list.isEmpty) {
+            return EasyRefresh(
+        header: const ClassicHeader(
+          dragText: 'Pull to refresh',
+          armedText: 'Release ready',
+          readyText: 'Refreshing...',
+          processingText: 'Refreshing...',
+          processedText: 'Succeeded',
+          failedText: 'Failed',
+          messageText: 'Last updated at %T',
+        ),
+        onRefresh: () async =>
           ref.invalidate(qbitFilesProvider((widget.instance, widget.hash))),
-      data: (List<QbitFile> list) {
-        if (list.isEmpty) {
-          return EasyRefresh(
-            header: const ClassicHeader(
-              dragText: 'Pull to refresh',
-              armedText: 'Release ready',
-              readyText: 'Refreshing...',
-              processingText: 'Refreshing...',
-              processedText: 'Succeeded',
-              failedText: 'Failed',
-              messageText: 'Last updated at %T',
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const <Widget>[
+            SizedBox(height: 100),
+            EmptyView(
+              icon: Icons.description_outlined,
+              title: 'No files',
+              message: 'Metadata not downloaded yet.',
             ),
-            onRefresh: () async => ref
-                .invalidate(qbitFilesProvider((widget.instance, widget.hash))),
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: const <Widget>[
-                SizedBox(height: 100),
-                EmptyView(
-                  icon: Icons.description_outlined,
-                  title: 'No files',
-                  message: 'Metadata not downloaded yet.',
-                ),
-              ],
-            ),
-          );
-        }
-        final List<_FileNode> nodes = _buildFileTree(list, _collapsedPaths);
+          ],
+        ),
+      );
+          }
+          final List<_FileNode> nodes = _buildFileTree(list, _collapsedPaths);
 
-        return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
-          onRefresh: () async =>
-              ref.invalidate(qbitFilesProvider((widget.instance, widget.hash))),
-          child: ListView.builder(
+          return EasyRefresh(
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
+      onRefresh: () async =>
+          ref.invalidate(qbitFilesProvider((widget.instance, widget.hash))),
+      child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: Insets.sm),
             itemCount: nodes.length,
             itemBuilder: (BuildContext context, int index) {
@@ -1160,9 +1163,10 @@ class _FilesTabState extends ConsumerState<_FilesTab>
               );
             },
           ),
-        );
-      },
     );
+        
+          },
+        );
   }
 }
 
@@ -1180,51 +1184,52 @@ class _TrackersTab extends ConsumerWidget {
         ref.watch(qbitTrackersProvider((instance, hash)));
 
     return AsyncValueView<List<QbitTracker>>(
-      value: trackers,
-      onRetry: () => ref.invalidate(qbitTrackersProvider((instance, hash))),
-      data: (List<QbitTracker> list) {
-        // Hide qBittorrent's synthetic DHT/PeX/LSD pseudo-trackers.
-        final List<QbitTracker> real =
-            list.where((QbitTracker t) => !t.url.startsWith('** ')).toList();
-        if (real.isEmpty) {
+          value: trackers,
+        onRetry: () => ref.invalidate(qbitTrackersProvider((instance, hash))),
+          data: (List<QbitTracker> list) {
+            
+          // Hide qBittorrent's synthetic DHT/PeX/LSD pseudo-trackers.
+          final List<QbitTracker> real =
+              list.where((QbitTracker t) => !t.url.startsWith('** ')).toList();
+          if (real.isEmpty) {
+            return EasyRefresh(
+        header: const ClassicHeader(
+          dragText: 'Pull to refresh',
+          armedText: 'Release ready',
+          readyText: 'Refreshing...',
+          processingText: 'Refreshing...',
+          processedText: 'Succeeded',
+          failedText: 'Failed',
+          messageText: 'Last updated at %T',
+        ),
+        onRefresh: () async =>
+          ref.invalidate(qbitTrackersProvider((instance, hash))),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const <Widget>[
+            SizedBox(height: 100),
+            EmptyView(
+              icon: Icons.dns_outlined,
+              title: 'No trackers',
+              message: 'This torrent has no HTTP trackers (DHT only).',
+            ),
+          ],
+        ),
+      );
+          }
           return EasyRefresh(
-            header: const ClassicHeader(
-              dragText: 'Pull to refresh',
-              armedText: 'Release ready',
-              readyText: 'Refreshing...',
-              processingText: 'Refreshing...',
-              processedText: 'Succeeded',
-              failedText: 'Failed',
-              messageText: 'Last updated at %T',
-            ),
-            onRefresh: () async =>
-                ref.invalidate(qbitTrackersProvider((instance, hash))),
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: const <Widget>[
-                SizedBox(height: 100),
-                EmptyView(
-                  icon: Icons.dns_outlined,
-                  title: 'No trackers',
-                  message: 'This torrent has no HTTP trackers (DHT only).',
-                ),
-              ],
-            ),
-          );
-        }
-        return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
-          onRefresh: () async =>
-              ref.invalidate(qbitTrackersProvider((instance, hash))),
-          child: ListView.separated(
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
+      onRefresh: () async =>
+          ref.invalidate(qbitTrackersProvider((instance, hash))),
+      child: ListView.separated(
             padding: Insets.page,
             itemCount: real.length,
             separatorBuilder: (_, __) => const SizedBox(height: Insets.sm),
@@ -1294,7 +1299,8 @@ class _TrackersTab extends ConsumerWidget {
                             Text(
                               t.msg,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: t.status == 4 ? c : cs.onSurfaceVariant,
+                                color:
+                                    t.status == 4 ? c : cs.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -1318,9 +1324,10 @@ class _TrackersTab extends ConsumerWidget {
               );
             },
           ),
-        );
-      },
     );
+        
+          },
+        );
   }
 }
 
@@ -1346,48 +1353,49 @@ class _PeersTab extends ConsumerWidget {
         ref.watch(qbitPeersProvider((instance, hash)));
 
     return AsyncValueView<List<QbitPeer>>(
-      value: peers,
-      onRetry: () => ref.invalidate(qbitPeersProvider((instance, hash))),
-      data: (List<QbitPeer> list) {
-        if (list.isEmpty) {
+          value: peers,
+        onRetry: () => ref.invalidate(qbitPeersProvider((instance, hash))),
+          data: (List<QbitPeer> list) {
+            
+          if (list.isEmpty) {
+            return EasyRefresh(
+        header: const ClassicHeader(
+          dragText: 'Pull to refresh',
+          armedText: 'Release ready',
+          readyText: 'Refreshing...',
+          processingText: 'Refreshing...',
+          processedText: 'Succeeded',
+          failedText: 'Failed',
+          messageText: 'Last updated at %T',
+        ),
+        onRefresh: () async =>
+          ref.invalidate(qbitPeersProvider((instance, hash))),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const <Widget>[
+            SizedBox(height: 100),
+            EmptyView(
+              icon: Icons.people_outline,
+              title: 'No peers',
+              message: 'Not connected to any peers.',
+            ),
+          ],
+        ),
+      );
+          }
           return EasyRefresh(
-            header: const ClassicHeader(
-              dragText: 'Pull to refresh',
-              armedText: 'Release ready',
-              readyText: 'Refreshing...',
-              processingText: 'Refreshing...',
-              processedText: 'Succeeded',
-              failedText: 'Failed',
-              messageText: 'Last updated at %T',
-            ),
-            onRefresh: () async =>
-                ref.invalidate(qbitPeersProvider((instance, hash))),
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: const <Widget>[
-                SizedBox(height: 100),
-                EmptyView(
-                  icon: Icons.people_outline,
-                  title: 'No peers',
-                  message: 'Not connected to any peers.',
-                ),
-              ],
-            ),
-          );
-        }
-        return EasyRefresh(
-          header: const ClassicHeader(
-            dragText: 'Pull to refresh',
-            armedText: 'Release ready',
-            readyText: 'Refreshing...',
-            processingText: 'Refreshing...',
-            processedText: 'Succeeded',
-            failedText: 'Failed',
-            messageText: 'Last updated at %T',
-          ),
-          onRefresh: () async =>
-              ref.invalidate(qbitPeersProvider((instance, hash))),
-          child: ListView.separated(
+      header: const ClassicHeader(
+        dragText: 'Pull to refresh',
+        armedText: 'Release ready',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Succeeded',
+        failedText: 'Failed',
+        messageText: 'Last updated at %T',
+      ),
+      onRefresh: () async =>
+          ref.invalidate(qbitPeersProvider((instance, hash))),
+      child: ListView.separated(
             padding: Insets.page,
             itemCount: list.length,
             separatorBuilder: (_, __) => const SizedBox(height: Insets.sm),
@@ -1463,8 +1471,9 @@ class _PeersTab extends ConsumerWidget {
               );
             },
           ),
-        );
-      },
     );
+        
+          },
+        );
   }
 }

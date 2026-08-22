@@ -190,16 +190,16 @@ class _SeriesTabState extends ConsumerState<SeriesTab>
           onRetry: () => ref.invalidate(sonarrSeriesProvider(widget.instance)),
           data: (List<SonarrSeries> list) {
             return EasyRefresh(
-              header: const ClassicHeader(
-                position: IndicatorPosition.locator,
-                dragText: 'Pull to refresh',
-                armedText: 'Release ready',
-                readyText: 'Refreshing...',
-                processingText: 'Refreshing...',
-                processedText: 'Succeeded',
-                failedText: 'Failed',
-                messageText: 'Last updated at %T',
-              ),
+          header: const ClassicHeader(
+            position: IndicatorPosition.locator,
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
               onRefresh: () async {
                 ref.invalidate(sonarrSeriesProvider(widget.instance));
                 await ref.read(sonarrSeriesProvider(widget.instance).future);
@@ -1203,13 +1203,13 @@ class _BulkDeleteDialogState extends ConsumerState<_BulkDeleteDialog> {
                   title: const Text('Also delete files from disk'),
                   value: _deleteFiles,
                   contentPadding: EdgeInsets.zero,
-                  onChanged: (val) =>
-                      setState(() => _deleteFiles = val ?? false),
+                  onChanged: (val) => setState(() => _deleteFiles = val ?? false),
                 ),
               ),
             const RadioListTile<_DeleteMode>(
               title: Text('Delete files only'),
-              subtitle: Text('Keep entry in Sonarr library to free disk space'),
+              subtitle:
+                  Text('Keep entry in Sonarr library to free disk space'),
               value: _DeleteMode.deleteFilesOnly,
               contentPadding: EdgeInsets.zero,
             ),
@@ -1312,8 +1312,7 @@ class _BulkDeleteDialogState extends ConsumerState<_BulkDeleteDialog> {
                   ? 'Successfully deleted files and unmonitored $successCount series'
                   : 'Successfully deleted files for $successCount series';
             } else {
-              msg =
-                  'Deleted files for $successCount series. Failed for $failedCount series';
+              msg = 'Deleted files for $successCount series. Failed for $failedCount series';
             }
 
             ScaffoldMessenger.of(context).showSnackBar(

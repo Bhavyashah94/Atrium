@@ -96,8 +96,7 @@ class _QualityProfilesTab extends ConsumerWidget {
       text: profile?['cutoffFormatScore']?.toString() ?? '0',
     );
 
-    final List<dynamic> profileFormatItems =
-        profile?['formatItems'] as List<dynamic>? ?? [];
+    final List<dynamic> profileFormatItems = profile?['formatItems'] as List<dynamic>? ?? [];
     final editableFormatItems = formats.map((dynamic f) {
       final fMap = f as Map<String, dynamic>;
       final int formatId = fMap['id'] as int;
@@ -228,10 +227,9 @@ class _QualityProfilesTab extends ConsumerWidget {
                       const SizedBox(height: Insets.sm),
                       Text(
                         'Custom Formats Settings',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                       const SizedBox(height: Insets.md),
                       Row(
@@ -263,10 +261,9 @@ class _QualityProfilesTab extends ConsumerWidget {
                         const SizedBox(height: Insets.md),
                         Text(
                           'Format Scores & Constraints',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                         const SizedBox(height: Insets.sm),
                         ...editableFormatItems.map((item) {
@@ -282,8 +279,7 @@ class _QualityProfilesTab extends ConsumerWidget {
                                   flex: 3,
                                   child: Text(
                                     formatName,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w500),
+                                    style: const TextStyle(fontWeight: FontWeight.w500),
                                   ),
                                 ),
                                 const SizedBox(width: Insets.sm),
@@ -317,8 +313,7 @@ class _QualityProfilesTab extends ConsumerWidget {
                                         });
                                       },
                                     ),
-                                    const Text('Req.',
-                                        style: TextStyle(fontSize: 10)),
+                                    const Text('Req.', style: TextStyle(fontSize: 10)),
                                   ],
                                 ),
                               ],
@@ -375,19 +370,13 @@ class _QualityProfilesTab extends ConsumerWidget {
                       payload['upgradeAllowed'] = upgradeAllowed;
                       payload['cutoff'] = effectiveCutoff;
                       payload['items'] = editableItems;
-                      payload['minFormatScore'] =
-                          int.tryParse(minFormatScoreController.text) ?? 0;
-                      payload['cutoffFormatScore'] =
-                          int.tryParse(cutoffFormatScoreController.text) ?? 0;
-                      payload['formatItems'] = editableFormatItems
-                          .map(
-                            (item) => {
-                              'format': item['format'],
-                              'score': item['score'],
-                              'required': item['required'],
-                            },
-                          )
-                          .toList();
+                      payload['minFormatScore'] = int.tryParse(minFormatScoreController.text) ?? 0;
+                      payload['cutoffFormatScore'] = int.tryParse(cutoffFormatScoreController.text) ?? 0;
+                      payload['formatItems'] = editableFormatItems.map((item) => {
+                        'format': item['format'],
+                        'score': item['score'],
+                        'required': item['required'],
+                      },).toList();
 
                       if (isEdit) {
                         await api.updateQualityProfile(
@@ -641,8 +630,7 @@ class _DelayProfilesTab extends ConsumerWidget {
                       payload['bypassIfHighestQuality'] = bypassIfHighest;
 
                       if (isEdit) {
-                        await api.updateDelayProfile(
-                            payload, payload['id'] as int);
+                        await api.updateDelayProfile(payload, payload['id'] as int);
                       } else {
                         await api.createDelayProfile(payload);
                       }
@@ -745,8 +733,7 @@ class _DelayProfilesTab extends ConsumerWidget {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.edit_outlined),
-                        onPressed: () =>
-                            _showDelayProfileDialog(context, ref, p),
+                        onPressed: () => _showDelayProfileDialog(context, ref, p),
                       ),
                       IconButton(
                         icon: Icon(
@@ -843,8 +830,7 @@ class _CustomFormatsTab extends ConsumerWidget {
                             payload['includeCustomFormatWhenRenaming'] =
                                 includeWhenRenaming;
 
-                            await api.updateCustomFormat(
-                                payload, payload['id'] as int);
+                            await api.updateCustomFormat(payload, payload['id'] as int);
 
                             ref.invalidate(
                               radarrCustomFormatsProvider(instance),
@@ -943,8 +929,7 @@ class _CustomFormatsTab extends ConsumerWidget {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.edit_outlined),
-                        onPressed: () =>
-                            _showCustomFormatDialog(context, ref, f),
+                        onPressed: () => _showCustomFormatDialog(context, ref, f),
                       ),
                       IconButton(
                         icon: Icon(

@@ -150,8 +150,7 @@ class _MovieDetailBodyState extends ConsumerState<_MovieDetailBody> {
     final String? fanartUrl =
         fanart == null ? null : api?.posterUrl(fanart, width: 1080);
 
-    final queueAsync =
-        ref.watch(radarrMovieQueueProvider((widget.instance, widget.movie.id)));
+    final queueAsync = ref.watch(radarrMovieQueueProvider((widget.instance, widget.movie.id)));
     final download = queueAsync.value?.firstOrNull;
 
     double? dlProgress;
@@ -190,175 +189,174 @@ class _MovieDetailBodyState extends ConsumerState<_MovieDetailBody> {
         },
       ),
       body: EasyRefresh(
-        header: const ClassicHeader(
-          position: IndicatorPosition.locator,
-          dragText: 'Pull to refresh',
-          armedText: 'Release ready',
-          readyText: 'Refreshing...',
-          processingText: 'Refreshing...',
-          processedText: 'Succeeded',
-          failedText: 'Failed',
-          messageText: 'Last updated at %T',
-        ),
-        onRefresh: () => _refresh(context),
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: <Widget>[
-            SliverAppBar(
-              expandedHeight: 250.0,
-              pinned: true,
-              backgroundColor: cs.surface,
-              surfaceTintColor: cs.surfaceTint,
-              leading: _AppBarLeading(controller: _scrollController),
-              actions: <Widget>[
-                _AppBarActions(
-                  controller: _scrollController,
+          header: const ClassicHeader(
+            position: IndicatorPosition.locator,
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
+      onRefresh: () => _refresh(context),
+      child: CustomScrollView(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: <Widget>[
+          SliverAppBar(
+            expandedHeight: 250.0,
+            pinned: true,
+            backgroundColor: cs.surface,
+            surfaceTintColor: cs.surfaceTint,
+            leading: _AppBarLeading(controller: _scrollController),
+            actions: <Widget>[
+              _AppBarActions(
+                controller: _scrollController,
+                instance: widget.instance,
+                movie: widget.movie,
+                onRefreshed: _invalidateProviders,
+              ),
+            ],
+            title: CollapsedTitle(
+              controller: _scrollController,
+              title: widget.movie.title,
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              background: _Backdrop(fanartUrl: fanartUrl),
+            ),
+          ),
+          const HeaderLocator.sliver(),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              Insets.lg,
+              Insets.sm,
+              Insets.lg,
+              Insets.xl,
+            ),
+            sliver: SliverList.list(
+              children: <Widget>[
+                _HeroInfoCard(
+                  movie: widget.movie,
+                  posterUrl: posterUrl,
+                ),
+                if (download != null) ...[
+                  Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(Radii.lg),
+                      side: BorderSide(
+                        color: cs.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    color: cs.primaryContainer.withValues(alpha: 0.1),
+                    margin: const EdgeInsets.only(top: Insets.lg),
+                    child: Padding(
+                      padding: const EdgeInsets.all(Insets.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.downloading, color: cs.primary),
+                              const SizedBox(width: Insets.sm),
+                              Expanded(
+                                child: Text(
+                                  'Downloading • ETA: ${_formatTimeLeft(download.timeleft)}',
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: cs.primary,
+                                  ),
+                                ),
+                              ),
+                              if (dlProgress != null)
+                                Text(
+                                  '${(dlProgress * 100).toStringAsFixed(0)}%',
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: cs.primary,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (dlProgress != null) ...[
+                            const SizedBox(height: Insets.sm),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: dlProgress,
+                                minHeight: 6,
+                                backgroundColor: cs.primaryContainer.withValues(alpha: 0.3),
+                                color: cs.primary,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: Insets.xs),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Client: ${download.downloadClient ?? 'unknown'}',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: cs.outline,
+                                ),
+                              ),
+                              Text(
+                                'Indexer: ${download.indexer ?? 'unknown'}',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: cs.outline,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: Insets.lg),
+                _ActionsRow(
                   instance: widget.instance,
                   movie: widget.movie,
                   onRefreshed: _invalidateProviders,
                 ),
-              ],
-              title: CollapsedTitle(
-                controller: _scrollController,
-                title: widget.movie.title,
-              ),
-              flexibleSpace: FlexibleSpaceBar(
-                background: _Backdrop(fanartUrl: fanartUrl),
-              ),
-            ),
-            const HeaderLocator.sliver(),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                Insets.lg,
-                Insets.sm,
-                Insets.lg,
-                Insets.xl,
-              ),
-              sliver: SliverList.list(
-                children: <Widget>[
-                  _HeroInfoCard(
-                    movie: widget.movie,
-                    posterUrl: posterUrl,
+                if (widget.movie.genres.isNotEmpty) ...[
+                  const SizedBox(height: Insets.lg),
+                  Wrap(
+                    spacing: Insets.sm,
+                    runSpacing: Insets.sm,
+                    children: widget.movie.genres
+                        .map(
+                          (String g) => Chip(
+                            label: Text(g),
+                            backgroundColor: cs.tertiaryContainer,
+                            labelStyle: TextStyle(
+                              color: cs.onTertiaryContainer,
+                              fontSize: 12,
+                            ),
+                            side: BorderSide.none,
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                          ),
+                        )
+                        .toList(),
                   ),
-                  if (download != null) ...[
-                    Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(Radii.lg),
-                        side: BorderSide(
-                          color: cs.primary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      color: cs.primaryContainer.withValues(alpha: 0.1),
-                      margin: const EdgeInsets.only(top: Insets.lg),
-                      child: Padding(
-                        padding: const EdgeInsets.all(Insets.md),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.downloading, color: cs.primary),
-                                const SizedBox(width: Insets.sm),
-                                Expanded(
-                                  child: Text(
-                                    'Downloading • ETA: ${_formatTimeLeft(download.timeleft)}',
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: cs.primary,
-                                    ),
-                                  ),
-                                ),
-                                if (dlProgress != null)
-                                  Text(
-                                    '${(dlProgress * 100).toStringAsFixed(0)}%',
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: cs.primary,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            if (dlProgress != null) ...[
-                              const SizedBox(height: Insets.sm),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: dlProgress,
-                                  minHeight: 6,
-                                  backgroundColor: cs.primaryContainer
-                                      .withValues(alpha: 0.3),
-                                  color: cs.primary,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: Insets.xs),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Client: ${download.downloadClient ?? 'unknown'}',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: cs.outline,
-                                  ),
-                                ),
-                                Text(
-                                  'Indexer: ${download.indexer ?? 'unknown'}',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: cs.outline,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: Insets.lg),
-                  _ActionsRow(
-                    instance: widget.instance,
-                    movie: widget.movie,
-                    onRefreshed: _invalidateProviders,
-                  ),
-                  if (widget.movie.genres.isNotEmpty) ...[
-                    const SizedBox(height: Insets.lg),
-                    Wrap(
-                      spacing: Insets.sm,
-                      runSpacing: Insets.sm,
-                      children: widget.movie.genres
-                          .map(
-                            (String g) => Chip(
-                              label: Text(g),
-                              backgroundColor: cs.tertiaryContainer,
-                              labelStyle: TextStyle(
-                                color: cs.onTertiaryContainer,
-                                fontSize: 12,
-                              ),
-                              side: BorderSide.none,
-                              visualDensity: VisualDensity.compact,
-                              padding: EdgeInsets.zero,
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ],
-                  if (widget.movie.overview != null &&
-                      widget.movie.overview!.isNotEmpty) ...[
-                    const SizedBox(height: Insets.lg),
-                    _OverviewSection(overview: widget.movie.overview!),
-                  ],
-                  const SizedBox(height: Insets.lg),
-                  _FileSection(movie: widget.movie),
-                  const SizedBox(height: Insets.lg),
-                  _ReleaseDatesSection(movie: widget.movie),
                 ],
-              ),
+                if (widget.movie.overview != null &&
+                    widget.movie.overview!.isNotEmpty) ...[
+                  const SizedBox(height: Insets.lg),
+                  _OverviewSection(overview: widget.movie.overview!),
+                ],
+                const SizedBox(height: Insets.lg),
+                _FileSection(movie: widget.movie),
+                const SizedBox(height: Insets.lg),
+                _ReleaseDatesSection(movie: widget.movie),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    ),
     );
   }
 }
@@ -1450,8 +1448,7 @@ class RadarrMovieHistoryScreen extends ConsumerWidget {
         error: (Object error, StackTrace? _) => ErrorView(
           title: 'Failed to load history',
           message: error.toString(),
-          onRetry: () =>
-              ref.invalidate(radarrMovieHistoryProvider((instance, movie.id))),
+          onRetry: () => ref.invalidate(radarrMovieHistoryProvider((instance, movie.id))),
         ),
         data: (List<RadarrHistoryItem> items) {
           if (items.isEmpty) {
@@ -1479,14 +1476,12 @@ class RadarrMovieHistoryScreen extends ConsumerWidget {
           return EasyRefresh(
             onRefresh: () async {
               ref.invalidate(radarrMovieHistoryProvider((instance, movie.id)));
-              await ref.read(
-                  radarrMovieHistoryProvider((instance, movie.id)).future);
+              await ref.read(radarrMovieHistoryProvider((instance, movie.id)).future);
             },
             child: ListView.separated(
               padding: const EdgeInsets.all(Insets.md),
               itemCount: items.length,
-              separatorBuilder: (BuildContext context, int index) =>
-                  const Divider(
+              separatorBuilder: (BuildContext context, int index) => const Divider(
                 height: 1,
                 indent: Insets.lg,
                 endIndent: Insets.lg,
@@ -1515,8 +1510,7 @@ class RadarrMovieHistoryScreen extends ConsumerWidget {
                       color: cs.outline,
                     ),
                   ),
-                  onTap: () => _showHistoryDetails(
-                      context, ref, instance, movie.id, item),
+                  onTap: () => _showHistoryDetails(context, ref, instance, movie.id, item),
                 );
               },
             ),
@@ -1661,8 +1655,7 @@ void _showHistoryDetails(
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children:
-                        item.data!.entries.map((MapEntry<String, String?> e) {
+                    children: item.data!.entries.map((MapEntry<String, String?> e) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 2),
                         child: Text(
@@ -1689,8 +1682,7 @@ void _showHistoryDetails(
                   final RadarrApi api =
                       await ref.read(radarrApiProvider(instance).future);
                   await api.failHistoryItem(item.id);
-                  ref.invalidate(
-                      radarrMovieHistoryProvider((instance, movieId)));
+                  ref.invalidate(radarrMovieHistoryProvider((instance, movieId)));
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -1755,3 +1747,4 @@ String _formatTimeLeft(String? timeleft) {
     return timeleft;
   }
 }
+

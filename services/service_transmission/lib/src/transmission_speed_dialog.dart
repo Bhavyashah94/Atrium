@@ -74,7 +74,8 @@ class _SpeedDialogContentState extends State<_SpeedDialogContent> {
               contentPadding: EdgeInsets.zero,
               selected: !widget.currentEnabled,
               title: const Text('Unlimited'),
-              trailing: !widget.currentEnabled ? const Icon(Icons.check) : null,
+              trailing:
+                  !widget.currentEnabled ? const Icon(Icons.check) : null,
               onTap: () => Navigator.of(context).pop(transmissionUnlimited),
             ),
             for (final int kbps in _presetsKbps)

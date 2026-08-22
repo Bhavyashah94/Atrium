@@ -239,15 +239,15 @@ class _StatusTab extends ConsumerWidget {
     final diskAsync = ref.watch(radarrDiskSpaceProvider(instance));
 
     return EasyRefresh(
-      header: const ClassicHeader(
-        dragText: 'Pull to refresh',
-        armedText: 'Release ready',
-        readyText: 'Refreshing...',
-        processingText: 'Refreshing...',
-        processedText: 'Succeeded',
-        failedText: 'Failed',
-        messageText: 'Last updated at %T',
-      ),
+          header: const ClassicHeader(
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
       onRefresh: () async {
         ref.invalidate(radarrSystemStatusProvider(instance));
         ref.invalidate(radarrHealthProvider(instance));
@@ -671,15 +671,15 @@ class _TasksTab extends ConsumerWidget {
     final tasksAsync = ref.watch(radarrTasksProvider(instance));
 
     return EasyRefresh(
-      header: const ClassicHeader(
-        dragText: 'Pull to refresh',
-        armedText: 'Release ready',
-        readyText: 'Refreshing...',
-        processingText: 'Refreshing...',
-        processedText: 'Succeeded',
-        failedText: 'Failed',
-        messageText: 'Last updated at %T',
-      ),
+          header: const ClassicHeader(
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
       onRefresh: () async {
         ref.invalidate(radarrTasksProvider(instance));
         await ref.read(radarrTasksProvider(instance).future);
@@ -816,15 +816,15 @@ class _UpdatesTab extends ConsumerWidget {
     final updatesAsync = ref.watch(radarrUpdatesProvider(instance));
 
     return EasyRefresh(
-      header: const ClassicHeader(
-        dragText: 'Pull to refresh',
-        armedText: 'Release ready',
-        readyText: 'Refreshing...',
-        processingText: 'Refreshing...',
-        processedText: 'Succeeded',
-        failedText: 'Failed',
-        messageText: 'Last updated at %T',
-      ),
+          header: const ClassicHeader(
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
       onRefresh: () async {
         ref.invalidate(radarrUpdatesProvider(instance));
         await ref.read(radarrUpdatesProvider(instance).future);
@@ -1159,8 +1159,7 @@ class _LogsTabState extends ConsumerState<_LogsTab> {
               ListTile(
                 leading: const Icon(Icons.info_outline),
                 title: const Text('Info'),
-                trailing:
-                    _levelFilter == 'info' ? const Icon(Icons.check) : null,
+                trailing: _levelFilter == 'info' ? const Icon(Icons.check) : null,
                 onTap: () {
                   Navigator.pop(context);
                   _levelFilter = 'info';
@@ -1170,8 +1169,7 @@ class _LogsTabState extends ConsumerState<_LogsTab> {
               ListTile(
                 leading: const Icon(Icons.warning_amber_outlined),
                 title: const Text('Warning'),
-                trailing:
-                    _levelFilter == 'warn' ? const Icon(Icons.check) : null,
+                trailing: _levelFilter == 'warn' ? const Icon(Icons.check) : null,
                 onTap: () {
                   Navigator.pop(context);
                   _levelFilter = 'warn';
@@ -1181,8 +1179,7 @@ class _LogsTabState extends ConsumerState<_LogsTab> {
               ListTile(
                 leading: const Icon(Icons.error_outline),
                 title: const Text('Error'),
-                trailing:
-                    _levelFilter == 'error' ? const Icon(Icons.check) : null,
+                trailing: _levelFilter == 'error' ? const Icon(Icons.check) : null,
                 onTap: () {
                   Navigator.pop(context);
                   _levelFilter = 'error';
@@ -1425,15 +1422,15 @@ class _BackupsTab extends ConsumerWidget {
     final backupsAsync = ref.watch(radarrBackupsProvider(instance));
 
     return EasyRefresh(
-      header: const ClassicHeader(
-        dragText: 'Pull to refresh',
-        armedText: 'Release ready',
-        readyText: 'Refreshing...',
-        processingText: 'Refreshing...',
-        processedText: 'Succeeded',
-        failedText: 'Failed',
-        messageText: 'Last updated at %T',
-      ),
+          header: const ClassicHeader(
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
       onRefresh: () async {
         ref.invalidate(radarrBackupsProvider(instance));
         await ref.read(radarrBackupsProvider(instance).future);

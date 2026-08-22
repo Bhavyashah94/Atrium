@@ -179,264 +179,264 @@ class _SeriesDetailBodyState extends ConsumerState<_SeriesDetailBody> {
         },
       ),
       body: EasyRefresh(
-        header: const ClassicHeader(
-          position: IndicatorPosition.locator,
-          dragText: 'Pull to refresh',
-          armedText: 'Release ready',
-          readyText: 'Refreshing...',
-          processingText: 'Refreshing...',
-          processedText: 'Succeeded',
-          failedText: 'Failed',
-          messageText: 'Last updated at %T',
-        ),
-        onRefresh: () => _refresh(context),
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: <Widget>[
-            // -- AppBar --
-            SliverAppBar(
-              expandedHeight: 250.0,
-              pinned: true,
-              backgroundColor: cs.surface,
-              surfaceTintColor: cs.surfaceTint,
-              leading: _AppBarLeading(controller: _scrollController),
-              actions: <Widget>[
-                _AppBarActions(
-                  controller: _scrollController,
+          header: const ClassicHeader(
+            position: IndicatorPosition.locator,
+            dragText: 'Pull to refresh',
+            armedText: 'Release ready',
+            readyText: 'Refreshing...',
+            processingText: 'Refreshing...',
+            processedText: 'Succeeded',
+            failedText: 'Failed',
+            messageText: 'Last updated at %T',
+          ),
+      onRefresh: () => _refresh(context),
+      child: CustomScrollView(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: <Widget>[
+          // -- AppBar --
+          SliverAppBar(
+            expandedHeight: 250.0,
+            pinned: true,
+            backgroundColor: cs.surface,
+            surfaceTintColor: cs.surfaceTint,
+            leading: _AppBarLeading(controller: _scrollController),
+            actions: <Widget>[
+              _AppBarActions(
+                controller: _scrollController,
+                instance: widget.instance,
+                series: widget.series,
+                onRefreshed: _invalidateProviders,
+              ),
+            ],
+            title: CollapsedTitle(
+              controller: _scrollController,
+              title: widget.series.title,
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              background: _Backdrop(fanartUrl: fanartUrl),
+            ),
+          ),
+          const HeaderLocator.sliver(),
+
+          // -- Content --
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              Insets.lg,
+              Insets.sm,
+              Insets.lg,
+              Insets.xl,
+            ),
+            sliver: SliverList.list(
+              children: <Widget>[
+                // Hero info card
+                _HeroInfoCard(
+                  series: widget.series,
+                  posterUrl: posterUrl,
+                ),
+
+                const SizedBox(height: Insets.lg),
+
+                // Stats card with progress bar
+                _StatsCard(
+                  downloadedCount: downloadedCount,
+                  totalEpisodes: totalEpisodes,
+                  sizeOnDisk: widget.series.statistics?.sizeOnDisk ?? 0,
+                ),
+
+                const SizedBox(height: Insets.lg),
+
+                // Action buttons row
+                _ActionsRow(
                   instance: widget.instance,
                   series: widget.series,
                   onRefreshed: _invalidateProviders,
                 ),
-              ],
-              title: CollapsedTitle(
-                controller: _scrollController,
-                title: widget.series.title,
-              ),
-              flexibleSpace: FlexibleSpaceBar(
-                background: _Backdrop(fanartUrl: fanartUrl),
-              ),
-            ),
-            const HeaderLocator.sliver(),
 
-            // -- Content --
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                Insets.lg,
-                Insets.sm,
-                Insets.lg,
-                Insets.xl,
-              ),
-              sliver: SliverList.list(
-                children: <Widget>[
-                  // Hero info card
-                  _HeroInfoCard(
-                    series: widget.series,
-                    posterUrl: posterUrl,
-                  ),
-
+                // Genre chips
+                if (widget.series.genres.isNotEmpty) ...<Widget>[
                   const SizedBox(height: Insets.lg),
-
-                  // Stats card with progress bar
-                  _StatsCard(
-                    downloadedCount: downloadedCount,
-                    totalEpisodes: totalEpisodes,
-                    sizeOnDisk: widget.series.statistics?.sizeOnDisk ?? 0,
-                  ),
-
-                  const SizedBox(height: Insets.lg),
-
-                  // Action buttons row
-                  _ActionsRow(
-                    instance: widget.instance,
-                    series: widget.series,
-                    onRefreshed: _invalidateProviders,
-                  ),
-
-                  // Genre chips
-                  if (widget.series.genres.isNotEmpty) ...<Widget>[
-                    const SizedBox(height: Insets.lg),
-                    Wrap(
-                      spacing: Insets.sm,
-                      runSpacing: Insets.sm,
-                      children: widget.series.genres
-                          .map(
-                            (String g) => Chip(
-                              label: Text(g),
-                              backgroundColor: cs.tertiaryContainer,
-                              labelStyle: TextStyle(
-                                color: cs.onTertiaryContainer,
-                                fontSize: 12,
-                              ),
-                              side: BorderSide.none,
-                              visualDensity: VisualDensity.compact,
-                              padding: EdgeInsets.zero,
+                  Wrap(
+                    spacing: Insets.sm,
+                    runSpacing: Insets.sm,
+                    children: widget.series.genres
+                        .map(
+                          (String g) => Chip(
+                            label: Text(g),
+                            backgroundColor: cs.tertiaryContainer,
+                            labelStyle: TextStyle(
+                              color: cs.onTertiaryContainer,
+                              fontSize: 12,
                             ),
-                          )
-                          .toList(),
-                    ),
-                  ],
-
-                  // Overview
-                  if (widget.series.overview != null &&
-                      widget.series.overview!.isNotEmpty) ...<Widget>[
-                    const SizedBox(height: Insets.lg),
-                    _OverviewSection(overview: widget.series.overview!),
-                  ],
-
-                  // Info section (path, next airing)
-                  if (widget.series.path != null ||
-                      widget.series.nextAiring != null) ...<Widget>[
-                    const SizedBox(height: Insets.lg),
-                    _InfoSection(series: widget.series),
-                  ],
-
-                  const SizedBox(height: Insets.xl),
-
-                  // Season & Episodes header
-                  Text(
-                    'Seasons & Episodes',
-                    key: _seasonsHeaderKey,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                            side: BorderSide.none,
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                          ),
+                        )
+                        .toList(),
                   ),
-                  const SizedBox(height: Insets.md),
-
-                  // Episodes content
-                  ...(() {
-                    final asyncVal = widget.episodesAsync;
-
-                    List<Widget> buildData(List<SonarrEpisode> episodes) {
-                      final Map<int, List<SonarrEpisode>> episodesBySeason =
-                          groupBy(episodes, (e) => e.seasonNumber);
-                      final List<int> sortedSeasons = episodesBySeason.keys
-                          .toList()
-                        ..sort((a, b) => b.compareTo(a)); // newest first
-
-                      for (final seasonNum in sortedSeasons) {
-                        _seasonKeys.putIfAbsent(seasonNum, GlobalKey.new);
-                      }
-
-                      return <Widget>[
-                        if (sortedSeasons.isNotEmpty) ...[
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: Insets.xs),
-                            child: Row(
-                              children: [
-                                ActionChip(
-                                  label: const Text('All'),
-                                  onPressed: () {
-                                    if (_seasonsHeaderKey.currentContext !=
-                                        null) {
-                                      Scrollable.ensureVisible(
-                                        _seasonsHeaderKey.currentContext!,
-                                        duration:
-                                            const Duration(milliseconds: 500),
-                                        curve: Curves.easeInOut,
-                                      );
-                                    }
-                                  },
-                                ),
-                                ...sortedSeasons.map((seasonNum) {
-                                  final label = seasonNum == 0
-                                      ? 'Specials'
-                                      : 'Season $seasonNum';
-                                  return Padding(
-                                    padding:
-                                        const EdgeInsets.only(left: Insets.xs),
-                                    child: ActionChip(
-                                      label: Text(label),
-                                      onPressed: () {
-                                        if (!_expandedSeasons
-                                            .contains(seasonNum)) {
-                                          setState(() {
-                                            _expandedSeasons.add(seasonNum);
-                                          });
-                                        }
-                                        WidgetsBinding.instance
-                                            .addPostFrameCallback((_) {
-                                          final key = _seasonKeys[seasonNum];
-                                          if (key?.currentContext != null) {
-                                            Scrollable.ensureVisible(
-                                              key!.currentContext!,
-                                              duration: const Duration(
-                                                milliseconds: 500,
-                                              ),
-                                              curve: Curves.easeInOut,
-                                            );
-                                          }
-                                        });
-                                      },
-                                    ),
-                                  );
-                                }),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: Insets.md),
-                        ],
-                        Column(
-                          children: _buildSeasonCards(
-                            context,
-                            episodesBySeason,
-                            sortedSeasons,
-                          ),
-                        ),
-                      ];
-                    }
-
-                    if (asyncVal.hasValue) {
-                      return buildData(asyncVal.value!);
-                    }
-
-                    return asyncVal.when(
-                      data: buildData,
-                      loading: () => <Widget>[
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: Insets.xl),
-                            child: ExpressiveProgressIndicator(),
-                          ),
-                        ),
-                      ],
-                      error: (error, stack) => <Widget>[
-                        Center(
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: Insets.xl),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Text(
-                                  'Failed to load episodes.',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: cs.error,
-                                  ),
-                                ),
-                                const SizedBox(height: Insets.sm),
-                                FilledButton.tonal(
-                                  onPressed: () => ref.invalidate(
-                                    sonarrEpisodesProvider(
-                                      (widget.instance, widget.series.id),
-                                    ),
-                                  ),
-                                  child: const Text('Retry'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  })(),
                 ],
-              ),
+
+                // Overview
+                if (widget.series.overview != null &&
+                    widget.series.overview!.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: Insets.lg),
+                  _OverviewSection(overview: widget.series.overview!),
+                ],
+
+                // Info section (path, next airing)
+                if (widget.series.path != null ||
+                    widget.series.nextAiring != null) ...<Widget>[
+                  const SizedBox(height: Insets.lg),
+                  _InfoSection(series: widget.series),
+                ],
+
+                const SizedBox(height: Insets.xl),
+
+                // Season & Episodes header
+                Text(
+                  'Seasons & Episodes',
+                  key: _seasonsHeaderKey,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: Insets.md),
+
+                // Episodes content
+                ...(() {
+                  final asyncVal = widget.episodesAsync;
+                  
+                  List<Widget> buildData(List<SonarrEpisode> episodes) {
+                    final Map<int, List<SonarrEpisode>> episodesBySeason =
+                        groupBy(episodes, (e) => e.seasonNumber);
+                    final List<int> sortedSeasons = episodesBySeason.keys
+                        .toList()
+                      ..sort((a, b) => b.compareTo(a)); // newest first
+
+                    for (final seasonNum in sortedSeasons) {
+                      _seasonKeys.putIfAbsent(seasonNum, GlobalKey.new);
+                    }
+
+                    return <Widget>[
+                      if (sortedSeasons.isNotEmpty) ...[
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: Insets.xs),
+                          child: Row(
+                            children: [
+                              ActionChip(
+                                label: const Text('All'),
+                                onPressed: () {
+                                  if (_seasonsHeaderKey.currentContext !=
+                                      null) {
+                                    Scrollable.ensureVisible(
+                                      _seasonsHeaderKey.currentContext!,
+                                      duration:
+                                          const Duration(milliseconds: 500),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  }
+                                },
+                              ),
+                              ...sortedSeasons.map((seasonNum) {
+                                final label = seasonNum == 0
+                                    ? 'Specials'
+                                    : 'Season $seasonNum';
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: Insets.xs),
+                                  child: ActionChip(
+                                    label: Text(label),
+                                    onPressed: () {
+                                      if (!_expandedSeasons
+                                          .contains(seasonNum)) {
+                                        setState(() {
+                                          _expandedSeasons.add(seasonNum);
+                                        });
+                                      }
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        final key = _seasonKeys[seasonNum];
+                                        if (key?.currentContext != null) {
+                                          Scrollable.ensureVisible(
+                                            key!.currentContext!,
+                                            duration: const Duration(
+                                              milliseconds: 500,
+                                            ),
+                                            curve: Curves.easeInOut,
+                                          );
+                                        }
+                                      });
+                                    },
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: Insets.md),
+                      ],
+                      Column(
+                        children: _buildSeasonCards(
+                          context,
+                          episodesBySeason,
+                          sortedSeasons,
+                        ),
+                      ),
+                    ];
+                  }
+
+                  if (asyncVal.hasValue) {
+                    return buildData(asyncVal.value!);
+                  }
+
+                  return asyncVal.when(
+                    data: buildData,
+                    loading: () => <Widget>[
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: Insets.xl),
+                          child: ExpressiveProgressIndicator(),
+                        ),
+                      ),
+                    ],
+                    error: (error, stack) => <Widget>[
+                      Center(
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.symmetric(vertical: Insets.xl),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(
+                                'Failed to load episodes.',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: cs.error,
+                                ),
+                              ),
+                              const SizedBox(height: Insets.sm),
+                              FilledButton.tonal(
+                                onPressed: () => ref.invalidate(
+                                  sonarrEpisodesProvider(
+                                    (widget.instance, widget.series.id),
+                                  ),
+                                ),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                })(),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    ),
     );
   }
 
@@ -1021,8 +1021,7 @@ class _SeasonCard extends ConsumerWidget {
     final String seasonSizeStr =
         seasonSizeBytes > 0 ? ' • ${_formatSize(seasonSizeBytes.toInt())}' : '';
 
-    final queue =
-        ref.watch(sonarrQueueProvider(instance)).value ?? <SonarrQueueItem>[];
+    final queue = ref.watch(sonarrQueueProvider(instance)).value ?? <SonarrQueueItem>[];
     final Map<String, List<SonarrQueueItem>> groupedByDownload = {};
     for (final item in queue) {
       final dlId = item.downloadId;
@@ -1040,8 +1039,7 @@ class _SeasonCard extends ConsumerWidget {
           item.seriesId == series.id &&
           item.seasonNumber == seasonNumber &&
           (item.episodeId == null ||
-              (item.downloadId != null &&
-                  seasonPackDownloadIds.contains(item.downloadId))),
+              (item.downloadId != null && seasonPackDownloadIds.contains(item.downloadId))),
     );
 
     double? dlProgress;
@@ -1174,8 +1172,7 @@ class _SeasonCard extends ConsumerWidget {
                               child: LinearProgressIndicator(
                                 value: dlProgress,
                                 minHeight: 3,
-                                backgroundColor:
-                                    cs.primaryContainer.withValues(alpha: 0.3),
+                                backgroundColor: cs.primaryContainer.withValues(alpha: 0.3),
                                 color: cs.primary,
                               ),
                             ),
@@ -1270,9 +1267,7 @@ class _SeasonCard extends ConsumerWidget {
                       final downloadingItem = queue.firstWhereOrNull(
                         (item) =>
                             item.episodeId == episode.id &&
-                            (item.downloadId == null ||
-                                !seasonPackDownloadIds
-                                    .contains(item.downloadId)),
+                            (item.downloadId == null || !seasonPackDownloadIds.contains(item.downloadId)),
                       );
 
                       double? dlProgress;
@@ -1428,11 +1423,9 @@ class _SeasonCard extends ConsumerWidget {
         if (unmonitor) {
           try {
             final Map<String, dynamic> raw = await api.getSeriesRaw(series.id);
-            final List<dynamic> seasons =
-                (raw['seasons'] as List<dynamic>?) ?? <dynamic>[];
+            final List<dynamic> seasons = (raw['seasons'] as List<dynamic>?) ?? <dynamic>[];
             for (final dynamic s in seasons) {
-              if (s is Map<String, dynamic> &&
-                  s['seasonNumber'] == seasonNumber) {
+              if (s is Map<String, dynamic> && s['seasonNumber'] == seasonNumber) {
                 s['monitored'] = false;
                 break;
               }
@@ -1711,8 +1704,7 @@ class _EpisodeRow extends ConsumerWidget {
                         child: LinearProgressIndicator(
                           value: dlProgress,
                           minHeight: 2,
-                          backgroundColor:
-                              cs.primaryContainer.withValues(alpha: 0.3),
+                          backgroundColor: cs.primaryContainer.withValues(alpha: 0.3),
                           color: cs.primary,
                         ),
                       ),
@@ -2000,8 +1992,7 @@ void _showEpisodeBottomSheet({
                                   title: const Text('Delete Episode File'),
                                   content: Column(
                                     mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: <Widget>[
                                       const Text(
                                         'Are you sure? This will delete the file from disk and cannot be undone.',
@@ -2010,11 +2001,9 @@ void _showEpisodeBottomSheet({
                                       CheckboxListTile(
                                         contentPadding: EdgeInsets.zero,
                                         title: const Text('Unmonitor episode'),
-                                        subtitle: const Text(
-                                            'Prevent automatic re-downloads'),
+                                        subtitle: const Text('Prevent automatic re-downloads'),
                                         value: unmonitor,
-                                        onChanged: (v) => setState(
-                                            () => unmonitor = v ?? false),
+                                        onChanged: (v) => setState(() => unmonitor = v ?? false),
                                       ),
                                     ],
                                   ),
@@ -2029,8 +2018,7 @@ void _showEpisodeBottomSheet({
                                         backgroundColor: cs.error,
                                         foregroundColor: cs.onError,
                                       ),
-                                      onPressed: () =>
-                                          Navigator.pop(context, true),
+                                      onPressed: () => Navigator.pop(context, true),
                                       child: const Text('Delete'),
                                     ),
                                   ],
@@ -2745,8 +2733,7 @@ class SonarrSeriesHistoryScreen extends ConsumerWidget {
         error: (Object error, StackTrace? _) => ErrorView(
           title: 'Failed to load history',
           message: error.toString(),
-          onRetry: () => ref
-              .invalidate(sonarrSeriesHistoryProvider((instance, series.id))),
+          onRetry: () => ref.invalidate(sonarrSeriesHistoryProvider((instance, series.id))),
         ),
         data: (List<SonarrHistoryItem> items) {
           if (items.isEmpty) {
@@ -2773,16 +2760,13 @@ class SonarrSeriesHistoryScreen extends ConsumerWidget {
 
           return EasyRefresh(
             onRefresh: () async {
-              ref.invalidate(
-                  sonarrSeriesHistoryProvider((instance, series.id)));
-              await ref.read(
-                  sonarrSeriesHistoryProvider((instance, series.id)).future);
+              ref.invalidate(sonarrSeriesHistoryProvider((instance, series.id)));
+              await ref.read(sonarrSeriesHistoryProvider((instance, series.id)).future);
             },
             child: ListView.separated(
               padding: const EdgeInsets.all(Insets.md),
               itemCount: items.length,
-              separatorBuilder: (BuildContext context, int index) =>
-                  const Divider(
+              separatorBuilder: (BuildContext context, int index) => const Divider(
                 height: 1,
                 indent: Insets.lg,
                 endIndent: Insets.lg,
@@ -2793,10 +2777,8 @@ class SonarrSeriesHistoryScreen extends ConsumerWidget {
 
                 String epInfo = '';
                 if (item.episode != null) {
-                  final String season =
-                      item.episode!.seasonNumber.toString().padLeft(2, '0');
-                  final String ep =
-                      item.episode!.episodeNumber.toString().padLeft(2, '0');
+                  final String season = item.episode!.seasonNumber.toString().padLeft(2, '0');
+                  final String ep = item.episode!.episodeNumber.toString().padLeft(2, '0');
                   epInfo = 'S${season}E$ep';
                 }
 
@@ -2825,8 +2807,7 @@ class SonarrSeriesHistoryScreen extends ConsumerWidget {
                       color: cs.outline,
                     ),
                   ),
-                  onTap: () => _showHistoryDetails(
-                      context, ref, instance, series.id, item),
+                  onTap: () => _showHistoryDetails(context, ref, instance, series.id, item),
                 );
               },
             ),
@@ -2984,8 +2965,7 @@ void _showHistoryDetails(
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children:
-                        item.data!.entries.map((MapEntry<String, String?> e) {
+                    children: item.data!.entries.map((MapEntry<String, String?> e) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 2),
                         child: Text(
@@ -3012,8 +2992,7 @@ void _showHistoryDetails(
                   final SonarrApi api =
                       await ref.read(sonarrApiProvider(instance).future);
                   await api.failHistoryItem(item.id);
-                  ref.invalidate(
-                      sonarrSeriesHistoryProvider((instance, seriesId)));
+                  ref.invalidate(sonarrSeriesHistoryProvider((instance, seriesId)));
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -3078,3 +3057,4 @@ String _formatTimeLeft(String? timeleft) {
     return timeleft;
   }
 }
+

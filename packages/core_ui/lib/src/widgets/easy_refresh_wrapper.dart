@@ -78,18 +78,14 @@ class ClampingERScrollPhysics extends material.ScrollPhysics {
 
   @override
   double applyPhysicsToUserOffset(
-    material.ScrollMetrics position,
-    double offset,
-  ) {
+      material.ScrollMetrics position, double offset,) {
     _activeDrags.add(position);
     return _delegate.applyPhysicsToUserOffset(position, offset);
   }
 
   @override
   double applyBoundaryConditions(
-    material.ScrollMetrics position,
-    double value,
-  ) {
+      material.ScrollMetrics position, double value,) {
     // If dragging or already out of range, let the delegate handle it.
     if (_activeDrags.contains(position) ||
         (position.hasContentDimensions && position.outOfRange)) {
@@ -152,8 +148,7 @@ class HeaderLocator extends material.StatelessWidget {
     if (isTest) {
       if (_isSliver) {
         return const material.SliverToBoxAdapter(
-          child: material.SizedBox.shrink(),
-        );
+            child: material.SizedBox.shrink(),);
       }
       return const material.SizedBox.shrink();
     }

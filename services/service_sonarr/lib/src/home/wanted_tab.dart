@@ -666,11 +666,9 @@ class _EpisodeListLayout extends ConsumerWidget {
                   onTap: () {
                     final bool hasSelection = selectedIds.isNotEmpty;
                     if (hasSelection) {
-                      final notifier = ref.read(
-                          sonarrWantedSelectionProvider(instance).notifier);
+                      final notifier = ref.read(sonarrWantedSelectionProvider(instance).notifier);
                       if (isSelected) {
-                        notifier.state =
-                            selectedIds.where((id) => id != episode.id).toSet();
+                        notifier.state = selectedIds.where((id) => id != episode.id).toSet();
                       } else {
                         notifier.state = {...selectedIds, episode.id};
                       }
@@ -680,11 +678,9 @@ class _EpisodeListLayout extends ConsumerWidget {
                     }
                   },
                   onLongPress: () {
-                    final notifier = ref
-                        .read(sonarrWantedSelectionProvider(instance).notifier);
+                    final notifier = ref.read(sonarrWantedSelectionProvider(instance).notifier);
                     if (isSelected) {
-                      notifier.state =
-                          selectedIds.where((id) => id != episode.id).toSet();
+                      notifier.state = selectedIds.where((id) => id != episode.id).toSet();
                     } else {
                       notifier.state = {...selectedIds, episode.id};
                     }
@@ -888,7 +884,9 @@ class _EpisodeListLayout extends ConsumerWidget {
                           onPressed: onBulkSearch,
                           icon: const Icon(Icons.search, size: 18),
                           label: Text(
-                            isCutoffTab ? 'Search Cutoff' : 'Search All',
+                            isCutoffTab
+                                ? 'Search Cutoff'
+                                : 'Search All',
                           ),
                         ),
                       ),
@@ -966,8 +964,7 @@ class _GroupedEpisodeCardState extends ConsumerState<_GroupedEpisodeCard> {
     final bool someSelected =
         !allSelected && widget.selectedIds.any(groupEpIds.contains);
 
-    final int selectedCount =
-        widget.episodes.where((e) => widget.selectedIds.contains(e.id)).length;
+    final int selectedCount = widget.episodes.where((e) => widget.selectedIds.contains(e.id)).length;
 
     return Card(
       elevation: 0,
@@ -996,8 +993,7 @@ class _GroupedEpisodeCardState extends ConsumerState<_GroupedEpisodeCard> {
             onTap: () {
               final bool hasSelection = widget.selectedIds.isNotEmpty;
               if (hasSelection) {
-                final notifier = ref.read(
-                    sonarrWantedSelectionProvider(widget.instance).notifier);
+                final notifier = ref.read(sonarrWantedSelectionProvider(widget.instance).notifier);
                 if (allSelected) {
                   notifier.state = widget.selectedIds.difference(groupEpIds);
                 } else {
@@ -1011,8 +1007,7 @@ class _GroupedEpisodeCardState extends ConsumerState<_GroupedEpisodeCard> {
               }
             },
             onLongPress: () {
-              final notifier = ref.read(
-                  sonarrWantedSelectionProvider(widget.instance).notifier);
+              final notifier = ref.read(sonarrWantedSelectionProvider(widget.instance).notifier);
               if (allSelected) {
                 notifier.state = widget.selectedIds.difference(groupEpIds);
               } else {
@@ -1024,6 +1019,7 @@ class _GroupedEpisodeCardState extends ConsumerState<_GroupedEpisodeCard> {
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: <Widget>[
+
                   // Poster Thumbnail
                   if (posterUrl != null)
                     ClipRRect(
@@ -1176,18 +1172,11 @@ class _GroupedEpisodeCardState extends ConsumerState<_GroupedEpisodeCard> {
                       onTap: () {
                         final bool hasSelection = widget.selectedIds.isNotEmpty;
                         if (hasSelection) {
-                          final notifier = ref.read(
-                              sonarrWantedSelectionProvider(widget.instance)
-                                  .notifier);
+                          final notifier = ref.read(sonarrWantedSelectionProvider(widget.instance).notifier);
                           if (isEpSelected) {
-                            notifier.state = widget.selectedIds
-                                .where((id) => id != episode.id)
-                                .toSet();
+                            notifier.state = widget.selectedIds.where((id) => id != episode.id).toSet();
                           } else {
-                            notifier.state = {
-                              ...widget.selectedIds,
-                              episode.id
-                            };
+                            notifier.state = {...widget.selectedIds, episode.id};
                           }
                           widget.onSelectionChanged();
                         } else {
@@ -1195,13 +1184,9 @@ class _GroupedEpisodeCardState extends ConsumerState<_GroupedEpisodeCard> {
                         }
                       },
                       onLongPress: () {
-                        final notifier = ref.read(
-                            sonarrWantedSelectionProvider(widget.instance)
-                                .notifier);
+                        final notifier = ref.read(sonarrWantedSelectionProvider(widget.instance).notifier);
                         if (isEpSelected) {
-                          notifier.state = widget.selectedIds
-                              .where((id) => id != episode.id)
-                              .toSet();
+                          notifier.state = widget.selectedIds.where((id) => id != episode.id).toSet();
                         } else {
                           notifier.state = {...widget.selectedIds, episode.id};
                         }

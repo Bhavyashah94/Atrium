@@ -69,7 +69,8 @@ class DelugeFilter {
   final String label;
   final String trackerHost;
 
-  bool get isActive => state != 'All' || label != 'All' || trackerHost != 'All';
+  bool get isActive =>
+      state != 'All' || label != 'All' || trackerHost != 'All';
 
   DelugeFilter copyWith({String? state, String? label, String? trackerHost}) =>
       DelugeFilter(
@@ -140,17 +141,13 @@ final delugeSortDescendingProvider =
 /// one they would inherit whatever the user last picked on the Deluge screen -
 /// filter to Paused there and the Activity feed would go empty.
 final delugeRawTorrentsProvider =
-    FutureProvider.autoDispose.family<List<DelugeTorrent>, Instance>(
-  (
-    Ref ref,
-    Instance instance,
-  ) =>
-      ref.polled(
-    delugeListPollInterval,
-    () async {
-      final DelugeClient client =
-          await ref.watch(delugeClientProvider(instance).future);
-      return client.getTorrents();
+    FutureProvider.autoDispose.family<List<DelugeTorrent>, Instance>((
+  Ref ref,
+  Instance instance,
+) => ref.polled(delugeListPollInterval, () async {
+    final DelugeClient client =
+        await ref.watch(delugeClientProvider(instance).future);
+    return client.getTorrents();
     },
   ),
 );
@@ -217,26 +214,25 @@ List<DelugeTorrent> sortDelugeTorrents(
         DelugeSortField.added => a.timeAdded.compareTo(b.timeAdded),
       };
   out.sort(
-    descending ? (DelugeTorrent a, DelugeTorrent b) => compare(b, a) : compare,
+    descending
+        ? (DelugeTorrent a, DelugeTorrent b) => compare(b, a)
+        : compare,
   );
   return out;
 }
 
-int _queueRank(DelugeTorrent t) => t.queue < 0 ? 1 << 30 : t.queue;
+int _queueRank(DelugeTorrent t) =>
+    t.queue < 0 ? 1 << 30 : t.queue;
 
 /// Session-wide speeds and peer counts. Polls alongside the list.
 final delugeSessionStatusProvider =
-    FutureProvider.autoDispose.family<DelugeSessionStatus, Instance>(
-  (
-    Ref ref,
-    Instance instance,
-  ) =>
-      ref.polled(
-    delugeListPollInterval,
-    () async {
-      final DelugeClient client =
-          await ref.watch(delugeClientProvider(instance).future);
-      return client.getSessionStatus();
+    FutureProvider.autoDispose.family<DelugeSessionStatus, Instance>((
+  Ref ref,
+  Instance instance,
+) => ref.polled(delugeListPollInterval, () async {
+    final DelugeClient client =
+        await ref.watch(delugeClientProvider(instance).future);
+    return client.getSessionStatus();
     },
   ),
 );
@@ -244,17 +240,13 @@ final delugeSessionStatusProvider =
 /// The filter buckets the daemon currently offers. Polls slowly - the counts
 /// move, but the set of buckets rarely does.
 final delugeFilterTreeProvider =
-    FutureProvider.autoDispose.family<DelugeFilterTree, Instance>(
-  (
-    Ref ref,
-    Instance instance,
-  ) =>
-      ref.polled(
-    delugeDetailPollInterval,
-    () async {
-      final DelugeClient client =
-          await ref.watch(delugeClientProvider(instance).future);
-      return client.getFilterTree();
+    FutureProvider.autoDispose.family<DelugeFilterTree, Instance>((
+  Ref ref,
+  Instance instance,
+) => ref.polled(delugeDetailPollInterval, () async {
+    final DelugeClient client =
+        await ref.watch(delugeClientProvider(instance).future);
+    return client.getFilterTree();
     },
   ),
 );
@@ -262,17 +254,13 @@ final delugeFilterTreeProvider =
 /// Whether the whole session is paused. Polls alongside the list so the
 /// pause/resume affordance cannot go stale.
 final delugeSessionPausedProvider =
-    FutureProvider.autoDispose.family<bool, Instance>(
-  (
-    Ref ref,
-    Instance instance,
-  ) =>
-      ref.polled(
-    delugeListPollInterval,
-    () async {
-      final DelugeClient client =
-          await ref.watch(delugeClientProvider(instance).future);
-      return client.isSessionPaused();
+    FutureProvider.autoDispose.family<bool, Instance>((
+  Ref ref,
+  Instance instance,
+) => ref.polled(delugeListPollInterval, () async {
+    final DelugeClient client =
+        await ref.watch(delugeClientProvider(instance).future);
+    return client.isSessionPaused();
     },
   ),
 );
@@ -304,18 +292,14 @@ final delugeFreeSpaceProvider =
 typedef DelugeTorrentRef = (Instance instance, String torrentId);
 
 /// Files, trackers and peers for one torrent. Polls slowly while open.
-final delugeTorrentDetailProvider =
-    FutureProvider.autoDispose.family<DelugeTorrentDetail, DelugeTorrentRef>(
-  (
-    Ref ref,
-    DelugeTorrentRef key,
-  ) =>
-      ref.polled(
-    delugeDetailPollInterval,
-    () async {
-      final DelugeClient client =
-          await ref.watch(delugeClientProvider(key.$1).future);
-      return client.getTorrentDetail(key.$2);
+final delugeTorrentDetailProvider = FutureProvider.autoDispose
+    .family<DelugeTorrentDetail, DelugeTorrentRef>((
+  Ref ref,
+  DelugeTorrentRef key,
+) => ref.polled(delugeDetailPollInterval, () async {
+    final DelugeClient client =
+        await ref.watch(delugeClientProvider(key.$1).future);
+    return client.getTorrentDetail(key.$2);
     },
   ),
 );
