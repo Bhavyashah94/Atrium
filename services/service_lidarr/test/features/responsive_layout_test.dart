@@ -4,12 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_lidarr/service_lidarr.dart';
 import 'package:service_lidarr/src/features/activity/views/queue_view.dart';
+import 'package:service_lidarr/src/features/artists/views/artist_history_view.dart';
 import 'package:service_lidarr/src/features/settings/sections/download_clients_section.dart';
 import 'package:service_lidarr/src/features/settings/sections/indexers_section.dart';
-
-import 'package:service_lidarr/src/features/artists/views/artist_history_view.dart';
-import 'package:service_lidarr/src/features/track_files/track_file_editor_screen.dart';
-import 'package:service_lidarr/src/features/track_files/unmapped_files_screen.dart';
 
 import 'test_helpers.dart';
 
@@ -467,7 +464,7 @@ void main() {
                 statusCode: 200,
                 data: {
                   'records': [
-                    {'id': 1, 'sourceTitle': 'Test'}
+                    {'id': 1, 'sourceTitle': 'Test'},
                   ],
                 },
               ),
@@ -478,7 +475,7 @@ void main() {
               requestOptions: options,
               statusCode: 200,
               data: [
-                {'id': 1, 'path': '/test/file.mp3'}
+                {'id': 1, 'path': '/test/file.mp3'},
               ],
             ),
           );
@@ -511,7 +508,7 @@ void main() {
       'LidarrUnmappedFilesScreen AppBar does not overflow vertically with extremely long dynamic title',
       (WidgetTester tester) async {
         setupErrorFilter();
-        await tester.setViewport(textScale: 2.0, width: 320, height: 800);
+        await tester.setViewport(textScale: 2.0, width: 320);
 
         await tester.pumpWidget(
           ProviderScope(
@@ -537,7 +534,7 @@ void main() {
       'LidarrTrackFileEditorScreen AppBar does not overflow vertically with extremely long dynamic title',
       (WidgetTester tester) async {
         setupErrorFilter();
-        await tester.setViewport(textScale: 2.0, width: 320, height: 800);
+        await tester.setViewport(textScale: 2.0, width: 320);
 
         await tester.pumpWidget(
           ProviderScope(
@@ -564,7 +561,7 @@ void main() {
       'ArtistHistoryView AppBar does not overflow vertically with extremely long dynamic title',
       (WidgetTester tester) async {
         setupErrorFilter();
-        await tester.setViewport(textScale: 2.0, width: 320, height: 800);
+        await tester.setViewport(textScale: 2.0, width: 320);
 
         await tester.pumpWidget(
           ProviderScope(

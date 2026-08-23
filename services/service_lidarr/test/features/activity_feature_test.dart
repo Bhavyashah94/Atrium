@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_lidarr/service_lidarr.dart';
+import 'package:service_lidarr/src/features/activity/views/history_view.dart';
 
 import 'test_helpers.dart';
 
@@ -233,8 +234,21 @@ void main() {
                 .overrideWith((ref) => LidarrApi(dio)),
             lidarrQueueProvider(testInstance)
                 .overrideWith((ref) async => [queueItem]),
-            lidarrHistoryProvider(testInstance)
-                .overrideWith((ref) async => [historyItem]),
+            lidarrHistoryPagedProvider(
+              (
+                testInstance,
+                page: 1,
+                pageSize: 50,
+                eventType: null,
+              ),
+            ).overrideWith(
+              (ref) async => const HistoryResourcePagingResource(
+                page: 1,
+                pageSize: 50,
+                totalRecords: 1,
+                records: [historyItem],
+              ),
+            ),
             lidarrBlocklistProvider(testInstance)
                 .overrideWith((ref) async => [blocklistItem]),
           ],
@@ -363,7 +377,21 @@ void main() {
                 .overrideWith((ref) => LidarrApi(dio)),
             lidarrQueueProvider(testInstance)
                 .overrideWith((ref) async => [queueItem1]),
-            lidarrHistoryProvider(testInstance).overrideWith((ref) async => []),
+            lidarrHistoryPagedProvider(
+              (
+                testInstance,
+                page: 1,
+                pageSize: 50,
+                eventType: null,
+              ),
+            ).overrideWith(
+              (ref) async => const HistoryResourcePagingResource(
+                page: 1,
+                pageSize: 50,
+                totalRecords: 0,
+                records: [],
+              ),
+            ),
             lidarrBlocklistProvider(testInstance)
                 .overrideWith((ref) async => []),
           ],
@@ -425,5 +453,160 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Download Details'), findsNothing);
     });
+
+    testWidgets(
+        'HistoryView supports pagination, infinite scrolling (onLoad), and pull-to-refresh',
+        (tester) async {
+      int historyFetchCount = 0;
+
+      final List<HistoryResource> page1Records = List.generate(
+        50,
+        (i) => HistoryResource(
+          id: i + 1,
+          sourceTitle: 'Release Event Item #${i + 1}',
+          eventType: EntityHistoryEventType.grabbed,
+          date: '2026-08-15T12:00:00Z',
+          artist: const ArtistResource(artistName: 'Test Artist'),
+          album: const AlbumResource(title: 'Test Album'),
+        ),
+      );
+
+      final List<HistoryResource> page2Records = List.generate(
+        25,
+        (i) => HistoryResource(
+          id: i + 51,
+          sourceTitle: 'Release Event Item #${i + 51}',
+          eventType: EntityHistoryEventType.downloadImported,
+          date: '2026-08-14T12:00:00Z',
+          artist: const ArtistResource(artistName: 'Test Artist'),
+          album: const AlbumResource(title: 'Test Album'),
+        ),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            lidarrHistoryPagedProvider(
+              (
+                testInstance,
+                page: 1,
+                pageSize: 50,
+                eventType: null,
+              ),
+            ).overrideWith(
+              (ref) async {
+                historyFetchCount++;
+                return HistoryResourcePagingResource(
+                  page: 1,
+                  pageSize: 50,
+                  totalRecords: 75,
+                  records: page1Records,
+                );
+              },
+            ),
+            lidarrHistoryPagedProvider(
+              (
+                testInstance,
+                page: 2,
+                pageSize: 50,
+                eventType: null,
+              ),
+            ).overrideWith(
+              (ref) async {
+                historyFetchCount++;
+                return HistoryResourcePagingResource(
+                  page: 2,
+                  pageSize: 50,
+                  totalRecords: 75,
+                  records: page2Records,
+                );
+              },
+            ),
+            lidarrActivityGroupedProvider(testInstance).overrideWith(
+              () => _TestActivityGroupedNotifier(testInstance, false),
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: HistoryView(
+                instance: testInstance,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Trigger post-frame callback and allow async load
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump();
+
+      // 1. Verify Page 1 items are displayed
+      expect(historyFetchCount, equals(1));
+      expect(
+        tester.state<HistoryViewState>(find.byType(HistoryView)).currentPage,
+        equals(1),
+      );
+      expect(
+        tester.state<HistoryViewState>(find.byType(HistoryView)).totalLoaded,
+        equals(50),
+      );
+      expect(
+        tester.state<HistoryViewState>(find.byType(HistoryView)).hasMore,
+        isTrue,
+      );
+      expect(find.text('Release Event Item #1'), findsOneWidget);
+
+      // 2. Trigger infinite scroll / load more
+      await tester.state<HistoryViewState>(find.byType(HistoryView)).loadMore();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump();
+
+      // Verify Page 2 was requested and items are appended
+      expect(historyFetchCount, equals(2));
+      expect(
+        tester.state<HistoryViewState>(find.byType(HistoryView)).currentPage,
+        equals(2),
+      );
+      expect(
+        tester.state<HistoryViewState>(find.byType(HistoryView)).totalLoaded,
+        equals(75),
+      );
+      expect(
+        tester.state<HistoryViewState>(find.byType(HistoryView)).hasMore,
+        isFalse,
+      );
+
+      // 3. Trigger Pull-to-Refresh
+      await tester
+          .state<HistoryViewState>(find.byType(HistoryView))
+          .loadInitial();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump();
+
+      expect(historyFetchCount, equals(3));
+      expect(
+        tester.state<HistoryViewState>(find.byType(HistoryView)).currentPage,
+        equals(1),
+      );
+      expect(
+        tester.state<HistoryViewState>(find.byType(HistoryView)).totalLoaded,
+        equals(50),
+      );
+      expect(
+        tester.state<HistoryViewState>(find.byType(HistoryView)).hasMore,
+        isTrue,
+      );
+    });
   });
+}
+
+class _TestActivityGroupedNotifier extends LidarrActivityGroupedNotifier {
+  _TestActivityGroupedNotifier(super.instance, this._initial);
+  final bool _initial;
+
+  @override
+  bool build() => _initial;
 }
