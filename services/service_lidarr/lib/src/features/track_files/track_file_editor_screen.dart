@@ -200,6 +200,7 @@ class _LidarrTrackFileEditorScreenState
                     ),
                     const SizedBox(height: Insets.md),
                     DropdownButtonFormField<QualityModel>(
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Target Quality',
                         border: OutlineInputBorder(),
@@ -478,6 +479,8 @@ class _LidarrTrackFileEditorScreenState
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             asyncFiles.maybeWhen(
               data: (files) {
@@ -682,26 +685,25 @@ class _LidarrTrackFileEditorScreenState
                       ),
                       const Spacer(),
                       if (_selectedIds.isNotEmpty) ...[
-                        TextButton.icon(
+                        IconButton(
                           icon: const Icon(
                             Icons.edit_outlined,
-                            size: 16,
+                            size: 20,
                           ),
-                          label: const Text('Edit Quality'),
+                          tooltip: 'Edit Quality',
                           onPressed: _isProcessing
                               ? null
                               : () => _bulkEditQuality(files),
                         ),
-                        const SizedBox(width: 4),
-                        TextButton.icon(
-                          style: TextButton.styleFrom(
+                        IconButton(
+                          style: IconButton.styleFrom(
                             foregroundColor: cs.error,
                           ),
                           icon: const Icon(
                             Icons.delete_outline,
-                            size: 16,
+                            size: 20,
                           ),
-                          label: const Text('Delete'),
+                          tooltip: 'Delete Selected',
                           onPressed: _isProcessing ? null : _bulkDeleteFiles,
                         ),
                       ],
