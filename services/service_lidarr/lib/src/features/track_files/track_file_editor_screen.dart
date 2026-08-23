@@ -591,30 +591,37 @@ class _LidarrTrackFileEditorScreenState
                         ),
                       ),
                       const SizedBox(width: 8),
-                      TextButton.icon(
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 8,
+                      // The label doubles at large text scales, so the
+                      // button has to be able to give ground rather than
+                      // push the row past its width.
+                      Flexible(
+                        child: TextButton.icon(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
                           ),
+                          icon: Icon(
+                            allSelected
+                                ? Icons.deselect_outlined
+                                : Icons.select_all_outlined,
+                            size: 18,
+                          ),
+                          label: Text(
+                            allSelected ? 'Deselect' : 'Select All',
+                            style: const TextStyle(fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onPressed: () {
+                            if (allSelected) {
+                              _deselectAll();
+                            } else {
+                              _selectAll(filteredFiles);
+                            }
+                          },
                         ),
-                        icon: Icon(
-                          allSelected
-                              ? Icons.deselect_outlined
-                              : Icons.select_all_outlined,
-                          size: 18,
-                        ),
-                        label: Text(
-                          allSelected ? 'Deselect' : 'Select All',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        onPressed: () {
-                          if (allSelected) {
-                            _deselectAll();
-                          } else {
-                            _selectAll(filteredFiles);
-                          }
-                        },
                       ),
                     ],
                   ),
@@ -676,11 +683,17 @@ class _LidarrTrackFileEditorScreenState
                           }
                         },
                       ),
-                      Text(
-                        '${_selectedIds.length} / ${files.length} selected',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
+                      // Ahead of a Spacer, which cannot shrink below zero, so an
+                      // unbounded count pushes the buttons after it off the edge.
+                      Flexible(
+                        child: Text(
+                          '${_selectedIds.length} / ${files.length} selected',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const Spacer(),

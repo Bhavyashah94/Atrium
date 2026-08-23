@@ -40,8 +40,6 @@ class LidarrOpenApiParser {
   final Set<String> _writtenFilePaths = {};
   final List<String> _warnings = [];
 
-  final Map<String, String> _enumUnknownMap = {};
-
   int _modelsWritten = 0;
   int _modelsSkippedUnchanged = 0;
   int _apisWritten = 0;
@@ -59,27 +57,6 @@ class LidarrOpenApiParser {
 
     for (final fullKey in schemas.keys) {
       schemaClassNames[fullKey] = _resolveClassName(fullKey, rawSchemas);
-    }
-
-    for (final entry in schemas.entries) {
-      final s = entry.value is Map
-          ? (entry.value as Map).cast<String, dynamic>()
-          : <String, dynamic>{};
-      if (s.containsKey('enum')) {
-        final enumList = (s['enum'] as List<dynamic>?) ?? [];
-        final hasUnknown =
-            enumList.any((e) => e.toString().toLowerCase() == 'unknown');
-        if (hasUnknown) {
-          final unknownItem = enumList
-              .firstWhere((e) => e.toString().toLowerCase() == 'unknown');
-          final unknownId = unknownItem is int
-              ? 'val$unknownItem'
-              : _toCamelCase(unknownItem.toString());
-          final clsName = schemaClassNames[entry.key] ??
-              _resolveClassName(entry.key, rawSchemas);
-          _enumUnknownMap[clsName] = unknownId;
-        }
-      }
     }
   }
 
@@ -773,6 +750,7 @@ Object? normalizeLidarrEnum(
     buffer.writeln();
     buffer.writeln("part '$fileName.g.dart';");
     buffer.writeln();
+    buffer.writeln('/// Enum `$className`');
     buffer.writeln('@JsonEnum(alwaysCreate: true)');
     buffer.writeln('enum $className {');
 
@@ -800,34 +778,11 @@ Object? normalizeLidarrEnum(
         buffer.writeln("  $identifier('$escaped'),");
       }
     }
-    if (className == 'DownloadProtocol') {
-      if (!usedIdentifiers.contains('torrentDownloadProtocol')) {
-        buffer.writeln("  @JsonValue('TorrentDownloadProtocol')");
-        buffer.writeln("  torrentDownloadProtocol('TorrentDownloadProtocol'),");
-      }
-      if (!usedIdentifiers.contains('usenetDownloadProtocol')) {
-        buffer.writeln("  @JsonValue('UsenetDownloadProtocol')");
-        buffer.writeln("  usenetDownloadProtocol('UsenetDownloadProtocol'),");
-      }
-    }
     buffer.writeln(';');
     buffer.writeln();
     final valType = isIntEnum ? 'int' : 'String';
     buffer.writeln('  final $valType value;');
     buffer.writeln('  const $className(this.value);');
-    if (className == 'DownloadProtocol') {
-      buffer.writeln();
-      buffer.writeln(
-          '  bool get isTorrent => value.toLowerCase().contains("torrent");');
-      buffer.writeln(
-          '  bool get isUsenet => value.toLowerCase().contains("usenet");');
-      buffer.writeln();
-      buffer.writeln('  String get displayName {');
-      buffer.writeln('    if (isTorrent) return "Torrent";');
-      buffer.writeln('    if (isUsenet) return "Usenet";');
-      buffer.writeln('    return value;');
-      buffer.writeln('  }');
-    }
     buffer.writeln('}');
     return buffer.toString();
   }

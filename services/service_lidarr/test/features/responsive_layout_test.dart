@@ -483,31 +483,9 @@ void main() {
       ),
     );
 
-    void setupErrorFilter() {
-      final void Function(FlutterErrorDetails)? originalOnError = FlutterError.onError;
-      addTearDown(() {
-        FlutterError.onError = originalOnError;
-      });
-
-      FlutterError.onError = (FlutterErrorDetails details) {
-        final String fullDetails = details.toString();
-
-        final bool isKnownHorizontalBug = fullDetails.contains('RenderFlex overflowed') &&
-            fullDetails.contains('Axis.horizontal') &&
-            fullDetails.contains('track_file_editor_screen.dart');
-
-        if (isKnownHorizontalBug) {
-          return;
-        }
-
-        originalOnError?.call(details);
-      };
-    }
-
     testWidgets(
-      'LidarrUnmappedFilesScreen AppBar does not overflow vertically with extremely long dynamic title',
+      'LidarrUnmappedFilesScreen lays out without overflow at 2x text scale on a narrow screen',
       (WidgetTester tester) async {
-        setupErrorFilter();
         await tester.setViewport(textScale: 2.0, width: 320);
 
         await tester.pumpWidget(
@@ -531,9 +509,8 @@ void main() {
     );
 
     testWidgets(
-      'LidarrTrackFileEditorScreen AppBar does not overflow vertically with extremely long dynamic title',
+      'LidarrTrackFileEditorScreen lays out without overflow at 2x text scale on a narrow screen',
       (WidgetTester tester) async {
-        setupErrorFilter();
         await tester.setViewport(textScale: 2.0, width: 320);
 
         await tester.pumpWidget(
@@ -558,9 +535,8 @@ void main() {
     );
 
     testWidgets(
-      'ArtistHistoryView AppBar does not overflow vertically with extremely long dynamic title',
+      'ArtistHistoryView lays out without overflow at 2x text scale on a narrow screen',
       (WidgetTester tester) async {
-        setupErrorFilter();
         await tester.setViewport(textScale: 2.0, width: 320);
 
         await tester.pumpWidget(
