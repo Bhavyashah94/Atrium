@@ -240,6 +240,11 @@ class _LidarrInteractiveSearchScreenState
       final LidarrApi api =
           await ref.read(lidarrApiProvider(widget.instance).future);
       final ReleaseResource payload = release.copyWith(
+        // A search result carries no id of its own, and Lidarr deserialises
+        // this as a non-nullable int before it validates anything, so a null
+        // fails the request outright. That is true of every branch, not just
+        // nightly. LidarrApi strips nulls as well, but this path is explicit
+        // about it because it is the one that always relies on it.
         id: release.id ?? 0,
         albumId: release.albumId ?? widget.albumId,
         artistId: release.artistId ?? widget.artistId,
