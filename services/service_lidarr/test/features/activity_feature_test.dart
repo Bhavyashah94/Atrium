@@ -122,6 +122,8 @@ void main() {
       expect(postGrabCalled, isTrue);
       expect(grabbedPayload?['guid'], equals('release-guid-1'));
       expect(grabbedPayload?['indexerId'], equals(1));
+      expect(grabbedPayload?['id'], equals(0));
+      expect(grabbedPayload?['id'], isA<int>());
 
       // Grab rejected release -> should show confirmation dialog
       postGrabCalled = false;
@@ -138,6 +140,8 @@ void main() {
       expect(postGrabCalled, isTrue);
       expect(grabbedPayload?['guid'], equals('release-guid-2'));
       expect(grabbedPayload?['indexerId'], equals(2));
+      expect(grabbedPayload?['id'], equals(0));
+      expect(grabbedPayload?['id'], isA<int>());
     });
 
     testWidgets(

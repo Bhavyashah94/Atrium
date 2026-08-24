@@ -240,6 +240,8 @@ class _LidarrInteractiveSearchScreenState
       final LidarrApi api =
           await ref.read(lidarrApiProvider(widget.instance).future);
       final ReleaseResource payload = release.copyWith(
+        // Search results have no database id, but Lidarr nightly still
+        // deserialises this field as Int32 before it validates the release.
         id: release.id ?? 0,
         albumId: release.albumId ?? widget.albumId,
         artistId: release.artistId ?? widget.artistId,
