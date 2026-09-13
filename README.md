@@ -37,7 +37,8 @@ external URLs.
   profile and wake them from Settings; magic packets are sent with pure
   Dart UDP.
 - **Reverse-proxy friendly.** Global and per-instance custom HTTP
-  headers (Authelia / Cloudflare Access style) ride every request.
+  headers (Authelia / Cloudflare Access style) ride every request. See
+  [Behind a reverse proxy](docs/REVERSE_PROXY.md).
 - **Hardware-backed credentials.** API keys live in the Android Keystore
   via `flutter_secure_storage`. Optional biometric unlock on launch.
   Profiles export/import as JSON (including WOL devices and headers).
