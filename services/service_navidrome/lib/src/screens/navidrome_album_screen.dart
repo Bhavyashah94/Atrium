@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../navidrome_api.dart';
 import '../navidrome_providers.dart';
+import '../widgets/navidrome_playlist_dialogs.dart';
 import '../widgets/navidrome_rating_bar.dart';
 import 'navidrome_artist_screen.dart';
 
@@ -253,7 +254,31 @@ class NavidromeAlbumScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: Insets.md),
+                    const SizedBox(height: Insets.sm),
+                    ListTile(
+                      dense: true,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      tileColor:
+                          cs.surfaceContainerHighest.withValues(alpha: 0.45),
+                      leading: const Icon(Icons.playlist_add_rounded),
+                      title: const Text(
+                        'Add to Playlist',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        showNavidromePlaylistPicker(
+                          context: context,
+                          ref: ref,
+                          instance: instance,
+                          song: song,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: Insets.sm),
                     const Divider(),
                 _DetailTile(
                   label: 'Duration',
@@ -398,11 +423,16 @@ class NavidromeAlbumScreen extends ConsumerWidget {
               client?.getCoverArtUrl(album.coverArt, size: 1000);
           final double bannerHeight = MediaQuery.sizeOf(context).height * 0.48;
 
-          return CustomScrollView(
-            slivers: <Widget>[
-              // Top Section: Half-page album cover banner with bottom fade
-              SliverToBoxAdapter(
-                child: SizedBox(
+          return RefreshIndicator(
+            onRefresh: () async {
+              await hardRefreshNavidrome(ref, instance);
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: <Widget>[
+                // Top Section: Half-page album cover banner with bottom fade
+                SliverToBoxAdapter(
+                  child: SizedBox(
                   height: bannerHeight,
                   child: Stack(
                     children: <Widget>[
@@ -772,8 +802,9 @@ class NavidromeAlbumScreen extends ConsumerWidget {
                   ),
                 ),
             ],
-          );
-        },
+          ),
+        );
+      },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object err, _) => Center(
           child: Column(

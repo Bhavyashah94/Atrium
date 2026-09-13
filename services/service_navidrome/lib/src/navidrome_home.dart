@@ -12,6 +12,8 @@ import 'screens/navidrome_album_screen.dart';
 import 'screens/navidrome_playlist_screen.dart';
 import 'screens/navidrome_search_screen.dart';
 import 'widgets/navidrome_artists_tab.dart';
+import 'widgets/navidrome_overview_tab.dart';
+import 'widgets/navidrome_playlist_dialogs.dart';
 
 String _formatDuration(int seconds) {
   if (seconds <= 0) return '0:00';
@@ -123,6 +125,7 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
       _buildAlbumsTab(theme, cs, client),
       NavidromeArtistsTab(instance: widget.instance),
       _buildPlaylistsTab(theme, cs, client),
+      NavidromeOverviewTab(instance: widget.instance),
     ];
 
     return Scaffold(
@@ -295,11 +298,27 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
                   selectedIcon: Icon(Icons.queue_music),
                   label: 'Playlists',
                 ),
+                NavigationDestination(
+                  icon: Icon(Icons.insights_outlined),
+                  selectedIcon: Icon(Icons.insights_rounded),
+                  label: 'Overview',
+                ),
               ],
             ),
           ),
         ),
       ),
+      floatingActionButton: currentIndex == 2
+          ? FloatingActionButton(
+              tooltip: 'Create Playlist',
+              onPressed: () => showNavidromeCreatePlaylistDialog(
+                context: context,
+                ref: ref,
+                instance: widget.instance,
+              ),
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 
@@ -346,11 +365,7 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
         Expanded(
           child: EasyRefresh(
             onRefresh: () async {
-              ref.invalidate(
-                navidromeAlbumsProvider(
-                  (widget.instance, _selectedAlbumCategory),
-                ),
-              );
+              await hardRefreshNavidrome(ref, widget.instance);
             },
             child: albumsAsync.when(
               data: (List<NavidromeAlbum> albums) {
@@ -458,12 +473,47 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
 
     return EasyRefresh(
       onRefresh: () async {
-        ref.invalidate(navidromePlaylistsProvider(widget.instance));
+        await hardRefreshNavidrome(ref, widget.instance);
       },
       child: playlistsAsync.when(
         data: (List<NavidromePlaylist> playlists) {
           if (playlists.isEmpty) {
-            return const Center(child: Text('No playlists found'));
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(
+                    Icons.queue_music_rounded,
+                    size: 64,
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.4),
+                  ),
+                  const SizedBox(height: Insets.md),
+                  Text(
+                    'No playlists found',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: Insets.sm),
+                  Text(
+                    'Create custom playlists to organize your music',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const SizedBox(height: Insets.lg),
+                  FilledButton.icon(
+                    onPressed: () => showNavidromeCreatePlaylistDialog(
+                      context: context,
+                      ref: ref,
+                      instance: widget.instance,
+                    ),
+                    icon: const Icon(Icons.add),
+                    label: const Text('New Playlist'),
+                  ),
+                ],
+              ),
+            );
           }
 
           return ListView.separated(

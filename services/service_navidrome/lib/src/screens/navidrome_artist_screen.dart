@@ -140,8 +140,13 @@ class NavidromeArtistScreen extends ConsumerWidget {
 
           final double bannerHeight = MediaQuery.sizeOf(context).height * 0.48;
 
-          return CustomScrollView(
-            slivers: <Widget>[
+          return RefreshIndicator(
+            onRefresh: () async {
+              await hardRefreshNavidrome(ref, instance);
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: <Widget>[
               // Top Section: Half-page artist banner with bottom fade
               SliverToBoxAdapter(
                 child: SizedBox(
@@ -396,8 +401,9 @@ class NavidromeArtistScreen extends ConsumerWidget {
                   ),
                 ),
             ],
-          );
-        },
+          ),
+        );
+      },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object err, _) => Center(
           child: Column(

@@ -42,7 +42,7 @@ class _NavidromeArtistsTabState extends ConsumerState<NavidromeArtistsTab> {
 
     return EasyRefresh(
       onRefresh: () async {
-        ref.invalidate(navidromeArtistsProvider(widget.instance));
+        await hardRefreshNavidrome(ref, widget.instance);
       },
       child: artistsAsync.when(
         data: (List<NavidromeArtistIndex> indexes) {

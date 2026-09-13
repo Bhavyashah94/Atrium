@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../navidrome_api.dart';
 import '../navidrome_providers.dart';
+import '../widgets/navidrome_playlist_dialogs.dart';
 import 'navidrome_album_screen.dart';
 import 'navidrome_artist_screen.dart';
 
@@ -417,11 +418,28 @@ class NavidromeSearchResults extends ConsumerWidget {
                       color: cs.onSurfaceVariant,
                     ),
                   ),
-                  trailing: Text(
-                    _formatDuration(song.duration),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurfaceVariant,
-                    ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        _formatDuration(song.duration),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.playlist_add_rounded, size: 20),
+                        tooltip: 'Add to Playlist',
+                        onPressed: () {
+                          showNavidromePlaylistPicker(
+                            context: context,
+                            ref: ref,
+                            instance: instance,
+                            song: song,
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   onTap: song.albumId != null
                       ? () {
