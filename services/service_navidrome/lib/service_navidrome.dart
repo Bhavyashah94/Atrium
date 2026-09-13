@@ -9,3 +9,4 @@ export 'src/screens/navidrome_album_screen.dart';
 export 'src/screens/navidrome_artist_screen.dart';
 export 'src/screens/navidrome_playlist_screen.dart';
 export 'src/screens/navidrome_search_screen.dart';
+export 'src/subsonic_error_interceptor.dart';

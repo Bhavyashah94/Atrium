@@ -75,9 +75,6 @@ desktop.ini
 google-services.json
 GoogleService-Info.plist
 
-# Tests
-services/service_navidrome/test/
-
 # Coverage
 coverage/
 test/.test_coverage.dart

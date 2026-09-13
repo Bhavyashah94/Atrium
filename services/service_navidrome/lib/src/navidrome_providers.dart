@@ -1,11 +1,13 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_networking/core_networking.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import 'navidrome_api.dart';
+import 'subsonic_error_interceptor.dart';
 
 /// Epoch timestamp used to bust image caches upon hard refresh.
 final navidromeImageEpochProvider =
@@ -15,8 +17,18 @@ final navidromeClientProvider =
     FutureProvider.family<NavidromeClient, Instance>(
         (Ref ref, Instance instance) async {
   final int epoch = ref.watch(navidromeImageEpochProvider(instance));
-  final DioFactory factory = ref.watch(dioFactoryProvider);
-  final dio = await factory.create(instance);
+  // instanceDioProvider rather than building one straight off the factory,
+  // because it closes the client on dispose. This provider watches the image
+  // epoch above, so it rebuilds on every hard refresh; a Dio created here
+  // would be abandoned, connection pool and all, each time the user pulled
+  // to refresh.
+  final Dio dio = await ref.watch(instanceDioProvider(instance).future);
+  // Subsonic reports its errors inside a 200, so without this a rejected
+  // password arrives as an ordinary empty response and every screen renders
+  // its "nothing here" state instead of an error.
+  if (!dio.interceptors.any((Interceptor i) => i is SubsonicErrorInterceptor)) {
+    dio.interceptors.add(const SubsonicErrorInterceptor());
+  }
   return NavidromeClient(instance: instance, dio: dio, cacheBuster: epoch);
 });
 

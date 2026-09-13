@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:core_models/core_models.dart';
+import 'package:core_networking/core_networking.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 
@@ -69,8 +70,11 @@ class NavidromeClient {
   final Dio dio;
   final int cacheBuster;
 
-  static const String clientName = 'Atrium';
-  static const String apiVersion = '1.16.1';
+  // Shared with AuthInterceptor, which signs the health probe and the
+  // connection test for this kind. Keeping one definition means the probe and
+  // the service module cannot start claiming different protocol versions.
+  static const String clientName = subsonicClientName;
+  static const String apiVersion = subsonicApiVersion;
 
   Map<String, dynamic> _buildAuthParams([Map<String, dynamic>? extra]) {
     final Map<String, dynamic> params = <String, dynamic>{
@@ -97,10 +101,13 @@ class NavidromeClient {
     return params;
   }
 
-  static String _randomSalt([int length = 8]) {
+  /// [Random.secure] rather than [Random]: the salt travels in the clear next
+  /// to the hash it salts, so a predictable one lets anyone who captures a
+  /// single request precompute against it.
+  static String _randomSalt([int length = 16]) {
     const String chars =
         'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    final Random rnd = Random();
+    final Random rnd = Random.secure();
     return List<String>.generate(
       length,
       (_) => chars[rnd.nextInt(chars.length)],
