@@ -251,4 +251,46 @@ void main() {
     expect(find.text('Andrew Hulshult'), findsOneWidget);
     expect(find.text('Emby'), findsOneWidget);
   });
+
+  testWidgets('renders Jellyfin music session with poster in Activity tab',
+      (WidgetTester tester) async {
+    // The music artwork resolution in jellyfin_client.dart is a line-for-line
+    // copy of the one in emby_client.dart, so the Emby test above protects
+    // none of it. Until the two share an implementation, both need covering.
+    final Instance jellyfinInst = _instance(ServiceKind.jellyfin);
+    await _pump(
+      tester,
+      <Override>[
+        activeInstancesProvider
+            .overrideWith((Ref ref) => <Instance>[jellyfinInst]),
+        jf.jellyfinFastSessionsProvider(jellyfinInst).overrideWith(
+              (Ref ref) => Stream<List<jf.ActiveSession>>.value(
+                const <jf.ActiveSession>[
+                  jf.ActiveSession(
+                    id: 's_jf_1',
+                    user: 'bob',
+                    device: 'Chrome',
+                    status: 'Playing',
+                    showTitle: 'Collection',
+                    episodeName: 'Gemini Drive',
+                    progressPercent: 40,
+                    timePosition: '01:15',
+                    timeDuration: '03:11',
+                    positionTicks: 0,
+                    durationTicks: 0,
+                    volumeLevel: 100,
+                    isMuted: false,
+                    posterUrl: 'http://example.com/album.jpg',
+                    aspectRatio: 1.0,
+                  ),
+                ],
+              ),
+            ),
+      ],
+    );
+    expect(find.text('Now Streaming'), findsOneWidget);
+    expect(find.text('Collection'), findsOneWidget);
+    expect(find.text('Gemini Drive'), findsOneWidget);
+    expect(find.text('Jellyfin'), findsOneWidget);
+  });
 }
