@@ -26,6 +26,7 @@ enum ServiceKind {
   dashdot,
   lidarr,
   unraid,
+  gluetun,
 }
 
 /// Static metadata about a [ServiceKind] - display name, default port, the
@@ -57,6 +58,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.dashdot => 'Dashdot',
         ServiceKind.lidarr => 'Lidarr',
         ServiceKind.unraid => 'Unraid',
+        ServiceKind.gluetun => 'Gluetun',
       };
 
   /// One-line role description.
@@ -83,6 +85,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.dashdot => 'System monitor',
         ServiceKind.lidarr => 'Music',
         ServiceKind.unraid => 'Server',
+        ServiceKind.gluetun => 'VPN client',
       };
 
   /// Whether this service's integration is still in beta. Surfaced as a
@@ -127,6 +130,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.lidarr => 8686,
         // Unraid's web UI answers on plain http 80 unless it has been moved.
         ServiceKind.unraid => 80,
+        ServiceKind.gluetun => 8000,
       };
 
   /// What auth flow the service uses by default. Some services (Jellyfin) can
@@ -141,7 +145,8 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.sabnzbd ||
         ServiceKind.tracearr ||
         ServiceKind.lidarr ||
-        ServiceKind.unraid =>
+        ServiceKind.unraid ||
+        ServiceKind.gluetun =>
           AuthStyle.apiKey,
         // Transmission and rTorrent both use HTTP Basic, and for both it is
         // *optional* - rTorrent's XML-RPC has no auth of its own and is only
@@ -190,6 +195,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.beszel => ServiceRole.analytics,
         ServiceKind.dashdot => ServiceRole.analytics,
         ServiceKind.unraid => ServiceRole.analytics,
+        ServiceKind.gluetun => ServiceRole.analytics,
       };
 
   /// Whether this service can be handed a torrent - a magnet URI, a link to a
