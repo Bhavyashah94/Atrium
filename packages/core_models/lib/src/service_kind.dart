@@ -96,7 +96,8 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.deluge ||
         ServiceKind.rtorrent ||
         ServiceKind.lidarr ||
-        ServiceKind.unraid =>
+        ServiceKind.unraid ||
+        ServiceKind.gluetun =>
           true,
         _ => false,
       };
