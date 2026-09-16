@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('proxy interception', _interceptionTests);
+  group('Navidrome Subsonic health', _navidromeTests);
   group('Unraid GraphQL health', () {
     test('a query that actually ran is online', () {
       expect(
@@ -184,6 +185,93 @@ void _interceptionTests() {
     expect(
       interpretServiceHealthResponse(ServiceKind.sonarr, 200, <String, dynamic>{}),
       Health.ok,
+    );
+  });
+}
+
+/// Subsonic reports every error inside a 200, so the envelope is the only
+/// thing that separates a working server from a rejected password.
+///
+/// The bodies below are real responses from Navidrome 0.64.0, captured while
+/// reviewing the service: the app used to call all three of them Online.
+void _navidromeTests() {
+  Map<String, dynamic> envelope(Map<String, dynamic> extra) =>
+      <String, dynamic>{
+        'subsonic-response': <String, dynamic>{
+          'version': '1.16.1',
+          'type': 'navidrome',
+          'serverVersion': '0.64.0',
+          'openSubsonic': true,
+          ...extra,
+        },
+      };
+
+  test('a signed request that succeeded is online', () {
+    expect(
+      interpretServiceHealthResponse(
+        ServiceKind.navidrome,
+        200,
+        envelope(<String, dynamic>{'status': 'ok'}),
+      ),
+      Health.ok,
+    );
+  });
+
+  test('a rejected password is a warning, not online', () {
+    expect(
+      interpretServiceHealthResponse(
+        ServiceKind.navidrome,
+        200,
+        envelope(<String, dynamic>{
+          'status': 'failed',
+          'error': <String, dynamic>{
+            'code': 40,
+            'message': 'Wrong username or password',
+          },
+        }),
+      ),
+      Health.warning,
+    );
+  });
+
+  test('an unauthenticated probe is a warning, not online', () {
+    // What the probe itself used to send before the interceptor learned to
+    // sign Subsonic requests.
+    expect(
+      interpretServiceHealthResponse(
+        ServiceKind.navidrome,
+        200,
+        envelope(<String, dynamic>{
+          'status': 'failed',
+          'error': <String, dynamic>{
+            'code': 10,
+            'message': "missing parameter: 'u'",
+          },
+        }),
+      ),
+      Health.warning,
+    );
+  });
+
+  test('some other server answering json on that url is a warning', () {
+    for (final Object? body in <Object?>[
+      <String, dynamic>{'hello': 'world'},
+      <String, dynamic>{'subsonic-response': 'not an object'},
+      'plain text',
+      null,
+    ]) {
+      expect(
+        interpretServiceHealthResponse(ServiceKind.navidrome, 200, body),
+        Health.warning,
+        reason: 'body $body should not read as a healthy Navidrome',
+      );
+    }
+  });
+
+  test('an unreachable host is still offline', () {
+    expect(
+      interpretServiceHealthResponse(ServiceKind.navidrome, 0, null),
+      Health.error,
     );
   });
 }

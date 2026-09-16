@@ -28,6 +28,7 @@ import 'package:service_tracearr/service_tracearr.dart';
 import 'package:service_lidarr/service_lidarr.dart';
 import 'package:service_unraid/service_unraid.dart';
 import 'package:service_gluetun/service_gluetun.dart';
+import 'package:service_navidrome/service_navidrome.dart';
 
 import 'dashboard_screen.dart';
 
@@ -112,6 +113,15 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
         ),
       );
     }
+    if (instance.kind == ServiceKind.navidrome) {
+      return NavidromeHome(
+        instance: instance,
+        drawer: ServicesDrawer(
+          instances: ref.watch(activeInstancesProvider),
+          profile: ref.watch(activeProfileProvider),
+        ),
+      );
+    }
     return PopScope<Object?>(
         canPop: false,
         onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -169,7 +179,8 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
               if (instance.kind == ServiceKind.emby ||
                   instance.kind == ServiceKind.jellyfin ||
                   instance.kind == ServiceKind.plex ||
-                  instance.kind == ServiceKind.seerr)
+                  instance.kind == ServiceKind.seerr ||
+                  instance.kind == ServiceKind.navidrome)
                 IconButton(
                   tooltip: 'Search',
                   icon: const Icon(Icons.search),
@@ -187,7 +198,58 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                           PlexSearchDelegate(instance: instance),
                         ServiceKind.seerr =>
                           SeerrSearchDelegate(instance: instance),
+                        ServiceKind.navidrome =>
+                          NavidromeSearchDelegate(instance: instance),
                         _ => JellyfinSearchDelegate(instance: instance),
+                      },
+                    );
+                  },
+                ),
+              if (instance.kind == ServiceKind.navidrome)
+                Consumer(
+                  builder:
+                      (BuildContext context, WidgetRef ref, Widget? child) {
+                    final AsyncValue<NavidromeScanStatus> scanAsync =
+                        ref.watch(navidromeScanStatusProvider(instance));
+                    return IconButton(
+                      tooltip: 'Quick scan library',
+                      icon: scanAsync.maybeWhen(
+                        data: (NavidromeScanStatus scan) => scan.scanning
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.sync_rounded),
+                        orElse: () => const Icon(Icons.sync_rounded),
+                      ),
+                      onPressed: () async {
+                        try {
+                          final NavidromeClient client = await ref
+                              .read(navidromeClientProvider(instance).future);
+                          await client.startScan();
+                          ref.invalidate(
+                            navidromeScanStatusProvider(instance),
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Quick scan started (checking for new items)',
+                                ),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to start scan: $e'),
+                              ),
+                            );
+                          }
+                        }
                       },
                     );
                   },
@@ -268,6 +330,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       ServiceKind.dashdot => DashdotHome(instance: instance),
       ServiceKind.speedtestTracker => SpeedtestTrackerHome(instance: instance),
       ServiceKind.gluetun => GluetunHome(instance: instance),
+      ServiceKind.navidrome => const SizedBox.shrink(),
     };
   }
 }

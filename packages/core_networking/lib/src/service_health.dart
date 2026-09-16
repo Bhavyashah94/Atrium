@@ -94,6 +94,12 @@ enum _HealthMode {
       // The only API Unraid exposes is GraphQL on one endpoint, so the probe
       // POSTs the cheapest query there is rather than fetching a status page.
       return (path: 'graphql', mode: _HealthMode.authed);
+    case ServiceKind.navidrome:
+      // Subsonic's ping, with the credentials the interceptor attaches as
+      // query parameters. `authed` rather than `reachable` because the
+      // response is only worth anything once the envelope has been read;
+      // see the navidrome arm of [interpretServiceHealthResponse].
+      return (path: 'rest/ping.view', mode: _HealthMode.authed);
   }
 }
 
@@ -217,6 +223,16 @@ Health interpretServiceHealthResponse(
           // proof the query actually ran.
           return Health.warning;
         }
+        if (kind == ServiceKind.navidrome && !_subsonicSaysOk(data)) {
+          // Subsonic never reports an error through the HTTP status. A
+          // healthy server, a rejected password and a malformed request all
+          // answer 200 with JSON; only the `status` inside the envelope
+          // tells them apart. Verified against Navidrome 0.64: a wrong
+          // password is 200 with status failed and error code 40, and an
+          // unauthenticated request is 200 with code 10. Without this the
+          // dot stayed green for both.
+          return Health.warning;
+        }
         if (kind == ServiceKind.rtorrent &&
             !'$data'.contains('methodResponse')) {
           // A 200 from the web UI or a proxy landing page is not the XML-RPC
@@ -238,3 +254,17 @@ Health interpretServiceHealthResponse(
 
 bool _isSpeedtestResultsEnvelope(Object? data) =>
     data is Map && data['data'] is List;
+
+/// Whether a Subsonic reply actually succeeded.
+///
+/// Every response is wrapped in a `subsonic-response` object carrying a
+/// `status` of `ok` or `failed`. Anything that is not a recognisable envelope
+/// saying `ok` is treated as a failure, which also covers the case of some
+/// other server answering on that URL.
+bool _subsonicSaysOk(Object? data) {
+  if (data is! Map) {
+    return false;
+  }
+  final Object? envelope = data['subsonic-response'];
+  return envelope is Map && envelope['status'] == 'ok';
+}

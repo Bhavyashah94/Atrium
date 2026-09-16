@@ -49,4 +49,4 @@ workspace:
   - services/service_unraid
   - services/service_ombi
   - services/service_gluetun
-
+  - services/service_navidrome

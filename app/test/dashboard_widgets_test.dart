@@ -376,7 +376,7 @@ void main() {
     // The gauges fill via a TweenAnimationBuilder, so let it run out before
     // reading the settled percentage.
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Server info'), findsOneWidget);
+    expect(find.text('Glances'), findsOneWidget);
     expect(find.text('CPU'), findsOneWidget);
     expect(find.text('Memory'), findsOneWidget);
     expect(find.text('GPU'), findsOneWidget);
@@ -420,7 +420,7 @@ void main() {
     // No sonarr/radarr, seerr or glances configured:
     expect(find.text('Upcoming releases'), findsNothing);
     expect(find.text('Requests'), findsNothing);
-    expect(find.text('Server info'), findsNothing);
+    expect(find.text('Glances'), findsNothing);
   });
 
   testWidgets('DashboardBoard activity-gates downloads and streams',
@@ -467,6 +467,11 @@ void main() {
 
   testWidgets('DashboardBoard edit mode reorders and hides widgets',
       (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final Instance qbit = makeInstance(ServiceKind.qbittorrent);
     await pumpBody(
       tester,
@@ -476,7 +481,7 @@ void main() {
       ],
       const DashboardBoard(),
     );
-    // All eight widgets are arrangeable in edit mode, configured or not.
+    // All widgets are arrangeable in edit mode, configured or not.
     // Counted from the enum so adding a widget does not break this.
     expect(
       find.byIcon(Icons.drag_indicator),
@@ -526,6 +531,11 @@ void main() {
 
   testWidgets('a widget nothing can fill cannot be shown',
       (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await pumpBody(
       tester,
       <Override>[
@@ -538,7 +548,7 @@ void main() {
     // Hide it so it lands in the Hidden section, where the show button lives.
     await tester.tap(
       find.descendant(
-        of: tileFor('Server info'),
+        of: tileFor('Glances'),
         matching: find.byIcon(Icons.visibility_off_outlined),
       ),
     );
@@ -547,7 +557,7 @@ void main() {
     // Showing it again would put it back on a board that filters it straight
     // out, which reads as the button having failed.
     final Finder show = find.descendant(
-      of: tileFor('Server info'),
+      of: tileFor('Glances'),
       matching: find.widgetWithIcon(IconButton, Icons.add_circle_outline),
     );
     expect(show, findsOneWidget);
@@ -556,6 +566,11 @@ void main() {
 
   testWidgets('a widget with its service configured can still be shown',
       (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final Instance glances = makeInstance(ServiceKind.glances);
     await pumpBody(
       tester,
@@ -569,14 +584,14 @@ void main() {
     expect(find.text('Needs Glances'), findsNothing);
     await tester.tap(
       find.descendant(
-        of: tileFor('Server info'),
+        of: tileFor('Glances'),
         matching: find.byIcon(Icons.visibility_off_outlined),
       ),
     );
     await tester.pump();
 
     final Finder show = find.descendant(
-      of: tileFor('Server info'),
+      of: tileFor('Glances'),
       matching: find.widgetWithIcon(IconButton, Icons.add_circle_outline),
     );
     expect(tester.widget<IconButton>(show).onPressed, isNotNull);
