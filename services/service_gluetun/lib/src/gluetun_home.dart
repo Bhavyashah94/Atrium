@@ -31,6 +31,17 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
 
   Future<void> _toggleVpn(bool currentlyRunning) async {
     if (_togglingVpn) return;
+    if (currentlyRunning &&
+        !await _confirmStop(
+          title: 'Stop the VPN?',
+          message: 'Anything that shares the Gluetun network loses its '
+              'connection until the VPN is started again, because the '
+              'firewall blocks traffic while the tunnel is down.',
+          action: 'Stop VPN',
+        )) {
+      return;
+    }
+    if (!mounted) return;
     setState(() => _togglingVpn = true);
 
     try {
@@ -65,6 +76,17 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
 
   Future<void> _toggleDns(bool currentlyRunning) async {
     if (_togglingDns) return;
+    if (currentlyRunning &&
+        !await _confirmStop(
+          title: 'Stop DNS?',
+          message: 'Anything that shares the Gluetun network uses this DNS '
+              'server to look up names, so it may fail to connect until DNS '
+              'is started again.',
+          action: 'Stop DNS',
+        )) {
+      return;
+    }
+    if (!mounted) return;
     setState(() => _togglingDns = true);
 
     try {
@@ -127,6 +149,39 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
         _refreshAll();
       }
     }
+  }
+
+  /// Asks before stopping something that cuts off what sits behind Gluetun.
+  ///
+  /// In the usual setup the download client shares Gluetun's network, so a
+  /// single mis-tap on Stop would stall every download, or break every name
+  /// lookup. Starting is always safe, which is why only stopping asks.
+  Future<bool> _confirmStop({
+    required String title,
+    required String message,
+    required String action,
+  }) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(action),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
   }
 
   @override
@@ -379,7 +434,13 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
                             if (ipInfo.organization != null)
                               Chip(
                                 avatar: const Icon(Icons.business, size: 16),
-                                label: Text(ipInfo.organization!),
+                                // Provider names like an ASN plus a full company
+                                // name outgrow the row; end them with an ellipsis
+                                // rather than cutting a word in half.
+                                label: Text(
+                                  ipInfo.organization!,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                                 padding: EdgeInsets.zero,
                               ),
                           ],
