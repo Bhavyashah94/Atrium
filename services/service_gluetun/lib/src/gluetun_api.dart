@@ -51,21 +51,6 @@ class GluetunApi {
     return GluetunVpnStatus(status: run ? 'running' : 'stopped');
   }
 
-  /// Fetches VPN configuration settings & provider selection.
-  Future<GluetunVpnSettings?> getVpnSettings() async {
-    try {
-      final Response<dynamic> resp =
-          await _dio.get<dynamic>('v1/vpn/settings');
-      final Map<String, dynamic>? map = _toMap(resp.data);
-      if (map != null) {
-        return GluetunVpnSettings.fromJson(map);
-      }
-    } on DioException {
-      return null;
-    }
-    return null;
-  }
-
   /// Fetches public IP details.
   Future<GluetunPublicIp?> getPublicIp() async {
     try {
