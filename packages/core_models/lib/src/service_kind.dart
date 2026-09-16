@@ -26,8 +26,8 @@ enum ServiceKind {
   dashdot,
   lidarr,
   unraid,
-  gluetun,
   navidrome,
+  gluetun,
 }
 
 /// Static metadata about a [ServiceKind] - display name, default port, the
