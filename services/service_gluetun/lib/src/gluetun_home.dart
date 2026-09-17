@@ -1,5 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,7 +37,9 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
           title: 'Stop the VPN?',
           message: 'Anything that shares the Gluetun network loses its '
               'connection until the VPN is started again, because the '
-              'firewall blocks traffic while the tunnel is down.',
+              'firewall blocks traffic while the tunnel is down. With port '
+              'forwarding on, the forwarded port usually changes when it '
+              'reconnects.',
           action: 'Stop VPN',
         )) {
       return;
@@ -61,7 +64,10 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to change VPN status: $e'),
+            content: Text(
+              'Could not change the VPN. '
+              '${_describeFailure(e, 'PUT /v1/vpn/status')}',
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -106,7 +112,10 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to change DNS status: $e'),
+            content: Text(
+              'Could not change DNS. '
+              '${_describeFailure(e, 'PUT /v1/dns/status')}',
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -138,7 +147,10 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to trigger updater: $e'),
+            content: Text(
+              'Could not start the update. '
+              '${_describeFailure(e, 'PUT /v1/updater/status')}',
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -149,6 +161,27 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
         _refreshAll();
       }
     }
+  }
+
+  /// Why a change did not go through, in terms the user can act on.
+  ///
+  /// Current Gluetun refuses any route its auth config does not grant, so a
+  /// 401 or 403 on a change, while reads still work, almost always means the
+  /// API key's role is missing that route. The raw DioException says none of
+  /// that and runs to a screenful of boilerplate.
+  String _describeFailure(Object error, String route) {
+    if (error is DioException) {
+      final int? status = error.response?.statusCode;
+      if (status == 401 || status == 403) {
+        return 'Gluetun refused it. Check that the role for this API key '
+            'grants $route.';
+      }
+      if (status != null) {
+        return 'Gluetun answered HTTP $status.';
+      }
+      return 'Gluetun could not be reached.';
+    }
+    return 'Something went wrong.';
   }
 
   /// Asks before stopping something that cuts off what sits behind Gluetun.

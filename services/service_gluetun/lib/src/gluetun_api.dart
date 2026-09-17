@@ -38,16 +38,11 @@ class GluetunApi {
     );
   }
 
-  /// Updates the VPN status ('running' to start, 'stopped' to stop).
+  /// Starts or stops the VPN.
+  ///
+  /// Throws when Gluetun refuses; see [_put].
   Future<GluetunVpnStatus> setVpnStatus({required bool run}) async {
-    final Response<dynamic> resp = await _dio.put<dynamic>(
-      'v1/vpn/status',
-      data: <String, String>{'status': run ? 'running' : 'stopped'},
-    );
-    final Map<String, dynamic>? map = _toMap(resp.data);
-    if (map != null) {
-      return GluetunVpnStatus.fromJson(map);
-    }
+    await _put('v1/vpn/status', run: run);
     return GluetunVpnStatus(status: run ? 'running' : 'stopped');
   }
 
@@ -93,20 +88,11 @@ class GluetunApi {
     return null;
   }
 
-  /// Toggles DNS server status ('running' or 'stopped').
-  Future<GluetunDnsStatus?> setDnsStatus({required bool run}) async {
-    try {
-      final Response<dynamic> resp = await _dio.put<dynamic>(
-        'v1/dns/status',
-        data: <String, String>{'status': run ? 'running' : 'stopped'},
-      );
-      final Map<String, dynamic>? map = _toMap(resp.data);
-      if (map != null) {
-        return GluetunDnsStatus.fromJson(map);
-      }
-    } on DioException {
-      return null;
-    }
+  /// Starts or stops Gluetun's DNS server.
+  ///
+  /// Throws when Gluetun refuses; see [_put].
+  Future<GluetunDnsStatus> setDnsStatus({required bool run}) async {
+    await _put('v1/dns/status', run: run);
     return GluetunDnsStatus(status: run ? 'running' : 'stopped');
   }
 
@@ -125,20 +111,25 @@ class GluetunApi {
     return null;
   }
 
-  /// Triggers the server database updater.
-  Future<GluetunUpdaterStatus?> setUpdaterStatus({required bool run}) async {
-    try {
-      final Response<dynamic> resp = await _dio.put<dynamic>(
-        'v1/updater/status',
-        data: <String, String>{'status': run ? 'running' : 'stopped'},
-      );
-      final Map<String, dynamic>? map = _toMap(resp.data);
-      if (map != null) {
-        return GluetunUpdaterStatus.fromJson(map);
-      }
-    } on DioException {
-      return null;
-    }
+  /// Starts or stops the server list updater.
+  ///
+  /// Throws when Gluetun refuses; see [_put].
+  Future<GluetunUpdaterStatus> setUpdaterStatus({required bool run}) async {
+    await _put('v1/updater/status', run: run);
     return GluetunUpdaterStatus(status: run ? 'running' : 'stopped');
   }
+
+  /// Sends a status change to one of Gluetun's control endpoints.
+  ///
+  /// Two things about these endpoints shape this. A refusal has to reach the
+  /// caller: current Gluetun refuses any route its auth config does not grant,
+  /// and catching that here used to turn a 401 into a success message on
+  /// screen. And a successful change answers `{"outcome": "..."}`, not the
+  /// status object the matching GET returns, so the reply carries nothing the
+  /// status models can read; callers get back the state they asked for.
+  Future<void> _put(String path, {required bool run}) =>
+      _dio.put<dynamic>(
+        path,
+        data: <String, String>{'status': run ? 'running' : 'stopped'},
+      );
 }
