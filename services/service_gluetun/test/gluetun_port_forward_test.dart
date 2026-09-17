@@ -84,12 +84,31 @@ void main() {
     });
 
     test('asks the old route when the role only grants that one', () async {
+      // The only role a v3.40 Gluetun accepts: it refuses to start with the
+      // new route listed, so the new route is refused with 401.
       final _Routes routes = _Routes(<String, (int, String)>{
         '/v1/portforward': (401, 'Unauthorized'),
         '/v1/openvpn/portforwarded': (200, '{"port":5914}'),
       });
 
       expect((await routes.api.getPortForward())?.ports, <int>[5914]);
+    });
+
+    test('keeps asking the old route once it has answered', () async {
+      final _Routes routes = _Routes(<String, (int, String)>{
+        '/v1/portforward': (401, 'Unauthorized'),
+        '/v1/openvpn/portforwarded': (200, '{"port":5914}'),
+      });
+      final GluetunApi api = routes.api;
+
+      await api.getPortForward();
+      await api.getPortForward();
+
+      expect(routes.asked, <String>[
+        '/v1/portforward',
+        '/v1/openvpn/portforwarded',
+        '/v1/openvpn/portforwarded',
+      ]);
     });
 
     test('throws the current route failing when both are refused', () async {

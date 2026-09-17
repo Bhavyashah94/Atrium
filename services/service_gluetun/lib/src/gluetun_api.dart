@@ -6,9 +6,12 @@ import 'models/gluetun_models.dart';
 
 /// REST client for the Gluetun HTTP control server API.
 class GluetunApi {
-  const GluetunApi(this._dio);
+  GluetunApi(this._dio);
 
   final Dio _dio;
+
+  /// Whether this Gluetun only has the pre-v3.41 port forwarding route.
+  bool _legacyPortRoute = false;
 
   Map<String, dynamic>? _toMap(dynamic data) {
     if (data is Map) {
@@ -84,19 +87,29 @@ class GluetunApi {
   /// way an older Gluetun fails it: with 400, its answer to a route it does
   /// not have, or with a refusal from a role written before the rename. If
   /// the old route fails too, the first failure is the one thrown.
+  ///
+  /// Once the old route has answered it is asked directly from then on.
+  /// Checked on a live v3.40.4, which will not even start with the new route
+  /// in a role, so every poll there would otherwise add a refused request,
+  /// and a 401 line in Gluetun's log.
   Future<GluetunPortForward?> getPortForward() async {
     Map<String, dynamic>? map;
-    try {
-      map = await _getMap('v1/portforward');
-    } on DioException catch (error, stack) {
-      final int? status = error.response?.statusCode;
-      if (status != 400 && status != 401 && status != 403) {
-        rethrow;
-      }
+    if (_legacyPortRoute) {
+      map = await _getMap('v1/openvpn/portforwarded');
+    } else {
       try {
-        map = await _getMap('v1/openvpn/portforwarded');
-      } on DioException {
-        Error.throwWithStackTrace(error, stack);
+        map = await _getMap('v1/portforward');
+      } on DioException catch (error, stack) {
+        final int? status = error.response?.statusCode;
+        if (status != 400 && status != 401 && status != 403) {
+          rethrow;
+        }
+        try {
+          map = await _getMap('v1/openvpn/portforwarded');
+          _legacyPortRoute = true;
+        } on DioException {
+          Error.throwWithStackTrace(error, stack);
+        }
       }
     }
     return map == null ? null : GluetunPortForward.fromJson(map);
