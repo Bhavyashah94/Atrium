@@ -248,11 +248,11 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
           vpnStatus.when(
             data: (GluetunVpnStatus status) {
               final bool isRunning = status.isRunning;
-              final Color statusColor = isRunning
-                  ? (scheme.brightness == Brightness.dark
-                      ? Colors.greenAccent
-                      : Colors.green)
-                  : scheme.error;
+              // Theme roles rather than a fixed green, so the card follows the
+              // user's palette, dynamic wallpaper colours included, and agrees
+              // with the dashboard widget, which uses the same two roles.
+              final Color statusColor =
+                  isRunning ? scheme.primary : scheme.error;
 
               return Card(
                 elevation: 0,
@@ -510,14 +510,14 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(
                       Icons.dns,
-                      color: isOk ? Colors.green : scheme.onSurfaceVariant,
+                      color: isOk ? scheme.primary : scheme.onSurfaceVariant,
                     ),
                     title: const Text('DNS Server Status'),
                     subtitle: Text(
                       dns?.status.toUpperCase() ?? 'UNKNOWN',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: isOk ? Colors.green : null,
+                        color: isOk ? scheme.primary : null,
                       ),
                     ),
                     trailing: _togglingDns
