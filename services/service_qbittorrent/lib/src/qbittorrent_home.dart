@@ -44,7 +44,10 @@ class QbittorrentHome extends ConsumerWidget {
     final List<Widget> tabs = <Widget>[
       _TorrentsTab(instance: instance),
       QbittorrentSettingsTab(instance: instance),
-      QbittorrentLogsTab(instance: instance),
+      _BuiltOnceSelected(
+        selected: currentIndex == 2,
+        child: QbittorrentLogsTab(instance: instance),
+      ),
     ];
 
     return Scaffold(
@@ -183,6 +186,36 @@ class QbittorrentHome extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Builds [child] the first time its tab is selected, and keeps it after.
+///
+/// [IndexedStack] builds every tab as soon as the screen opens, so a tab
+/// that fetches while building fetches whether or not it is ever shown. For
+/// the Logs tab that meant downloading qBittorrent's whole log, which can be
+/// 20,000 entries, on every visit to the screen.
+class _BuiltOnceSelected extends StatefulWidget {
+  const _BuiltOnceSelected({required this.selected, required this.child});
+
+  final bool selected;
+  final Widget child;
+
+  @override
+  State<_BuiltOnceSelected> createState() => _BuiltOnceSelectedState();
+}
+
+class _BuiltOnceSelectedState extends State<_BuiltOnceSelected> {
+  late bool _built = widget.selected;
+
+  @override
+  void didUpdateWidget(_BuiltOnceSelected oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _built = _built || widget.selected;
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      _built ? widget.child : const SizedBox.shrink();
 }
 
 class _TorrentsTab extends ConsumerStatefulWidget {
