@@ -139,13 +139,12 @@ class _DashboardGluetunResult extends StatelessWidget {
         ? theme.colorScheme.primary
         : theme.colorScheme.error;
 
-    final List<String> locationParts = <String>[
-      if (ipData?.city != null && ipData!.city!.isNotEmpty) ipData!.city!,
-      if (ipData?.region != null && ipData!.region!.isNotEmpty)
-        ipData!.region!,
-      if (ipData?.country != null && ipData!.country!.isNotEmpty)
-        ipData!.country!,
-    ];
+    final GluetunPlaces? places = ipData?.places;
+    final List<String> locationParts = <String?>[
+      places?.city,
+      places?.region,
+      places?.country,
+    ].whereType<String>().toList();
     final String locationText = locationParts.isNotEmpty
         ? locationParts.join(', ')
         : (ipData?.organization ?? 'Unknown location');

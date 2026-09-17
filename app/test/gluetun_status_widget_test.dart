@@ -72,6 +72,23 @@ void main() {
     );
   });
 
+  // A city-state reports its name as the city, region and country, which
+  // the card joined into "Singapore, Singapore, Singapore".
+  testWidgets('a city-state is named once', (WidgetTester tester) async {
+    await pumpCard(
+      tester,
+      vpnStatus: running,
+      publicIp: const GluetunPublicIp(
+        publicIp: '203.0.113.7',
+        country: 'Singapore',
+        region: 'Singapore',
+        city: 'Singapore',
+      ),
+    );
+
+    expect(find.text('Singapore'), findsOneWidget);
+  });
+
   // A card that cannot load says why.
   //
   // It only ever said it could not load, which left a role missing the
