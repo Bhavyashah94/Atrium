@@ -38,6 +38,7 @@ class QbittorrentHome extends ConsumerWidget {
     final int currentIndex = ref.watch(qbitActiveTabBarIndexProvider(instance));
     final bool isNavbarVisible =
         ref.watch(qbitBottomNavVisibleProvider(instance));
+    final bool isHomeTab = currentIndex == 0;
 
     final List<Widget> tabs = <Widget>[
       _TorrentsTab(instance: instance),
@@ -48,7 +49,8 @@ class QbittorrentHome extends ConsumerWidget {
       drawerEdgeDragWidth:
           drawer != null ? MediaQuery.sizeOf(context).width * 0.15 : null,
       drawer: drawer,
-      endDrawer: QbittorrentFilterDrawer(instance: instance),
+      endDrawer: isHomeTab ? QbittorrentFilterDrawer(instance: instance) : null,
+      endDrawerEnableOpenDragGesture: isHomeTab,
       body: NotificationListener<ScrollNotification>(
         onNotification: (ScrollNotification notification) {
           if (notification.metrics.axis == Axis.vertical) {

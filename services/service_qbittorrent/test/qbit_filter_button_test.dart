@@ -122,6 +122,48 @@ void main() {
           'which owns no end drawer, and the tap does nothing',
     );
   });
+
+  testWidgets(
+      'end drawer and swipe gesture are active on home tab, disabled on settings tab',
+      (WidgetTester tester) async {
+    final ProviderContainer container = ProviderContainer(
+      overrides: <Override>[
+        qbitRawTorrentsProvider(_instance)
+            .overrideWith((Ref ref) async => const <QbitTorrent>[]),
+        qbitTransferProvider(_instance)
+            .overrideWith((Ref ref) async => const QbitTransferInfo()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: AtriumTheme.light(null),
+          home: const QbittorrentHome(instance: _instance),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    // On home view (tab 0)
+    final Scaffold homeScaffold =
+        tester.widget<Scaffold>(find.byType(Scaffold).first);
+    expect(homeScaffold.endDrawer, isNotNull);
+    expect(homeScaffold.endDrawerEnableOpenDragGesture, isTrue);
+
+    // Switch to settings tab (tab 1)
+    container.read(qbitActiveTabBarIndexProvider(_instance).notifier).state = 1;
+    await tester.pump();
+    await tester.pump();
+
+    final Scaffold settingsScaffold =
+        tester.widget<Scaffold>(find.byType(Scaffold).first);
+    expect(settingsScaffold.endDrawer, isNull);
+    expect(settingsScaffold.endDrawerEnableOpenDragGesture, isFalse);
+  });
 }
 
 const Instance _instance = Instance(
