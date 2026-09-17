@@ -231,7 +231,8 @@ class _DashboardError extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'Could not load Gluetun status.',
+          'Could not load Gluetun status. '
+          '${describeGluetunFailure(error, 'GET /v1/vpn/status')}',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         Align(
