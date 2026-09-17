@@ -39,7 +39,34 @@ class GluetunPublicIp {
   final String? country;
   final String? city;
   final String? organization;
+
+  /// [country], [region] and [city], leaving out blanks and repeats.
+  ///
+  /// A city-state reports the same name for all three, which read as
+  /// "Singapore, Singapore, Singapore". A region or city is kept only when it
+  /// names somewhere the larger places have not already named.
+  GluetunPlaces get places {
+    final String? country = _blankToNull(this.country);
+    final String? region = _blankToNull(this.region);
+    final String? city = _blankToNull(this.city);
+    return (
+      country: country,
+      region: _samePlace(region, country) ? null : region,
+      city: _samePlace(city, region) || _samePlace(city, country) ? null : city,
+    );
+  }
 }
+
+/// The places a public IP is in, as [GluetunPublicIp.places] returns them.
+typedef GluetunPlaces = ({String? country, String? region, String? city});
+
+String? _blankToNull(String? value) {
+  final String? trimmed = value?.trim();
+  return trimmed == null || trimmed.isEmpty ? null : trimmed;
+}
+
+bool _samePlace(String? a, String? b) =>
+    a != null && b != null && a.toLowerCase() == b.toLowerCase();
 
 class GluetunPortForward {
   const GluetunPortForward({

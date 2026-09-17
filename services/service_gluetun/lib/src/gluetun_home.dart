@@ -382,6 +382,7 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
                       ),
                     );
                   }
+                  final GluetunPlaces places = ipInfo.places;
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
@@ -414,9 +415,9 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
                           },
                         ),
                       ),
-                      if (ipInfo.country != null ||
-                          ipInfo.region != null ||
-                          ipInfo.city != null ||
+                      if (places.country != null ||
+                          places.region != null ||
+                          places.city != null ||
                           ipInfo.organization != null) ...<Widget>[
                         const Divider(),
                         const SizedBox(height: Insets.xs),
@@ -424,24 +425,24 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
                           spacing: Insets.xs,
                           runSpacing: Insets.xs,
                           children: <Widget>[
-                            if (ipInfo.country != null)
+                            if (places.country != null)
                               Chip(
                                 avatar: const Icon(Icons.flag, size: 16),
-                                label: Text(ipInfo.country!),
+                                label: Text(places.country!),
                                 padding: EdgeInsets.zero,
                               ),
-                            if (ipInfo.region != null)
+                            if (places.region != null)
                               Chip(
                                 avatar:
                                     const Icon(Icons.location_on, size: 16),
-                                label: Text(ipInfo.region!),
+                                label: Text(places.region!),
                                 padding: EdgeInsets.zero,
                               ),
-                            if (ipInfo.city != null)
+                            if (places.city != null)
                               Chip(
                                 avatar:
                                     const Icon(Icons.location_city, size: 16),
-                                label: Text(ipInfo.city!),
+                                label: Text(places.city!),
                                 padding: EdgeInsets.zero,
                               ),
                             if (ipInfo.organization != null)
