@@ -51,37 +51,62 @@ class _QbittorrentLogsTabState extends ConsumerState<QbittorrentLogsTab> {
     }
   }
 
-  void _copyAllLogs(List<QbitLogEntry> logs) {
+  /// The most text one copy puts on the clipboard.
+  ///
+  /// Android hands clipboard text to the system in a single binder call,
+  /// which is refused outright past about a megabyte. qBittorrent keeps up to
+  /// 20,000 log entries, and copying all of them came to 1.3 MB and failed.
+  static const int _maxCopyChars = 100000;
+
+  Future<void> _copyLogs(List<QbitLogEntry> logs) async {
     if (logs.isEmpty) return;
-    final String text = logs
-        .map(
-          (QbitLogEntry e) =>
-              '[${e.timeText}] [${e.level.label.toUpperCase()}] ${e.message}',
-        )
-        .join('\n');
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Copied ${logs.length} log ${logs.length == 1 ? "entry" : "entries"} to clipboard',
-        ),
-        duration: const Duration(seconds: 2),
-      ),
+    // The newest entries that fit, put back in the order they happened.
+    final List<String> lines = <String>[];
+    int chars = 0;
+    for (final QbitLogEntry entry in logs.reversed) {
+      final String line = _copyLine(entry);
+      if (lines.isNotEmpty && chars + line.length > _maxCopyChars) break;
+      lines.add(line);
+      chars += line.length + 1;
+    }
+    final int total = logs.length;
+    await _copyToClipboard(
+      lines.reversed.join('\n'),
+      lines.length == total
+          ? 'Copied $total log ${total == 1 ? "entry" : "entries"} to clipboard'
+          : 'Copied the newest ${lines.length} of $total log entries to '
+              'clipboard',
+      const Duration(seconds: 2),
     );
   }
 
-  void _copyLogEntry(QbitLogEntry entry) {
-    Clipboard.setData(
-      ClipboardData(
-        text:
-            '[${entry.timeText}] [${entry.level.label.toUpperCase()}] ${entry.message}',
-      ),
-    );
+  Future<void> _copyLogEntry(QbitLogEntry entry) => _copyToClipboard(
+        _copyLine(entry),
+        'Log entry copied to clipboard',
+        const Duration(seconds: 1),
+      );
+
+  String _copyLine(QbitLogEntry entry) =>
+      '[${entry.timeText}] [${entry.level.label.toUpperCase()}] ${entry.message}';
+
+  /// Copies [text], then says whether it worked.
+  ///
+  /// The platform can refuse the write, and a success message shown anyway
+  /// leaves someone pasting whatever was on the clipboard before.
+  Future<void> _copyToClipboard(
+    String text,
+    String copiedMessage,
+    Duration duration,
+  ) async {
+    String message = copiedMessage;
+    try {
+      await Clipboard.setData(ClipboardData(text: text));
+    } on PlatformException {
+      message = 'Could not copy to the clipboard';
+    }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Log entry copied to clipboard'),
-        duration: Duration(seconds: 1),
-      ),
+      SnackBar(content: Text(message), duration: duration),
     );
   }
 
@@ -139,12 +164,13 @@ class _QbittorrentLogsTabState extends ConsumerState<QbittorrentLogsTab> {
             ),
             IconButton(
               icon: const Icon(Icons.copy_all_outlined),
-              tooltip: 'Copy all logs',
+              // It copies what the filter and search leave, not everything.
+              tooltip: 'Copy logs',
               onPressed: () {
                 final List<QbitLogEntry>? currentLogs = logsAsync.value;
                 if (currentLogs != null) {
                   final List<QbitLogEntry> filtered = _filterLogs(currentLogs);
-                  _copyAllLogs(filtered);
+                  _copyLogs(filtered);
                 }
               },
             ),
