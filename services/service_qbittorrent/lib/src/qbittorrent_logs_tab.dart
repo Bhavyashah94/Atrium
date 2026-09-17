@@ -197,20 +197,16 @@ class _QbittorrentLogsTabState extends ConsumerState<QbittorrentLogsTab> {
                     ref.invalidate(qbitLogsProvider(widget.instance));
                     await ref.read(qbitLogsProvider(widget.instance).future);
                   },
-                  child: ListView.separated(
+                  child: ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: Insets.md,
-                      vertical: Insets.sm,
+                    padding: const EdgeInsets.only(
+                      top: Insets.xs,
+                      bottom: 80,
                     ),
                     itemCount: reversed.length,
-                    separatorBuilder: (_, __) => Divider(
-                      height: 1,
-                      color: cs.outlineVariant.withAlpha(50),
-                    ),
                     itemBuilder: (BuildContext context, int index) {
                       final QbitLogEntry entry = reversed[index];
-                      return _LogEntryTile(
+                      return _LogCard(
                         entry: entry,
                         onTap: () => _copyLogEntry(entry),
                       );
@@ -271,8 +267,83 @@ class _QbittorrentLogsTabState extends ConsumerState<QbittorrentLogsTab> {
   }
 }
 
-class _LogEntryTile extends StatelessWidget {
-  const _LogEntryTile({required this.entry, required this.onTap});
+class _LogVisual {
+  const _LogVisual({
+    required this.color,
+    required this.container,
+    required this.onContainer,
+    required this.icon,
+  });
+
+  final Color color;
+  final Color container;
+  final Color onContainer;
+  final IconData icon;
+}
+
+_LogVisual _visualForLevel(QbitLogLevel level, ColorScheme cs) {
+  return switch (level) {
+    QbitLogLevel.critical => _LogVisual(
+        color: cs.error,
+        container: cs.errorContainer,
+        onContainer: cs.onErrorContainer,
+        icon: Icons.error_outline_rounded,
+      ),
+    QbitLogLevel.warning => _LogVisual(
+        color: cs.secondary,
+        container: cs.secondaryContainer,
+        onContainer: cs.onSecondaryContainer,
+        icon: Icons.warning_amber_rounded,
+      ),
+    QbitLogLevel.info => _LogVisual(
+        color: cs.tertiary,
+        container: cs.tertiaryContainer,
+        onContainer: cs.onTertiaryContainer,
+        icon: Icons.info_outline_rounded,
+      ),
+    QbitLogLevel.normal => _LogVisual(
+        color: cs.primary,
+        container: cs.primaryContainer,
+        onContainer: cs.onPrimaryContainer,
+        icon: Icons.article_rounded,
+      ),
+  };
+}
+
+class _StatePill extends StatelessWidget {
+  const _StatePill({required this.label, required this.visual});
+
+  final String label;
+  final _LogVisual visual;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      decoration: BoxDecoration(
+        color: visual.color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(visual.icon, size: 12, color: visual.color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: visual.color,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogCard extends StatelessWidget {
+  const _LogCard({required this.entry, required this.onTap});
 
   final QbitLogEntry entry;
   final VoidCallback onTap;
@@ -281,60 +352,88 @@ class _LogEntryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme cs = theme.colorScheme;
+    final _LogVisual v = _visualForLevel(entry.level, cs);
 
-    final Color badgeColor = switch (entry.level) {
-      QbitLogLevel.critical => cs.error,
-      QbitLogLevel.warning => cs.secondary,
-      QbitLogLevel.info => cs.tertiary,
-      QbitLogLevel.normal => cs.primary,
-    };
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            SizedBox(
-              width: 58,
-              child: Text(
-                entry.timeText,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontFamily: 'monospace',
-                  color: cs.onSurfaceVariant,
+    final Widget tile = Material(
+      color: cs.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(Insets.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: v.container,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  v.icon,
+                  size: 22,
+                  color: v.onContainer,
                 ),
               ),
-            ),
-            const SizedBox(width: Insets.xs),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              decoration: BoxDecoration(
-                color: badgeColor.withAlpha(30),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                entry.level.label.toUpperCase(),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: badgeColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
+              const SizedBox(width: Insets.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      entry.message,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: <Widget>[
+                        _StatePill(
+                          label: entry.level.label.toUpperCase(),
+                          visual: v,
+                        ),
+                        const SizedBox(width: Insets.sm),
+                        Expanded(
+                          child: Text(
+                            entry.timeText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: cs.onSurfaceVariant,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.copy_outlined,
+                          size: 14,
+                          color: cs.onSurfaceVariant.withValues(alpha: 0.6),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(width: Insets.sm),
-            Expanded(
-              child: Text(
-                entry.message,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Insets.md,
+        Insets.xs,
+        Insets.md,
+        Insets.xs,
+      ),
+      child: tile,
     );
   }
 }
