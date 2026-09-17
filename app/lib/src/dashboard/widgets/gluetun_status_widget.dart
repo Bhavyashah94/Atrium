@@ -19,7 +19,7 @@ class DashboardGluetunStatusWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final Color accent = ServiceVisuals.accent(ServiceKind.gluetun);
+    final Color accent = Theme.of(context).colorScheme.primary;
     return DashboardWidgetCard(
       kind: DashboardWidgetKind.gluetunStatus,
       accent: accent,
