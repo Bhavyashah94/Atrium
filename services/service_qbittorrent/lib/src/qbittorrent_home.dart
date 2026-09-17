@@ -43,8 +43,8 @@ class QbittorrentHome extends ConsumerWidget {
 
     final List<Widget> tabs = <Widget>[
       _TorrentsTab(instance: instance),
-      QbittorrentLogsTab(instance: instance),
       QbittorrentSettingsTab(instance: instance),
+      QbittorrentLogsTab(instance: instance),
     ];
 
     return Scaffold(
@@ -167,14 +167,14 @@ class QbittorrentHome extends ConsumerWidget {
                   label: 'Home',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.article_outlined),
-                  selectedIcon: Icon(Icons.article),
-                  label: 'Logs',
-                ),
-                NavigationDestination(
                   icon: Icon(Icons.settings_outlined),
                   selectedIcon: Icon(Icons.settings),
                   label: 'Settings',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.article_outlined),
+                  selectedIcon: Icon(Icons.article),
+                  label: 'Logs',
                 ),
               ],
             ),

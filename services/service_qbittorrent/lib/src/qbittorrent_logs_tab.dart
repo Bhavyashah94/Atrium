@@ -90,9 +90,9 @@ class _QbittorrentLogsTabState extends ConsumerState<QbittorrentLogsTab> {
     final ThemeData theme = Theme.of(context);
     final ColorScheme cs = theme.colorScheme;
 
-    // Listen to scroll to top signal from bottom nav tap (index 1 is Logs)
+    // Listen to scroll to top signal from bottom nav tap (index 2 is Logs)
     ref.listen<int>(
-      qbitHomeScrollToTopProvider((widget.instance, 1)),
+      qbitHomeScrollToTopProvider((widget.instance, 2)),
       (_, __) => _scrollToTop(),
     );
 

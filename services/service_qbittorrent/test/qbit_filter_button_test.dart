@@ -156,18 +156,8 @@ void main() {
     expect(homeScaffold.endDrawer, isNotNull);
     expect(homeScaffold.endDrawerEnableOpenDragGesture, isTrue);
 
-    // Switch to logs tab (tab 1)
+    // Switch to settings tab (tab 1)
     container.read(qbitActiveTabBarIndexProvider(_instance).notifier).state = 1;
-    await tester.pump();
-    await tester.pump();
-
-    final Scaffold logsScaffold =
-        tester.widget<Scaffold>(find.byType(Scaffold).first);
-    expect(logsScaffold.endDrawer, isNull);
-    expect(logsScaffold.endDrawerEnableOpenDragGesture, isFalse);
-
-    // Switch to settings tab (tab 2)
-    container.read(qbitActiveTabBarIndexProvider(_instance).notifier).state = 2;
     await tester.pump();
     await tester.pump();
 
@@ -175,6 +165,16 @@ void main() {
         tester.widget<Scaffold>(find.byType(Scaffold).first);
     expect(settingsScaffold.endDrawer, isNull);
     expect(settingsScaffold.endDrawerEnableOpenDragGesture, isFalse);
+
+    // Switch to logs tab (tab 2)
+    container.read(qbitActiveTabBarIndexProvider(_instance).notifier).state = 2;
+    await tester.pump();
+    await tester.pump();
+
+    final Scaffold logsScaffold =
+        tester.widget<Scaffold>(find.byType(Scaffold).first);
+    expect(logsScaffold.endDrawer, isNull);
+    expect(logsScaffold.endDrawerEnableOpenDragGesture, isFalse);
   });
 }
 
