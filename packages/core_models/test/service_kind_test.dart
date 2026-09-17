@@ -32,6 +32,7 @@ void main() {
         'lidarr',
         'unraid',
         'navidrome',
+        'gluetun',
       ],
     );
   });
@@ -86,6 +87,14 @@ void main() {
     expect(ServiceKind.navidrome.role, ServiceRole.mediaServer);
     expect(ServiceKind.navidrome.authStyle, AuthStyle.userPass);
     expect(ServiceKind.navidrome.defaultPort, 4533);
+  });
+
+  test('Gluetun is registered as an apiKey analytics service', () {
+    expect(ServiceKind.gluetun.displayName, 'Gluetun');
+    expect(ServiceKind.gluetun.role, ServiceRole.analytics);
+    expect(ServiceKind.gluetun.authStyle, AuthStyle.apiKey);
+    expect(ServiceKind.gluetun.defaultPort, 8000);
+    expect(ServiceKind.gluetun.isBeta, isTrue);
   });
 
   test('existing services retain their default ports', () {

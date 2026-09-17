@@ -27,6 +27,7 @@ import 'package:service_transmission/service_transmission.dart';
 import 'package:service_tracearr/service_tracearr.dart';
 import 'package:service_lidarr/service_lidarr.dart';
 import 'package:service_unraid/service_unraid.dart';
+import 'package:service_gluetun/service_gluetun.dart';
 import 'package:service_navidrome/service_navidrome.dart';
 
 import 'dashboard_screen.dart';
@@ -328,6 +329,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       ServiceKind.beszel => BeszelHome(instance: instance),
       ServiceKind.dashdot => DashdotHome(instance: instance),
       ServiceKind.speedtestTracker => SpeedtestTrackerHome(instance: instance),
+      ServiceKind.gluetun => GluetunHome(instance: instance),
       ServiceKind.navidrome => const SizedBox.shrink(),
     };
   }

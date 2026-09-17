@@ -20,6 +20,7 @@ import 'package:service_tautulli/service_tautulli.dart';
 import 'package:service_tracearr/service_tracearr.dart';
 import 'package:service_rtorrent/service_rtorrent.dart';
 import 'package:service_transmission/service_transmission.dart';
+import 'package:service_gluetun/service_gluetun.dart';
 
 import '../health_providers.dart';
 import '../screens/calendar_screen.dart';
@@ -27,6 +28,7 @@ import 'dashboard_layout.dart';
 import 'dashboard_widget_kind.dart';
 import 'widgets/dashdot_widget.dart';
 import 'widgets/downloads_widget.dart';
+import 'widgets/gluetun_status_widget.dart';
 import 'widgets/recently_added_widget.dart';
 import 'widgets/recently_downloaded_widget.dart';
 import 'widgets/requests_widget.dart';
@@ -186,6 +188,10 @@ class DashboardBoard extends ConsumerWidget {
         return DashboardSpeedtestResultsWidget(
           instances: _byKind(instances, ServiceKind.speedtestTracker),
         );
+      case DashboardWidgetKind.gluetunStatus:
+        return DashboardGluetunStatusWidget(
+          instances: _byKind(instances, ServiceKind.gluetun),
+        );
       case DashboardWidgetKind.wakeOnLan:
         return const DashboardWakeOnLanWidget();
     }
@@ -240,6 +246,9 @@ class DashboardBoard extends ConsumerWidget {
           ref.invalidate(speedtestOverviewProvider(i));
         case ServiceKind.tracearr:
           ref.invalidate(tracearrStreamsProvider(i));
+        case ServiceKind.gluetun:
+          ref.invalidate(gluetunVpnStatusProvider(i));
+          ref.invalidate(gluetunPublicIpProvider(i));
         default:
           break;
       }

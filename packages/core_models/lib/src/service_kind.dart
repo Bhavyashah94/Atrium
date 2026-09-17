@@ -27,6 +27,7 @@ enum ServiceKind {
   lidarr,
   unraid,
   navidrome,
+  gluetun,
 }
 
 /// Static metadata about a [ServiceKind] - display name, default port, the
@@ -58,6 +59,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.dashdot => 'Dashdot',
         ServiceKind.lidarr => 'Lidarr',
         ServiceKind.unraid => 'Unraid',
+        ServiceKind.gluetun => 'Gluetun',
         ServiceKind.navidrome => 'Navidrome',
       };
 
@@ -85,6 +87,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.dashdot => 'System monitor',
         ServiceKind.lidarr => 'Music',
         ServiceKind.unraid => 'Server',
+        ServiceKind.gluetun => 'VPN client',
         ServiceKind.navidrome => 'Music server',
       };
 
@@ -97,6 +100,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.rtorrent ||
         ServiceKind.lidarr ||
         ServiceKind.unraid ||
+        ServiceKind.gluetun ||
         ServiceKind.navidrome =>
           true,
         _ => false,
@@ -131,6 +135,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.lidarr => 8686,
         // Unraid's web UI answers on plain http 80 unless it has been moved.
         ServiceKind.unraid => 80,
+        ServiceKind.gluetun => 8000,
         ServiceKind.navidrome => 4533,
       };
 
@@ -146,7 +151,8 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.sabnzbd ||
         ServiceKind.tracearr ||
         ServiceKind.lidarr ||
-        ServiceKind.unraid =>
+        ServiceKind.unraid ||
+        ServiceKind.gluetun =>
           AuthStyle.apiKey,
         // Transmission and rTorrent both use HTTP Basic, and for both it is
         // *optional* - rTorrent's XML-RPC has no auth of its own and is only
@@ -197,6 +203,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.beszel => ServiceRole.analytics,
         ServiceKind.dashdot => ServiceRole.analytics,
         ServiceKind.unraid => ServiceRole.analytics,
+        ServiceKind.gluetun => ServiceRole.analytics,
       };
 
   /// Whether this service can be handed a torrent - a magnet URI, a link to a

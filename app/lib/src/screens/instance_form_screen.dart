@@ -445,7 +445,8 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
               ),
             ],
             if (_kind == ServiceKind.glances ||
-                _kind == ServiceKind.dashdot) ...<Widget>[
+                _kind == ServiceKind.dashdot ||
+                _kind == ServiceKind.gluetun) ...<Widget>[
               const SizedBox(height: Insets.lg),
               Text(
                 'Polling',
@@ -484,16 +485,24 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
   List<Widget> _authFields() {
     switch (_kind.authStyle) {
       case AuthStyle.apiKey:
+        // Gluetun's control server can run without auth, through a role with
+        // auth = "none", and then there is no key to give.
+        final bool keyOptional = _kind == ServiceKind.gluetun;
         return <Widget>[
           TextFormField(
             controller: _apiKey,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'API key',
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              labelText: keyOptional ? 'API key (optional)' : 'API key',
+              helperText: keyOptional
+                  ? 'Leave empty if the control server has auth turned off.'
+                  : null,
             ),
             autocorrect: false,
             validator: (String? v) =>
-                (v == null || v.trim().isEmpty) ? 'Required' : null,
+                !keyOptional && (v == null || v.trim().isEmpty)
+                    ? 'Required'
+                    : null,
           ),
         ];
       case AuthStyle.bearerToken:

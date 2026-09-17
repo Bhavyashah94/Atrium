@@ -30,6 +30,7 @@ abstract final class ServiceVisuals {
         ServiceKind.dashdot => Icons.dashboard_outlined,
         ServiceKind.lidarr => Icons.album_outlined,
         ServiceKind.unraid => Icons.storage_rounded,
+        ServiceKind.gluetun => Icons.shield_outlined,
         ServiceKind.navidrome => Icons.queue_music_rounded,
       };
 
@@ -56,6 +57,7 @@ abstract final class ServiceVisuals {
         ServiceKind.dashdot => const Color(0xFFE9433B),
         ServiceKind.lidarr => const Color(0xFF00C7A9),
         ServiceKind.unraid => const Color(0xFFF15A2C),
+        ServiceKind.gluetun => const Color(0xFF3B82F6),
         ServiceKind.navidrome => const Color(0xFF0086D6),
       };
 
