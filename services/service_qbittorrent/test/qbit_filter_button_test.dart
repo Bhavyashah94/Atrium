@@ -124,7 +124,7 @@ void main() {
   });
 
   testWidgets(
-      'end drawer and swipe gesture are active on home tab, disabled on settings tab',
+      'end drawer and swipe gesture are active on home tab, disabled on logs and settings tabs',
       (WidgetTester tester) async {
     final ProviderContainer container = ProviderContainer(
       overrides: <Override>[
@@ -132,6 +132,8 @@ void main() {
             .overrideWith((Ref ref) async => const <QbitTorrent>[]),
         qbitTransferProvider(_instance)
             .overrideWith((Ref ref) async => const QbitTransferInfo()),
+        qbitLogsProvider(_instance)
+            .overrideWith((Ref ref) async => const <QbitLogEntry>[]),
       ],
     );
     addTearDown(container.dispose);
@@ -154,8 +156,18 @@ void main() {
     expect(homeScaffold.endDrawer, isNotNull);
     expect(homeScaffold.endDrawerEnableOpenDragGesture, isTrue);
 
-    // Switch to settings tab (tab 1)
+    // Switch to logs tab (tab 1)
     container.read(qbitActiveTabBarIndexProvider(_instance).notifier).state = 1;
+    await tester.pump();
+    await tester.pump();
+
+    final Scaffold logsScaffold =
+        tester.widget<Scaffold>(find.byType(Scaffold).first);
+    expect(logsScaffold.endDrawer, isNull);
+    expect(logsScaffold.endDrawerEnableOpenDragGesture, isFalse);
+
+    // Switch to settings tab (tab 2)
+    container.read(qbitActiveTabBarIndexProvider(_instance).notifier).state = 2;
     await tester.pump();
     await tester.pump();
 

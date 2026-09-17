@@ -15,6 +15,7 @@ import 'models/qbit_transfer_info.dart';
 import 'qbittorrent_action_utils.dart';
 import 'qbittorrent_client.dart';
 import 'qbittorrent_filter_drawer.dart';
+import 'qbittorrent_logs_tab.dart';
 import 'qbittorrent_providers.dart';
 import 'qbittorrent_settings_tab.dart';
 import 'torrent_detail_screen.dart';
@@ -42,6 +43,7 @@ class QbittorrentHome extends ConsumerWidget {
 
     final List<Widget> tabs = <Widget>[
       _TorrentsTab(instance: instance),
+      QbittorrentLogsTab(instance: instance),
       QbittorrentSettingsTab(instance: instance),
     ];
 
@@ -163,6 +165,11 @@ class QbittorrentHome extends ConsumerWidget {
                   icon: Icon(Icons.home_outlined),
                   selectedIcon: Icon(Icons.home),
                   label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.article_outlined),
+                  selectedIcon: Icon(Icons.article),
+                  label: 'Logs',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.settings_outlined),

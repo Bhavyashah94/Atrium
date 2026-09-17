@@ -9,6 +9,7 @@ import 'package:dio/io.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 
 import 'models/qbit_detail.dart';
+import 'models/qbit_log_entry.dart';
 import 'models/qbit_torrent.dart';
 import 'models/qbit_transfer_info.dart';
 
@@ -673,6 +674,37 @@ class QbittorrentClient {
             rethrow;
           }
         }
+      });
+
+  /// Retrieves application logs (`GET /api/v2/log/main`).
+  Future<List<QbitLogEntry>> getLogs({
+    bool normal = true,
+    bool info = true,
+    bool warning = true,
+    bool critical = true,
+    int lastKnownId = -1,
+  }) =>
+      _guarded(() async {
+        final Response<dynamic> resp = await _dio.get<dynamic>(
+          'api/v2/log/main',
+          queryParameters: <String, dynamic>{
+            'normal': normal,
+            'info': info,
+            'warning': warning,
+            'critical': critical,
+            if (lastKnownId >= 0) 'last_known_id': lastKnownId,
+          },
+        );
+        final dynamic data = resp.data;
+        if (data is! List) return const <QbitLogEntry>[];
+        return data
+            .map(
+              (dynamic item) => item is Map
+                  ? QbitLogEntry.fromJson(Map<String, dynamic>.from(item))
+                  : null,
+            )
+            .whereType<QbitLogEntry>()
+            .toList();
       });
 
   /// Ensures a session exists, runs [call], and re-logins once on a 403.
