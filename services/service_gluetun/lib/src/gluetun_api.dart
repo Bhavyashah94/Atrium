@@ -26,6 +26,10 @@ class GluetunApi {
   }
 
   /// Fetches the current VPN status (e.g. running, stopped).
+  ///
+  /// Throws when Gluetun refuses, and when the answer is not Gluetun's JSON.
+  /// That exception keeps the response, so a login page answering 200 can be
+  /// told apart from a server that never answered.
   Future<GluetunVpnStatus> getVpnStatus() async {
     final Response<dynamic> resp = await _dio.get<dynamic>('v1/vpn/status');
     final Map<String, dynamic>? map = _toMap(resp.data);
@@ -34,6 +38,8 @@ class GluetunApi {
     }
     throw DioException(
       requestOptions: resp.requestOptions,
+      response: resp,
+      type: DioExceptionType.badResponse,
       error: 'Invalid response from Gluetun VPN status endpoint',
     );
   }
@@ -47,45 +53,27 @@ class GluetunApi {
   }
 
   /// Fetches public IP details.
+  ///
+  /// Throws when Gluetun refuses; see [_getMap].
   Future<GluetunPublicIp?> getPublicIp() async {
-    try {
-      final Response<dynamic> resp = await _dio.get<dynamic>('v1/publicip/ip');
-      final Map<String, dynamic>? map = _toMap(resp.data);
-      if (map != null) {
-        return GluetunPublicIp.fromJson(map);
-      }
-    } on DioException {
-      return null;
-    }
-    return null;
+    final Map<String, dynamic>? map = await _getMap('v1/publicip/ip');
+    return map == null ? null : GluetunPublicIp.fromJson(map);
   }
 
   /// Fetches port forwarding info.
+  ///
+  /// Throws when Gluetun refuses; see [_getMap].
   Future<GluetunPortForward?> getPortForward() async {
-    try {
-      final Response<dynamic> resp = await _dio.get<dynamic>('v1/portforward');
-      final Map<String, dynamic>? map = _toMap(resp.data);
-      if (map != null) {
-        return GluetunPortForward.fromJson(map);
-      }
-    } on DioException {
-      return null;
-    }
-    return null;
+    final Map<String, dynamic>? map = await _getMap('v1/portforward');
+    return map == null ? null : GluetunPortForward.fromJson(map);
   }
 
   /// Fetches DNS server status.
+  ///
+  /// Throws when Gluetun refuses; see [_getMap].
   Future<GluetunDnsStatus?> getDnsStatus() async {
-    try {
-      final Response<dynamic> resp = await _dio.get<dynamic>('v1/dns/status');
-      final Map<String, dynamic>? map = _toMap(resp.data);
-      if (map != null) {
-        return GluetunDnsStatus.fromJson(map);
-      }
-    } on DioException {
-      return null;
-    }
-    return null;
+    final Map<String, dynamic>? map = await _getMap('v1/dns/status');
+    return map == null ? null : GluetunDnsStatus.fromJson(map);
   }
 
   /// Starts or stops Gluetun's DNS server.
@@ -97,18 +85,11 @@ class GluetunApi {
   }
 
   /// Fetches server database updater status.
+  ///
+  /// Throws when Gluetun refuses; see [_getMap].
   Future<GluetunUpdaterStatus?> getUpdaterStatus() async {
-    try {
-      final Response<dynamic> resp =
-          await _dio.get<dynamic>('v1/updater/status');
-      final Map<String, dynamic>? map = _toMap(resp.data);
-      if (map != null) {
-        return GluetunUpdaterStatus.fromJson(map);
-      }
-    } on DioException {
-      return null;
-    }
-    return null;
+    final Map<String, dynamic>? map = await _getMap('v1/updater/status');
+    return map == null ? null : GluetunUpdaterStatus.fromJson(map);
   }
 
   /// Starts or stops the server list updater.
@@ -117,6 +98,17 @@ class GluetunApi {
   Future<GluetunUpdaterStatus> setUpdaterStatus({required bool run}) async {
     await _put('v1/updater/status', run: run);
     return GluetunUpdaterStatus(status: run ? 'running' : 'stopped');
+  }
+
+  /// Reads one of Gluetun's endpoints as a JSON object, or null if it is not.
+  ///
+  /// A refusal or an unreachable server throws. Catching those here used to
+  /// show a route the API key's role does not grant as a DNS server in state
+  /// UNKNOWN, an IDLE updater, or a public IP check that was switched off,
+  /// when Gluetun had simply said no.
+  Future<Map<String, dynamic>?> _getMap(String path) async {
+    final Response<dynamic> resp = await _dio.get<dynamic>(path);
+    return _toMap(resp.data);
   }
 
   /// Sends a status change to one of Gluetun's control endpoints.

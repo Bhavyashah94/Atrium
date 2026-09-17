@@ -1,11 +1,11 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'gluetun_api.dart';
+import 'gluetun_failure.dart';
 import 'gluetun_providers.dart';
 import 'models/gluetun_models.dart';
 
@@ -66,7 +66,7 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
           SnackBar(
             content: Text(
               'Could not change the VPN. '
-              '${_describeFailure(e, 'PUT /v1/vpn/status')}',
+              '${describeGluetunFailure(e, 'PUT /v1/vpn/status')}',
             ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
@@ -114,7 +114,7 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
           SnackBar(
             content: Text(
               'Could not change DNS. '
-              '${_describeFailure(e, 'PUT /v1/dns/status')}',
+              '${describeGluetunFailure(e, 'PUT /v1/dns/status')}',
             ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
@@ -149,7 +149,7 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
           SnackBar(
             content: Text(
               'Could not start the update. '
-              '${_describeFailure(e, 'PUT /v1/updater/status')}',
+              '${describeGluetunFailure(e, 'PUT /v1/updater/status')}',
             ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
@@ -161,27 +161,6 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
         _refreshAll();
       }
     }
-  }
-
-  /// Why a change did not go through, in terms the user can act on.
-  ///
-  /// Current Gluetun refuses any route its auth config does not grant, so a
-  /// 401 or 403 on a change, while reads still work, almost always means the
-  /// API key's role is missing that route. The raw DioException says none of
-  /// that and runs to a screenful of boilerplate.
-  String _describeFailure(Object error, String route) {
-    if (error is DioException) {
-      final int? status = error.response?.statusCode;
-      if (status == 401 || status == 403) {
-        return 'Gluetun refused it. Check that the role for this API key '
-            'grants $route.';
-      }
-      if (status != null) {
-        return 'Gluetun answered HTTP $status.';
-      }
-      return 'Gluetun could not be reached.';
-    }
-    return 'Something went wrong.';
   }
 
   /// Asks before stopping something that cuts off what sits behind Gluetun.
@@ -364,7 +343,8 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
                     const SizedBox(width: Insets.md),
                     Expanded(
                       child: Text(
-                        'Could not check VPN status: $error',
+                        'Could not check the VPN. '
+                        '${describeGluetunFailure(error, 'GET /v1/vpn/status')}',
                         style: TextStyle(color: scheme.onErrorContainer),
                       ),
                     ),
@@ -487,9 +467,11 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
                   child: Center(child: CircularProgressIndicator()),
                 ),
                 error: (Object error, StackTrace stack) => ListTile(
-                  leading: const Icon(Icons.error_outline),
-                  title: const Text('Public IP Error'),
-                  subtitle: Text('$error'),
+                  leading: const Icon(Icons.public_off),
+                  title: const Text('Public IP Address'),
+                  subtitle: Text(
+                    describeGluetunFailure(error, 'GET /v1/publicip/ip'),
+                  ),
                 ),
               ),
             ),
@@ -540,10 +522,12 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
                   padding: EdgeInsets.all(Insets.md),
                   child: Center(child: CircularProgressIndicator()),
                 ),
-                error: (_, __) => const ListTile(
-                  leading: Icon(Icons.dns_outlined),
-                  title: Text('DNS Server Status'),
-                  subtitle: Text('Unavailable'),
+                error: (Object error, StackTrace stack) => ListTile(
+                  leading: const Icon(Icons.dns_outlined),
+                  title: const Text('DNS Server Status'),
+                  subtitle: Text(
+                    describeGluetunFailure(error, 'GET /v1/dns/status'),
+                  ),
                 ),
               ),
             ),
@@ -591,10 +575,12 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
                   padding: EdgeInsets.all(Insets.md),
                   child: Center(child: CircularProgressIndicator()),
                 ),
-                error: (_, __) => const ListTile(
-                  leading: Icon(Icons.sync_problem),
-                  title: Text('Server Database Updater'),
-                  subtitle: Text('Unavailable'),
+                error: (Object error, StackTrace stack) => ListTile(
+                  leading: const Icon(Icons.sync_problem),
+                  title: const Text('Server Database Updater'),
+                  subtitle: Text(
+                    describeGluetunFailure(error, 'GET /v1/updater/status'),
+                  ),
                 ),
               ),
             ),
