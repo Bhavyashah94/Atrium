@@ -597,7 +597,7 @@ class QbittorrentClient {
       _guarded(() async {
         try {
           final Response<dynamic> res =
-              await _dio.get<dynamic>('api/v2/app/networkInterfacesList');
+              await _dio.get<dynamic>('api/v2/app/networkInterfaceList');
           dynamic raw = res.data;
           if (raw is String && raw.isNotEmpty) {
             try {
@@ -629,10 +629,10 @@ class QbittorrentClient {
       _guarded(() async {
         try {
           final Response<dynamic> res = await _dio.get<dynamic>(
-            'api/v2/app/networkInterfaceAddressesList',
-            queryParameters: iface != null && iface.isNotEmpty
-                ? <String, dynamic>{'iface': iface}
-                : null,
+            'api/v2/app/networkInterfaceAddressList',
+            // Sent even when empty: qBittorrent answers 400 without it, and
+            // an empty value is how every address is asked for.
+            queryParameters: <String, dynamic>{'iface': iface ?? ''},
           );
           dynamic raw = res.data;
           if (raw is String && raw.isNotEmpty) {
