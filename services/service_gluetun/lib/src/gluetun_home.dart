@@ -81,6 +81,64 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
     }
   }
 
+  Future<void> _reconnectVpn() async {
+    if (_togglingVpn) return;
+    if (!await _confirmStop(
+      title: 'Reconnect the VPN?',
+      message: 'Gluetun stops the tunnel and starts it again, usually on '
+          'another server, so the public IP changes and the forwarded port '
+          'usually does too. Anything that shares the Gluetun network loses '
+          'its connection for a few seconds.',
+      action: 'Reconnect',
+    )) {
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _togglingVpn = true);
+
+    try {
+      final GluetunApi api =
+          await ref.read(gluetunApiProvider(widget.instance).future);
+      await api.reconnectVpn();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Reconnecting VPN...')),
+        );
+      }
+    } on GluetunRestartFailed catch (e) {
+      // The worst place to stop: the tunnel is down and so is everything
+      // behind it, so say that plainly rather than as a failed reconnect.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'The VPN stopped but did not start again. '
+              '${describeGluetunFailure(e.cause, 'PUT /v1/vpn/status')}',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Could not reconnect the VPN. '
+              '${describeGluetunFailure(e, 'PUT /v1/vpn/status')}',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _togglingVpn = false);
+        _refreshAll();
+      }
+    }
+  }
+
   Future<void> _toggleDns(bool currentlyRunning) async {
     if (_togglingDns) return;
     if (currentlyRunning &&
@@ -168,7 +226,8 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
   ///
   /// In the usual setup the download client shares Gluetun's network, so a
   /// single mis-tap on Stop would stall every download, or break every name
-  /// lookup. Starting is always safe, which is why only stopping asks.
+  /// lookup. Starting is always safe, which is why only stopping asks, and a
+  /// reconnect stops the VPN first, so it asks too.
   Future<bool> _confirmStop({
     required String title,
     required String message,
@@ -310,24 +369,40 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
                                   child: CircularProgressIndicator(),
                                 ),
                               )
-                            : FilledButton.icon(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: isRunning
-                                      ? scheme.error
-                                      : scheme.primary,
-                                  foregroundColor: isRunning
-                                      ? scheme.onError
-                                      : scheme.onPrimary,
-                                ),
-                                onPressed: () => _toggleVpn(isRunning),
-                                icon: Icon(
-                                  isRunning
-                                      ? Icons.power_settings_new
-                                      : Icons.play_arrow,
-                                ),
-                                label: Text(
-                                  isRunning ? 'Stop VPN' : 'Start VPN',
-                                ),
+                            : Row(
+                                children: <Widget>[
+                                  if (isRunning) ...<Widget>[
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: _reconnectVpn,
+                                        icon: const Icon(Icons.restart_alt),
+                                        label: const Text('Reconnect'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: Insets.sm),
+                                  ],
+                                  Expanded(
+                                    child: FilledButton.icon(
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: isRunning
+                                            ? scheme.error
+                                            : scheme.primary,
+                                        foregroundColor: isRunning
+                                            ? scheme.onError
+                                            : scheme.onPrimary,
+                                      ),
+                                      onPressed: () => _toggleVpn(isRunning),
+                                      icon: Icon(
+                                        isRunning
+                                            ? Icons.power_settings_new
+                                            : Icons.play_arrow,
+                                      ),
+                                      label: Text(
+                                        isRunning ? 'Stop VPN' : 'Start VPN',
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                       ),
                     ],

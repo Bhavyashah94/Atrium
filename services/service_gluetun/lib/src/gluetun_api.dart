@@ -52,6 +52,23 @@ class GluetunApi {
     return GluetunVpnStatus(status: run ? 'running' : 'stopped');
   }
 
+  /// Stops the VPN and starts it again.
+  ///
+  /// Gluetun has no reconnect route, but it answers a stop and a start within
+  /// a second each and connects afresh on the start, usually to another
+  /// server, so the public IP and any forwarded port change. The tunnel is
+  /// back about ten seconds later. Throws when Gluetun refuses the stop, in
+  /// which case nothing changed, and [GluetunRestartFailed] when the stop
+  /// went through but the start did not, which leaves the VPN stopped.
+  Future<void> reconnectVpn() async {
+    await _put('v1/vpn/status', run: false);
+    try {
+      await _put('v1/vpn/status', run: true);
+    } on DioException catch (error, stack) {
+      Error.throwWithStackTrace(GluetunRestartFailed(error), stack);
+    }
+  }
+
   /// Fetches public IP details.
   ///
   /// Throws when Gluetun refuses; see [_getMap].
@@ -141,4 +158,18 @@ class GluetunApi {
         path,
         data: <String, String>{'status': run ? 'running' : 'stopped'},
       );
+}
+
+/// A reconnect stopped the VPN but could not start it again.
+///
+/// Kept apart from a plain failure because the VPN is now down, and
+/// everything behind Gluetun with it, which the user has to be told.
+class GluetunRestartFailed implements Exception {
+  const GluetunRestartFailed(this.cause);
+
+  /// Why the start failed.
+  final DioException cause;
+
+  @override
+  String toString() => 'GluetunRestartFailed: $cause';
 }
