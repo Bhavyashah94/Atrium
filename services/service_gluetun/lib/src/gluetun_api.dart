@@ -62,9 +62,26 @@ class GluetunApi {
 
   /// Fetches port forwarding info.
   ///
-  /// Throws when Gluetun refuses; see [_getMap].
+  /// Gluetun v3.41 renamed the route from `/v1/openvpn/portforwarded` to
+  /// `/v1/portforward`, so the old one is asked when the new one fails the
+  /// way an older Gluetun fails it: with 400, its answer to a route it does
+  /// not have, or with a refusal from a role written before the rename. If
+  /// the old route fails too, the first failure is the one thrown.
   Future<GluetunPortForward?> getPortForward() async {
-    final Map<String, dynamic>? map = await _getMap('v1/portforward');
+    Map<String, dynamic>? map;
+    try {
+      map = await _getMap('v1/portforward');
+    } on DioException catch (error, stack) {
+      final int? status = error.response?.statusCode;
+      if (status != 400 && status != 401 && status != 403) {
+        rethrow;
+      }
+      try {
+        map = await _getMap('v1/openvpn/portforwarded');
+      } on DioException {
+        Error.throwWithStackTrace(error, stack);
+      }
+    }
     return map == null ? null : GluetunPortForward.fromJson(map);
   }
 

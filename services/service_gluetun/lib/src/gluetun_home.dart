@@ -26,6 +26,7 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
   void _refreshAll() {
     ref.invalidate(gluetunVpnStatusProvider(widget.instance));
     ref.invalidate(gluetunPublicIpProvider(widget.instance));
+    ref.invalidate(gluetunPortForwardProvider(widget.instance));
     ref.invalidate(gluetunDnsStatusProvider(widget.instance));
     ref.invalidate(gluetunUpdaterStatusProvider(widget.instance));
   }
@@ -202,6 +203,13 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
         ref.watch(gluetunVpnStatusProvider(widget.instance));
     final AsyncValue<GluetunPublicIp?> publicIp =
         ref.watch(gluetunPublicIpProvider(widget.instance));
+    // Port forwarding is optional and most providers do not offer it, so the
+    // row only appears once a port is forwarded. A failed read hides it too:
+    // a role that leaves the route out is a normal setup for everyone who
+    // does not forward a port, and not worth a warning on their screen.
+    final List<int> forwardedPorts =
+        ref.watch(gluetunPortForwardProvider(widget.instance)).value?.ports ??
+            const <int>[];
     final AsyncValue<GluetunDnsStatus?> dnsStatus =
         ref.watch(gluetunDnsStatusProvider(widget.instance));
     final AsyncValue<GluetunUpdaterStatus?> updaterStatus =
@@ -477,6 +485,47 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
               ),
             ),
           ),
+
+          if (forwardedPorts.isNotEmpty) ...<Widget>[
+            const SizedBox(height: Insets.md),
+            Card(
+              elevation: 0,
+              color: scheme.surfaceContainerLow,
+              child: Padding(
+                padding: const EdgeInsets.all(Insets.md),
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.settings_ethernet),
+                  title: Text(
+                    forwardedPorts.length == 1
+                        ? 'Forwarded Port'
+                        : 'Forwarded Ports',
+                  ),
+                  subtitle: SelectableText(
+                    forwardedPorts.join(', '),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.copy, size: 20),
+                    tooltip: 'Copy port',
+                    onPressed: () {
+                      Clipboard.setData(
+                        ClipboardData(text: forwardedPorts.join(',')),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Forwarded port copied to clipboard'),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: Insets.md),
 

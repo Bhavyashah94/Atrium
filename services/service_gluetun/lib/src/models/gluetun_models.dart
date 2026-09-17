@@ -71,6 +71,7 @@ bool _samePlace(String? a, String? b) =>
 class GluetunPortForward {
   const GluetunPortForward({
     required this.port,
+    this.ports = const <int>[],
     this.status,
   });
 
@@ -79,14 +80,36 @@ class GluetunPortForward {
     final int portNum = portVal is int
         ? portVal
         : int.tryParse(portVal?.toString() ?? '') ?? 0;
+    final Object? listed = json['ports'];
+    final List<int> ports = <int>[
+      if (listed is List)
+        for (final Object? value in listed)
+          if (_asPort(value) case final int port) port,
+    ];
     return GluetunPortForward(
       port: portNum,
+      ports: ports.isEmpty && _asPort(portNum) != null
+          ? <int>[portNum]
+          : ports,
       status: json['status']?.toString(),
     );
   }
 
+  /// The first forwarded port, or 0 when nothing is forwarded.
   final int port;
+
+  /// Every forwarded port, empty when nothing is forwarded yet.
+  ///
+  /// Current Gluetun lists them all under `ports`, and repeats the first as
+  /// [port]; releases before v3.41 only send [port].
+  final List<int> ports;
+
   final String? status;
+}
+
+int? _asPort(Object? value) {
+  final int? port = value is int ? value : int.tryParse('$value');
+  return port != null && port > 0 && port <= 65535 ? port : null;
 }
 
 class GluetunDnsStatus {
