@@ -710,6 +710,24 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
               ),
             ),
           ),
+          // Proton's server API needs an account login, so without one the
+          // update fails inside Gluetun while the app has nothing to show for
+          // it. Checked on a live Gluetun, and against its source from v3.40.1.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Insets.md,
+              Insets.sm,
+              Insets.md,
+              0,
+            ),
+            child: Text(
+              'ProtonVPN only updates when Gluetun has your Proton login, set '
+              'as UPDATER_PROTONVPN_EMAIL and UPDATER_PROTONVPN_PASSWORD.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
         ],
       ),
     );
