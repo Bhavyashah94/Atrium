@@ -39,7 +39,7 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
           message: 'Anything that shares the Gluetun network loses its '
               'connection until the VPN is started again, because the '
               'firewall blocks traffic while the tunnel is down. With port '
-              'forwarding on, the forwarded port usually changes when it '
+              'forwarding on, the forwarded port can change when it '
               'reconnects.',
           action: 'Stop VPN',
         )) {
@@ -85,10 +85,10 @@ class _GluetunHomeState extends ConsumerState<GluetunHome> {
     if (_togglingVpn) return;
     if (!await _confirmStop(
       title: 'Reconnect the VPN?',
-      message: 'Gluetun stops the tunnel and starts it again, usually on '
-          'another server, so the public IP changes and the forwarded port '
-          'usually does too. Anything that shares the Gluetun network loses '
-          'its connection for a few seconds.',
+      message: 'Gluetun stops the tunnel and starts it again, which can move '
+          'it to another server with a new public IP and forwarded port. '
+          'Anything that shares the Gluetun network loses its connection for '
+          'a few seconds.',
       action: 'Reconnect',
     )) {
       return;

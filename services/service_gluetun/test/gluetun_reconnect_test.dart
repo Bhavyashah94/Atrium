@@ -11,8 +11,9 @@ import 'package:service_gluetun/service_gluetun.dart';
 /// Reconnect stops the VPN and starts it again in one action.
 ///
 /// Gluetun has no route for it. Checked against a live Gluetun: a stop and a
-/// start each answer within a second, and the tunnel comes back on a new
-/// public IP with a new forwarded port about ten seconds later.
+/// start each answer within a second, and the tunnel is back within seconds,
+/// sometimes on another server with a new public IP and forwarded port, and
+/// sometimes on the same one.
 void main() {
   group('GluetunApi.reconnectVpn', () {
     test('stops the VPN, then starts it', () async {

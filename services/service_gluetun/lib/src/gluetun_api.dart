@@ -55,11 +55,11 @@ class GluetunApi {
   /// Stops the VPN and starts it again.
   ///
   /// Gluetun has no reconnect route, but it answers a stop and a start within
-  /// a second each and connects afresh on the start, usually to another
-  /// server, so the public IP and any forwarded port change. The tunnel is
-  /// back about ten seconds later. Throws when Gluetun refuses the stop, in
-  /// which case nothing changed, and [GluetunRestartFailed] when the stop
-  /// went through but the start did not, which leaves the VPN stopped.
+  /// a second each and connects afresh on the start, which can land on
+  /// another server with a new public IP and forwarded port. The tunnel is
+  /// back within seconds. Throws when Gluetun refuses the stop, in which case
+  /// nothing changed, and [GluetunRestartFailed] when the stop went through
+  /// but the start did not, which leaves the VPN stopped.
   Future<void> reconnectVpn() async {
     await _put('v1/vpn/status', run: false);
     try {
