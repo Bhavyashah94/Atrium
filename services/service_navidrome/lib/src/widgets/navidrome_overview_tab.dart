@@ -175,13 +175,12 @@ class NavidromeOverviewTab extends ConsumerWidget {
                         : null,
                     onTap: (artistId != null && artistId.isNotEmpty)
                         ? () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => NavidromeArtistScreen(
-                                  instance: instance,
-                                  artistId: artistId,
-                                  initialArtistName: artistName,
-                                ),
+                            pushScreen<void>(
+                              context,
+                              NavidromeArtistScreen(
+                                instance: instance,
+                                artistId: artistId,
+                                initialArtistName: artistName,
                               ),
                             );
                           }
@@ -388,13 +387,12 @@ class NavidromeOverviewTab extends ConsumerWidget {
                   return InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => NavidromeAlbumScreen(
-                            instance: instance,
-                            albumId: album.id,
-                            initialAlbum: album,
-                          ),
+                      pushScreen<void>(
+                        context,
+                        NavidromeAlbumScreen(
+                          instance: instance,
+                          albumId: album.id,
+                          initialAlbum: album,
                         ),
                       );
                     },

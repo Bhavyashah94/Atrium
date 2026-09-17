@@ -199,13 +199,12 @@ class _NavidromeArtistsTabState extends ConsumerState<NavidromeArtistsTab> {
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => NavidromeArtistScreen(
-                  instance: widget.instance,
-                  artistId: artist.id,
-                  initialArtistName: artist.name,
-                ),
+            pushScreen<void>(
+              context,
+              NavidromeArtistScreen(
+                instance: widget.instance,
+                artistId: artist.id,
+                initialArtistName: artist.name,
               ),
             );
           },

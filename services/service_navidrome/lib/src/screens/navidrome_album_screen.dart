@@ -65,6 +65,7 @@ class NavidromeAlbumScreen extends ConsumerWidget {
 
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -515,14 +516,12 @@ class NavidromeAlbumScreen extends ConsumerWidget {
                             GestureDetector(
                               onTap: album.artistId != null
                                   ? () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute<void>(
-                                          builder: (_) =>
-                                              NavidromeArtistScreen(
-                                            instance: instance,
-                                            artistId: album.artistId!,
-                                            initialArtistName: album.artist,
-                                          ),
+                                      pushScreen<void>(
+                                        context,
+                                        NavidromeArtistScreen(
+                                          instance: instance,
+                                          artistId: album.artistId!,
+                                          initialArtistName: album.artist,
                                         ),
                                       );
                                     }

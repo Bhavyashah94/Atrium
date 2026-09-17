@@ -152,13 +152,12 @@ Future<NavidromePlaylist?> showNavidromeCreatePlaylistDialog({
 
                             if (initialSongId == null && pl.id.isNotEmpty) {
                               unawaited(
-                                Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => NavidromePlaylistScreen(
-                                      instance: instance,
-                                      playlistId: pl.id,
-                                      initialName: name,
-                                    ),
+                                pushScreen<void>(
+                                  context,
+                                  NavidromePlaylistScreen(
+                                    instance: instance,
+                                    playlistId: pl.id,
+                                    initialName: name,
                                   ),
                                 ),
                               );
@@ -201,6 +200,7 @@ Future<void> showNavidromePlaylistPicker({
 
   await showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),

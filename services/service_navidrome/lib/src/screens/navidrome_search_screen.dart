@@ -187,13 +187,12 @@ class NavidromeSearchResults extends ConsumerWidget {
 
                     return GestureDetector(
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => NavidromeArtistScreen(
-                              instance: instance,
-                              artistId: artist.id,
-                              initialArtistName: artist.name,
-                            ),
+                        pushScreen<void>(
+                          context,
+                          NavidromeArtistScreen(
+                            instance: instance,
+                            artistId: artist.id,
+                            initialArtistName: artist.name,
                           ),
                         );
                       },
@@ -281,13 +280,12 @@ class NavidromeSearchResults extends ConsumerWidget {
 
                     return GestureDetector(
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => NavidromeAlbumScreen(
-                              instance: instance,
-                              albumId: album.id,
-                              initialAlbum: album,
-                            ),
+                        pushScreen<void>(
+                          context,
+                          NavidromeAlbumScreen(
+                            instance: instance,
+                            albumId: album.id,
+                            initialAlbum: album,
                           ),
                         );
                       },
@@ -443,12 +441,11 @@ class NavidromeSearchResults extends ConsumerWidget {
                   ),
                   onTap: song.albumId != null
                       ? () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => NavidromeAlbumScreen(
-                                instance: instance,
-                                albumId: song.albumId!,
-                              ),
+                          pushScreen<void>(
+                            context,
+                            NavidromeAlbumScreen(
+                              instance: instance,
+                              albumId: song.albumId!,
                             ),
                           );
                         }

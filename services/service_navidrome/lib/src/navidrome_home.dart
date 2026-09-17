@@ -389,13 +389,12 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
                     return InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () async {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => NavidromeAlbumScreen(
-                              instance: widget.instance,
-                              albumId: album.id,
-                              initialAlbum: album,
-                            ),
+                        await pushScreen<void>(
+                          context,
+                          NavidromeAlbumScreen(
+                            instance: widget.instance,
+                            albumId: album.id,
+                            initialAlbum: album,
                           ),
                         );
                         ref.invalidate(navidromeAlbumsProvider);
@@ -565,13 +564,12 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
                 ),
                 trailing: const Icon(Icons.chevron_right_rounded, size: 20),
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => NavidromePlaylistScreen(
-                        instance: widget.instance,
-                        playlistId: pl.id,
-                        initialName: pl.name,
-                      ),
+                  pushScreen<void>(
+                    context,
+                    NavidromePlaylistScreen(
+                      instance: widget.instance,
+                      playlistId: pl.id,
+                      initialName: pl.name,
                     ),
                   );
                 },

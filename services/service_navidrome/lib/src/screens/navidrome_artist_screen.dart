@@ -331,13 +331,12 @@ class NavidromeArtistScreen extends ConsumerWidget {
                         return InkWell(
                           borderRadius: BorderRadius.circular(12),
                           onTap: () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => NavidromeAlbumScreen(
-                                  instance: instance,
-                                  albumId: album.id,
-                                  initialAlbum: album,
-                                ),
+                            await pushScreen<void>(
+                              context,
+                              NavidromeAlbumScreen(
+                                instance: instance,
+                                albumId: album.id,
+                                initialAlbum: album,
                               ),
                             );
                             ref.invalidate(
