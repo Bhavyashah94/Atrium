@@ -34,7 +34,8 @@ class QbitLogEntry {
   /// The content of the log entry.
   final String message;
 
-  /// Timestamp (epoch milliseconds, or seconds on some older versions).
+  /// When the message was logged, in seconds since the epoch. qBittorrent
+  /// sent milliseconds before 4.5.0, so [dateTime] reads either.
   final int timestamp;
 
   /// Message type: 1 = normal, 2 = info, 4 = warning, 8 = critical.
