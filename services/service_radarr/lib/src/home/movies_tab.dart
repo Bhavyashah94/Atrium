@@ -167,14 +167,11 @@ class _MoviesTabState extends ConsumerState<MoviesTab>
                   backgroundColor: theme.colorScheme.primaryContainer,
                   foregroundColor: theme.colorScheme.onPrimaryContainer,
                   onPressed: () {
-                    final String activeQuery =
-                        ref.read(radarrSearchQueryProvider(widget.instance)).trim();
                     Navigator.of(context, rootNavigator: true).push(
                       FadePageRoute<void>(
                         builder: (BuildContext context) => AddMovieScreen(
                           instance: widget.instance,
-                          initialQuery:
-                              activeQuery.isNotEmpty ? activeQuery : null,
+                          initialQuery: query.isNotEmpty ? query : null,
                         ),
                       ),
                     );
