@@ -168,15 +168,12 @@ class _SeriesTabState extends ConsumerState<SeriesTab>
                   backgroundColor: theme.colorScheme.primaryContainer,
                   foregroundColor: theme.colorScheme.onPrimaryContainer,
                   onPressed: () {
-                    final String activeQuery =
-                        ref.read(sonarrSearchQueryProvider(widget.instance)).trim();
                     Navigator.of(context, rootNavigator: true).push(
                       FadePageRoute<void>(
                         builder: (BuildContext context) =>
                             SonarrAddSeriesSearchScreen(
                           instance: widget.instance,
-                          initialQuery:
-                              activeQuery.isNotEmpty ? activeQuery : null,
+                          initialQuery: query.isNotEmpty ? query : null,
                         ),
                       ),
                     );
