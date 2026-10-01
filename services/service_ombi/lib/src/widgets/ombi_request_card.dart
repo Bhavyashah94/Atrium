@@ -205,5 +205,5 @@ String _ago(DateTime when, DateTime now) {
   if (d.inDays < 30) {
     return '${d.inDays}d ago';
   }
-  return DateFormat.yMMMd().format(when);
+  return DateFormat.yMMMd().format(when.toLocal());
 }

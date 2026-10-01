@@ -30,7 +30,7 @@ OmbiRequest ombiRequestFromMovie(MovieRequests m) => OmbiRequest(
       backdropUrl: ombiBackdropUrl(m.background),
       overview: _text(m.overview),
       requestedBy: _requester(m.requestedByAlias, m.requestedUser),
-      requestedAt: _date(m.requestedDate),
+      requestedAt: _utcDate(m.requestedDate),
       deniedReason: _text(m.deniedReason),
       denied: m.denied ?? false,
       has4K: m.has4KRequest ?? false,
@@ -59,7 +59,7 @@ OmbiRequest ombiRequestFromChild(ChildRequests c) {
     backdropUrl: ombiBackdropUrl(show?.background),
     overview: _text(show?.overview),
     requestedBy: _requester(c.requestedByAlias, c.requestedUser),
-    requestedAt: _date(c.requestedDate),
+    requestedAt: _utcDate(c.requestedDate),
     deniedReason: _text(c.deniedReason),
     denied: c.denied ?? false,
     // Ombi's own rule for its cards: any requested episode being in.
@@ -242,6 +242,30 @@ String? _text(String? s) {
 }
 
 DateTime? _date(String? s) => s == null ? null : DateTime.tryParse(s);
+
+/// When a movie or TV request was made.
+///
+/// Ombi stores these in UTC and sends them with no zone on them, which a
+/// plain parse reads as this phone's local time: every request would then
+/// look older, or newer, by the phone's distance from UTC. A date that does
+/// name its zone is left as it is. Albums are not read this way, since Ombi
+/// stamps those in its own local time.
+DateTime? _utcDate(String? s) {
+  final DateTime? d = _date(s);
+  if (d == null || d.isUtc) {
+    return d;
+  }
+  return DateTime.utc(
+    d.year,
+    d.month,
+    d.day,
+    d.hour,
+    d.minute,
+    d.second,
+    d.millisecond,
+    d.microsecond,
+  );
+}
 
 /// A score worth showing. TheMovieDB reports an unrated title as zero.
 double? _rating(double? value) => (value == null || value <= 0) ? null : value;

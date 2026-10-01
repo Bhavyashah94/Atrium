@@ -14,12 +14,35 @@ void main() {
       expect(r.title, 'Arrival');
       expect(r.year, 2016);
       expect(r.requestedBy, 'alice');
-      expect(r.requestedAt, DateTime.parse('2026-09-18T10:15:00'));
+      expect(r.requestedAt, DateTime.utc(2026, 9, 18, 10, 15));
       expect(r.status, OmbiRequestStatus.pending);
       expect(
         r.posterUrl,
         'https://image.tmdb.org/t/p/w342/x2FJsf1ElAgr63Y3PNPtJrcmpoe.jpg',
       );
+    });
+
+    test('a movie or TV request date with no zone on it is UTC', () {
+      // Ombi stores these with DateTime.UtcNow and sends them bare. Read as
+      // local time, a request made minutes ago shows as hours old anywhere
+      // that is not on UTC.
+      final OmbiRequest movie =
+          ombiRequestFromMovie(MovieRequests.fromJson(movieRequestJson()));
+      final OmbiRequest show =
+          ombiRequestFromChild(ChildRequests.fromJson(childRequestJson()));
+
+      expect(movie.requestedAt, DateTime.utc(2026, 9, 18, 10, 15));
+      expect(show.requestedAt, DateTime.utc(2026, 9, 17, 8));
+    });
+
+    test('a request date that names its zone keeps it', () {
+      final OmbiRequest r = ombiRequestFromMovie(
+        MovieRequests.fromJson(
+          movieRequestJson(requestedDate: '2026-09-18T12:15:00+02:00'),
+        ),
+      );
+
+      expect(r.requestedAt, DateTime.utc(2026, 9, 18, 10, 15));
     });
 
     test('status follows Ombi request list: available, denied, approved',
