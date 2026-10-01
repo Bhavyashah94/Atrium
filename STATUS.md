@@ -1,6 +1,6 @@
 # Atrium - Status
 
-> Snapshot of what genuinely works and what is left, as of 2026-10-01.
+> Snapshot of what genuinely works and what is left, as of 2026-10-02.
 > Atrium is published on F-Droid and on the GitHub releases page. It is
 > still in early development and every module is work in progress; nothing
 > here is a release promise.
@@ -79,13 +79,18 @@ Atrium is a **controller** app. Video playback was removed by design
 - **Seerr** (Jellyseerr / Overseerr): discover (trending/upcoming/genres),
   search, item detail with request submission (profile/folder/server
   selection), requests management (approve/decline/delete/retry)
-- **Ombi** (beta, added 2026-09-19, live-verified against 4.53): requests
-  for movies, TV and, where Lidarr is set up, music, filtered as Ombi's own
-  Requests page filters them, with approve / deny (with a reason) / delete;
-  search and a Discover tab (popular and upcoming movies, popular and
-  trending TV) whose request sheet reads a title's state before offering to
-  request it; Ombi rows on the dashboard's Requests widget. Every state is
-  worded the way Ombi's own pages word it
+- **Ombi** (beta, added 2026-09-19, live-verified against 4.53, restyled
+  2026-10-02): its own screen with a bottom bar for Requests and Discover
+  and search in the app bar. Requests for movies, TV and, where Lidarr is
+  set up, music, filtered as Ombi's own Requests page filters them, each
+  filter showing its count, as cards with approve / deny (with a reason) /
+  delete and, for a show, the seasons asked for and how many episodes are
+  in; tapping a card opens the title. Search and a Discover tab (popular
+  and upcoming movies, popular and trending TV, with year, score and
+  requested / available marks) open a title sheet with backdrop, tagline,
+  runtime, genres and network that reads the title's state before offering
+  to request it; Ombi rows on the dashboard's Requests widget. Every state
+  is worded the way Ombi's own pages word it
 - **Tautulli**: activity (10s poll) with backdrop session cards and a
   detail sheet (codecs, decisions, bandwidth, terminate with inline
   errors), history, 30-day stats, users - restyled to the expressive
