@@ -361,6 +361,46 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('says why a denied request was denied',
+        (WidgetTester tester) async {
+      fake
+        ..onCounts('movie', all: 2, pending: 1, denied: 1)
+        ..on(
+          'GET',
+          _movies('denied/'),
+          pageJson(<Map<String, dynamic>>[
+            movieRequestJson(denied: true, deniedReason: 'Already on Plex'),
+          ]),
+        );
+      await open(tester);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Denied (1)'));
+      await settle(tester);
+
+      expect(find.text('Denied'), findsOneWidget);
+      expect(find.text('Already on Plex'), findsOneWidget);
+    });
+
+    // Ombi clears the denied flag when a denied request is approved after
+    // all, and leaves the old reason on it.
+    testWidgets('drops the reason of a denial that was later overturned',
+        (WidgetTester tester) async {
+      fake.on(
+        'GET',
+        _movies('processing/'),
+        pageJson(<Map<String, dynamic>>[
+          movieRequestJson(approved: true, deniedReason: 'Already on Plex'),
+        ]),
+      );
+      await open(tester);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Processing (2)'));
+      await settle(tester);
+
+      expect(find.text('Processing Request'), findsOneWidget);
+      expect(find.text('Already on Plex'), findsNothing);
+    });
   });
 
   group('the screen itself', () {

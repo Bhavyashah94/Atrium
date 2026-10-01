@@ -42,7 +42,11 @@ class OmbiRequestCard extends StatelessWidget {
         theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant);
     final String? byLine = _byLine();
     final String? episodes = ombiEpisodesLine(request);
-    final String? deniedReason = request.deniedReason;
+    // Ombi leaves the reason on a request whose denial was later overturned,
+    // so it is only said where the card says Denied.
+    final String? deniedReason = request.status == OmbiRequestStatus.denied
+        ? request.deniedReason
+        : null;
     final int? year = request.year;
 
     return Material(
