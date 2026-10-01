@@ -1,6 +1,6 @@
 # Atrium - Status
 
-> Snapshot of what genuinely works and what is left, as of 2026-09-21.
+> Snapshot of what genuinely works and what is left, as of 2026-10-01.
 > Atrium is published on F-Droid and on the GitHub releases page. It is
 > still in early development and every module is work in progress; nothing
 > here is a release promise.
@@ -61,7 +61,8 @@ Atrium is a **controller** app. Video playback was removed by design
   queue/wanted/history/blocklist/system tabs, and a full Settings editor
   (17 panels) - settings writes live-verified
 - **Radarr**: same depth as Sonarr, movie flavored
-- **Lidarr** (beta, added in 1.5.0): artists and discography with grid and
+- **Lidarr** (added in 1.5.0, out of beta since 2026-10-01): artists and
+  discography with grid and
   list views and bulk actions, artist detail with release-type filters,
   album and track detail with a file inspector and single-track search,
   album studio, track file rename/retag previews and manual import, wanted
@@ -69,8 +70,7 @@ Atrium is a **controller** app. Video playback was removed by design
   tree (profiles, download clients, indexers, import lists, notifications,
   metadata, media management, quality definitions), system diagnostics and
   an in-app log viewer with level filtering and search. Album releases also
-  appear in the shared calendar. Marked beta: it has not been exercised
-  against a live Lidarr for long
+  appear in the shared calendar
 - **Prowlarr**: indexers (add/edit/test from schema), manual search
   across indexers with grab-to-client, history, full settings menu,
   system
@@ -137,7 +137,8 @@ Atrium is a **controller** app. Video playback was removed by design
 - **Beszel**: systems list, live metrics, and a per-system detail screen
 - **dashdot**: live CPU, memory, disk, and GPU usage with a system-info tab,
   and a dashboard widget with a circular monitor and live vitals
-- **Unraid** (beta): array state with parity and per-disk usage, temperature
+- **Unraid** (out of beta since 2026-10-01): array state with parity and
+  per-disk usage, temperature
   and health, system with per-core CPU load and an About card, Docker
   containers with a detail sheet and start/stop/pause/resume, and virtual
   machines with start, shut down, pause, resume, reboot, force stop and reset

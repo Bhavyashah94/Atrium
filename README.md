@@ -58,7 +58,7 @@ each one covers:
 | ---------------------- | --------------------------------------------------------------------- |
 | Sonarr                 | 7 tabs incl. full Settings editor, sort/filter, calendar              |
 | Radarr                 | same depth as Sonarr, movie flavored                                  |
-| Lidarr                 | artists, albums and tracks, wanted, activity, settings, log reader (beta) |
+| Lidarr                 | artists, albums and tracks, wanted, activity, settings, log reader    |
 | Prowlarr               | indexers, search + grab, history, settings, system                    |
 | Bazarr                 | series/movies, wanted, manual subtitle search, system                 |
 | Seerr                  | discover, search, requests management                                 |
@@ -81,7 +81,7 @@ each one covers:
 | Beszel                 | systems list, live metrics, per-system detail screen                  |
 | dashdot                | live CPU, memory, disk, and GPU usage with a system-info tab, dashboard widget |
 | Gluetun                | VPN status, forwarded port, reconnect, dashboard widget               |
-| Unraid                 | array and disk health, system with per-core load, Docker, VM control (beta) |
+| Unraid                 | array and disk health, system with per-core load, Docker, VM control  |
 
 ## Install
 
