@@ -101,7 +101,8 @@ void main() {
     expect(ServiceKind.qbittorrent.isBeta, isFalse);
     // Tracearr graduated out of beta once its rebuild landed.
     expect(ServiceKind.tracearr.isBeta, isFalse);
-    expect(ServiceKind.unraid.isBeta, isTrue);
+    expect(ServiceKind.unraid.isBeta, isFalse);
+    expect(ServiceKind.lidarr.isBeta, isFalse);
     expect(ServiceKind.navidrome.isBeta, isTrue);
     expect(ServiceKind.myspeed.isBeta, isFalse);
   });
