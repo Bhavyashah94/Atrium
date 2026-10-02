@@ -770,15 +770,12 @@ class NavidromePlaylistScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: <Widget>[
-                                  GestureDetector(
-                                    onTap: () {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(pl.name),
-                                          duration: const Duration(seconds: 2),
-                                        ),
-                                      );
-                                    },
+                                  // The whole name on a tap. A
+                                  // tooltip, since a snackbar queues one
+                                  // per tap and holds up real messages.
+                                  Tooltip(
+                                    message: pl.name,
+                                    triggerMode: TooltipTriggerMode.tap,
                                     child: Text(
                                       pl.name,
                                       style: theme.textTheme.headlineMedium?.copyWith(

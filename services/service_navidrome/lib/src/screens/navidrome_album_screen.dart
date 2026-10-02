@@ -504,6 +504,20 @@ class NavidromeAlbumScreen extends ConsumerWidget {
                                       width: 140,
                                       height: 140,
                                       fit: BoxFit.contain,
+                                      // Without one a cover that fails to
+                                      // load is an empty square that still
+                                      // pushes the title aside.
+                                      errorWidget: (_, __, ___) => Container(
+                                        width: 140,
+                                        height: 140,
+                                        color: cs.surfaceContainerHighest,
+                                        child: Icon(
+                                          Icons.album_rounded,
+                                          size: 48,
+                                          color: cs.onSurfaceVariant
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                      ),
                                     )
                                   : Container(
                                       width: 140,
@@ -523,15 +537,12 @@ class NavidromeAlbumScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: <Widget>[
-                                  GestureDetector(
-                                    onTap: () {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(album.name),
-                                          duration: const Duration(seconds: 2),
-                                        ),
-                                      );
-                                    },
+                                  // The whole title on a tap. A
+                                  // tooltip, since a snackbar queues one
+                                  // per tap and holds up real messages.
+                                  Tooltip(
+                                    message: album.name,
+                                    triggerMode: TooltipTriggerMode.tap,
                                     child: Text(
                                       album.name,
                                       style: theme.textTheme.headlineMedium?.copyWith(
