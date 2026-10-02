@@ -15,18 +15,6 @@ import 'widgets/navidrome_artists_tab.dart';
 import 'widgets/navidrome_overview_tab.dart';
 import 'widgets/navidrome_playlist_dialogs.dart';
 
-String _formatDuration(int seconds) {
-  if (seconds <= 0) return '0:00';
-  final int m = seconds ~/ 60;
-  final int s = seconds % 60;
-  if (m >= 60) {
-    final int h = m ~/ 60;
-    final int remM = m % 60;
-    return '$h:${remM.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-  }
-  return '$m:${s.toString().padLeft(2, '0')}';
-}
-
 /// Filter categories for the Albums tab.
 enum NavidromeAlbumCategory {
   all('All', 'alphabeticalByName'),
@@ -515,54 +503,22 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: Insets.sm),
+          return GridView.builder(
+            padding: const EdgeInsets.all(Insets.md),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.74,
+              crossAxisSpacing: Insets.sm,
+              mainAxisSpacing: Insets.sm,
+            ),
             itemCount: playlists.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (BuildContext ctx, int index) {
               final NavidromePlaylist pl = playlists[index];
               final String? coverUrl =
-                  client?.getCoverArtUrl(pl.coverArt, size: 160);
+                  client?.getCoverArtUrl(pl.coverArt, size: 300);
 
-              return ListTile(
-                leading: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    color: cs.primaryContainer,
-                    child: coverUrl != null
-                        ? AtriumNetworkImage(
-                            imageUrl: coverUrl,
-                            fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) => Icon(
-                              Icons.queue_music_rounded,
-                              size: 24,
-                              color: cs.onPrimaryContainer,
-                            ),
-                          )
-                        : Icon(
-                            Icons.queue_music_rounded,
-                            size: 24,
-                            color: cs.onPrimaryContainer,
-                          ),
-                  ),
-                ),
-                title: Text(
-                  pl.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: Text(
-                  '${pl.songCount} songs • ${_formatDuration(pl.duration)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurfaceVariant,
-                  ),
-                ),
-                trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+              return InkWell(
+                borderRadius: BorderRadius.circular(12),
                 onTap: () {
                   pushScreen<void>(
                     context,
@@ -573,6 +529,53 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
                     ),
                   );
                 },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    AspectRatio(
+                      aspectRatio: 1.0,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: coverUrl != null
+                            ? AtriumNetworkImage(
+                                imageUrl: coverUrl,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) => Container(
+                                  color: cs.surfaceContainerHighest,
+                                  child: const Icon(
+                                    Icons.queue_music_rounded,
+                                    size: 40,
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                color: cs.surfaceContainerHighest,
+                                child: const Icon(
+                                  Icons.queue_music_rounded,
+                                  size: 40,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      pl.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      '${pl.songCount} songs',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               );
             },
           );
