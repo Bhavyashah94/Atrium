@@ -52,6 +52,9 @@ abstract class QbitTorrent with _$QbitTorrent {
     /// tracker currently answering" rather than "this torrent has no
     /// trackers".
     @Default('') String tracker,
+
+    /// Whether the torrent is private (true) or public (false).
+    @Default(false) bool private,
   }) = _QbitTorrent;
 
   factory QbitTorrent.fromJson(Map<String, dynamic> json) =>

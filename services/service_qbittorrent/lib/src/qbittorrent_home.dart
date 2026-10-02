@@ -1159,6 +1159,8 @@ class _TorrentTileState extends ConsumerState<_TorrentTile> {
                               label: friendlyState(torrent.state),
                               visual: v,
                             ),
+                            const SizedBox(width: Insets.xs),
+                            _PrivacyBadge(isPrivate: torrent.private),
                             const SizedBox(width: Insets.sm),
                             Expanded(
                               child: Text(
@@ -1577,6 +1579,47 @@ class _SpeedPill extends StatelessWidget {
                   color: fg,
                   fontWeight: FontWeight.w700,
                 ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrivacyBadge extends StatelessWidget {
+  const _PrivacyBadge({required this.isPrivate});
+
+  final bool isPrivate;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme cs = theme.colorScheme;
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: isPrivate
+            ? cs.tertiaryContainer.withValues(alpha: 0.5)
+            : cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(
+            isPrivate ? Icons.lock_outline : Icons.public,
+            size: 11,
+            color: isPrivate ? cs.onTertiaryContainer : cs.onSurfaceVariant,
+          ),
+          const SizedBox(width: 3),
+          Text(
+            isPrivate ? 'Private' : 'Public',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: isPrivate ? cs.onTertiaryContainer : cs.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+              fontSize: 10,
+            ),
           ),
         ],
       ),
