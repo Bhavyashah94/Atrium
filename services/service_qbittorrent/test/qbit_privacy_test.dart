@@ -1,6 +1,7 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -131,6 +132,26 @@ void main() {
       expect(find.text('Public'), findsNothing);
       expect(find.text('Private'), findsNothing);
     });
+
+    // The state pill and the badge share a line with the sizes. Where they
+    // do not all fit the sizes move down a line: cut short they would read
+    // "754 MB / 7...", which leaves out the number the line is there for.
+    testWidgets('keeps the sizes whole on a narrow phone',
+        (WidgetTester tester) async {
+      await _openList(
+        tester,
+        <Map<String, dynamic>>[
+          torrentRowJson(name: 'Private one', private: true),
+        ],
+        width: 320,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(_badgeOf(tester, 'Private one'), 'Private');
+      final Finder sizes = find.text('754 MB / 754 MB');
+      expect(sizes, findsOneWidget);
+      expect(_isCutShort(tester, sizes), isFalse);
+    });
   });
 
   group("a torrent's own screen", () {
@@ -195,6 +216,27 @@ void main() {
         expect(find.text('Private'), findsNothing, reason: '$release');
       }
     });
+
+    // Both speeds, the privacy pill and the time left share one line.
+    testWidgets('fits a narrow phone while a private torrent downloads',
+        (WidgetTester tester) async {
+      await _openDetail(
+        tester,
+        QbitRelease.v512,
+        private: true,
+        state: 'downloading',
+        progress: 0.42,
+        dlSpeed: 11744051,
+        upSpeed: 1153433,
+        eta: 1630,
+        width: 320,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Private'), findsOneWidget);
+      expect(find.text('11.2 MB/s'), findsOneWidget);
+      expect(find.text('27m 10s'), findsOneWidget);
+    });
   });
 }
 
@@ -208,8 +250,8 @@ const Instance _instance = Instance(
   auth: InstanceAuth.apiKey(apiKey: 'k'),
 );
 
-void _phone(WidgetTester tester) {
-  tester.view.physicalSize = const Size(411, 1600);
+void _phone(WidgetTester tester, double width) {
+  tester.view.physicalSize = Size(width, 1600);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -217,9 +259,10 @@ void _phone(WidgetTester tester) {
 
 Future<void> _openList(
   WidgetTester tester,
-  List<Map<String, dynamic>> rows,
-) async {
-  _phone(tester);
+  List<Map<String, dynamic>> rows, {
+  double width = 411,
+}) async {
+  _phone(tester, width);
   await tester.pumpWidget(
     ProviderScope(
       overrides: <Override>[
@@ -245,14 +288,23 @@ Future<void> _openDetail(
   required bool private,
   bool hasMetadata = true,
   String state = 'stalledUP',
+  double progress = 1,
+  int dlSpeed = 0,
+  int upSpeed = 0,
+  int eta = 8640000,
+  double width = 411,
 }) async {
-  _phone(tester);
+  _phone(tester, width);
   final QbitTorrent row = QbitTorrent.fromJson(
     torrentRowJson(
       release: release,
       private: private,
       hasMetadata: hasMetadata,
       state: state,
+      progress: progress,
+      dlspeed: dlSpeed,
+      upspeed: upSpeed,
+      eta: eta,
     ),
   );
   await tester.pumpWidget(
@@ -268,6 +320,8 @@ Future<void> _openDetail(
               release: release,
               private: private,
               hasMetadata: hasMetadata,
+              dlSpeed: dlSpeed,
+              upSpeed: upSpeed,
             ),
           ),
         ),
@@ -297,4 +351,11 @@ String? _badgeOf(WidgetTester tester, String name) {
     }
   }
   return null;
+}
+
+bool _isCutShort(WidgetTester tester, Finder text) {
+  final RenderParagraph paragraph = tester.renderObject<RenderParagraph>(text);
+  return paragraph.didExceedMaxLines ||
+      paragraph.size.width + 0.5 <
+          paragraph.getMaxIntrinsicWidth(double.infinity);
 }

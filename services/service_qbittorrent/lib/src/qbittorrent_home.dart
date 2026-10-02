@@ -1153,31 +1153,40 @@ class _TorrentTileState extends ConsumerState<_TorrentTile> {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Row(
+                        // A Wrap, so that where the pill and the badge leave
+                        // the sizes no room they move down a line rather
+                        // than being cut short.
+                        Wrap(
+                          spacing: Insets.sm,
+                          runSpacing: Insets.xs,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: <Widget>[
-                            _StatePill(
-                              label: friendlyState(torrent.state),
-                              visual: v,
-                            ),
-                            // Only where the server says which it is: a
-                            // torrent it has not spoken for is not public.
-                            if (torrent.private
-                                case final bool isPrivate) ...<Widget>[
-                              const SizedBox(width: Insets.xs),
-                              _PrivacyBadge(isPrivate: isPrivate),
-                            ],
-                            const SizedBox(width: Insets.sm),
-                            Expanded(
-                              child: Text(
-                                '${fmtBytes(torrent.downloaded)} / ${fmtBytes(torrent.size)}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: isSelected
-                                      ? cs.onPrimaryContainer
-                                          .withValues(alpha: 0.8)
-                                      : cs.onSurfaceVariant,
+                            // The pill and the badge keep to each other, and
+                            // part only where one line cannot hold both.
+                            Wrap(
+                              spacing: Insets.xs,
+                              runSpacing: Insets.xs,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: <Widget>[
+                                _StatePill(
+                                  label: friendlyState(torrent.state),
+                                  visual: v,
                                 ),
+                                // Only where the server says which it is: a
+                                // torrent it has not spoken for is not public.
+                                if (torrent.private case final bool isPrivate)
+                                  _PrivacyBadge(isPrivate: isPrivate),
+                              ],
+                            ),
+                            Text(
+                              '${fmtBytes(torrent.downloaded)} / ${fmtBytes(torrent.size)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: isSelected
+                                    ? cs.onPrimaryContainer
+                                        .withValues(alpha: 0.8)
+                                    : cs.onSurfaceVariant,
                               ),
                             ),
                           ],

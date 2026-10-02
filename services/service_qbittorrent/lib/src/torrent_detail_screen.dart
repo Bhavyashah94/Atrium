@@ -360,28 +360,42 @@ class _OverviewTab extends ConsumerWidget {
                     const SizedBox(height: Insets.md),
                     Row(
                       children: <Widget>[
-                        _MiniPill(
-                          icon: Icons.south,
-                          label: '${fmtBytes(p.dlSpeed)}/s',
-                          color: cs.primary,
-                        ),
-                        const SizedBox(width: Insets.sm),
-                        _MiniPill(
-                          icon: Icons.north,
-                          label: '${fmtBytes(p.upSpeed)}/s',
-                          color: cs.tertiary,
-                        ),
-                        // Only where the server says which it is.
-                        if (isPrivate != null) ...<Widget>[
-                          const SizedBox(width: Insets.sm),
-                          _MiniPill(
-                            icon: isPrivate ? Icons.lock_outline : Icons.public,
-                            label: isPrivate ? 'Private' : 'Public',
-                            color: isPrivate ? cs.tertiary : cs.outline,
+                        // A Wrap, so that on a narrow screen the pills take
+                        // a second line rather than push the time left off
+                        // the edge.
+                        Expanded(
+                          child: Wrap(
+                            spacing: Insets.sm,
+                            runSpacing: Insets.sm,
+                            children: <Widget>[
+                              _MiniPill(
+                                icon: Icons.south,
+                                label: '${fmtBytes(p.dlSpeed)}/s',
+                                color: cs.primary,
+                              ),
+                              _MiniPill(
+                                icon: Icons.north,
+                                label: '${fmtBytes(p.upSpeed)}/s',
+                                color: cs.tertiary,
+                              ),
+                              // Only where the server says which it is.
+                              if (isPrivate != null)
+                                _MiniPill(
+                                  icon: isPrivate
+                                      ? Icons.lock_outline
+                                      : Icons.public,
+                                  label: isPrivate ? 'Private' : 'Public',
+                                  // Not the outline colour: that one is
+                                  // for borders and reads as disabled.
+                                  color: isPrivate
+                                      ? cs.tertiary
+                                      : cs.onSurfaceVariant,
+                                ),
+                            ],
                           ),
-                        ],
-                        const Spacer(),
+                        ),
                         if (progress < 1.0) ...<Widget>[
+                          const SizedBox(width: Insets.sm),
                           Icon(
                             Icons.schedule,
                             size: 14,
