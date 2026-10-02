@@ -68,7 +68,7 @@ each one covers:
 | Jellyfin               | libraries, detail, seasons, music, sessions with remote control       |
 | Emby                   | same depth as Jellyfin                                                |
 | Plex                   | libraries, detail, seasons, music, genres, now-playing controller, plex.tv sign-in |
-| Navidrome              | artists, albums and tracks, playlists, ratings and favorites, search (beta) |
+| Navidrome              | artists, albums and tracks, playlists, ratings and favorites, search |
 | qBittorrent            | realtime list, add/manage, torrent detail, queue reorder, full settings, execution log |
 | Deluge                 | torrent list, add/manage, queue moves, speed limits, torrent detail (beta) |
 | Transmission           | the web UI's filters, actions and inspector, full settings, turtle mode |

@@ -134,14 +134,17 @@ Atrium is a **controller** app. Video playback was removed by design
   transport commands are exercised best-effort. Since 2026-09-18 the
   instance form offers a plex.tv sign-in beside the token field, which
   fills in a server that answers
-- **Navidrome** (beta, added 2026-09-10, depth by lxBlazarxl 2026-09-12 to
-  09-14): Subsonic API with signed requests and the envelope read for
-  errors; an overview tab; artists in list and grid views with section
-  badges; artist and album screens with half-page banners, biographies,
-  metadata badges and tracklists with artwork; five-star ratings and
-  favorites for artists and albums; custom playlists (create, rename,
-  delete, add tracks); search in the shape of Emby's; quick library scan;
-  artwork and web UI links respect a reverse-proxy sub-path
+- **Navidrome** (added 2026-09-10, out of beta since 2026-10-02, depth by
+  lxBlazarxl 2026-09-12 to 09-14): Subsonic API with signed requests and
+  the envelope read for errors; an overview tab; artists in list and grid
+  views with section badges named as the server names its index groups;
+  artist, album and playlist screens with half-page banners, the cover
+  beside the title, metadata badges and tracklists with artwork (an
+  album's banner is its artist's picture where there is one); albums and
+  playlists as cover grids; five-star ratings and favorites for artists
+  and albums; custom playlists (create, rename, delete, add tracks);
+  search in the shape of Emby's; quick library scan; artwork and web UI
+  links respect a reverse-proxy sub-path
 - **Glances**: per-instance polling, CPU/memory gauges, swap + per-core
   bars, network with interface pinning, disks, uptime
 - **Beszel**: systems list, live metrics, and a per-system detail screen
