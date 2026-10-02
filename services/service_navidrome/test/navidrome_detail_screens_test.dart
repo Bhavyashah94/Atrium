@@ -34,10 +34,8 @@ void main() {
   }
 
   group('an album', () {
-    // The banner behind the header and the cover beside the title are the
-    // same picture, so where one fails to load both do, and a cover with
-    // nothing to fall back on is an empty square that still pushes the
-    // title aside. Asked of the widgets rather than by failing a fetch,
+    // A picture with nothing to fall back on is an empty square that still
+    // pushes the title aside. Asked of the widgets rather than by failing a fetch,
     // because the image cache needs plugins a test does not have.
     testWidgets('gives every cover something to show if it will not load',
         (WidgetTester tester) async {
@@ -59,6 +57,52 @@ void main() {
       for (final AtriumNetworkImage cover in covers) {
         expect(cover.errorWidget, isNotNull);
       }
+    });
+
+    List<String> pictures(WidgetTester tester) => tester
+        .widgetList<AtriumNetworkImage>(find.byType(AtriumNetworkImage))
+        .map((AtriumNetworkImage image) => Uri.parse(image.imageUrl))
+        .map((Uri url) => url.queryParameters['id']!)
+        .toList();
+
+    // One picture each: the artist across the banner, the album's cover in
+    // the square beside the title.
+    testWidgets('shows the artist in the banner and the cover by the title',
+        (WidgetTester tester) async {
+      fake
+        ..on('getAlbum', albumJson(coverArt: 'al-1_0'))
+        ..on(
+          'getArtist',
+          artistJson(imageUrl: 'http://navidrome.test/share/img/abc'),
+        );
+      await open(
+        tester,
+        const NavidromeAlbumScreen(
+          instance: navidromeTestInstance,
+          albumId: 'al-1',
+        ),
+      );
+
+      // The banner, the cover beside the title, and the one track's own.
+      expect(pictures(tester), <String>['ar-ar-1', 'al-1_0', 'al-1_0']);
+    });
+
+    // For an artist with no picture Navidrome serves a white star of its
+    // own, with a good status. The cover makes the better banner.
+    testWidgets('keeps the cover as the banner for an artist with no picture',
+        (WidgetTester tester) async {
+      fake
+        ..on('getAlbum', albumJson(coverArt: 'al-1_0'))
+        ..on('getArtist', artistJson());
+      await open(
+        tester,
+        const NavidromeAlbumScreen(
+          instance: navidromeTestInstance,
+          albumId: 'al-1',
+        ),
+      );
+
+      expect(pictures(tester), <String>['al-1_0', 'al-1_0', 'al-1_0']);
     });
 
     testWidgets('shows its whole title when the title is tapped',

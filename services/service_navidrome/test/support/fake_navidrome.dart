@@ -112,6 +112,18 @@ Map<String, dynamic> playlistsJson(List<Map<String, dynamic>> playlists) =>
       'playlists': <String, dynamic>{'playlist': playlists},
     };
 
+/// `getArtist`. Navidrome sends `artistImageUrl` for an artist it has a
+/// picture of and leaves it out for one it does not.
+Map<String, dynamic> artistJson({String? imageUrl}) => <String, dynamic>{
+      'artist': <String, dynamic>{
+        'id': 'ar-1',
+        'name': 'Pink Floyd',
+        'albumCount': 1,
+        'coverArt': 'ar-ar-1_0',
+        if (imageUrl != null) 'artistImageUrl': imageUrl,
+      },
+    };
+
 Map<String, dynamic> albumJson({
   String id = 'al-1',
   String name = 'The Dark Side of the Moon',
