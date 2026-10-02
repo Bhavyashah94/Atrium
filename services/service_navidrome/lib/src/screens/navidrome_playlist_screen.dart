@@ -729,61 +729,101 @@ class NavidromePlaylistScreen extends ConsumerWidget {
                         left: Insets.lg,
                         right: Insets.lg,
                         bottom: Insets.sm,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: <Widget>[
-                            Text(
-                              pl.name,
-                              style: theme.textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                shadows: const <Shadow>[
-                                  Shadow(
-                                    color: Colors.black87,
-                                    offset: Offset(0, 1.5),
-                                    blurRadius: 6,
+                            ClipRRect(
+                              borderRadius: Radii.card,
+                              child: coverUrl != null && coverUrl.isNotEmpty
+                                  ? AtriumNetworkImage(
+                                      imageUrl: coverUrl,
+                                      width: 140,
+                                      height: 140,
+                                      fit: BoxFit.contain,
+                                      errorWidget: (_, __, ___) => Container(
+                                        width: 140,
+                                        height: 140,
+                                        color: cs.surfaceContainerHighest,
+                                        child: Icon(
+                                          Icons.queue_music_rounded,
+                                          size: 48,
+                                          color: cs.onSurfaceVariant
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                    )
+                                  : Container(
+                                      width: 140,
+                                      height: 140,
+                                      color: cs.surfaceContainerHighest,
+                                      child: Icon(
+                                        Icons.queue_music_rounded,
+                                        size: 48,
+                                        color: cs.onSurfaceVariant
+                                            .withValues(alpha: 0.5),
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(width: Insets.lg),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Text(
+                                    pl.name,
+                                    style: theme.textTheme.headlineMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      shadows: const <Shadow>[
+                                        Shadow(
+                                          color: Colors.black87,
+                                          offset: Offset(0, 1.5),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
+                                    ),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
+                                  if (pl.owner != null && pl.owner!.isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Created by ${pl.owner}',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: cs.onSurfaceVariant,
+                                        shadows: const <Shadow>[
+                                          Shadow(
+                                            color: Colors.black87,
+                                            offset: Offset(0, 1),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                  if (pl.comment != null &&
+                                      pl.comment!.isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      pl.comment!,
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: cs.onSurfaceVariant,
+                                        fontStyle: FontStyle.italic,
+                                        shadows: const <Shadow>[
+                                          Shadow(
+                                            color: Colors.black87,
+                                            offset: Offset(0, 1),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ],
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                            if (pl.owner != null && pl.owner!.isNotEmpty) ...<Widget>[
-                              const SizedBox(height: 4),
-                              Text(
-                                'Created by ${pl.owner}',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: cs.onSurfaceVariant,
-                                  shadows: const <Shadow>[
-                                    Shadow(
-                                      color: Colors.black87,
-                                      offset: Offset(0, 1),
-                                      blurRadius: 4,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                            if (pl.comment != null &&
-                                pl.comment!.isNotEmpty) ...<Widget>[
-                              const SizedBox(height: 4),
-                              Text(
-                                pl.comment!,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: cs.onSurfaceVariant,
-                                  fontStyle: FontStyle.italic,
-                                  shadows: const <Shadow>[
-                                    Shadow(
-                                      color: Colors.black87,
-                                      offset: Offset(0, 1),
-                                      blurRadius: 4,
-                                    ),
-                                  ],
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
                           ],
                         ),
                       ),

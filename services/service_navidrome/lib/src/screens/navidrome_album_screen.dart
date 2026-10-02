@@ -493,69 +493,98 @@ class NavidromeAlbumScreen extends ConsumerWidget {
                         left: Insets.lg,
                         right: Insets.lg,
                         bottom: Insets.sm,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: <Widget>[
-                            Text(
-                              album.name,
-                              style: theme.textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                shadows: const <Shadow>[
-                                  Shadow(
-                                    color: Colors.black87,
-                                    offset: Offset(0, 1.5),
-                                    blurRadius: 6,
-                                  ),
-                                ],
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                            ClipRRect(
+                              borderRadius: Radii.card,
+                              child: coverUrl != null
+                                  ? AtriumNetworkImage(
+                                      imageUrl: coverUrl,
+                                      width: 140,
+                                      height: 140,
+                                      fit: BoxFit.contain,
+                                    )
+                                  : Container(
+                                      width: 140,
+                                      height: 140,
+                                      color: cs.surfaceContainerHighest,
+                                      child: Icon(
+                                        Icons.album_rounded,
+                                        size: 48,
+                                        color: cs.onSurfaceVariant
+                                            .withValues(alpha: 0.5),
+                                      ),
+                                    ),
                             ),
-                            const SizedBox(height: 6),
-                            GestureDetector(
-                              onTap: album.artistId != null
-                                  ? () {
-                                      pushScreen<void>(
-                                        context,
-                                        NavidromeArtistScreen(
-                                          instance: instance,
-                                          artistId: album.artistId!,
-                                          initialArtistName: album.artist,
-                                        ),
-                                      );
-                                    }
-                                  : null,
-                              child: Row(
+                            const SizedBox(width: Insets.lg),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: <Widget>[
-                                  Flexible(
-                                    child: Text(
-                                      album.artist,
-                                      style:
-                                          theme.textTheme.titleMedium?.copyWith(
-                                        color: cs.primary,
-                                        fontWeight: FontWeight.w600,
-                                        shadows: const <Shadow>[
-                                          Shadow(
-                                            color: Colors.black87,
-                                            offset: Offset(0, 1),
-                                            blurRadius: 4,
+                                  Text(
+                                    album.name,
+                                    style: theme.textTheme.headlineMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      shadows: const <Shadow>[
+                                        Shadow(
+                                          color: Colors.black87,
+                                          offset: Offset(0, 1.5),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
+                                    ),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  GestureDetector(
+                                    onTap: album.artistId != null
+                                        ? () {
+                                            pushScreen<void>(
+                                              context,
+                                              NavidromeArtistScreen(
+                                                instance: instance,
+                                                artistId: album.artistId!,
+                                                initialArtistName: album.artist,
+                                              ),
+                                            );
+                                          }
+                                        : null,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        Flexible(
+                                          child: Text(
+                                            album.artist,
+                                            style:
+                                                theme.textTheme.titleMedium?.copyWith(
+                                              color: cs.primary,
+                                              fontWeight: FontWeight.w600,
+                                              shadows: const <Shadow>[
+                                                Shadow(
+                                                  color: Colors.black87,
+                                                  offset: Offset(0, 1),
+                                                  blurRadius: 4,
+                                                ),
+                                              ],
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (album.artistId != null) ...<Widget>[
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            Icons.chevron_right_rounded,
+                                            size: 18,
+                                            color: cs.primary,
                                           ),
                                         ],
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                      ],
                                     ),
                                   ),
-                                  if (album.artistId != null) ...<Widget>[
-                                    const SizedBox(width: 4),
-                                    Icon(
-                                      Icons.chevron_right_rounded,
-                                      size: 18,
-                                      color: cs.primary,
-                                    ),
-                                  ],
                                 ],
                               ),
                             ),
