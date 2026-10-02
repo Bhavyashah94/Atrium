@@ -559,38 +559,19 @@ class NavidromeAlbumScreen extends ConsumerWidget {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: <Widget>[
-                                if (album.year != null)
-                                  _AlbumBadge(
-                                    icon: Icons.calendar_today_rounded,
-                                    label: '${album.year}',
-                                  ),
-                                if (album.genre != null &&
-                                    album.genre!.isNotEmpty)
-                                  _AlbumBadge(
-                                    icon: Icons.music_note_rounded,
-                                    label: album.genre!,
-                                  ),
-                                _AlbumBadge(
-                                  icon: Icons.queue_music_rounded,
-                                  label:
-                                      '${detail.songs.length} ${detail.songs.length == 1 ? 'Track' : 'Tracks'}',
-                                ),
-                                if (album.duration > 0)
-                                  _AlbumBadge(
-                                    icon: Icons.schedule_rounded,
-                                    label: _formatAlbumDuration(album.duration),
-                                  ),
-                              ],
-                            ),
                           ],
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.all(Insets.lg),
+                sliver: SliverToBoxAdapter(
+                  child: _AlbumInfoSection(
+                    album: album,
+                    trackCount: detail.songs.length,
                   ),
                 ),
               ),
@@ -831,14 +812,14 @@ class NavidromeAlbumScreen extends ConsumerWidget {
   }
 }
 
-class _AlbumBadge extends StatelessWidget {
-  const _AlbumBadge({
-    required this.icon,
-    required this.label,
+class _AlbumInfoSection extends StatelessWidget {
+  const _AlbumInfoSection({
+    required this.album,
+    required this.trackCount,
   });
 
-  final IconData icon;
-  final String label;
+  final NavidromeAlbum album;
+  final int trackCount;
 
   @override
   Widget build(BuildContext context) {
@@ -846,32 +827,92 @@ class _AlbumBadge extends StatelessWidget {
     final ColorScheme cs = theme.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      width: double.infinity,
+      padding: const EdgeInsets.all(Insets.lg),
       decoration: BoxDecoration(
-        color: cs.secondaryContainer,
-        borderRadius: BorderRadius.circular(8),
+        color: cs.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(
-            icon,
-            size: 15,
-            color: cs.onSecondaryContainer,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: cs.onSecondaryContainer,
-              fontWeight: FontWeight.bold,
+          if (album.year != null)
+            _AlbumInfoRow(
+              icon: Icons.calendar_today_rounded,
+              label: 'Year',
+              value: '${album.year}',
             ),
+          if (album.genre != null && album.genre!.isNotEmpty) ...<Widget>[
+            if (album.year != null) const SizedBox(height: Insets.sm),
+            _AlbumInfoRow(
+              icon: Icons.music_note_rounded,
+              label: 'Genre',
+              value: album.genre!,
+            ),
+          ],
+          if (album.year != null || (album.genre != null && album.genre!.isNotEmpty))
+            const SizedBox(height: Insets.sm),
+          _AlbumInfoRow(
+            icon: Icons.queue_music_rounded,
+            label: 'Tracks',
+            value: '$trackCount ${trackCount == 1 ? 'Track' : 'Tracks'}',
           ),
+          if (album.duration > 0) ...<Widget>[
+            const SizedBox(height: Insets.sm),
+            _AlbumInfoRow(
+              icon: Icons.schedule_rounded,
+              label: 'Duration',
+              value: _formatAlbumDuration(album.duration),
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _AlbumInfoRow extends StatelessWidget {
+  const _AlbumInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme cs = theme.colorScheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Icon(icon, size: 20, color: cs.primary),
+        const SizedBox(width: Insets.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
