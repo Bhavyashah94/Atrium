@@ -784,33 +784,19 @@ class NavidromePlaylistScreen extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ],
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: <Widget>[
-                                _PlaylistBadge(
-                                  icon: Icons.queue_music_rounded,
-                                  label:
-                                      '${detail.songs.length} ${detail.songs.length == 1 ? 'Track' : 'Tracks'}',
-                                ),
-                                if (pl.duration > 0)
-                                  _PlaylistBadge(
-                                    icon: Icons.schedule_rounded,
-                                    label: _formatAlbumDuration(pl.duration),
-                                  ),
-                                _PlaylistBadge(
-                                  icon: pl.public
-                                      ? Icons.public_rounded
-                                      : Icons.lock_outline_rounded,
-                                  label: pl.public ? 'Public' : 'Private',
-                                ),
-                              ],
-                            ),
                           ],
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.all(Insets.lg),
+                sliver: SliverToBoxAdapter(
+                  child: _PlaylistInfoSection(
+                    playlist: pl,
+                    trackCount: detail.songs.length,
                   ),
                 ),
               ),
@@ -1123,14 +1109,14 @@ class NavidromePlaylistScreen extends ConsumerWidget {
   }
 }
 
-class _PlaylistBadge extends StatelessWidget {
-  const _PlaylistBadge({
-    required this.icon,
-    required this.label,
+class _PlaylistInfoSection extends StatelessWidget {
+  const _PlaylistInfoSection({
+    required this.playlist,
+    required this.trackCount,
   });
 
-  final IconData icon;
-  final String label;
+  final NavidromePlaylist playlist;
+  final int trackCount;
 
   @override
   Widget build(BuildContext context) {
@@ -1138,31 +1124,84 @@ class _PlaylistBadge extends StatelessWidget {
     final ColorScheme cs = theme.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 3,
-      ),
+      width: double.infinity,
+      padding: const EdgeInsets.all(Insets.lg),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: cs.outlineVariant.withValues(alpha: 0.5),
-        ),
+        color: cs.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(icon, size: 12, color: cs.primary),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: cs.onSurface,
+          _PlaylistInfoRow(
+            icon: Icons.queue_music_rounded,
+            label: 'Tracks',
+            value: '$trackCount ${trackCount == 1 ? 'Track' : 'Tracks'}',
+          ),
+          if (playlist.duration > 0) ...<Widget>[
+            const SizedBox(height: Insets.sm),
+            _PlaylistInfoRow(
+              icon: Icons.schedule_rounded,
+              label: 'Duration',
+              value: _formatAlbumDuration(playlist.duration),
             ),
+          ],
+          const SizedBox(height: Insets.sm),
+          _PlaylistInfoRow(
+            icon: playlist.public
+                ? Icons.public_rounded
+                : Icons.lock_outline_rounded,
+            label: 'Visibility',
+            value: playlist.public ? 'Public' : 'Private',
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PlaylistInfoRow extends StatelessWidget {
+  const _PlaylistInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme cs = theme.colorScheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Icon(icon, size: 20, color: cs.primary),
+        const SizedBox(width: Insets.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
