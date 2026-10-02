@@ -308,6 +308,35 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
     );
   }
 
+  /// The grid the albums and the playlists share: two columns of square
+  /// covers, each over a line of title and a line of detail.
+  ///
+  /// A cell is as tall as its cover and those two lines at the text size in
+  /// use. A fixed shape left the text no room once the system font was set
+  /// larger, and the second line ran out of the cell.
+  SliverGridDelegate _coverGrid(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextScaler scaler = MediaQuery.textScalerOf(context);
+    double line(TextStyle? style, double size, double height) =>
+        scaler.scale(style?.fontSize ?? size) * (style?.height ?? height);
+
+    final double cover =
+        (MediaQuery.sizeOf(context).width - Insets.md * 2 - Insets.sm) / 2;
+    return SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 2,
+      crossAxisSpacing: Insets.sm,
+      mainAxisSpacing: Insets.sm,
+      mainAxisExtent: cover +
+          _coverGap +
+          line(theme.textTheme.titleSmall, 14, 1.43) +
+          line(theme.textTheme.bodySmall, 12, 1.33) +
+          Insets.md,
+    );
+  }
+
+  /// The space between a cover and the title under it.
+  static const double _coverGap = 6;
+
   Widget _buildAlbumsTab(
     ThemeData theme,
     ColorScheme cs,
@@ -360,12 +389,7 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
                 }
                 return GridView.builder(
                   padding: const EdgeInsets.all(Insets.md),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.74,
-                    crossAxisSpacing: Insets.sm,
-                    mainAxisSpacing: Insets.sm,
-                  ),
+                  gridDelegate: _coverGrid(context),
                   itemCount: albums.length,
                   itemBuilder: (BuildContext ctx, int index) {
                     final NavidromeAlbum album = albums[index];
@@ -413,7 +437,7 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
                                     ),
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: _coverGap),
                           Text(
                             album.name,
                             maxLines: 1,
@@ -446,7 +470,6 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
       ],
     );
   }
-
 
   Widget _buildPlaylistsTab(
     ThemeData theme,
@@ -502,13 +525,15 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
           }
 
           return GridView.builder(
-            padding: const EdgeInsets.all(Insets.md),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.74,
-              crossAxisSpacing: Insets.sm,
-              mainAxisSpacing: Insets.sm,
+            // The bottom keeps the last row clear of the add button, which
+            // floats over that corner.
+            padding: const EdgeInsets.fromLTRB(
+              Insets.md,
+              Insets.md,
+              Insets.md,
+              88,
             ),
+            gridDelegate: _coverGrid(context),
             itemCount: playlists.length,
             itemBuilder: (BuildContext ctx, int index) {
               final NavidromePlaylist pl = playlists[index];
@@ -555,7 +580,7 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
                               ),
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: _coverGap),
                     Text(
                       pl.name,
                       maxLines: 1,
@@ -565,7 +590,7 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
                       ),
                     ),
                     Text(
-                      '${pl.songCount} songs',
+                      pl.songCount == 1 ? '1 song' : '${pl.songCount} songs',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(

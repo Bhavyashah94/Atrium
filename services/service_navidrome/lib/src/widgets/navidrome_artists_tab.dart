@@ -97,16 +97,13 @@ class _NavidromeArtistsTabState extends ConsumerState<NavidromeArtistsTab> {
     );
   }
 
-  String _getSectionHeaderLabel(String groupName) {
-    if (groupName.isEmpty) return '#';
-    if (groupName.startsWith('[') && groupName.endsWith(']')) return '#';
-    final String firstChar = groupName[0];
-    if (RegExp(r'^[a-zA-Z]$').hasMatch(firstChar)) {
-      return firstChar.toUpperCase();
-    }
-    return '#';
-  }
-
+  /// The header of one index group, under the name the server gives it.
+  ///
+  /// Navidrome names its groups from its `IndexGroups` setting, and the
+  /// default has two names longer than a letter: `X-Z`, which holds X, Y
+  /// and Z, and `[Unknown]`. A server owner can name them anything, in any
+  /// script. So the badge shows the name as it is and widens to hold it,
+  /// rather than cutting it to a letter that would file Yes under X.
   Widget _buildSectionHeader(
     ThemeData theme,
     ColorScheme cs,
@@ -122,8 +119,10 @@ class _NavidromeArtistsTabState extends ConsumerState<NavidromeArtistsTab> {
       child: Row(
         children: <Widget>[
           Container(
-            width: 32,
             height: 32,
+            // Square for a single letter, wider for a longer name.
+            constraints: const BoxConstraints(minWidth: 32),
+            padding: const EdgeInsets.symmetric(horizontal: Insets.sm),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: <Color>[
@@ -144,7 +143,9 @@ class _NavidromeArtistsTabState extends ConsumerState<NavidromeArtistsTab> {
             ),
             alignment: Alignment.center,
             child: Text(
-              _getSectionHeaderLabel(group.name),
+              group.name.isEmpty ? '#' : group.name,
+              maxLines: 1,
+              softWrap: false,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: cs.onPrimaryContainer,
