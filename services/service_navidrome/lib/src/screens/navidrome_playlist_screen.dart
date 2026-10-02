@@ -770,20 +770,30 @@ class NavidromePlaylistScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: <Widget>[
-                                  Text(
-                                    pl.name,
-                                    style: theme.textTheme.headlineMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      shadows: const <Shadow>[
-                                        Shadow(
-                                          color: Colors.black87,
-                                          offset: Offset(0, 1.5),
-                                          blurRadius: 6,
+                                  GestureDetector(
+                                    onTap: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(pl.name),
+                                          duration: const Duration(seconds: 2),
                                         ),
-                                      ],
+                                      );
+                                    },
+                                    child: Text(
+                                      pl.name,
+                                      style: theme.textTheme.headlineMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        shadows: const <Shadow>[
+                                          Shadow(
+                                            color: Colors.black87,
+                                            offset: Offset(0, 1.5),
+                                            blurRadius: 6,
+                                          ),
+                                        ],
+                                      ),
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                   if (pl.owner != null && pl.owner!.isNotEmpty) ...<Widget>[
                                     const SizedBox(height: 4),
