@@ -273,6 +273,9 @@ class _OverviewTab extends ConsumerWidget {
         String date(int secs) => secs <= 0
             ? '-'
             : fmt.format(DateTime.fromMillisecondsSinceEpoch(secs * 1000));
+        // Read from the properties rather than the list's row, which says
+        // nothing before qBittorrent 5.0.
+        final bool? isPrivate = qbitIsPrivate(p);
         return EasyRefresh(
           header: const ClassicHeader(
             dragText: 'Pull to refresh',
@@ -368,12 +371,15 @@ class _OverviewTab extends ConsumerWidget {
                           label: '${fmtBytes(p.upSpeed)}/s',
                           color: cs.tertiary,
                         ),
-                        const SizedBox(width: Insets.sm),
-                        _MiniPill(
-                          icon: torrent.private ? Icons.lock_outline : Icons.public,
-                          label: torrent.private ? 'Private' : 'Public',
-                          color: torrent.private ? cs.tertiary : cs.outline,
-                        ),
+                        // Only where the server says which it is.
+                        if (isPrivate != null) ...<Widget>[
+                          const SizedBox(width: Insets.sm),
+                          _MiniPill(
+                            icon: isPrivate ? Icons.lock_outline : Icons.public,
+                            label: isPrivate ? 'Private' : 'Public',
+                            color: isPrivate ? cs.tertiary : cs.outline,
+                          ),
+                        ],
                         const Spacer(),
                         if (progress < 1.0) ...<Widget>[
                           Icon(

@@ -1159,8 +1159,13 @@ class _TorrentTileState extends ConsumerState<_TorrentTile> {
                               label: friendlyState(torrent.state),
                               visual: v,
                             ),
-                            const SizedBox(width: Insets.xs),
-                            _PrivacyBadge(isPrivate: torrent.private),
+                            // Only where the server says which it is: a
+                            // torrent it has not spoken for is not public.
+                            if (torrent.private
+                                case final bool isPrivate) ...<Widget>[
+                              const SizedBox(width: Insets.xs),
+                              _PrivacyBadge(isPrivate: isPrivate),
+                            ],
                             const SizedBox(width: Insets.sm),
                             Expanded(
                               child: Text(
@@ -1586,6 +1591,8 @@ class _SpeedPill extends StatelessWidget {
   }
 }
 
+/// Whether a torrent is private or public, for the torrents the server says
+/// that about.
 class _PrivacyBadge extends StatelessWidget {
   const _PrivacyBadge({required this.isPrivate});
 
@@ -1595,7 +1602,7 @@ class _PrivacyBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme cs = theme.colorScheme;
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(

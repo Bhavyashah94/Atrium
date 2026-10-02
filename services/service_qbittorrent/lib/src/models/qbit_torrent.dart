@@ -53,8 +53,12 @@ abstract class QbitTorrent with _$QbitTorrent {
     /// trackers".
     @Default('') String tracker,
 
-    /// Whether the torrent is private (true) or public (false).
-    @Default(false) bool private,
+    /// Whether the torrent is private, or null where the server has not
+    /// said. qBittorrent sends this from 5.0, and sends null until a magnet's
+    /// metadata is in; before 5.0 the rows of the list do not carry it. Null
+    /// is not public: a 4.x server would have every private torrent read as
+    /// one that is safe to remove.
+    bool? private,
   }) = _QbitTorrent;
 
   factory QbitTorrent.fromJson(Map<String, dynamic> json) =>
