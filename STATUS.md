@@ -63,7 +63,9 @@ Atrium is a **controller** app. Video playback was removed by design
   over to the Add screen, contributed by Bhavyashah94 in PR #160),
   queue/wanted/history/blocklist/system tabs, and a full Settings editor
   (17 panels) - settings writes live-verified
-- **Radarr**: same depth as Sonarr, movie flavored
+- **Radarr**: same depth as Sonarr, movie flavored, plus collection
+  monitoring when adding a movie and from its detail screen (contributed by
+  Bhavyashah94 in PR #173)
 - **Lidarr** (added in 1.5.0, out of beta since 2026-10-01): artists and
   discography with grid and
   list views and bulk actions, artist detail with release-type filters,
