@@ -52,7 +52,10 @@ Atrium is a **controller** app. Video playback was removed by design
   address moves the app can no longer reach the server to undo it. An
   execution log tab (contributed by lxBlazarxl in PR #159) reads the
   server's log on demand, with copy, and the settings screen offers the
-  network interfaces the server actually routes
+  network interfaces the server actually routes. Torrents are marked
+  private or public (contributed by lxBlazarxl in PR #171) wherever the
+  server says which: in the list from qBittorrent 5.0, on a torrent's own
+  screen from 4.5.1, and nowhere while a magnet has no metadata
 - **Sonarr** (the canonical *arr module): poster/banner grid with
   client-side sort & filter (status, network, airing, added, size on
   disk) and per-series disk sizes, series detail (fanart backdrop,
