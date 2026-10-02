@@ -103,7 +103,7 @@ void main() {
     expect(ServiceKind.tracearr.isBeta, isFalse);
     expect(ServiceKind.unraid.isBeta, isFalse);
     expect(ServiceKind.lidarr.isBeta, isFalse);
-    expect(ServiceKind.navidrome.isBeta, isTrue);
+    expect(ServiceKind.navidrome.isBeta, isFalse);
     expect(ServiceKind.myspeed.isBeta, isFalse);
   });
 
