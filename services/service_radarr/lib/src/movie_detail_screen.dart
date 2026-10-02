@@ -798,7 +798,7 @@ class _CollectionSectionState extends ConsumerState<_CollectionSection> {
                               ),
                               icon: const Icon(Icons.bookmark, size: 18),
                               label: const Text(
-                                'Collection Monitored',
+                                'Collection monitored',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               onPressed:
@@ -817,7 +817,7 @@ class _CollectionSectionState extends ConsumerState<_CollectionSection> {
                               ),
                               icon:
                                   const Icon(Icons.bookmark_border, size: 18),
-                              label: const Text('Collection Unmonitored'),
+                              label: const Text('Collection unmonitored'),
                               onPressed:
                                   (collection == null || collection.id <= 0)
                                       ? null

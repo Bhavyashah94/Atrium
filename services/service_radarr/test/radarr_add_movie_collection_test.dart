@@ -94,7 +94,7 @@ void main() {
 
   group('RadarrAddMovieSheet Collection Monitoring', () {
     testWidgets(
-        'displays Monitor Collection switch when movie has a collection',
+        'displays Monitor collection switch when movie has a collection',
         (tester) async {
       const movieWithCollection = RadarrMovie(
         tmdbId: 101,
@@ -111,11 +111,11 @@ void main() {
       await tester.pumpAndSettle();
       await openSheet(tester);
 
-      expect(find.text('Monitor Collection'), findsOneWidget);
+      expect(find.text('Monitor collection'), findsOneWidget);
       expect(find.text('Gladiator Collection'), findsOneWidget);
 
       final monitorCollectionSwitchFinder = find.ancestor(
-        of: find.text('Monitor Collection'),
+        of: find.text('Monitor collection'),
         matching: find.byType(SwitchListTile),
       );
       expect(monitorCollectionSwitchFinder, findsOneWidget);
@@ -125,7 +125,7 @@ void main() {
     });
 
     testWidgets(
-        'does NOT display Monitor Collection switch when movie has no collection',
+        'does NOT display Monitor collection switch when movie has no collection',
         (tester) async {
       const movieWithoutCollection = RadarrMovie(
         tmdbId: 102,
@@ -138,11 +138,11 @@ void main() {
       await tester.pumpAndSettle();
       await openSheet(tester);
 
-      expect(find.text('Monitor Collection'), findsNothing);
+      expect(find.text('Monitor collection'), findsNothing);
     });
 
     testWidgets(
-        'submits addOptions with movieAndCollection when Monitor Collection is checked',
+        'submits addOptions with movieAndCollection when Monitor collection is checked',
         (tester) async {
       RequestOptions? recordedAddRequest;
       final dio = Dio();
@@ -183,9 +183,9 @@ void main() {
       await tester.pumpAndSettle();
       await openSheet(tester);
 
-      // Toggle Monitor Collection switch
+      // Toggle Monitor collection switch
       final monitorCollectionSwitchFinder = find.ancestor(
-        of: find.text('Monitor Collection'),
+        of: find.text('Monitor collection'),
         matching: find.byType(SwitchListTile),
       );
       await tester.scrollUntilVisible(monitorCollectionSwitchFinder, 100);
@@ -207,7 +207,7 @@ void main() {
     });
 
     testWidgets(
-        'submits addOptions with movieOnly when Monitor Collection is unchecked',
+        'submits addOptions with movieOnly when Monitor collection is unchecked',
         (tester) async {
       RequestOptions? recordedAddRequest;
       final dio = Dio();
@@ -248,7 +248,7 @@ void main() {
       await tester.pumpAndSettle();
       await openSheet(tester);
 
-      // Leave Monitor Collection unchecked
+      // Leave Monitor collection unchecked
       final addMovieButton = find.widgetWithText(FilledButton, 'Add Movie');
       await tester.tap(addMovieButton);
       await tester.pumpAndSettle();

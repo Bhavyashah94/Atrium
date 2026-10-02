@@ -83,7 +83,7 @@ void main() {
       expect(find.text('Collection'), findsOneWidget);
       expect(find.text('Gladiator Collection'), findsOneWidget);
       expect(find.text('Films set in ancient Rome.'), findsOneWidget);
-      expect(find.text('Collection Monitored'), findsOneWidget);
+      expect(find.text('Collection monitored'), findsOneWidget);
     });
 
     testWidgets(
@@ -128,7 +128,7 @@ void main() {
 
       expect(find.text('Collection'), findsOneWidget);
       expect(find.text('Gladiator Collection'), findsOneWidget);
-      expect(find.text('Collection Unmonitored'), findsOneWidget);
+      expect(find.text('Collection unmonitored'), findsOneWidget);
     });
 
     testWidgets(
@@ -235,7 +235,7 @@ void main() {
       });
 
       final toggleButton =
-          find.widgetWithText(OutlinedButton, 'Collection Unmonitored');
+          find.widgetWithText(OutlinedButton, 'Collection unmonitored');
       expect(toggleButton, findsOneWidget);
 
       await tester.scrollUntilVisible(toggleButton, 100);

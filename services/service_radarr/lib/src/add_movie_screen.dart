@@ -620,7 +620,7 @@ class _RadarrAddMovieSheetState extends ConsumerState<RadarrAddMovieSheet> {
                             ),
                             if (widget.movie.collection != null)
                               SwitchListTile(
-                                title: const Text('Monitor Collection'),
+                                title: const Text('Monitor collection'),
                                 subtitle: widget.movie.collection?.title != null
                                     ? Text(widget.movie.collection!.title!)
                                     : null,
