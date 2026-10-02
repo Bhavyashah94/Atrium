@@ -10,7 +10,7 @@ in the world.
 
 **[Website][site]** - screenshots and a tour, no install needed.
 
-> **Status:** v1.7.0. Install from [F-Droid][fdroid], or grab a signed APK
+> **Status:** v1.8.0. Install from [F-Droid][fdroid], or grab a signed APK
 > from the [releases page][releases].
 
 ## Why
@@ -57,7 +57,7 @@ each one covers:
 | Service                | What works today                                                      |
 | ---------------------- | --------------------------------------------------------------------- |
 | Sonarr                 | 7 tabs incl. full Settings editor, sort/filter, calendar              |
-| Radarr                 | same depth as Sonarr, movie flavored                                  |
+| Radarr                 | same depth as Sonarr, movie flavored, with collection monitoring      |
 | Lidarr                 | artists, albums and tracks, wanted, activity, settings, log reader    |
 | Prowlarr               | indexers, search + grab, history, settings, system                    |
 | Bazarr                 | series/movies, wanted, manual subtitle search, system                 |
@@ -69,7 +69,7 @@ each one covers:
 | Emby                   | same depth as Jellyfin                                                |
 | Plex                   | libraries, detail, seasons, music, genres, now-playing controller, plex.tv sign-in |
 | Navidrome              | artists, albums and tracks, playlists, ratings and favorites, search |
-| qBittorrent            | realtime list, add/manage, torrent detail, queue reorder, full settings, execution log |
+| qBittorrent            | realtime list, add/manage, torrent detail, private/public badges, queue reorder, full settings, execution log |
 | Deluge                 | torrent list, add/manage, queue moves, speed limits, torrent detail (beta) |
 | Transmission           | the web UI's filters, actions and inspector, full settings, turtle mode |
 | rTorrent               | torrent list, add/manage, priorities, speed limits, torrent detail (beta) |
