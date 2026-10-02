@@ -142,8 +142,6 @@ class _NavidromeHomeState extends ConsumerState<NavidromeHome> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 8),
-            const BetaBadge(),
           ],
         ),
         actions: <Widget>[
