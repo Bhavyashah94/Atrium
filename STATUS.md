@@ -137,7 +137,8 @@ Atrium is a **controller** app. Video playback was removed by design
   the envelope read for errors; an overview tab; artists in list and grid
   views with section badges named as the server names its index groups;
   artist, album and playlist screens with half-page banners, the cover
-  beside the title, an info card and tracklists with artwork; albums and
+  beside the title, metadata badges and tracklists with artwork (an
+  album's banner is its artist's picture where there is one); albums and
   playlists as cover grids; five-star ratings and favorites for artists
   and albums; custom playlists (create, rename, delete, add tracks);
   search in the shape of Emby's; quick library scan; artwork and web UI
