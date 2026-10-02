@@ -97,6 +97,16 @@ class _NavidromeArtistsTabState extends ConsumerState<NavidromeArtistsTab> {
     );
   }
 
+  String _getSectionHeaderLabel(String groupName) {
+    if (groupName.isEmpty) return '#';
+    if (groupName.startsWith('[') && groupName.endsWith(']')) return '#';
+    final String firstChar = groupName[0];
+    if (RegExp(r'^[a-zA-Z]$').hasMatch(firstChar)) {
+      return firstChar.toUpperCase();
+    }
+    return '#';
+  }
+
   Widget _buildSectionHeader(
     ThemeData theme,
     ColorScheme cs,
@@ -134,7 +144,7 @@ class _NavidromeArtistsTabState extends ConsumerState<NavidromeArtistsTab> {
             ),
             alignment: Alignment.center,
             child: Text(
-              group.name,
+              _getSectionHeaderLabel(group.name),
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: cs.onPrimaryContainer,
