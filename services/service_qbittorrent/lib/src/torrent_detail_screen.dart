@@ -368,6 +368,12 @@ class _OverviewTab extends ConsumerWidget {
                           label: '${fmtBytes(p.upSpeed)}/s',
                           color: cs.tertiary,
                         ),
+                        const SizedBox(width: Insets.sm),
+                        _MiniPill(
+                          icon: torrent.private ? Icons.lock_outline : Icons.public,
+                          label: torrent.private ? 'Private' : 'Public',
+                          color: torrent.private ? cs.tertiary : cs.outline,
+                        ),
                         const Spacer(),
                         if (progress < 1.0) ...<Widget>[
                           Icon(
