@@ -39,10 +39,10 @@ void main() {
     );
   });
 
-  test('Ombi is registered as a beta apiKey request service', () {
+  test('Ombi is registered as an apiKey request service', () {
     expect(ServiceKind.ombi.displayName, 'Ombi');
     expect(ServiceKind.ombi.tagline, 'Requests');
-    expect(ServiceKind.ombi.isBeta, isTrue);
+    expect(ServiceKind.ombi.isBeta, isFalse);
     expect(ServiceKind.ombi.defaultPort, 3579);
     expect(ServiceKind.ombi.authStyle, AuthStyle.apiKey);
     expect(ServiceKind.ombi.role, ServiceRole.requests);
