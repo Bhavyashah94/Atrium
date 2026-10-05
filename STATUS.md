@@ -1,6 +1,6 @@
 # Atrium - Status
 
-> Snapshot of what genuinely works and what is left, as of 2026-10-03 (release 1.8.0).
+> Snapshot of what genuinely works and what is left, as of 2026-10-05.
 > Atrium is published on F-Droid and on the GitHub releases page. It is
 > still in early development and every module is work in progress; nothing
 > here is a release promise.
@@ -84,8 +84,8 @@ Atrium is a **controller** app. Video playback was removed by design
 - **Seerr** (Jellyseerr / Overseerr): discover (trending/upcoming/genres),
   search, item detail with request submission (profile/folder/server
   selection), requests management (approve/decline/delete/retry)
-- **Ombi** (beta, added 2026-09-19, live-verified against 4.53, restyled
-  2026-10-02): its own screen with a bottom bar for Requests and Discover
+- **Ombi** (added 2026-09-19, out of beta since 2026-10-05, live-verified
+  against 4.53, restyled 2026-10-02): its own screen with a bottom bar for Requests and Discover
   and search in the app bar. Requests for movies, TV and, where Lidarr is
   set up, music, filtered as Ombi's own Requests page filters them, each
   filter showing its count, as cards with approve / deny (with a reason) /
