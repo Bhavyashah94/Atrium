@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import 'models/radarr_blocklist_item.dart';
+import 'models/radarr_custom_filter.dart';
 import 'models/radarr_history_item.dart';
 import 'models/radarr_movie.dart';
 import 'models/radarr_queue_item.dart';
 import 'radarr_api.dart';
+import 'radarr_custom_filter_evaluator.dart';
 
 /// How often the movie library refreshes.
 const Duration radarrLibraryPollInterval = Duration(seconds: 60);
@@ -122,6 +124,26 @@ final radarrMovieFilterProvider =
   (ref, instance) => RadarrMovieFilter.all,
 );
 
+/// Fetches custom filters for a Radarr instance. Returns empty list on error.
+final radarrCustomFiltersProvider =
+    FutureProvider.autoDispose.family<List<RadarrCustomFilter>, Instance>((
+  ref,
+  instance,
+) async {
+  try {
+    final RadarrApi api = await ref.watch(radarrApiProvider(instance).future);
+    return await api.getCustomFilters();
+  } catch (_) {
+    return const <RadarrCustomFilter>[];
+  }
+});
+
+/// Active custom filter setting for Radarr movies (null if default filter is active).
+final radarrActiveCustomFilterProvider =
+    StateProvider.family<RadarrCustomFilter?, Instance>(
+  (ref, instance) => null,
+);
+
 /// Search query string for Radarr movies.
 final radarrSearchQueryProvider =
     StateProvider.family<String, Instance>((ref, instance) => '');
@@ -144,6 +166,8 @@ final radarrFilteredMoviesProvider = Provider.autoDispose
       ref.watch(radarrMovieSortAscendingProvider(instance));
   final RadarrMovieFilter filter =
       ref.watch(radarrMovieFilterProvider(instance));
+  final RadarrCustomFilter? activeCustomFilter =
+      ref.watch(radarrActiveCustomFilterProvider(instance));
 
   return moviesAsync.whenData((List<RadarrMovie> list) {
     Iterable<RadarrMovie> filtered = list;
@@ -156,22 +180,28 @@ final radarrFilteredMoviesProvider = Provider.autoDispose
       );
     }
 
-    // 2. Filter by active filter setting
-    switch (filter) {
-      case RadarrMovieFilter.all:
-        break;
-      case RadarrMovieFilter.monitoredOnly:
-        filtered = filtered.where((RadarrMovie m) => m.monitored);
-        break;
-      case RadarrMovieFilter.unmonitoredOnly:
-        filtered = filtered.where((RadarrMovie m) => !m.monitored);
-        break;
-      case RadarrMovieFilter.downloaded:
-        filtered = filtered.where((RadarrMovie m) => m.hasFile);
-        break;
-      case RadarrMovieFilter.missing:
-        filtered = filtered.where((RadarrMovie m) => !m.hasFile);
-        break;
+    // 2. Filter by active custom or standard filter
+    if (activeCustomFilter != null) {
+      filtered = filtered.where(
+        (RadarrMovie m) => matchesRadarrCustomFilter(m, activeCustomFilter),
+      );
+    } else {
+      switch (filter) {
+        case RadarrMovieFilter.all:
+          break;
+        case RadarrMovieFilter.monitoredOnly:
+          filtered = filtered.where((RadarrMovie m) => m.monitored);
+          break;
+        case RadarrMovieFilter.unmonitoredOnly:
+          filtered = filtered.where((RadarrMovie m) => !m.monitored);
+          break;
+        case RadarrMovieFilter.downloaded:
+          filtered = filtered.where((RadarrMovie m) => m.hasFile);
+          break;
+        case RadarrMovieFilter.missing:
+          filtered = filtered.where((RadarrMovie m) => !m.hasFile);
+          break;
+      }
     }
 
     // 3. Sort

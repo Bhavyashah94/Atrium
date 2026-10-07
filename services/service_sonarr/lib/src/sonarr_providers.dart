@@ -4,6 +4,7 @@ import 'package:core_storage/core_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+import 'generated/models/custom_filter_resource.dart';
 import 'models/sonarr_blocklist_item.dart';
 import 'models/sonarr_episode.dart';
 import 'models/sonarr_history_item.dart';
@@ -11,6 +12,7 @@ import 'models/sonarr_queue_item.dart';
 import 'models/sonarr_series.dart';
 import 'services/sonarr_client.dart';
 import 'sonarr_api.dart';
+import 'sonarr_custom_filter_evaluator.dart';
 
 /// How often the series library refreshes.
 const Duration sonarrLibraryPollInterval = Duration(seconds: 60);
@@ -147,6 +149,26 @@ final sonarrSeriesFilterProvider =
   (ref, instance) => SonarrSeriesFilter.all,
 );
 
+/// Fetches custom filters for a Sonarr instance. Returns empty list on error.
+final sonarrCustomFiltersProvider =
+    FutureProvider.autoDispose.family<List<CustomFilterResource>, Instance>((
+  ref,
+  instance,
+) async {
+  try {
+    final SonarrApi api = await ref.watch(sonarrApiProvider(instance).future);
+    return await api.getCustomFilters();
+  } catch (_) {
+    return const <CustomFilterResource>[];
+  }
+});
+
+/// Active custom filter setting for Sonarr series (null if default filter is active).
+final sonarrActiveCustomFilterProvider =
+    StateProvider.family<CustomFilterResource?, Instance>(
+  (ref, instance) => null,
+);
+
 /// Search query string for Sonarr series.
 final sonarrSearchQueryProvider =
     StateProvider.family<String, Instance>((ref, instance) => '');
@@ -169,6 +191,8 @@ final sonarrFilteredSeriesProvider = Provider.autoDispose
       ref.watch(sonarrSeriesSortAscendingProvider(instance));
   final SonarrSeriesFilter filter =
       ref.watch(sonarrSeriesFilterProvider(instance));
+  final CustomFilterResource? activeCustomFilter =
+      ref.watch(sonarrActiveCustomFilterProvider(instance));
 
   return seriesAsync.whenData((List<SonarrSeries> list) {
     Iterable<SonarrSeries> filtered = list;
@@ -181,33 +205,39 @@ final sonarrFilteredSeriesProvider = Provider.autoDispose
       );
     }
 
-    // 2. Filter by active filter setting
-    switch (filter) {
-      case SonarrSeriesFilter.all:
-        break;
-      case SonarrSeriesFilter.monitoredOnly:
-        filtered = filtered.where((SonarrSeries s) => s.monitored);
-        break;
-      case SonarrSeriesFilter.unmonitoredOnly:
-        filtered = filtered.where((SonarrSeries s) => !s.monitored);
-        break;
-      case SonarrSeriesFilter.continuingOnly:
-        filtered = filtered.where(
-          (SonarrSeries s) => s.status?.toLowerCase() == 'continuing',
-        );
-        break;
-      case SonarrSeriesFilter.endedOnly:
-        filtered = filtered.where(
-          (SonarrSeries s) => s.status?.toLowerCase() == 'ended',
-        );
-        break;
-      case SonarrSeriesFilter.missingEpisodes:
-        filtered = filtered.where((SonarrSeries s) {
-          final SonarrSeriesStatistics? stats = s.statistics;
-          if (stats == null) return false;
-          return stats.episodeFileCount < stats.episodeCount;
-        });
-        break;
+    // 2. Filter by active custom or standard filter
+    if (activeCustomFilter != null) {
+      filtered = filtered.where(
+        (SonarrSeries s) => matchesSonarrCustomFilter(s, activeCustomFilter),
+      );
+    } else {
+      switch (filter) {
+        case SonarrSeriesFilter.all:
+          break;
+        case SonarrSeriesFilter.monitoredOnly:
+          filtered = filtered.where((SonarrSeries s) => s.monitored);
+          break;
+        case SonarrSeriesFilter.unmonitoredOnly:
+          filtered = filtered.where((SonarrSeries s) => !s.monitored);
+          break;
+        case SonarrSeriesFilter.continuingOnly:
+          filtered = filtered.where(
+            (SonarrSeries s) => s.status?.toLowerCase() == 'continuing',
+          );
+          break;
+        case SonarrSeriesFilter.endedOnly:
+          filtered = filtered.where(
+            (SonarrSeries s) => s.status?.toLowerCase() == 'ended',
+          );
+          break;
+        case SonarrSeriesFilter.missingEpisodes:
+          filtered = filtered.where((SonarrSeries s) {
+            final SonarrSeriesStatistics? stats = s.statistics;
+            if (stats == null) return false;
+            return stats.episodeFileCount < stats.episodeCount;
+          });
+          break;
+      }
     }
 
     // 3. Sort

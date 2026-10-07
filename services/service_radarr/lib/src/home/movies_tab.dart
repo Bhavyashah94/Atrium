@@ -1361,6 +1361,10 @@ class _SortFilterBottomSheet extends ConsumerWidget {
     final sortOption = ref.watch(radarrMovieSortFieldProvider(instance));
     final sortAscending = ref.watch(radarrMovieSortAscendingProvider(instance));
     final filter = ref.watch(radarrMovieFilterProvider(instance));
+    final activeCustomFilter =
+        ref.watch(radarrActiveCustomFilterProvider(instance));
+    final customFiltersAsync =
+        ref.watch(radarrCustomFiltersProvider(instance));
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -1383,9 +1387,13 @@ class _SortFilterBottomSheet extends ConsumerWidget {
                 children: [
                   ChoiceChip(
                     label: const Text('All Status'),
-                    selected: filter == RadarrMovieFilter.all,
+                    selected: activeCustomFilter == null &&
+                        filter == RadarrMovieFilter.all,
                     onSelected: (val) {
                       if (val) {
+                        ref
+                            .read(radarrActiveCustomFilterProvider(instance).notifier)
+                            .state = null;
                         ref
                             .read(radarrMovieFilterProvider(instance).notifier)
                             .state = RadarrMovieFilter.all;
@@ -1394,9 +1402,13 @@ class _SortFilterBottomSheet extends ConsumerWidget {
                   ),
                   ChoiceChip(
                     label: const Text('Downloaded Only'),
-                    selected: filter == RadarrMovieFilter.downloaded,
+                    selected: activeCustomFilter == null &&
+                        filter == RadarrMovieFilter.downloaded,
                     onSelected: (val) {
                       if (val) {
+                        ref
+                            .read(radarrActiveCustomFilterProvider(instance).notifier)
+                            .state = null;
                         ref
                             .read(radarrMovieFilterProvider(instance).notifier)
                             .state = RadarrMovieFilter.downloaded;
@@ -1405,9 +1417,13 @@ class _SortFilterBottomSheet extends ConsumerWidget {
                   ),
                   ChoiceChip(
                     label: const Text('Missing Only'),
-                    selected: filter == RadarrMovieFilter.missing,
+                    selected: activeCustomFilter == null &&
+                        filter == RadarrMovieFilter.missing,
                     onSelected: (val) {
                       if (val) {
+                        ref
+                            .read(radarrActiveCustomFilterProvider(instance).notifier)
+                            .state = null;
                         ref
                             .read(radarrMovieFilterProvider(instance).notifier)
                             .state = RadarrMovieFilter.missing;
@@ -1416,9 +1432,13 @@ class _SortFilterBottomSheet extends ConsumerWidget {
                   ),
                   ChoiceChip(
                     label: const Text('Monitored Only'),
-                    selected: filter == RadarrMovieFilter.monitoredOnly,
+                    selected: activeCustomFilter == null &&
+                        filter == RadarrMovieFilter.monitoredOnly,
                     onSelected: (val) {
                       if (val) {
+                        ref
+                            .read(radarrActiveCustomFilterProvider(instance).notifier)
+                            .state = null;
                         ref
                             .read(radarrMovieFilterProvider(instance).notifier)
                             .state = RadarrMovieFilter.monitoredOnly;
@@ -1427,14 +1447,60 @@ class _SortFilterBottomSheet extends ConsumerWidget {
                   ),
                   ChoiceChip(
                     label: const Text('Unmonitored Only'),
-                    selected: filter == RadarrMovieFilter.unmonitoredOnly,
+                    selected: activeCustomFilter == null &&
+                        filter == RadarrMovieFilter.unmonitoredOnly,
                     onSelected: (val) {
                       if (val) {
+                        ref
+                            .read(radarrActiveCustomFilterProvider(instance).notifier)
+                            .state = null;
                         ref
                             .read(radarrMovieFilterProvider(instance).notifier)
                             .state = RadarrMovieFilter.unmonitoredOnly;
                       }
                     },
+                  ),
+                  ...customFiltersAsync.maybeWhen(
+                    data: (customFilters) => customFilters
+                        .where(
+                          (cf) =>
+                              (cf.type == 'movies' ||
+                                  cf.type == 'movieIndex' ||
+                                  cf.type == 'movie') &&
+                              cf.label != null &&
+                              cf.label!.isNotEmpty,
+                        )
+                        .map((cf) {
+                      final selected = activeCustomFilter?.id == cf.id;
+                      return ChoiceChip(
+                        label: Text(cf.label!),
+                        selected: selected,
+                        onSelected: (val) {
+                          if (val) {
+                            ref
+                                .read(
+                                  radarrActiveCustomFilterProvider(instance)
+                                      .notifier,
+                                )
+                                .state = cf;
+                          } else {
+                            ref
+                                .read(
+                                  radarrActiveCustomFilterProvider(instance)
+                                      .notifier,
+                                )
+                                .state = null;
+                            ref
+                                .read(
+                                  radarrMovieFilterProvider(instance)
+                                      .notifier,
+                                )
+                                .state = RadarrMovieFilter.all;
+                          }
+                        },
+                      );
+                    }),
+                    orElse: () => const <Widget>[],
                   ),
                 ],
               ),
