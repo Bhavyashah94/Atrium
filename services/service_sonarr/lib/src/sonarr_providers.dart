@@ -149,7 +149,9 @@ final sonarrSeriesFilterProvider =
   (ref, instance) => SonarrSeriesFilter.all,
 );
 
-/// Fetches custom filters for a Sonarr instance. Returns empty list on error.
+/// The custom filters saved on a Sonarr instance for its series list, by
+/// label. The server keeps every screen's filters in one list, so the ones
+/// for other screens are left out. Returns empty list on error.
 final sonarrCustomFiltersProvider =
     FutureProvider.autoDispose.family<List<CustomFilterResource>, Instance>((
   ref,
@@ -157,7 +159,7 @@ final sonarrCustomFiltersProvider =
 ) async {
   try {
     final SonarrApi api = await ref.watch(sonarrApiProvider(instance).future);
-    return await api.getCustomFilters();
+    return sonarrSeriesCustomFilters(await api.getCustomFilters());
   } catch (_) {
     return const <CustomFilterResource>[];
   }
