@@ -10,6 +10,7 @@ import 'package:service_glances/service_glances.dart';
 import 'package:service_jellyfin/service_jellyfin.dart' as jf;
 import 'package:service_deluge/service_deluge.dart';
 import 'package:service_nzbget/service_nzbget.dart';
+import 'package:service_ombi/service_ombi.dart';
 import 'package:service_qbittorrent/service_qbittorrent.dart';
 import 'package:service_radarr/service_radarr.dart';
 import 'package:service_sabnzbd/service_sabnzbd.dart';
@@ -21,6 +22,7 @@ import 'package:service_tracearr/service_tracearr.dart';
 import 'package:service_rtorrent/service_rtorrent.dart';
 import 'package:service_transmission/service_transmission.dart';
 import 'package:service_gluetun/service_gluetun.dart';
+import 'package:service_myspeed/service_myspeed.dart';
 
 import '../health_providers.dart';
 import '../screens/calendar_screen.dart';
@@ -29,6 +31,7 @@ import 'dashboard_widget_kind.dart';
 import 'widgets/dashdot_widget.dart';
 import 'widgets/downloads_widget.dart';
 import 'widgets/gluetun_status_widget.dart';
+import 'widgets/myspeed_widget.dart';
 import 'widgets/recently_added_widget.dart';
 import 'widgets/recently_downloaded_widget.dart';
 import 'widgets/requests_widget.dart';
@@ -174,7 +177,10 @@ class DashboardBoard extends ConsumerWidget {
         );
       case DashboardWidgetKind.requests:
         return DashboardRequestsWidget(
-          instances: _byKind(instances, ServiceKind.seerr),
+          instances: <Instance>[
+            ..._byKind(instances, ServiceKind.seerr),
+            ..._byKind(instances, ServiceKind.ombi),
+          ],
         );
       case DashboardWidgetKind.serverInfo:
         return DashboardServerInfoWidget(
@@ -191,6 +197,10 @@ class DashboardBoard extends ConsumerWidget {
       case DashboardWidgetKind.gluetunStatus:
         return DashboardGluetunStatusWidget(
           instances: _byKind(instances, ServiceKind.gluetun),
+        );
+      case DashboardWidgetKind.myspeed:
+        return DashboardMySpeedWidget(
+          instances: _byKind(instances, ServiceKind.myspeed),
         );
       case DashboardWidgetKind.wakeOnLan:
         return const DashboardWakeOnLanWidget();
@@ -234,6 +244,9 @@ class DashboardBoard extends ConsumerWidget {
         case ServiceKind.seerr:
           ref.invalidate(seerrRequestCountsProvider(i));
           ref.invalidate(seerrRequestsProvider(i));
+        case ServiceKind.ombi:
+          ref.invalidate(ombiCountsProvider(i));
+          ref.invalidate(ombiRecentRequestsProvider(i));
         case ServiceKind.glances:
           ref.invalidate(glancesStatsProvider(i));
         case ServiceKind.dashdot:
@@ -249,6 +262,9 @@ class DashboardBoard extends ConsumerWidget {
         case ServiceKind.gluetun:
           ref.invalidate(gluetunVpnStatusProvider(i));
           ref.invalidate(gluetunPublicIpProvider(i));
+        case ServiceKind.myspeed:
+          ref.invalidate(myspeedStatusProvider(i));
+          ref.invalidate(myspeedRecentTestsProvider(i));
         default:
           break;
       }

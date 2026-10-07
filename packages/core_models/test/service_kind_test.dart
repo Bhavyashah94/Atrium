@@ -33,8 +33,30 @@ void main() {
         'unraid',
         'navidrome',
         'gluetun',
+        'ombi',
+        'myspeed',
       ],
     );
+  });
+
+  test('Ombi is registered as an apiKey request service', () {
+    expect(ServiceKind.ombi.displayName, 'Ombi');
+    expect(ServiceKind.ombi.tagline, 'Requests');
+    expect(ServiceKind.ombi.isBeta, isFalse);
+    expect(ServiceKind.ombi.defaultPort, 3579);
+    expect(ServiceKind.ombi.authStyle, AuthStyle.apiKey);
+    expect(ServiceKind.ombi.role, ServiceRole.requests);
+    expect(ServiceKind.ombi.acceptsTorrents, isFalse);
+  });
+
+  test('MySpeed is registered as an apiKey analytics service', () {
+    expect(ServiceKind.myspeed.displayName, 'MySpeed');
+    expect(ServiceKind.myspeed.tagline, 'Internet speed');
+    expect(ServiceKind.myspeed.isBeta, isFalse);
+    expect(ServiceKind.myspeed.defaultPort, 5216);
+    expect(ServiceKind.myspeed.authStyle, AuthStyle.apiKey);
+    expect(ServiceKind.myspeed.role, ServiceRole.analytics);
+    expect(ServiceKind.myspeed.acceptsTorrents, isFalse);
   });
 
   test('Lidarr is registered as apiKey automation service', () {
@@ -71,15 +93,18 @@ void main() {
   });
 
   test('newer integrations are flagged beta; stable ones are not', () {
-    expect(ServiceKind.transmission.isBeta, isTrue);
+    // Out of beta since its parity pass against the web UI.
+    expect(ServiceKind.transmission.isBeta, isFalse);
     expect(ServiceKind.deluge.isBeta, isTrue);
     expect(ServiceKind.rtorrent.isBeta, isTrue);
     expect(ServiceKind.sonarr.isBeta, isFalse);
     expect(ServiceKind.qbittorrent.isBeta, isFalse);
     // Tracearr graduated out of beta once its rebuild landed.
     expect(ServiceKind.tracearr.isBeta, isFalse);
-    expect(ServiceKind.unraid.isBeta, isTrue);
-    expect(ServiceKind.navidrome.isBeta, isTrue);
+    expect(ServiceKind.unraid.isBeta, isFalse);
+    expect(ServiceKind.lidarr.isBeta, isFalse);
+    expect(ServiceKind.navidrome.isBeta, isFalse);
+    expect(ServiceKind.myspeed.isBeta, isFalse);
   });
 
   test('Navidrome is registered as userPass mediaServer service', () {
@@ -94,7 +119,7 @@ void main() {
     expect(ServiceKind.gluetun.role, ServiceRole.analytics);
     expect(ServiceKind.gluetun.authStyle, AuthStyle.apiKey);
     expect(ServiceKind.gluetun.defaultPort, 8000);
-    expect(ServiceKind.gluetun.isBeta, isTrue);
+    expect(ServiceKind.gluetun.isBeta, isFalse);
   });
 
   test('existing services retain their default ports', () {

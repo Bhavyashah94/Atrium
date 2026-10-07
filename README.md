@@ -2,13 +2,15 @@
 
 The central courtyard for your self-hosted media stack.
 One Android app that fronts Sonarr, Radarr, Lidarr, Prowlarr, Bazarr,
-Seerr, Tautulli, Tracearr, Jellyfin, Emby, Plex, qBittorrent, Deluge,
-Transmission, rTorrent, SABnzbd, NZBGet, Glances, Speedtest Tracker, Beszel, dashdot and Unraid - and routes every request through the right URL
-whether you're on the home Wi-Fi or out in the world.
+Seerr, Ombi, Tautulli, Tracearr, Jellyfin, Emby, Plex, Navidrome,
+qBittorrent, Deluge, Transmission, rTorrent, SABnzbd, NZBGet, Glances,
+Speedtest Tracker, MySpeed, Beszel, dashdot, Gluetun and Unraid - and routes
+every request through the right URL whether you're on the home Wi-Fi or out
+in the world.
 
 **[Website][site]** - screenshots and a tour, no install needed.
 
-> **Status:** v1.6.1. Install from [F-Droid][fdroid], or grab a signed APK
+> **Status:** v1.8.0. Install from [F-Droid][fdroid], or grab a signed APK
 > from the [releases page][releases].
 
 ## Why
@@ -55,26 +57,30 @@ each one covers:
 | Service                | What works today                                                      |
 | ---------------------- | --------------------------------------------------------------------- |
 | Sonarr                 | 7 tabs incl. full Settings editor, sort/filter, calendar              |
-| Radarr                 | same depth as Sonarr, movie flavored                                  |
-| Lidarr                 | artists, albums and tracks, wanted, activity, settings, log reader (beta) |
+| Radarr                 | same depth as Sonarr, movie flavored, with collection monitoring      |
+| Lidarr                 | artists, albums and tracks, wanted, activity, settings, log reader    |
 | Prowlarr               | indexers, search + grab, history, settings, system                    |
 | Bazarr                 | series/movies, wanted, manual subtitle search, system                 |
 | Seerr                  | discover, search, requests management                                 |
+| Ombi                   | requests with approve/deny/delete, search, discover                   |
 | Tautulli               | activity, history, stats, users, terminate                            |
 | Tracearr               | fleet overview, live streams, media catalog, user profiles, policy incidents |
 | Jellyfin               | libraries, detail, seasons, music, sessions with remote control       |
 | Emby                   | same depth as Jellyfin                                                |
-| Plex                   | libraries, detail, seasons, music, genres, now-playing controller     |
-| qBittorrent            | realtime list, add/manage, torrent detail, queue reorder, full settings |
-| Deluge                 | torrent list, add/manage, queue moves, speed limits, torrent detail   |
-| Transmission           | torrent list, add/manage, queue moves, turtle mode, torrent detail    |
-| rTorrent               | torrent list, add/manage, priorities, speed limits, torrent detail    |
+| Plex                   | libraries, detail, seasons, music, genres, now-playing controller, plex.tv sign-in |
+| Navidrome              | artists, albums and tracks, playlists, ratings and favorites, search |
+| qBittorrent            | realtime list, add/manage, torrent detail, private/public badges, queue reorder, full settings, execution log |
+| Deluge                 | torrent list, add/manage, queue moves, speed limits, torrent detail (beta) |
+| Transmission           | the web UI's filters, actions and inspector, full settings, turtle mode |
+| rTorrent               | torrent list, add/manage, priorities, speed limits, torrent detail (beta) |
 | SABnzbd                | queue, history with retry, speed limit, server stats                  |
 | NZBGet                 | queue with reorder/priority/category, add NZB, speed limit, history   |
 | Glances                | CPU/memory/network/disk monitoring                                    |
 | Speedtest Tracker      | latest result, history chart, dashboard, confirmed remote test runs   |
+| MySpeed                | status and manual runs, the day's results, history with averages, password auth, dashboard widget |
 | Beszel                 | systems list, live metrics, per-system detail screen                  |
-| dashdot                | live CPU, memory, disk, and GPU usage with a system-info tab           |
+| dashdot                | live CPU, memory, disk, and GPU usage with a system-info tab, dashboard widget |
+| Gluetun                | VPN status, forwarded port, reconnect, dashboard widget               |
 | Unraid                 | array and disk health, system with per-core load, Docker, VM control  |
 
 ## Install

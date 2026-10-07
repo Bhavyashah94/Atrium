@@ -28,6 +28,8 @@ enum ServiceKind {
   unraid,
   navidrome,
   gluetun,
+  ombi,
+  myspeed,
 }
 
 /// Static metadata about a [ServiceKind] - display name, default port, the
@@ -61,6 +63,8 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.unraid => 'Unraid',
         ServiceKind.gluetun => 'Gluetun',
         ServiceKind.navidrome => 'Navidrome',
+        ServiceKind.ombi => 'Ombi',
+        ServiceKind.myspeed => 'MySpeed',
       };
 
   /// One-line role description.
@@ -89,20 +93,15 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.unraid => 'Server',
         ServiceKind.gluetun => 'VPN client',
         ServiceKind.navidrome => 'Music server',
+        ServiceKind.ombi => 'Requests',
+        ServiceKind.myspeed => 'Internet speed',
       };
 
   /// Whether this service's integration is still in beta. Surfaced as a
   /// "BETA" badge in the service picker, on the instance tile, and on the
   /// service's own screen so users know it is not yet fully stable.
   bool get isBeta => switch (this) {
-        ServiceKind.transmission ||
-        ServiceKind.deluge ||
-        ServiceKind.rtorrent ||
-        ServiceKind.lidarr ||
-        ServiceKind.unraid ||
-        ServiceKind.gluetun ||
-        ServiceKind.navidrome =>
-          true,
+        ServiceKind.deluge || ServiceKind.rtorrent => true,
         _ => false,
       };
 
@@ -137,6 +136,10 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.unraid => 80,
         ServiceKind.gluetun => 8000,
         ServiceKind.navidrome => 4533,
+        // The linuxserver image, which most people run. Ombi's own default
+        // is 5000.
+        ServiceKind.ombi => 3579,
+        ServiceKind.myspeed => 5216,
       };
 
   /// What auth flow the service uses by default. Some services (Jellyfin) can
@@ -152,7 +155,9 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.tracearr ||
         ServiceKind.lidarr ||
         ServiceKind.unraid ||
-        ServiceKind.gluetun =>
+        ServiceKind.gluetun ||
+        ServiceKind.myspeed ||
+        ServiceKind.ombi =>
           AuthStyle.apiKey,
         // Transmission and rTorrent both use HTTP Basic, and for both it is
         // *optional* - rTorrent's XML-RPC has no auth of its own and is only
@@ -184,7 +189,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.bazarr ||
         ServiceKind.lidarr =>
           ServiceRole.automation,
-        ServiceKind.seerr => ServiceRole.requests,
+        ServiceKind.seerr || ServiceKind.ombi => ServiceRole.requests,
         ServiceKind.tautulli || ServiceKind.tracearr => ServiceRole.analytics,
         ServiceKind.jellyfin ||
         ServiceKind.emby ||
@@ -204,6 +209,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.dashdot => ServiceRole.analytics,
         ServiceKind.unraid => ServiceRole.analytics,
         ServiceKind.gluetun => ServiceRole.analytics,
+        ServiceKind.myspeed => ServiceRole.analytics,
       };
 
   /// Whether this service can be handed a torrent - a magnet URI, a link to a

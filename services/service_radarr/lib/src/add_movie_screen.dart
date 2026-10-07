@@ -9,9 +9,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../service_radarr.dart';
 
 class AddMovieScreen extends ConsumerStatefulWidget {
-  const AddMovieScreen({required this.instance, super.key});
+  const AddMovieScreen({
+    required this.instance,
+    this.initialQuery,
+    super.key,
+  });
 
   final Instance instance;
+  final String? initialQuery;
 
   @override
   ConsumerState<AddMovieScreen> createState() => _AddMovieScreenState();
@@ -19,9 +24,9 @@ class AddMovieScreen extends ConsumerStatefulWidget {
 
 class _AddMovieScreenState extends ConsumerState<AddMovieScreen>
     with WidgetsBindingObserver {
-  final TextEditingController _searchController = TextEditingController();
+  late final TextEditingController _searchController;
   final FocusNode _searchFocusNode = FocusNode();
-  String _debouncedQuery = '';
+  late String _debouncedQuery;
   Timer? _debounceTimer;
   final ScrollController _scrollController = ScrollController();
   double _lastBottomInset = 0;
@@ -29,6 +34,14 @@ class _AddMovieScreenState extends ConsumerState<AddMovieScreen>
   @override
   void initState() {
     super.initState();
+    final String initial = widget.initialQuery?.trim() ?? '';
+    _debouncedQuery = initial;
+    _searchController = TextEditingController(text: initial);
+    if (initial.isNotEmpty) {
+      _searchController.selection = TextSelection.fromPosition(
+        TextPosition(offset: initial.length),
+      );
+    }
     WidgetsBinding.instance.addObserver(this);
     _searchFocusNode.requestFocus();
     _searchController.addListener(_onSearchChanged);
@@ -376,6 +389,7 @@ class _RadarrAddMovieSheetState extends ConsumerState<RadarrAddMovieSheet> {
   String? _selectedRootFolder;
   int? _selectedQualityProfileId;
   bool _monitored = true;
+  bool _monitorCollection = false;
   String _minimumAvailability = 'announced';
   bool _searchForMovie = false;
   final List<int> _selectedTagIds = [];
@@ -597,9 +611,27 @@ class _RadarrAddMovieSheetState extends ConsumerState<RadarrAddMovieSheet> {
                               title: const Text('Monitored'),
                               value: _monitored,
                               contentPadding: EdgeInsets.zero,
-                              onChanged: (val) =>
-                                  setState(() => _monitored = val),
+                              onChanged: (val) => setState(() {
+                                _monitored = val;
+                                if (!val) {
+                                  _monitorCollection = false;
+                                }
+                              }),
                             ),
+                            if (widget.movie.collection != null)
+                              SwitchListTile(
+                                title: const Text('Monitor collection'),
+                                subtitle: widget.movie.collection?.title != null
+                                    ? Text(widget.movie.collection!.title!)
+                                    : null,
+                                value: _monitorCollection,
+                                contentPadding: EdgeInsets.zero,
+                                onChanged: _monitored
+                                    ? (val) => setState(
+                                        () => _monitorCollection = val,
+                                      )
+                                    : null,
+                              ),
                             SwitchListTile(
                               title: const Text('Start search for movie'),
                               value: _searchForMovie,
@@ -735,6 +767,9 @@ class _RadarrAddMovieSheetState extends ConsumerState<RadarrAddMovieSheet> {
         'tags': _selectedTagIds,
         'addOptions': {
           'searchForMovie': _searchForMovie,
+          'monitor': !_monitored
+              ? 'none'
+              : (_monitorCollection ? 'movieAndCollection' : 'movieOnly'),
         },
       };
 
