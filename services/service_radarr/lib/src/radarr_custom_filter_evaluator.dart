@@ -110,42 +110,73 @@ bool evaluateCustomFilterRule(
       return !_isContains(itemValue, filterValue);
 
     case 'greaterthan':
+      if (filterValue is List) {
+        if (filterValue.isEmpty) return false;
+        return _compare(itemValue, filterValue.first) > 0;
+      }
       return _compare(itemValue, filterValue) > 0;
 
     case 'greaterthanorequal':
+      if (filterValue is List) {
+        if (filterValue.isEmpty) return false;
+        return _compare(itemValue, filterValue.first) >= 0;
+      }
       return _compare(itemValue, filterValue) >= 0;
 
     case 'lessthan':
+      if (filterValue is List) {
+        if (filterValue.isEmpty) return false;
+        return _compare(itemValue, filterValue.first) < 0;
+      }
       return _compare(itemValue, filterValue) < 0;
 
     case 'lessthanorequal':
+      if (filterValue is List) {
+        if (filterValue.isEmpty) return false;
+        return _compare(itemValue, filterValue.first) <= 0;
+      }
       return _compare(itemValue, filterValue) <= 0;
 
     case 'startswith':
       if (itemValue == null || filterValue == null) return false;
+      final target = (filterValue is List && filterValue.isNotEmpty)
+          ? filterValue.first
+          : filterValue;
       return itemValue.toString().toLowerCase().startsWith(
-            filterValue.toString().toLowerCase(),
+            target.toString().toLowerCase(),
           );
 
     case 'notstartswith':
       if (itemValue == null || filterValue == null) return true;
+      final target = (filterValue is List && filterValue.isNotEmpty)
+          ? filterValue.first
+          : filterValue;
       return !itemValue.toString().toLowerCase().startsWith(
-            filterValue.toString().toLowerCase(),
+            target.toString().toLowerCase(),
           );
 
     case 'endswith':
       if (itemValue == null || filterValue == null) return false;
+      final target = (filterValue is List && filterValue.isNotEmpty)
+          ? filterValue.first
+          : filterValue;
       return itemValue.toString().toLowerCase().endsWith(
-            filterValue.toString().toLowerCase(),
+            target.toString().toLowerCase(),
           );
 
     case 'notendswith':
       if (itemValue == null || filterValue == null) return true;
+      final target = (filterValue is List && filterValue.isNotEmpty)
+          ? filterValue.first
+          : filterValue;
       return !itemValue.toString().toLowerCase().endsWith(
-            filterValue.toString().toLowerCase(),
+            target.toString().toLowerCase(),
           );
 
     default:
+      if (filterValue is List) {
+        return filterValue.any((dynamic v) => _isEqual(itemValue, v));
+      }
       return _isEqual(itemValue, filterValue);
   }
 }

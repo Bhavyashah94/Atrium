@@ -159,5 +159,34 @@ void main() {
       expect(filtered.value, hasLength(1));
       expect(filtered.value!.first.title, 'Movie A');
     });
+
+    test('supports array-wrapped filter values as sent by Servarr API', () {
+      const movieRecent = RadarrMovie(
+        id: 1,
+        title: 'Recent Movie',
+        year: 2024,
+      );
+      const movieOld = RadarrMovie(
+        id: 2,
+        title: 'Old Movie',
+        year: 2010,
+      );
+
+      final customFilter = RadarrCustomFilter.fromJson(<String, dynamic>{
+        'id': 100,
+        'type': 'movies',
+        'label': 'Recent Movies',
+        'filters': [
+          {
+            'key': 'year',
+            'value': [2020],
+            'type': 'greaterThan',
+          },
+        ],
+      });
+
+      expect(matchesRadarrCustomFilter(movieRecent, customFilter), isTrue);
+      expect(matchesRadarrCustomFilter(movieOld, customFilter), isFalse);
+    });
   });
 }

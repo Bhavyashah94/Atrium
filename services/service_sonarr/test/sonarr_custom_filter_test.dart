@@ -172,5 +172,39 @@ void main() {
       expect(filtered.value, hasLength(1));
       expect(filtered.value!.first.title, 'Show A');
     });
+
+    test('supports array-wrapped filter values as sent by Servarr API', () {
+      const seriesWithEpisodes = SonarrSeries(
+        id: 1,
+        title: 'Downloaded Show',
+        statistics: SonarrSeriesStatistics(
+          episodeFileCount: 5,
+          episodeCount: 10,
+        ),
+      );
+      const seriesWithoutEpisodes = SonarrSeries(
+        id: 2,
+        title: 'Empty Show',
+        statistics: SonarrSeriesStatistics(
+          episodeCount: 10,
+        ),
+      );
+
+      final customFilter = CustomFilterResource.fromJson(<String, dynamic>{
+        'id': 100,
+        'type': 'series',
+        'label': 'Downloaded Shows',
+        'filters': [
+          {
+            'key': 'episodeFileCount',
+            'value': [0],
+            'type': 'greaterThan',
+          },
+        ],
+      });
+
+      expect(matchesSonarrCustomFilter(seriesWithEpisodes, customFilter), isTrue);
+      expect(matchesSonarrCustomFilter(seriesWithoutEpisodes, customFilter), isFalse);
+    });
   });
 }
