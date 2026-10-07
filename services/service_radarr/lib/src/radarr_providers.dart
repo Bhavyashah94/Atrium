@@ -135,7 +135,9 @@ final radarrMovieFilterProvider =
   (ref, instance) => RadarrMovieFilter.all,
 );
 
-/// Fetches custom filters for a Radarr instance. Returns empty list on error.
+/// The custom filters saved on a Radarr instance for its movie list, by
+/// label. The server keeps every screen's filters in one list, so the ones
+/// for other screens are left out. Returns empty list on error.
 final radarrCustomFiltersProvider =
     FutureProvider.autoDispose.family<List<RadarrCustomFilter>, Instance>((
   ref,
@@ -143,7 +145,7 @@ final radarrCustomFiltersProvider =
 ) async {
   try {
     final RadarrApi api = await ref.watch(radarrApiProvider(instance).future);
-    return await api.getCustomFilters();
+    return radarrMovieCustomFilters(await api.getCustomFilters());
   } catch (_) {
     return const <RadarrCustomFilter>[];
   }

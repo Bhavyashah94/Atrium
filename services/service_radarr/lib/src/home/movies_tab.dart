@@ -1489,16 +1489,7 @@ class _SortFilterBottomSheet extends ConsumerWidget {
                     },
                   ),
                   ...customFiltersAsync.maybeWhen(
-                    data: (customFilters) => customFilters
-                        .where(
-                          (cf) =>
-                              (cf.type == 'movies' ||
-                                  cf.type == 'movieIndex' ||
-                                  cf.type == 'movie') &&
-                              cf.label != null &&
-                              cf.label!.isNotEmpty,
-                        )
-                        .map((cf) {
+                    data: (customFilters) => customFilters.map((cf) {
                       final selected = activeCustomFilter?.id == cf.id;
                       return ChoiceChip(
                         label: Text(cf.label!),
