@@ -4,6 +4,8 @@ import 'package:core_models/core_models.dart';
 import 'package:core_networking/core_networking.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+class _FakeX509Certificate extends Fake implements X509Certificate {}
+
 void main() {
   tearDown(SelfSignedCertTrust.reset);
 
@@ -68,6 +70,20 @@ void main() {
       expect(SelfSignedCertTrust.allowsUrl('https://image.tmdb.org/t/p/w500/abc.jpg'), isFalse);
     });
 
+    test('trust is host-wide across any port', () {
+      final Instance inst = createInstance(
+        id: 'sonarr',
+        localUrl: 'https://sonarr.lan:8989',
+        allowSelfSignedCerts: true,
+      );
+
+      SelfSignedCertTrust.update(<Instance>[inst]);
+
+      expect(SelfSignedCertTrust.allows(host: 'sonarr.lan'), isTrue);
+      expect(SelfSignedCertTrust.allows(host: 'sonarr.lan', port: 8989), isTrue);
+      expect(SelfSignedCertTrust.allows(host: 'sonarr.lan', port: 9999), isTrue);
+    });
+
     test('host matching is case-insensitive', () {
       final Instance inst = createInstance(
         id: 'jellyfin',
@@ -96,6 +112,12 @@ void main() {
       expect(SelfSignedCertTrust.allowsUrl('https://10.0.0.5:8686/api/v1/image'), isTrue);
     });
 
+    test('allowsUrl returns false on null, empty, or unparseable URLs', () {
+      expect(SelfSignedCertTrust.allowsUrl(null), isFalse);
+      expect(SelfSignedCertTrust.allowsUrl(''), isFalse);
+      expect(SelfSignedCertTrust.allowsUrl('   '), isFalse);
+    });
+
     test('reset clears all registered hosts', () {
       final Instance inst = createInstance(
         id: 'radarr',
@@ -112,7 +134,7 @@ void main() {
   });
 
   group('AtriumHttpOverrides', () {
-    test('createHttpClient instantiates client configured with trust registry', () {
+    test('badCertificateCallback returns true for trusted hosts and false for others', () {
       final Instance inst = createInstance(
         id: 'radarr',
         localUrl: 'https://radarr.lan:7878',
@@ -120,6 +142,13 @@ void main() {
       );
       SelfSignedCertTrust.update(<Instance>[inst]);
 
+      final _FakeX509Certificate fakeCert = _FakeX509Certificate();
+      expect(AtriumHttpOverrides.badCertificateCallback(fakeCert, 'radarr.lan', 7878), isTrue);
+      expect(AtriumHttpOverrides.badCertificateCallback(fakeCert, 'radarr.lan', 9999), isTrue);
+      expect(AtriumHttpOverrides.badCertificateCallback(fakeCert, 'evil.example.com', 443), isFalse);
+    });
+
+    test('createHttpClient instantiates client configured with trust registry', () {
       final AtriumHttpOverrides overrides = AtriumHttpOverrides();
       final HttpClient client = overrides.createHttpClient(null);
 

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:core_models/core_models.dart';
+import 'package:meta/meta.dart';
 
 /// Registry of hosts whose self-signed TLS certificates are explicitly trusted.
 ///
@@ -11,8 +12,19 @@ import 'package:core_models/core_models.dart';
 /// certificate, those image requests fail TLS validation silently unless
 /// intercepted.
 ///
-/// [AtriumHttpOverrides] queries this registry to allow bad certificates only
-/// for hosts explicitly configured with [Instance.allowSelfSignedCerts].
+/// [AtriumHttpOverrides] queries this registry to allow bad certificates for
+/// hosts explicitly configured with [Instance.allowSelfSignedCerts].
+///
+/// ### Trust Granularity
+/// Trust is host-scoped rather than port-scoped or per-instance:
+/// - Once a host is registered, any port on that host is trusted.
+/// - All instances or image requests in the application targeting that host
+///   share this trust setting.
+/// This matches standard homelab deployments where multiple services on the
+/// same machine or reverse proxy share a private root CA or wildcard cert.
+///
+/// Note on IPv6: `Uri.host` strips enclosing brackets; the TLS callback's
+/// `host` parameter is similarly provided as a bare literal on standard paths.
 abstract final class SelfSignedCertTrust {
   static Set<String> _selfSignedHosts = const <String>{};
 
@@ -29,35 +41,28 @@ abstract final class SelfSignedCertTrust {
       ]) {
         final Uri? uri = _tryParse(raw);
         if (uri != null && uri.host.isNotEmpty) {
-          final String host = uri.host.toLowerCase();
-          hosts.add(host);
-          if (uri.hasPort) {
-            hosts.add('$host:${uri.port}');
-          }
+          hosts.add(uri.host.toLowerCase());
         }
       }
     }
     _selfSignedHosts = hosts;
   }
 
-  /// Checks whether [host] (and optionally [port]) is allowed to use a
-  /// self-signed certificate.
+  /// Checks whether [host] is allowed to use a self-signed certificate.
+  ///
+  /// Trust is host-scoped: [port] is accepted for signature compatibility with
+  /// Dart's `badCertificateCallback` but matching evaluates the hostname.
   static bool allows({required String host, int? port}) {
     if (_selfSignedHosts.isEmpty) {
       return false;
     }
     final String normalizedHost = host.toLowerCase().trim();
-    if (_selfSignedHosts.contains(normalizedHost)) {
-      return true;
-    }
-    if (port != null && _selfSignedHosts.contains('$normalizedHost:$port')) {
-      return true;
-    }
-    return false;
+    return _selfSignedHosts.contains(normalizedHost);
   }
 
   /// Checks whether the host of [url] is allowed to use a self-signed
   /// certificate.
+  @visibleForTesting
   static bool allowsUrl(String? url) {
     if (url == null || url.trim().isEmpty) {
       return false;
@@ -70,6 +75,7 @@ abstract final class SelfSignedCertTrust {
   }
 
   /// Clears the registry. Only for tests.
+  @visibleForTesting
   static void reset() => _selfSignedHosts = const <String>{};
 
   static Uri? _tryParse(String raw) {
@@ -100,10 +106,20 @@ class AtriumHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     final HttpClient client = super.createHttpClient(context);
-    client.badCertificateCallback =
-        (X509Certificate cert, String host, int port) {
-      return SelfSignedCertTrust.allows(host: host, port: port);
-    };
+    client.badCertificateCallback = badCertificateCallback;
     return client;
+  }
+
+  /// Verification callback applied to [HttpClient.badCertificateCallback].
+  ///
+  /// Exposed for testing because `badCertificateCallback` on `dart:io`'s
+  /// [HttpClient] is a write-only setter without a getter in the Dart SDK.
+  @visibleForTesting
+  static bool badCertificateCallback(
+    X509Certificate cert,
+    String host,
+    int port,
+  ) {
+    return SelfSignedCertTrust.allows(host: host, port: port);
   }
 }
