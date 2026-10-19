@@ -9,11 +9,13 @@ import 'adguard_home_api.dart';
 import 'adguard_home_client_edit.dart';
 import 'adguard_home_clients_view.dart';
 import 'adguard_home_errors.dart';
+import 'adguard_home_filter_rules.dart';
 import 'adguard_home_rules.dart';
 import 'adguard_home_session.dart';
 import 'models/adguard_home_access.dart';
 import 'models/adguard_home_clients.dart';
 import 'models/adguard_home_filtering.dart';
+import 'models/adguard_home_filters.dart';
 import 'models/adguard_home_services.dart';
 import 'models/adguard_home_stats.dart';
 import 'models/adguard_home_status.dart';
@@ -189,6 +191,42 @@ final adguardHomeSafeSearchProvider =
     final AdguardHomeApi api =
         await ref.watch(adguardHomeApiProvider(instance).future);
     return api.getSafeSearch();
+  },
+  retry: (int _, Object __) => null,
+);
+
+/// The DNS rewrites. Read when a screen asks, not on a timer.
+final adguardHomeRewritesProvider =
+    FutureProvider.autoDispose.family<List<AdguardHomeRewrite>, Instance>(
+  (Ref ref, Instance instance) async {
+    ref.watch(adguardHomeSignInRetriesProvider(instance));
+    final AdguardHomeApi api =
+        await ref.watch(adguardHomeApiProvider(instance).future);
+    return api.getRewrites();
+  },
+  retry: (int _, Object __) => null,
+);
+
+/// Whether rewrites apply at all.
+final adguardHomeRewritesEnabledProvider =
+    FutureProvider.autoDispose.family<bool, Instance>(
+  (Ref ref, Instance instance) async {
+    ref.watch(adguardHomeSignInRetriesProvider(instance));
+    final AdguardHomeApi api =
+        await ref.watch(adguardHomeApiProvider(instance).future);
+    return api.getRewritesEnabled();
+  },
+  retry: (int _, Object __) => null,
+);
+
+/// The services the server blocks for everyone, and its pause schedule.
+final adguardHomeGlobalServicesProvider =
+    FutureProvider.autoDispose.family<AdguardHomeGlobalServices, Instance>(
+  (Ref ref, Instance instance) async {
+    ref.watch(adguardHomeSignInRetriesProvider(instance));
+    final AdguardHomeApi api =
+        await ref.watch(adguardHomeApiProvider(instance).future);
+    return api.getGlobalServices();
   },
   retry: (int _, Object __) => null,
 );
@@ -398,4 +436,202 @@ class AdguardHomeActions {
       queries: queries,
     );
   }
+
+  /// The lists, the custom rules and the figures on Home all come from the
+  /// one filtering read.
+  void _filteringChanged() =>
+      _ref.invalidate(adguardHomeFilteringProvider(_instance));
+
+  /// Switches [list] on or off. The server takes the whole list, so its
+  /// name and address go back as they are.
+  Future<void> setListEnabled(
+    AdguardHomeFilterList list, {
+    required bool allowlist,
+    required bool enabled,
+  }) async {
+    try {
+      await (await _api).updateFilterList(
+        url: list.url,
+        allowlist: allowlist,
+        name: list.name,
+        newUrl: list.url,
+        enabled: enabled,
+      );
+    } finally {
+      _filteringChanged();
+    }
+  }
+
+  /// Adds a list called [name] at [url], or with an [original] changes that
+  /// one, which keeps its switch.
+  Future<void> saveList({
+    required bool allowlist,
+    required String name,
+    required String url,
+    AdguardHomeFilterList? original,
+  }) async {
+    try {
+      final AdguardHomeApi api = await _api;
+      if (original == null) {
+        await api.addFilterList(name: name, url: url, allowlist: allowlist);
+      } else {
+        await api.updateFilterList(
+          url: original.url,
+          allowlist: allowlist,
+          name: name,
+          newUrl: url,
+          enabled: original.enabled,
+        );
+      }
+    } finally {
+      _filteringChanged();
+    }
+  }
+
+  Future<void> removeList(
+    AdguardHomeFilterList list, {
+    required bool allowlist,
+  }) async {
+    try {
+      await (await _api).removeFilterList(url: list.url, allowlist: allowlist);
+    } finally {
+      _filteringChanged();
+    }
+  }
+
+  /// Fetches the lists of one kind again. The answer is how many changed.
+  Future<int> refreshLists({required bool allowlist}) async {
+    try {
+      return await (await _api).refreshFilterLists(allowlist: allowlist);
+    } finally {
+      _filteringChanged();
+    }
+  }
+
+  /// Sets how often the lists are fetched again. Whether filtering is on
+  /// goes with it, read fresh: the server resets what the write leaves out.
+  Future<void> setUpdateInterval(int hours) async {
+    try {
+      final AdguardHomeApi api = await _api;
+      final AdguardHomeFiltering now = await api.getFiltering();
+      await api.setFilteringConfig(enabled: now.enabled, intervalHours: hours);
+    } finally {
+      _filteringChanged();
+    }
+  }
+
+  /// Replaces the custom rules with [after].
+  ///
+  /// The rules are read again first. When they are no longer [before], what
+  /// the editor was opened with, someone changed them meanwhile, and
+  /// [AdguardHomeRulesChanged] is thrown with the server's rules unless the
+  /// user said to [overwrite].
+  Future<void> saveRules({
+    required List<String> before,
+    required List<String> after,
+    bool overwrite = false,
+  }) async {
+    try {
+      final AdguardHomeApi api = await _api;
+      final List<String> now = (await api.getFiltering()).userRules;
+      if (!overwrite && !_sameList(now, before)) {
+        throw AdguardHomeRulesChanged(now);
+      }
+      await api.setUserRules(after);
+    } finally {
+      _filteringChanged();
+    }
+  }
+
+  /// Points the custom rules written for the client called [from] at its
+  /// new name [to]. The answer is how many rules changed; none, and nothing
+  /// is written.
+  Future<int> renameClientInRules(String from, String to) async {
+    final AdguardHomeApi api = await _api;
+    final List<String> rules = (await api.getFiltering()).userRules;
+    final int count = adguardHomeRulesNamingClient(rules, from);
+    if (count == 0) return 0;
+    try {
+      await api.setUserRules(adguardHomeRenameClientInRules(rules, from, to));
+    } finally {
+      _filteringChanged();
+    }
+    return count;
+  }
+
+  /// What the server would do with [name].
+  Future<AdguardHomeHostCheck> checkHost(String name, {String? client}) async =>
+      (await _api).checkHost(name, client: client);
+
+  /// Blocks [ids] for everyone. The pause schedule is read fresh and goes
+  /// back as it is.
+  Future<void> setGlobalServiceIds(List<String> ids) async {
+    try {
+      final AdguardHomeApi api = await _api;
+      final AdguardHomeGlobalServices now = await api.getGlobalServices();
+      await api.setGlobalServices(now.copyWith(ids: ids));
+    } finally {
+      _ref.invalidate(adguardHomeGlobalServicesProvider(_instance));
+    }
+  }
+
+  /// Sets when blocking of the server's services pauses. The services are
+  /// read fresh and go back as they are.
+  Future<void> setGlobalSchedule(AdguardHomeSchedule schedule) async {
+    try {
+      final AdguardHomeApi api = await _api;
+      final AdguardHomeGlobalServices now = await api.getGlobalServices();
+      await api.setGlobalServices(now.copyWith(schedule: schedule));
+    } finally {
+      _ref.invalidate(adguardHomeGlobalServicesProvider(_instance));
+    }
+  }
+
+  /// Adds [rewrite], or with an [original] changes that one into it.
+  Future<void> saveRewrite({
+    required AdguardHomeRewrite rewrite,
+    AdguardHomeRewrite? original,
+  }) async {
+    try {
+      final AdguardHomeApi api = await _api;
+      if (original == null) {
+        await api.addRewrite(rewrite);
+      } else {
+        await api.updateRewrite(original, rewrite);
+      }
+    } finally {
+      _ref.invalidate(adguardHomeRewritesProvider(_instance));
+    }
+  }
+
+  Future<void> setRewriteEnabled(
+    AdguardHomeRewrite rewrite, {
+    required bool enabled,
+  }) =>
+      saveRewrite(original: rewrite, rewrite: rewrite.copyWith(enabled: enabled));
+
+  Future<void> deleteRewrite(AdguardHomeRewrite rewrite) async {
+    try {
+      await (await _api).deleteRewrite(rewrite);
+    } finally {
+      _ref.invalidate(adguardHomeRewritesProvider(_instance));
+    }
+  }
+
+  /// Turns all rewrites on or off.
+  Future<void> setRewritesEnabled({required bool enabled}) async {
+    try {
+      await (await _api).setRewritesEnabled(enabled: enabled);
+    } finally {
+      _ref.invalidate(adguardHomeRewritesEnabledProvider(_instance));
+    }
+  }
+}
+
+bool _sameList(List<String> a, List<String> b) {
+  if (a.length != b.length) return false;
+  for (int i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
 }

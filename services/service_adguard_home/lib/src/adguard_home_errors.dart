@@ -80,10 +80,27 @@ class AdguardHomeClientGone implements Exception {
   String toString() => message;
 }
 
+/// The custom rules on the server are no longer the ones the editor was
+/// opened with: a block from the query log, or the web UI, changed them.
+/// Saving would replace those changes, so it is not done unasked.
+class AdguardHomeRulesChanged implements Exception {
+  const AdguardHomeRulesChanged(this.rules);
+
+  /// The rules as the server has them now.
+  final List<String> rules;
+
+  static const String message =
+      'The custom rules were changed on the server since you opened them.';
+
+  @override
+  String toString() => message;
+}
+
 /// One sentence for whatever went wrong, fit to show as it is.
 String describeAdguardHomeError(Object error) => switch (error) {
       AdguardHomeSignInRefused() => 'AdGuard Home refused the sign-in.',
       AdguardHomeClientGone(:final String message) => message,
+      AdguardHomeRulesChanged() => AdguardHomeRulesChanged.message,
       AdguardHomeLastAllowedClient() => AdguardHomeLastAllowedClient.message,
       AdguardHomeAllowedByWiderEntry() =>
         AdguardHomeAllowedByWiderEntry.message,
