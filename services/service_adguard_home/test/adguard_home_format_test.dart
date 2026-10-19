@@ -233,4 +233,48 @@ void main() {
     expect(adguardHomeServicesBlockedLabel(1), '1 service blocked');
     expect(adguardHomeServicesBlockedLabel(12), '12 services blocked');
   });
+
+  test('a weekday goes by its whole name', () {
+    expect(adguardHomeWeekdayName('mon'), 'Monday');
+    expect(adguardHomeWeekdayName('sun'), 'Sunday');
+    expect(adguardHomeWeekdayName('xyz'), 'xyz');
+  });
+
+  test('a time of day is written on the 24-hour clock', () {
+    expect(formatAdguardHomeClock(Duration.zero), '00:00');
+    expect(
+      formatAdguardHomeClock(const Duration(hours: 9, minutes: 5)),
+      '09:05',
+    );
+    expect(formatAdguardHomeClock(const Duration(hours: 24)), '24:00');
+  });
+
+  test('a pause reads as its hours, or all day', () {
+    expect(
+      adguardHomePauseLabel(
+        const AdguardHomeServicePause(
+          day: 'sat',
+          start: Duration(hours: 9),
+          end: Duration(hours: 17),
+        ),
+      ),
+      '09:00 to 17:00',
+    );
+    expect(
+      adguardHomePauseLabel(
+        const AdguardHomeServicePause(
+          day: 'sun',
+          start: Duration.zero,
+          end: Duration(hours: 24),
+        ),
+      ),
+      'All day',
+    );
+  });
+
+  test('the server\'s own time zone goes by a name, not its keyword', () {
+    expect(adguardHomeTimeZoneLabel('Local'), "The server's time zone");
+    expect(adguardHomeTimeZoneLabel(''), "The server's time zone");
+    expect(adguardHomeTimeZoneLabel('Europe/Berlin'), 'Europe/Berlin');
+  });
 }

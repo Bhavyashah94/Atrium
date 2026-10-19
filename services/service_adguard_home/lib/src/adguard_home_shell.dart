@@ -11,10 +11,12 @@ import 'adguard_home_log_actions.dart';
 import 'adguard_home_providers.dart';
 import 'screens/adguard_home_client_screen.dart';
 import 'tabs/adguard_home_clients_tab.dart';
+import 'tabs/adguard_home_filters_tab.dart';
 import 'tabs/adguard_home_home_tab.dart';
 import 'tabs/adguard_home_query_log_tab.dart';
 
-/// Which of the screen's tabs is showing: 0 Home, 1 Query log, 2 Clients.
+/// Which of the screen's tabs is showing: 0 Home, 1 Query log, 2 Filters,
+/// 3 Clients.
 /// Kept for the session, so the service opens where it was left.
 final adguardHomeTabProvider =
     StateProvider.family<int, Instance>((Ref ref, Instance _) => 0);
@@ -42,7 +44,8 @@ class AdguardHomeShell extends ConsumerStatefulWidget {
 
 class _AdguardHomeShellState extends ConsumerState<AdguardHomeShell> {
   static const int _queryLog = 1;
-  static const int _clients = 2;
+  static const int _filters = 2;
+  static const int _clients = 3;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -134,6 +137,10 @@ class _AdguardHomeShellState extends ConsumerState<AdguardHomeShell> {
               AdguardHomeQueryLogTab(instance: _instance)
             else
               const SizedBox.shrink(),
+            if (_shown.contains(_filters))
+              AdguardHomeFiltersTab(instance: _instance)
+            else
+              const SizedBox.shrink(),
             if (_shown.contains(_clients))
               AdguardHomeClientsTab(instance: _instance)
             else
@@ -166,6 +173,11 @@ class _AdguardHomeShellState extends ConsumerState<AdguardHomeShell> {
               icon: Icon(Icons.receipt_long_outlined),
               selectedIcon: Icon(Icons.receipt_long),
               label: 'Query log',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.filter_alt_outlined),
+              selectedIcon: Icon(Icons.filter_alt),
+              label: 'Filters',
             ),
             NavigationDestination(
               icon: Icon(Icons.devices_outlined),
