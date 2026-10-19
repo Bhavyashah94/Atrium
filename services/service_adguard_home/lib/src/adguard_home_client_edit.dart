@@ -355,3 +355,19 @@ int _bitsOfRangeHolding(String range, List<int> address) {
   }
   return bits;
 }
+
+/// What is wrong with [text] as an IP address of the kind [version] says
+/// (4, 6, or either when null), or null when it is one.
+String? adguardHomeIpProblem(String text, {int? version}) {
+  final List<int>? bytes = adguardHomeAddressBytes(text.trim());
+  final bool fits = bytes != null &&
+      (version == null ||
+          (version == 4 && bytes.length == 4) ||
+          (version == 6 && bytes.length == 16));
+  if (fits) return null;
+  return switch (version) {
+    4 => 'An IPv4 address, such as 0.0.0.0.',
+    6 => 'An IPv6 address, such as ::.',
+    _ => 'An IP address.',
+  };
+}

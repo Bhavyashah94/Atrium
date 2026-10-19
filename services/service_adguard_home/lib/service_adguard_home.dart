@@ -25,6 +25,7 @@ export 'src/models/adguard_home_stats.dart';
 export 'src/models/adguard_home_status.dart';
 export 'src/screens/adguard_home_client_screen.dart';
 export 'src/screens/adguard_home_custom_rules_screen.dart';
+export 'src/screens/adguard_home_dns_server_screen.dart';
 export 'src/screens/adguard_home_dns_upstreams_screen.dart';
 export 'src/screens/adguard_home_filter_lists_screen.dart';
 export 'src/screens/adguard_home_general_settings_screen.dart';

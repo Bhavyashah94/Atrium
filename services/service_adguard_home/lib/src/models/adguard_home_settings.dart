@@ -418,3 +418,19 @@ class AdguardHomeUpstreamResult {
 
   bool get ok => message == 'OK';
 }
+
+/// The largest number the server keeps in its 32-bit settings.
+const int adguardHomeMaxUint32 = 4294967295;
+
+/// What is wrong with [text] as a whole number from [min] to [max], or null
+/// when it is one.
+String? adguardHomeWholeNumberProblem(
+  String text, {
+  int min = 0,
+  int max = adguardHomeMaxUint32,
+}) {
+  final int? value = int.tryParse(text.trim());
+  if (value == null) return 'Enter a number.';
+  if (value < min || value > max) return 'From $min to $max.';
+  return null;
+}
