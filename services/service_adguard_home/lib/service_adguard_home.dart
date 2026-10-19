@@ -34,6 +34,7 @@ export 'src/screens/adguard_home_general_settings_screen.dart';
 export 'src/screens/adguard_home_global_services_screen.dart';
 export 'src/screens/adguard_home_retention_screen.dart';
 export 'src/screens/adguard_home_rewrites_screen.dart';
+export 'src/screens/adguard_home_server_info_screens.dart';
 export 'src/screens/adguard_home_services_screen.dart';
 export 'src/screens/adguard_home_top_list_screen.dart';
 export 'src/tabs/adguard_home_clients_tab.dart';
