@@ -1,0 +1,7 @@
+The qBittorrent list asks only for what changed since the last refresh, so a
+large library loads faster and uses far less data. Its refresh interval is set
+per instance, 5 seconds by default.
+
+Fixed: the Seerr requests list no longer reloads forever on servers with many
+requests, and artwork loads from instances that allow self-signed
+certificates.

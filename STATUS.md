@@ -1,6 +1,6 @@
 # Atrium - Status
 
-> Snapshot of what genuinely works and what is left, as of 2026-10-08.
+> Snapshot of what genuinely works and what is left, as of 2026-10-19.
 > Atrium is published on F-Droid and on the GitHub releases page. It is
 > still in early development and every module is work in progress; nothing
 > here is a release promise.
@@ -40,9 +40,12 @@ Atrium is a **controller** app. Video playback was removed by design
 ## What works today (live-verified unless noted; all still in progress)
 
 - Core foundation: profiles, multi-instance, dual-URL routing, secure
-  key storage, import/export, per-service health dots, theming
-- **qBittorrent**: cookie login (qBit 5.x 204 fix), 3s realtime polling,
-  add magnet/file (with skip hash check), categories, tag and tracker
+  key storage, import/export, per-service health dots, theming; an
+  instance that allows a self-signed certificate has it accepted for its
+  artwork too, not only its API (per host, 2026-10-19, #189)
+- **qBittorrent**: cookie login (qBit 5.x 204 fix), realtime polling of
+  only what changed (per-instance interval, default 5s), add
+  magnet/file (with skip hash check), categories, tag and tracker
   filters, pause/resume/delete/recheck, queue moves and reordering
   (top/up/down/bottom) with sort by queue position, torrent detail
   (overview/files/trackers), per-file priority, and a settings screen
@@ -87,7 +90,10 @@ Atrium is a **controller** app. Video playback was removed by design
   provider search/download/delete, wanted, history, blacklist, system
 - **Seerr** (Jellyseerr / Overseerr): discover (trending/upcoming/genres),
   search, item detail with request submission (profile/folder/server
-  selection), requests management (approve/decline/delete/retry)
+  selection), requests management (approve/decline/delete/retry). The
+  requests list reads its pages in parallel once the server has said how
+  many there are, and refreshes only after a read has finished, so a server
+  with thousands of requests finishes loading (fixed 2026-10-12, #185)
 - **Ombi** (added 2026-09-19, out of beta since 2026-10-05, live-verified
   against 4.53, restyled 2026-10-02): its own screen with a bottom bar for Requests and Discover
   and search in the app bar. Requests for movies, TV and, where Lidarr is
