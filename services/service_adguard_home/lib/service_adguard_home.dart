@@ -30,6 +30,7 @@ export 'src/screens/adguard_home_rewrites_screen.dart';
 export 'src/screens/adguard_home_services_screen.dart';
 export 'src/screens/adguard_home_top_list_screen.dart';
 export 'src/tabs/adguard_home_clients_tab.dart';
+export 'src/tabs/adguard_home_filters_tab.dart';
 export 'src/tabs/adguard_home_home_tab.dart';
 export 'src/tabs/adguard_home_query_log_tab.dart';
 export 'src/widgets/adguard_home_chart_card.dart';
