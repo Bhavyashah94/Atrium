@@ -184,3 +184,10 @@ nothing broke; the app just stopped believing the login page.
 
 Per instance, in its edit screen. Off by default, and worth leaving off for
 anything reachable from the internet.
+
+From 1.9.1 it covers artwork too: posters and backdrops load from such an
+instance, not only its API. The exception is made per host, not per instance:
+once one instance on a host allows a self-signed certificate, every request to
+that host accepts one, on any port, including those of other instances on the
+same machine. Hosts no instance names, such as the image servers of TMDB, are
+never covered.

@@ -27,6 +27,19 @@ class ReleaseNote {
 /// Newest first. Update alongside appVersion and the pubspec at each release.
 const List<ReleaseNote> releaseNotes = <ReleaseNote>[
   ReleaseNote(
+    version: '1.9.1',
+    date: '2026-10-19',
+    groups: <ChangeGroup>[
+      ChangeGroup(ChangeCategory.improved, <String>[
+        'The qBittorrent torrent list asks only for what changed since the last refresh, the way the qBittorrent web UI does, so a large library loads faster and uses far less data. How often it refreshes is now set per instance in its form, 5 seconds by default (it was 3).',
+      ]),
+      ChangeGroup(ChangeCategory.fixed, <String>[
+        'The Seerr requests list no longer reloads forever on servers with many requests.',
+        'Posters and other artwork load from an instance with "Allow self-signed certificates" turned on.',
+      ]),
+    ],
+  ),
+  ReleaseNote(
     version: '1.9.0',
     date: '2026-10-08',
     groups: <ChangeGroup>[
