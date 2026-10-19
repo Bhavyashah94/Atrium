@@ -69,6 +69,16 @@ void main() {
     expect(adguardHomeRetentionLabel(const Duration(hours: 30)), '30 hours');
   });
 
+  test('cache sizes read in steps of 1024', () {
+    expect(adguardHomeBytesLabel(0), '0 bytes');
+    expect(adguardHomeBytesLabel(1), '1 byte');
+    expect(adguardHomeBytesLabel(1023), '1023 bytes');
+    expect(adguardHomeBytesLabel(1024), '1 KB');
+    expect(adguardHomeBytesLabel(4194304), '4 MB');
+    expect(adguardHomeBytesLabel(1572864), '1.5 MB');
+    expect(adguardHomeBytesLabel(4294967295), '4 GB');
+  });
+
   group('when a query came in', () {
     // The server sends UTC. These are built in local time and turned into
     // UTC, so the test reads the same in every time zone.
