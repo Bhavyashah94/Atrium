@@ -60,6 +60,15 @@ void main() {
     expect(formatAdguardHomeElapsed(null), '');
   });
 
+  test('retention is named as the web UI names its choices', () {
+    expect(adguardHomeRetentionLabel(const Duration(hours: 1)), '1 hour');
+    expect(adguardHomeRetentionLabel(const Duration(hours: 6)), '6 hours');
+    expect(adguardHomeRetentionLabel(const Duration(hours: 24)), '24 hours');
+    expect(adguardHomeRetentionLabel(const Duration(days: 7)), '7 days');
+    expect(adguardHomeRetentionLabel(const Duration(days: 90)), '90 days');
+    expect(adguardHomeRetentionLabel(const Duration(hours: 30)), '30 hours');
+  });
+
   group('when a query came in', () {
     // The server sends UTC. These are built in local time and turned into
     // UTC, so the test reads the same in every time zone.
