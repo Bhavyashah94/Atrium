@@ -34,6 +34,7 @@ export 'src/tabs/adguard_home_filters_tab.dart';
 export 'src/tabs/adguard_home_home_tab.dart';
 export 'src/tabs/adguard_home_query_log_tab.dart';
 export 'src/widgets/adguard_home_chart_card.dart';
+export 'src/widgets/adguard_home_check_client_picker.dart';
 export 'src/widgets/adguard_home_client_rows.dart';
 export 'src/widgets/adguard_home_client_sheet.dart';
 export 'src/widgets/adguard_home_countdown.dart';

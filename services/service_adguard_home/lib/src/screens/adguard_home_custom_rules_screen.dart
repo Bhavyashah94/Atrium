@@ -34,6 +34,11 @@ class _AdguardHomeCustomRulesScreenState
   List<String>? _before;
   bool _busy = false;
 
+  /// Whether a rule too long for the box goes on over more lines. Off, each
+  /// rule stays on its one line and the box scrolls sideways, so a line is
+  /// always a rule.
+  bool _wrap = true;
+
   Instance get _instance => widget.instance;
 
   bool get _changed {
@@ -176,6 +181,12 @@ class _AdguardHomeCustomRulesScreenState
         appBar: AppBar(
           title: const Text('Custom rules'),
           actions: <Widget>[
+            IconButton(
+              isSelected: _wrap,
+              icon: const Icon(Icons.wrap_text),
+              tooltip: _wrap ? 'Stop wrapping lines' : 'Wrap lines',
+              onPressed: () => setState(() => _wrap = !_wrap),
+            ),
             FilledButton(
               onPressed: _busy || !changed ? null : _save,
               child: const Text('Save'),
@@ -242,28 +253,60 @@ class _AdguardHomeCustomRulesScreenState
                   ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: Insets.md),
-            Expanded(
-              child: TextField(
-                key: const Key('adguard-rules'),
-                controller: _text,
-                onChanged: (String _) => setState(() {}),
-                expands: true,
-                maxLines: null,
-                textAlignVertical: TextAlignVertical.top,
-                autocorrect: false,
-                enableSuggestions: false,
-                keyboardType: TextInputType.multiline,
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(fontFamily: 'monospace'),
-                decoration: const InputDecoration(
-                  hintText: '||example.org^',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
+            Expanded(child: _editor(theme)),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _editor(ThemeData theme) {
+    final TextStyle? style =
+        theme.textTheme.bodyMedium?.copyWith(fontFamily: 'monospace');
+    final Widget field = TextField(
+      key: const Key('adguard-rules'),
+      controller: _text,
+      onChanged: (String _) => setState(() {}),
+      expands: true,
+      maxLines: null,
+      textAlignVertical: TextAlignVertical.top,
+      autocorrect: false,
+      enableSuggestions: false,
+      keyboardType: TextInputType.multiline,
+      style: style,
+      decoration: const InputDecoration(
+        hintText: '||example.org^',
+        border: OutlineInputBorder(),
+      ),
+    );
+    if (_wrap) return field;
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints box) {
+        // The font is of one width, so the longest line in characters is
+        // the widest. A few to spare for the box's own padding and the
+        // cursor, so a line that fits is never wrapped after all.
+        int longest = 0;
+        for (final String line in _text.text.split('\n')) {
+          if (line.length > longest) longest = line.length;
+        }
+        final TextPainter glyph = TextPainter(
+          text: TextSpan(text: 'M', style: style),
+          textDirection: TextDirection.ltr,
+          textScaler: MediaQuery.textScalerOf(context),
+        )..layout();
+        final double width = glyph.width * (longest + 6);
+        glyph.dispose();
+        return Scrollbar(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: width > box.maxWidth ? width : box.maxWidth,
+              height: box.maxHeight,
+              child: field,
+            ),
+          ),
+        );
+      },
     );
   }
 }

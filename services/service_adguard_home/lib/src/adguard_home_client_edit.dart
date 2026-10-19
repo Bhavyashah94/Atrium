@@ -315,6 +315,41 @@ List<int>? adguardHomeAddressBytes(String text) {
   }
 }
 
+/// An address [client] can be checked as. The server's Check a host takes
+/// only an address for its client: not a name, a MAC address or a ClientID.
+/// So the first address the client lists, or else the first in its first
+/// range of the older kind; null when it has neither.
+String? adguardHomeCheckAddressOf(AdguardHomeClient client) {
+  for (final String id in client.ids) {
+    if (!id.contains('/') && adguardHomeAddressBytes(id) != null) return id;
+  }
+  for (final String id in client.ids) {
+    final int slash = id.indexOf('/');
+    if (slash < 0) continue;
+    final String start = id.substring(0, slash);
+    final int? bits = int.tryParse(id.substring(slash + 1));
+    final List<int>? network = adguardHomeAddressBytes(start);
+    if (network == null || network.length != 4 || bits == null) continue;
+    if (bits < 0 || bits > 32) continue;
+    if (bits >= 31) return start;
+    // Past the network's own address, which no device has.
+    final int value = ((network[0] << 24) |
+            (network[1] << 16) |
+            (network[2] << 8) |
+            network[3]) &
+        (0xffffffff << (32 - bits)) &
+        0xffffffff;
+    final int host = value + 1;
+    return <int>[
+      (host >> 24) & 0xff,
+      (host >> 16) & 0xff,
+      (host >> 8) & 0xff,
+      host & 0xff,
+    ].join('.');
+  }
+  return null;
+}
+
 /// How many leading bits [range] fixes, when it is a range that [address]
 /// is inside. Minus one when it is not a range, cannot be read, or does not
 /// hold the address.

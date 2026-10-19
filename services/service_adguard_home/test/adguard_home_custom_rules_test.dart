@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_adguard_home/service_adguard_home.dart';
 
@@ -172,6 +173,48 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.widget<FilledButton>(save).onPressed, isNull);
+    });
+
+    testWidgets('wrap long rules until told not to, then scroll sideways',
+        (WidgetTester tester) async {
+      await pumpRules(tester);
+      const String long =
+          r"||a-rather-long-domain-name.example.org^$client='Kids tablet'";
+      await tester.enterText(editor, '$long\n||b.example^');
+      await tester.pump();
+
+      // Where the caret would be at the start and at the end of the rule:
+      // on the same line only when the rule is not wrapped.
+      bool onOneLine() {
+        final RenderEditable editable = tester
+            .state<EditableTextState>(find.byType(EditableText))
+            .renderEditable;
+        return editable
+                .getLocalRectForCaret(const TextPosition(offset: 0))
+                .top ==
+            editable
+                .getLocalRectForCaret(const TextPosition(offset: long.length))
+                .top;
+      }
+
+      expect(onOneLine(), isFalse);
+      expect(find.byType(SingleChildScrollView), findsNothing);
+
+      await tester.tap(find.byTooltip('Stop wrapping lines'));
+      await tester.pump();
+
+      expect(onOneLine(), isTrue);
+      expect(
+        tester
+            .widget<SingleChildScrollView>(find.byType(SingleChildScrollView))
+            .scrollDirection,
+        Axis.horizontal,
+      );
+      expect(text(tester), '$long\n||b.example^');
+
+      await tester.tap(find.byTooltip('Wrap lines'));
+      await tester.pump();
+      expect(onOneLine(), isFalse);
     });
 
     testWidgets('leaving with a change asks first', (WidgetTester tester) async {

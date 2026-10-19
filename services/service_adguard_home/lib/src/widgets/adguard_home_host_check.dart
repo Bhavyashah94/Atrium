@@ -12,6 +12,7 @@ import '../models/adguard_home_filtering.dart';
 import '../models/adguard_home_filters.dart';
 import '../models/adguard_home_query_log.dart';
 import '../models/adguard_home_services.dart';
+import 'adguard_home_check_client_picker.dart';
 import 'adguard_home_fields.dart';
 import 'adguard_home_result_chip.dart';
 
@@ -59,6 +60,10 @@ class _AdguardHomeHostCheckSheetState
   AdguardHomeHostCheck? _check;
   Object? _error;
 
+  /// Whom the name is checked for. A client can have its own blocked
+  /// services, schedule, protection and rules.
+  AdguardHomeCheckClient _client = AdguardHomeCheckClient.any;
+
   @override
   void initState() {
     super.initState();
@@ -66,14 +71,37 @@ class _AdguardHomeHostCheckSheetState
   }
 
   Future<void> _ask() async {
+    final AdguardHomeCheckClient client = _client;
     try {
       final AdguardHomeHostCheck check = await ref
           .read(adguardHomeActionsProvider(widget.instance))
-          .checkHost(widget.name);
-      if (mounted) setState(() => _check = check);
+          .checkHost(widget.name, client: client.address);
+      // An answer for whom it is no longer asked about is dropped.
+      if (mounted && identical(client, _client)) {
+        setState(() => _check = check);
+      }
     } on Object catch (error) {
-      if (mounted) setState(() => _error = error);
+      if (mounted && identical(client, _client)) {
+        setState(() => _error = error);
+      }
     }
+  }
+
+  Future<void> _pickClient() async {
+    final AdguardHomeCheckClient? picked = await pickAdguardHomeCheckClient(
+      context,
+      instance: widget.instance,
+      current: _client,
+    );
+    if (picked == null || !mounted || picked.address == _client.address) {
+      return;
+    }
+    setState(() {
+      _client = picked;
+      _check = null;
+      _error = null;
+    });
+    await _ask();
   }
 
   /// Asks again. After a refused sign-in the session sends nothing until
@@ -122,7 +150,14 @@ class _AdguardHomeHostCheckSheetState
                   style: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w700),
                 ),
-                const SizedBox(height: Insets.sm),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.devices_other),
+                  title: const Text('Checked for'),
+                  subtitle: Text(_client.description),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _pickClient,
+                ),
                 if (check != null)
                   ..._result(theme, check)
                 else if (error != null) ...<Widget>[
