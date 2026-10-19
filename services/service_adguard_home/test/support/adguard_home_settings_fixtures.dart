@@ -1,111 +1,95 @@
 /// What AdGuard Home v0.107.79 answered about its settings, captured from
 /// a real server on 2026-10-20, unless a comment says a fixture is made up.
+/// The query log and statistics configs are in the older fixture files.
 /// Keep them as the server sent them: tests that need something else build
 /// on a copy.
 library;
 
 /// `GET control/dns_info`.
 Map<String, dynamic> dnsInfoJson() => <String, dynamic>{
-        'upstream_dns': <dynamic>[
-          'https://dns10.quad9.net/dns-query',
-        ],
-        'upstream_dns_file': '',
-        'bootstrap_dns': <dynamic>[
-          '9.9.9.10',
-          '149.112.112.10',
-          '2620:fe::10',
-          '2620:fe::fe:10',
-        ],
-        'fallback_dns': <dynamic>[],
-        'protection_enabled': true,
-        'ratelimit': 20,
-        'ratelimit_subnet_len_ipv4': 24,
-        'ratelimit_subnet_len_ipv6': 56,
-        'upstream_timeout': 10,
-        'ratelimit_whitelist': <dynamic>[],
-        'blocking_mode': 'default',
-        'edns_cs_enabled': false,
-        'edns_cs_use_custom': false,
-        'dnssec_enabled': true,
-        'disable_ipv6': false,
-        'upstream_mode': '',
-        'blocked_response_ttl': 10,
-        'cache_size': 4194304,
-        'cache_ttl_min': 0,
-        'cache_ttl_max': 0,
-        'cache_enabled': true,
-        'cache_optimistic': false,
-        'resolve_clients': true,
-        'use_private_ptr_resolvers': true,
-        'local_ptr_upstreams': <dynamic>[],
-        'blocking_ipv4': '',
-        'blocking_ipv6': '',
-        'protection_disabled_until': null,
-        'edns_cs_custom_ip': '',
-        'default_local_ptr_upstreams': <dynamic>[
-          '192.168.65.7:53',
-        ],
-      };
-
-/// `GET control/querylog/config`: kept 90 days.
-Map<String, dynamic> queryLogConfigJson() => <String, dynamic>{
-        'ignored': <dynamic>[],
-        'interval': 7776000000,
-        'enabled': true,
-        'ignored_enabled': false,
-        'anonymize_client_ip': false,
-      };
-
-/// `GET control/stats/config`: kept 24 hours.
-Map<String, dynamic> statsConfigJson() => <String, dynamic>{
-        'ignored': <dynamic>[],
-        'interval': 86400000,
-        'enabled': true,
-        'ignored_enabled': false,
+      'upstream_dns': <dynamic>[
+        'https://dns10.quad9.net/dns-query',
+      ],
+      'upstream_dns_file': '',
+      'bootstrap_dns': <dynamic>[
+        '9.9.9.10',
+        '149.112.112.10',
+        '2620:fe::10',
+        '2620:fe::fe:10',
+      ],
+      'fallback_dns': <dynamic>[],
+      'protection_enabled': true,
+      'ratelimit': 20,
+      'ratelimit_subnet_len_ipv4': 24,
+      'ratelimit_subnet_len_ipv6': 56,
+      'upstream_timeout': 10,
+      'ratelimit_whitelist': <dynamic>[],
+      'blocking_mode': 'default',
+      'edns_cs_enabled': false,
+      'edns_cs_use_custom': false,
+      'dnssec_enabled': true,
+      'disable_ipv6': false,
+      'upstream_mode': '',
+      'blocked_response_ttl': 10,
+      'cache_size': 4194304,
+      'cache_ttl_min': 0,
+      'cache_ttl_max': 0,
+      'cache_enabled': true,
+      'cache_optimistic': false,
+      'resolve_clients': true,
+      'use_private_ptr_resolvers': true,
+      'local_ptr_upstreams': <dynamic>[],
+      'blocking_ipv4': '',
+      'blocking_ipv6': '',
+      'protection_disabled_until': null,
+      'edns_cs_custom_ip': '',
+      'default_local_ptr_upstreams': <dynamic>[
+        '192.168.65.7:53',
+      ],
       };
 
 /// `GET control/dhcp/status` of a server not serving DHCP.
 Map<String, dynamic> dhcpOffJson() => <String, dynamic>{
-        'interface_name': '',
-        'v4': <String, dynamic>{
-          'gateway_ip': '',
-          'subnet_mask': '',
-          'range_start': '',
-          'range_end': '',
-          'lease_duration': 0,
-        },
-        'v6': <String, dynamic>{
-          'range_start': '',
-          'lease_duration': 86400,
-        },
-        'leases': <dynamic>[],
-        'static_leases': <dynamic>[],
-        'enabled': false,
+      'interface_name': '',
+      'v4': <String, dynamic>{
+        'gateway_ip': '',
+        'subnet_mask': '',
+        'range_start': '',
+        'range_end': '',
+        'lease_duration': 0,
+      },
+      'v6': <String, dynamic>{
+        'range_start': '',
+        'lease_duration': 86400,
+      },
+      'leases': <dynamic>[],
+      'static_leases': <dynamic>[],
+      'enabled': false,
       };
 
 /// `GET control/tls/status` of a server without encryption. The real answer
 /// carries the certificate and key text, empty here.
 Map<String, dynamic> tlsOffJson() => <String, dynamic>{
-        'not_before': '0001-01-01T00:00:00Z',
-        'not_after': '0001-01-01T00:00:00Z',
-        'dns_names': null,
-        'valid_cert': false,
-        'valid_chain': false,
-        'valid_key': false,
-        'valid_pair': false,
-        'enabled': false,
-        'force_https': false,
-        'port_https': 443,
-        'port_dns_over_tls': 853,
-        'port_dns_over_quic': 853,
-        'port_dnscrypt': 0,
-        'dnscrypt_config_file': '',
-        'certificate_chain': '',
-        'private_key': '',
-        'certificate_path': '',
-        'private_key_path': '',
-        'private_key_saved': false,
-        'serve_plain_dns': true,
+      'not_before': '0001-01-01T00:00:00Z',
+      'not_after': '0001-01-01T00:00:00Z',
+      'dns_names': null,
+      'valid_cert': false,
+      'valid_chain': false,
+      'valid_key': false,
+      'valid_pair': false,
+      'enabled': false,
+      'force_https': false,
+      'port_https': 443,
+      'port_dns_over_tls': 853,
+      'port_dns_over_quic': 853,
+      'port_dnscrypt': 0,
+      'dnscrypt_config_file': '',
+      'certificate_chain': '',
+      'private_key': '',
+      'certificate_path': '',
+      'private_key_path': '',
+      'private_key_saved': false,
+      'serve_plain_dns': true,
       };
 
 /// `GET control/tls/status` of a server with encryption on. Made up, in the

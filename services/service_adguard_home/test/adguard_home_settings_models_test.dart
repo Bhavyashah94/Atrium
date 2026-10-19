@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_adguard_home/service_adguard_home.dart';
 
+import 'support/adguard_home_fixtures.dart';
+import 'support/adguard_home_query_log_fixtures.dart';
 import 'support/adguard_home_settings_fixtures.dart';
 
 void main() {

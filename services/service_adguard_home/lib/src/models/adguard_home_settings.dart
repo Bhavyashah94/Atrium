@@ -4,9 +4,11 @@ import 'adguard_home_json.dart';
 /// they leave out: `GET control/querylog/config` and `GET control/stats/config`.
 ///
 /// Both are written whole (`PUT .../config/update`): the server refuses a
-/// write that leaves a field out.
+/// write that leaves a field out. What it sent that is not modelled here
+/// goes back as it came, in [json].
 class AdguardHomeRetention {
   const AdguardHomeRetention({
+    this.json = const <String, dynamic>{},
     this.enabled = true,
     this.interval = const Duration(days: 1),
     this.ignored = const <String>[],
@@ -16,6 +18,7 @@ class AdguardHomeRetention {
 
   factory AdguardHomeRetention.fromJson(Map<String, dynamic> json) =>
       AdguardHomeRetention(
+        json: json,
         enabled: readBool(json['enabled']),
         interval: Duration(milliseconds: readInt(json['interval'])),
         ignored: readStrings(json['ignored']),
@@ -24,6 +27,9 @@ class AdguardHomeRetention {
             ? readBool(json['anonymize_client_ip'])
             : null,
       );
+
+  /// The answer as read.
+  final Map<String, dynamic> json;
 
   final bool enabled;
   final Duration interval;
@@ -46,6 +52,7 @@ class AdguardHomeRetention {
     bool? anonymizeClientIp,
   }) =>
       AdguardHomeRetention(
+        json: json,
         enabled: enabled ?? this.enabled,
         interval: interval ?? this.interval,
         ignored: ignored ?? this.ignored,
@@ -54,6 +61,7 @@ class AdguardHomeRetention {
       );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
+        ...json,
         'enabled': enabled,
         'interval': interval.inMilliseconds,
         'ignored': ignored,
