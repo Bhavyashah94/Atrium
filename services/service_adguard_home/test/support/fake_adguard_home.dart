@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 
 import 'adguard_home_clients_fixtures.dart';
+import 'adguard_home_filters_fixtures.dart';
 import 'adguard_home_fixtures.dart';
 import 'adguard_home_query_log_fixtures.dart';
 
@@ -34,6 +35,23 @@ class FakeAdguardHome implements HttpClientAdapter {
     on('POST', 'control/clients/add', null);
     on('POST', 'control/clients/update', null);
     on('POST', 'control/clients/delete', null);
+    on('POST', 'control/filtering/add_url', null);
+    on('POST', 'control/filtering/set_url', null);
+    on('POST', 'control/filtering/remove_url', null);
+    on('POST', 'control/filtering/refresh', <String, dynamic>{'updated': 0});
+    on('POST', 'control/filtering/config', null);
+    onCall('GET', 'control/filtering/check_host', (RequestOptions request) {
+      final Object? checked = hostChecksJson()[request.queryParameters['name']];
+      return checked ?? hostChecksJson()['example.com'];
+    });
+    on('GET', 'control/blocked_services/get', globalServicesJson());
+    on('PUT', 'control/blocked_services/update', null);
+    on('GET', 'control/rewrite/list', rewritesJson());
+    on('POST', 'control/rewrite/add', null);
+    on('PUT', 'control/rewrite/update', null);
+    on('POST', 'control/rewrite/delete', null);
+    on('GET', 'control/rewrite/settings', rewriteSettingsJson());
+    on('PUT', 'control/rewrite/settings/update', null);
   }
 
   /// What the server says of each id it is asked about: the captured answer
