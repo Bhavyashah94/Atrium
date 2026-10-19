@@ -69,7 +69,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Pause blocking'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Save'));
+    await tester.tap(find.text('Remove pause'));
     await tester.pumpAndSettle();
 
     expect(pumped.actions.calls, <String>['schedule Europe/Berlin 1']);
@@ -85,7 +85,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Pause blocking'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Save'));
+    await tester.tap(find.text('Remove pause'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Monday'));
     await tester.pumpAndSettle();
@@ -106,7 +106,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Pause blocking'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Save'));
+    await tester.tap(find.text('Remove pause'));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('unknown time zone'), findsOneWidget);

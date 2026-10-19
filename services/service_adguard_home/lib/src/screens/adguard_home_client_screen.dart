@@ -275,7 +275,9 @@ class _ClientFormState extends ConsumerState<_ClientForm> {
     );
   }
 
-  Future<void> _save() async {
+  /// Saves the form. [updateRules] is the answer, once given, to whether
+  /// the custom rules that name a renamed client follow the rename.
+  Future<void> _save({bool? updateRules}) async {
     if (_busy) return;
     final AdguardHomeClientDraft draft = _draft;
     final AdguardHomeClientProblems problems = draft.problems;
@@ -293,7 +295,18 @@ class _ClientFormState extends ConsumerState<_ClientForm> {
 
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final ModalRoute<Object?>? form = ModalRoute.of(context);
+    final String name = draft.name.trim();
     setState(() => _busy = true);
+    bool rename = updateRules ?? false;
+    if (updateRules == null && originalName != null && name != originalName) {
+      final bool? answer = await _askAboutRules(originalName, name);
+      if (!mounted) return;
+      if (answer == null) {
+        setState(() => _busy = false);
+        return;
+      }
+      rename = answer;
+    }
     try {
       await ref.read(adguardHomeActionsProvider(_instance)).saveClient(
             originalName: originalName,
@@ -310,16 +323,13 @@ class _ClientFormState extends ConsumerState<_ClientForm> {
       );
       if (again && mounted) {
         _retrySignIn();
-        await _save();
+        await _save(updateRules: rename);
       }
       return;
     }
-    final String name = draft.name.trim();
     String message =
         'Client "$name" ${originalName == null ? 'added' : 'saved'}';
-    // A rule written for this client alone names it, so a rename would
-    // leave the rule naming no one.
-    if (originalName != null && name != originalName) {
+    if (rename && originalName != null) {
       try {
         final int rules = await ref
             .read(adguardHomeActionsProvider(_instance))
@@ -336,6 +346,51 @@ class _ClientFormState extends ConsumerState<_ClientForm> {
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  /// Asks whether the custom rules that name the client as [from] should
+  /// name it as [to] once it is renamed: left alone, they apply to no one.
+  /// True to change them, false to leave them, null to not save at all.
+  /// With no such rules, or none readable, nothing is asked and they are
+  /// left alone.
+  Future<bool?> _askAboutRules(String from, String to) async {
+    int rules;
+    try {
+      rules = adguardHomeRulesNamingClient(
+        (await ref.read(adguardHomeFilteringProvider(_instance).future))
+            .userRules,
+        from,
+      );
+    } on Object {
+      return false;
+    }
+    if (rules == 0 || !mounted) return false;
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Update the custom rules?'),
+        content: Text(
+          '${rules == 1 ? '1 custom rule names' : '$rules custom rules name'} '
+          'this client "$from". Renamed, it is no longer covered by '
+          '${rules == 1 ? 'that rule' : 'them'} unless '
+          '${rules == 1 ? 'it names' : 'they name'} "$to" instead.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Leave them'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Update them'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _delete() async {

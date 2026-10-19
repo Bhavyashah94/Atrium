@@ -156,7 +156,7 @@ void main() {
 
     await tester.tap(inSheet(find.text('Pause blocking')));
     await tester.pumpAndSettle();
-    await tester.tap(inSheet(find.text('Save')));
+    await tester.tap(inSheet(find.text('Remove pause')));
     await tester.pumpAndSettle();
 
     expect(reported()!.pauseOn('sun'), isNull);
@@ -178,7 +178,7 @@ void main() {
     );
     await tester.tap(inSheet(find.text('Until the end of the day')));
     await tester.pumpAndSettle();
-    await tester.tap(inSheet(find.text('Save')));
+    await tester.tap(inSheet(find.text('Add pause')));
     await tester.pumpAndSettle();
 
     expect(reported()!.pauseOn('mon')!.start, const Duration(hours: 9));
@@ -194,7 +194,7 @@ void main() {
     await tester.pump();
     await tester.tap(inSheet(find.widgetWithText(FilterChip, 'Fri')));
     await tester.pump();
-    await tester.tap(inSheet(find.text('Save')));
+    await tester.tap(inSheet(find.text('Add pause')));
     await tester.pumpAndSettle();
 
     final AdguardHomeSchedule schedule = reported()!;
@@ -203,6 +203,28 @@ void main() {
       <String>['mon', 'tue', 'fri', 'sat', 'sun'],
     );
     expect(schedule.pauseOn('fri')!.start, schedule.pauseOn('mon')!.start);
+  });
+
+  testWidgets('the button says what it will do', (WidgetTester tester) async {
+    await pumpEditor(tester);
+    await openDay(tester, 'Monday');
+
+    // Opened to add a pause, so it is on, and the button says so.
+    expect(inSheet(find.widgetWithText(FilledButton, 'Add pause')), findsOneWidget);
+    await tester.tap(inSheet(find.text('Pause blocking')));
+    await tester.pumpAndSettle();
+    expect(inSheet(find.widgetWithText(FilledButton, 'Save')), findsOneWidget);
+
+    await tester.tap(inSheet(find.text('Cancel')));
+    await tester.pumpAndSettle();
+    await openDay(tester, 'Saturday');
+    expect(inSheet(find.widgetWithText(FilledButton, 'Save')), findsOneWidget);
+    await tester.tap(inSheet(find.text('Pause blocking')));
+    await tester.pumpAndSettle();
+    expect(
+      inSheet(find.widgetWithText(FilledButton, 'Remove pause')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('an end before the start says so and cannot be saved',

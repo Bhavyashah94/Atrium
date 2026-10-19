@@ -858,7 +858,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Pause blocking'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, 'Save').last);
+      await tester.tap(find.widgetWithText(FilledButton, 'Remove pause'));
       await tester.pumpAndSettle();
       expect(find.byType(AdguardHomePauseSheet), findsNothing);
 
@@ -887,7 +887,7 @@ void main() {
 
       await tester.tap(find.text('Monday'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, 'Save').last);
+      await tester.tap(find.widgetWithText(FilledButton, 'Add pause'));
       await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -897,16 +897,34 @@ void main() {
   });
 
   group('renaming', () {
-    testWidgets('carries the custom rules that name the client, and says so',
+    const AdguardHomeFiltering namingKids = AdguardHomeFiltering(
+      userRules: <String>[
+        "||tiktok.com^\$client='Kids tablet'",
+        "@@||school.example^\$client='Kids tablet'",
+        '||plain.example^',
+      ],
+    );
+
+    testWidgets('asks first, then carries the rules that name the client',
         (WidgetTester tester) async {
       final ({
         Pumped pumped,
         List<AdguardHomeClientOutcome?> outcomes
-      }) form = await open(tester, client: capturedClient('Kids tablet'));
+      }) form = await open(
+        tester,
+        client: capturedClient('Kids tablet'),
+        filtering: namingKids,
+      );
       form.pumped.actions.rulesRenamed = 2;
 
       await tester.enterText(find.byKey(nameField), 'Tablet');
       await tester.tap(save);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Update the custom rules?'), findsOneWidget);
+      expect(find.textContaining('2 custom rules name'), findsOneWidget);
+      expect(form.pumped.actions.calls, isEmpty);
+      await tester.tap(find.text('Update them'));
       await tester.pumpAndSettle();
 
       expect(form.pumped.actions.calls, <String>[
@@ -917,6 +935,81 @@ void main() {
         find.text('Client "Tablet" saved. 2 custom rules now name it.'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('Leave them saves the client and leaves the rules',
+        (WidgetTester tester) async {
+      final ({
+        Pumped pumped,
+        List<AdguardHomeClientOutcome?> outcomes
+      }) form = await open(
+        tester,
+        client: capturedClient('Kids tablet'),
+        filtering: namingKids,
+      );
+
+      await tester.enterText(find.byKey(nameField), 'Tablet');
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Leave them'));
+      await tester.pumpAndSettle();
+
+      expect(form.pumped.actions.calls, <String>['save Kids tablet as Tablet']);
+      expect(find.text('Client "Tablet" saved'), findsOneWidget);
+    });
+
+    testWidgets('Cancel saves nothing and keeps the form',
+        (WidgetTester tester) async {
+      final ({
+        Pumped pumped,
+        List<AdguardHomeClientOutcome?> outcomes
+      }) form = await open(
+        tester,
+        client: capturedClient('Kids tablet'),
+        filtering: namingKids,
+      );
+
+      await tester.enterText(find.byKey(nameField), 'Tablet');
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(form.pumped.actions.calls, isEmpty);
+      expect(find.byKey(nameField), findsOneWidget);
+      // Not stuck: Save asks again.
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+      expect(find.text('Update the custom rules?'), findsOneWidget);
+    });
+
+    testWidgets('after a refused sign-in, Try again keeps the answer',
+        (WidgetTester tester) async {
+      final ({
+        Pumped pumped,
+        List<AdguardHomeClientOutcome?> outcomes
+      }) form = await open(
+        tester,
+        client: capturedClient('Kids tablet'),
+        filtering: namingKids,
+      );
+      form.pumped.actions.writeFailure = const AdguardHomeSignInRefused();
+
+      await tester.enterText(find.byKey(nameField), 'Tablet');
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Update them'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Try again'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Update the custom rules?'), findsNothing);
+      expect(form.pumped.actions.calls, <String>[
+        'save Kids tablet as Tablet',
+        'retry',
+        'save Kids tablet as Tablet',
+        'rename rules Kids tablet to Tablet',
+      ]);
     });
 
     testWidgets('with no rules naming the client says only that it saved',

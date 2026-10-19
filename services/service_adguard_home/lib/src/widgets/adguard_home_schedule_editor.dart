@@ -146,6 +146,15 @@ class _AdguardHomePauseSheetState extends State<AdguardHomePauseSheet> {
 
   bool get _toEndOfDay => _end == _dayEnd;
 
+  /// What the button does, said on it. A day opened to add a pause starts
+  /// switched on, so one tap adds it; the button says so, rather than a
+  /// plain Save that would add a pause nobody asked for by name.
+  String get _action {
+    if (_was == null && _paused) return 'Add pause';
+    if (_was != null && !_paused) return 'Remove pause';
+    return 'Save';
+  }
+
   String? get _problem =>
       _paused ? adguardHomeScheduleProblem(_start, _end) : null;
 
@@ -305,7 +314,7 @@ class _AdguardHomePauseSheetState extends State<AdguardHomePauseSheet> {
                 ),
                 FilledButton(
                   onPressed: problem == null ? _save : null,
-                  child: const Text('Save'),
+                  child: Text(_action),
                 ),
               ],
             ),
