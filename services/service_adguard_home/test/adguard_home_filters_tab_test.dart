@@ -56,6 +56,24 @@ void main() {
     expect(says('DNS rewrites', 'Off · 2 rewrites'), isTrue);
   });
 
+  testWidgets('counts rewrites without switches as all on, saying nothing '
+      'of it', (WidgetTester tester) async {
+    await pumpAdguardHome(
+      tester,
+      tab,
+      filtering: filtering,
+      rewrites: AdguardHomeRewrite.listFromJson(<dynamic>[
+        <String, dynamic>{'domain': 'a.example', 'answer': '10.0.0.1'},
+        <String, dynamic>{'domain': 'b.example', 'answer': '10.0.0.2'},
+      ]),
+      rewritesEnabledError: const AdguardHomeRequestRefused('404'),
+      size: const Size(360, 1600),
+    );
+    await tester.pumpAndSettle();
+
+    expect(says('DNS rewrites', '2 rewrites'), isTrue);
+  });
+
   testWidgets('each section opens its screen', (WidgetTester tester) async {
     await pumpTab(tester);
 

@@ -184,6 +184,18 @@ void main() {
       );
 
       expect(rewrites.single.enabled, isTrue);
+      // A server from before the switch: none to show, and none to send.
+      expect(rewrites.single.switchable, isFalse);
+      expect(rewrites.single.toJson(), <String, dynamic>{
+        'domain': 'a.example',
+        'answer': 'A',
+      });
+      expect(rewrites.single.copyWith(answer: 'AAAA').switchable, isFalse);
+      expect(
+        AdguardHomeRewrite.listFromJson(rewritesJson())
+            .every((AdguardHomeRewrite r) => r.switchable),
+        isTrue,
+      );
     });
 
     test('null reads as none', () {

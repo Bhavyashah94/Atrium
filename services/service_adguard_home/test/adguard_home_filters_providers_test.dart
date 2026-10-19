@@ -511,6 +511,28 @@ void main() {
       });
     });
 
+    test('an edit on a server without switches sends none', () async {
+      server.on('GET', 'control/rewrite/list', <dynamic>[
+        <String, dynamic>{'domain': rewrite.domain, 'answer': rewrite.answer},
+      ]);
+
+      await actions().saveRewrite(
+        original: rewrite,
+        rewrite: rewrite.copyWith(answer: '10.0.0.9'),
+      );
+
+      expect(body('PUT', 'control/rewrite/update'), <String, dynamic>{
+        'target': <String, dynamic>{
+          'domain': rewrite.domain,
+          'answer': rewrite.answer,
+        },
+        'update': <String, dynamic>{
+          'domain': rewrite.domain,
+          'answer': '10.0.0.9',
+        },
+      });
+    });
+
     test('one the server holds twice is not changed, nor one gone', () async {
       server.on('GET', 'control/rewrite/list', <dynamic>[
         rewrite.toJson(),

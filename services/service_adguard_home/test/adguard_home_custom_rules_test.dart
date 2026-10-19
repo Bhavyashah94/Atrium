@@ -293,6 +293,46 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('AdGuard Home refused the sign-in.'), findsOneWidget);
+
+      // Retry has to ask for the sign-in to be tried again, or the session
+      // would only refuse it again without a word to the server.
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+
+      expect(
+        pumped.actions.calls,
+        <String>['check a.example', 'retry', 'check a.example'],
+      );
+      expect(find.text('No rule matches this name.'), findsOneWidget);
+    });
+
+    testWidgets('a check that fails otherwise asks again, sign-in left be',
+        (WidgetTester tester) async {
+      final Pumped pumped = await pumpAdguardHome(
+        tester,
+        Builder(
+          builder: (BuildContext context) => TextButton(
+            onPressed: () => showAdguardHomeHostCheck(
+              context,
+              instance: adguardHomeTestInstance,
+              name: 'a.example',
+            ),
+            child: const Text('Open'),
+          ),
+        ),
+      );
+      pumped.actions.lookupFailure = const AdguardHomeUnexpectedAnswer();
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      pumped.actions.lookupFailure = null;
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+
+      expect(
+        pumped.actions.calls,
+        <String>['check a.example', 'check a.example'],
+      );
     });
 
     for (final double width in <double>[320, 411]) {

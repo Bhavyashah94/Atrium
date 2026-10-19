@@ -76,6 +76,17 @@ class _AdguardHomeHostCheckSheetState
     }
   }
 
+  /// Asks again. After a refused sign-in the session sends nothing until
+  /// it is asked to, and this is the asking: without it the button would
+  /// only get the same refusal back, without a word to the server.
+  void _retry() {
+    if (_error is AdguardHomeSignInRefused) {
+      ref.read(adguardHomeActionsProvider(widget.instance)).retrySignIn();
+    }
+    setState(() => _error = null);
+    _ask();
+  }
+
   void _toggle(AdguardHomeHostCheck check) {
     unawaited(
       adguardHomeToggleBlocking(
@@ -114,13 +125,19 @@ class _AdguardHomeHostCheckSheetState
                 const SizedBox(height: Insets.sm),
                 if (check != null)
                   ..._result(theme, check)
-                else if (error != null)
+                else if (error != null) ...<Widget>[
                   Text(
                     describeAdguardHomeError(error),
                     style: theme.textTheme.bodyMedium
                         ?.copyWith(color: theme.colorScheme.error),
-                  )
-                else
+                  ),
+                  const SizedBox(height: Insets.sm),
+                  FilledButton.tonalIcon(
+                    onPressed: _retry,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ] else
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: Insets.xl),
                     child: Center(child: ExpressiveProgressIndicator()),

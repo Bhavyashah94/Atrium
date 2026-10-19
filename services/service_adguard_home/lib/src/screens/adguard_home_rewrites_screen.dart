@@ -131,21 +131,27 @@ class _AdguardHomeRewritesScreenState
         ),
       ),
       data: (List<AdguardHomeRewrite> rewrites) {
-        final Widget overall = SwitchListTile(
-          title: const Text('Use rewrites'),
-          subtitle: enabled == false
-              ? const Text('None of these apply while this is off.')
-              : const Text('Each rewrite still has its own switch.'),
-          value: enabled ?? false,
-          onChanged:
-              enabled == null || _switchingAll ? null : _switchAll,
-        );
+        // Only what the server has: the switch for all of them once its
+        // setting is read, which an older server does not have, and a
+        // switch per rewrite where its list carries one.
+        final Widget? overall = enabled == null
+            ? null
+            : SwitchListTile(
+                title: const Text('Use rewrites'),
+                subtitle: enabled
+                    ? (rewrites.any((AdguardHomeRewrite r) => r.switchable)
+                        ? const Text('Each rewrite still has its own switch.')
+                        : null)
+                    : const Text('None of these apply while this is off.'),
+                value: enabled,
+                onChanged: _switchingAll ? null : _switchAll,
+              );
         if (rewrites.isEmpty) {
           return AdguardHomePullable(
             onRefresh: _refresh,
             child: Column(
               children: <Widget>[
-                overall,
+                if (overall != null) overall,
                 EmptyView(
                   icon: Icons.alt_route,
                   title: 'No rewrites',
@@ -166,8 +172,10 @@ class _AdguardHomeRewritesScreenState
           child: ListView(
             padding: const EdgeInsets.only(bottom: Insets.xl),
             children: <Widget>[
-              overall,
-              const Divider(height: 1),
+              if (overall != null) ...<Widget>[
+                overall,
+                const Divider(height: 1),
+              ],
               for (int i = 0; i < rewrites.length; i++)
                 Opacity(
                   opacity: enabled == false ? 0.6 : 1,
@@ -175,7 +183,9 @@ class _AdguardHomeRewritesScreenState
                     rewrite: rewrites[i],
                     busy: _toggling.contains(i),
                     onTap: () => _open(rewrites[i]),
-                    onToggle: (bool on) => _toggle(i, rewrites[i], on),
+                    onToggle: rewrites[i].switchable
+                        ? (bool on) => _toggle(i, rewrites[i], on)
+                        : null,
                   ),
                 ),
             ],
@@ -186,7 +196,8 @@ class _AdguardHomeRewritesScreenState
   }
 }
 
-/// One rewrite: its domain, what it is answered with, and its switch.
+/// One rewrite: its domain, what it is answered with, and its switch where
+/// [onToggle] gives it one.
 class AdguardHomeRewriteRow extends StatelessWidget {
   const AdguardHomeRewriteRow({
     required this.rewrite,
@@ -198,7 +209,8 @@ class AdguardHomeRewriteRow extends StatelessWidget {
 
   final AdguardHomeRewrite rewrite;
   final VoidCallback onTap;
-  final ValueChanged<bool> onToggle;
+  /// Null for a rewrite the server has no switch for.
+  final ValueChanged<bool>? onToggle;
   final bool busy;
 
   @override
@@ -239,8 +251,10 @@ class AdguardHomeRewriteRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: Insets.sm),
-            Switch(value: rewrite.enabled, onChanged: busy ? null : onToggle),
+            if (onToggle case final ValueChanged<bool> toggle) ...<Widget>[
+              const SizedBox(width: Insets.sm),
+              Switch(value: rewrite.enabled, onChanged: busy ? null : toggle),
+            ],
           ],
         ),
       ),

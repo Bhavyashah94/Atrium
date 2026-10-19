@@ -39,6 +39,10 @@ class _AdguardHomeFilterListsScreenState
   final Set<String> _toggling = <String>{};
   bool _refreshing = false;
 
+  /// The interval being written, shown on its tile until the server's own
+  /// says the same.
+  int? _savingInterval;
+
   Instance get _instance => widget.instance;
   bool get _allow => widget.allowlist;
   String get _kind => _allow ? 'allowlist' : 'blocklist';
@@ -102,12 +106,27 @@ class _AdguardHomeFilterListsScreenState
         ],
       ),
     );
-    if (picked == null || picked == current) return;
+    if (picked == null || picked == current || _savingInterval != null) {
+      return;
+    }
+    setState(() => _savingInterval = picked);
     try {
       await _actions.setUpdateInterval(picked);
+      // The write reads the lists again. Waited for, so the tile does not
+      // go back to the old interval for a moment.
+      await ref.read(adguardHomeFilteringProvider(_instance).future);
     } on Object catch (error) {
+      if (mounted) setState(() => _savingInterval = null);
       _say(describeAdguardHomeError(error));
+      return;
     }
+    if (!mounted) return;
+    setState(() => _savingInterval = null);
+    _say(
+      picked == 0
+          ? 'The lists will no longer update by themselves'
+          : 'The lists will update ${adguardHomeIntervalLabel(picked).toLowerCase()}',
+    );
   }
 
   void _open([AdguardHomeFilterList? list]) => pushScreen<void>(
@@ -155,7 +174,7 @@ class _AdguardHomeFilterListsScreenState
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
-          child: _refreshing
+          child: _refreshing || _savingInterval != null
               ? const LinearProgressIndicatorM3E(
                   size: LinearProgressM3ESize.s,
                   shape: ProgressM3EShape.flat,
@@ -199,8 +218,13 @@ class _AdguardHomeFilterListsScreenState
             : ListTile(
                 leading: const Icon(Icons.update),
                 title: const Text('Update the lists'),
-                subtitle: Text(adguardHomeIntervalLabel(filtering.intervalHours)),
+                subtitle: Text(
+                  adguardHomeIntervalLabel(
+                    _savingInterval ?? filtering.intervalHours,
+                  ),
+                ),
                 trailing: const Icon(Icons.chevron_right),
+                enabled: _savingInterval == null,
                 onTap: () => _pickInterval(filtering.intervalHours),
               );
         if (lists.isEmpty) {

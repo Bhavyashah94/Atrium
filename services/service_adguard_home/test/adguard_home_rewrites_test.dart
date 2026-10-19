@@ -69,6 +69,31 @@ void main() {
     );
   });
 
+  testWidgets('an older server gets no switches it does not have',
+      (WidgetTester tester) async {
+    // Before the per-rule switch: no `enabled`, and no rewrite/settings.
+    await pumpAdguardHome(
+      tester,
+      const AdguardHomeRewritesScreen(instance: adguardHomeTestInstance),
+      rewrites: AdguardHomeRewrite.listFromJson(<dynamic>[
+        <String, dynamic>{'domain': 'nas.home.example', 'answer': '10.0.0.5'},
+      ]),
+      rewritesEnabledError: const AdguardHomeRequestRefused('404'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('nas.home.example'), findsOneWidget);
+    expect(find.byType(Switch), findsNothing);
+    expect(find.text('Use rewrites'), findsNothing);
+  });
+
+  testWidgets('the switch for all of them shows once its setting is read',
+      (WidgetTester tester) async {
+    await pumpRewrites(tester);
+
+    expect(find.text('Use rewrites'), findsOneWidget);
+  });
+
   testWidgets('a rewrite is switched on or off', (WidgetTester tester) async {
     final Pumped pumped = await pumpRewrites(tester);
 

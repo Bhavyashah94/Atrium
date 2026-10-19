@@ -182,6 +182,10 @@ class _AdguardHomeFiltersTabState extends ConsumerState<AdguardHomeFiltersTab> {
                 return 'Off · ${_count(r.length, 'rewrite')}';
               }
               if (r.isEmpty) return 'None';
+              // A server without switches has every rewrite on.
+              if (!r.any((AdguardHomeRewrite x) => x.switchable)) {
+                return _count(r.length, 'rewrite');
+              }
               final int on =
                   r.where((AdguardHomeRewrite x) => x.enabled).length;
               return '${_count(r.length, 'rewrite')}, $on on';

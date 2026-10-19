@@ -643,7 +643,12 @@ class AdguardHomeActions {
     }
     await _changeRewrite(
       original,
-      (AdguardHomeRewrite now) => rewrite.copyWith(enabled: now.enabled),
+      (AdguardHomeRewrite now) => AdguardHomeRewrite(
+        domain: rewrite.domain,
+        answer: rewrite.answer,
+        enabled: now.enabled,
+        switchable: now.switchable,
+      ),
     );
   }
 

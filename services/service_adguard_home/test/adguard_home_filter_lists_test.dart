@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 import 'package:service_adguard_home/service_adguard_home.dart';
 
 import 'support/adguard_home_filters_fixtures.dart';
@@ -113,6 +114,52 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(pumped.actions.calls, <String>['interval 168']);
+      expect(find.text('The lists will update every 7 days'), findsOneWidget);
+    });
+
+    testWidgets('a new interval shows while it is written, and goes back if '
+        'it fails', (WidgetTester tester) async {
+      final Pumped pumped = await pumpLists(tester);
+      final Completer<void> hold = Completer<void>();
+      pumped.actions.writeHold = hold;
+
+      await tester.tap(find.text('Every 24 hours'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Never'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Never'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicatorM3E), findsOneWidget);
+      expect(
+        tester
+            .widget<ListTile>(find.widgetWithText(ListTile, 'Update the lists'))
+            .enabled,
+        isFalse,
+      );
+
+      pumped.actions.writeFailure = const AdguardHomeRequestRefused('nope');
+      hold.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Every 24 hours'), findsOneWidget);
+      expect(find.text('nope'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicatorM3E), findsNothing);
+    });
+
+    testWidgets('Never says the lists no longer update',
+        (WidgetTester tester) async {
+      await pumpLists(tester);
+
+      await tester.tap(find.text('Every 24 hours'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Never'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('The lists will no longer update by themselves'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('an interval the web UI does not offer is still offered',

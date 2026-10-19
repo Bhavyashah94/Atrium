@@ -31,11 +31,13 @@ class RecordingActions extends AdguardHomeActions {
     if (error != null) throw error;
   }
 
-  /// Lets the writes through again, as the session does once asked.
+  /// Lets requests out again, as the session does once asked: what was
+  /// refused for the sign-in now goes through.
   @override
   void retrySignIn() {
     calls.add('retry');
-    writeFailure = null;
+    if (writeFailure is AdguardHomeSignInRefused) writeFailure = null;
+    if (lookupFailure is AdguardHomeSignInRefused) lookupFailure = null;
   }
 
   @override
@@ -443,6 +445,7 @@ Future<Pumped> pumpAdguardHome(
   List<AdguardHomeRewrite>? rewrites,
   bool rewritesEnabled = true,
   Object? rewritesError,
+  Object? rewritesEnabledError,
   AdguardHomeGlobalServices? globalServices,
   Object? filteringError,
   Size size = const Size(360, 2400),
@@ -505,7 +508,10 @@ Future<Pumped> pumpAdguardHome(
           return rewrites ?? AdguardHomeRewrite.listFromJson(rewritesJson());
         }),
         adguardHomeRewritesEnabledProvider(instance)
-            .overrideWith((Ref ref) async => rewritesEnabled),
+            .overrideWith((Ref ref) async {
+          if (rewritesEnabledError != null) throw rewritesEnabledError;
+          return rewritesEnabled;
+        }),
         adguardHomeGlobalServicesProvider(instance)
             .overrideWith((Ref ref) async {
           pumped.globalServicesReads++;

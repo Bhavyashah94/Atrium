@@ -150,10 +150,12 @@ class AdguardHomeRewrite {
     required this.domain,
     required this.answer,
     this.enabled = true,
+    this.switchable = true,
   });
 
-  /// `GET control/rewrite/list`. A rewrite without the field is on: that is
-  /// how a server from before the per-rule switch treats every one.
+  /// `GET control/rewrite/list`. A rewrite without the field comes from a
+  /// server from before the per-rule switch: it is on, as that server
+  /// treats every one, and has no switch.
   static List<AdguardHomeRewrite> listFromJson(Object? json) =>
       <AdguardHomeRewrite>[
         if (json is List)
@@ -163,6 +165,7 @@ class AdguardHomeRewrite {
                 domain: readString(row['domain']),
                 answer: readString(row['answer']),
                 enabled: row['enabled'] != false,
+                switchable: row.containsKey('enabled'),
               ),
       ];
 
@@ -173,6 +176,10 @@ class AdguardHomeRewrite {
   final String answer;
   final bool enabled;
 
+  /// Whether the server has a switch for this rewrite. One that does not
+  /// is never sent a switch either.
+  final bool switchable;
+
   AdguardHomeRewrite copyWith({
     String? domain,
     String? answer,
@@ -182,12 +189,13 @@ class AdguardHomeRewrite {
         domain: domain ?? this.domain,
         answer: answer ?? this.answer,
         enabled: enabled ?? this.enabled,
+        switchable: switchable,
       );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'domain': domain,
         'answer': answer,
-        'enabled': enabled,
+        if (switchable) 'enabled': enabled,
       };
 
   @override
