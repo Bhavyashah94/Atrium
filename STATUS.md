@@ -197,9 +197,17 @@ Atrium is a **controller** app. Video playback was removed by design
   servers and their cache, leaving it out of the log or the statistics),
   and a runtime client can be made persistent with its name and address
   filled in. A change is written over the client as the server has it at
-  that moment, so what the form does not show, such as a pause schedule,
-  is kept. A top client on Home and the client of a query open the same
-  sheet. An
+  that moment, so a setting changed elsewhere meanwhile is kept; a client
+  with its own blocked services has its own pause schedule, edited by day
+  with its time zone, and renaming a client points the custom rules
+  written for it at the new name. A top client on Home and the client of a
+  query open the same sheet. A Filters tab (added 2026-10-19) has the
+  blocklists and allowlists (each with its switch; add, edit, delete,
+  Check for updates, and how often they are fetched), the custom rules in
+  one editor that will not silently overwrite rules changed elsewhere
+  meanwhile, the services blocked for everyone with their weekly pause
+  schedule, the DNS rewrites with a switch each and one for all, and Check
+  a host, which says what the server would do with a name and why. An
   AdGuard Home dashboard widget shows the state with Pause or Resume, the
   queries and the blocked ones with their share as a ring, a chart of both
   over the period, and the rules on the blocklists. Signed in with HTTP
@@ -208,8 +216,7 @@ Atrium is a **controller** app. Video playback was removed by design
   sign-ins (15 minutes after five, by default), so the health dot probes
   it with no password and cannot flag a wrong one, requests leave one at a
   time, and after a refusal nothing is sent until Try again is tapped.
-  Filters and settings are not built yet, nor the editor of a client's
-  pause schedule, which comes with the filters
+  Settings are not built yet
 - **MySpeed** (added 2026-09-20 by lxBlazarxl, live-verified against 1.0.9):
   execution status with a manual run, the last 24 hours of results, a
   history with averages and a search by test id, the server's config and
