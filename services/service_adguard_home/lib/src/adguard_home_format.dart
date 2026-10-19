@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 
+import 'adguard_home_time_zones.dart';
 import 'models/adguard_home_clients.dart';
 
 final NumberFormat _whole = NumberFormat.decimalPattern('en_US');
@@ -137,7 +138,8 @@ String formatAdguardHomePauses(
 ) {
   final String days = <String>[
     for (final AdguardHomeServicePause pause in pauses)
-      '${_dayLabel(pause.day)} ${_clock(pause.start)} to ${_clock(pause.end)}',
+      '${_dayLabel(pause.day)} ${formatAdguardHomeClock(pause.start)} to '
+          '${formatAdguardHomeClock(pause.end)}',
   ].join(', ');
   return timeZone.isEmpty ? days : '$days ($timeZone)';
 }
@@ -154,11 +156,37 @@ String _dayLabel(String day) => switch (day) {
     };
 
 /// A time of day from midnight. The end of the day is 24:00.
-String _clock(Duration fromMidnight) {
+String formatAdguardHomeClock(Duration fromMidnight) {
   final int minutes = fromMidnight.inMinutes;
   return '${(minutes ~/ 60).toString().padLeft(2, '0')}:'
       '${(minutes % 60).toString().padLeft(2, '0')}';
 }
+
+/// A weekday by its whole name, from the server's `mon` to `sun`.
+String adguardHomeWeekdayName(String day) => switch (day) {
+      'mon' => 'Monday',
+      'tue' => 'Tuesday',
+      'wed' => 'Wednesday',
+      'thu' => 'Thursday',
+      'fri' => 'Friday',
+      'sat' => 'Saturday',
+      'sun' => 'Sunday',
+      _ => day,
+    };
+
+/// One day's pause: its hours, or "All day" when it covers the whole of it.
+String adguardHomePauseLabel(AdguardHomeServicePause pause) =>
+    pause.start == Duration.zero && pause.end == const Duration(hours: 24)
+        ? 'All day'
+        : '${formatAdguardHomeClock(pause.start)} to '
+            '${formatAdguardHomeClock(pause.end)}';
+
+/// The time zone of a schedule. The server's own is named, not shown as
+/// its keyword.
+String adguardHomeTimeZoneLabel(String timeZone) =>
+    timeZone.isEmpty || timeZone == adguardHomeServerTimeZone
+        ? "The server's time zone"
+        : timeZone;
 
 /// `social_network` as `Social network`.
 String _sentence(String key) {
