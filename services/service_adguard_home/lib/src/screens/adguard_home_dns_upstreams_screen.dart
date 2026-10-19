@@ -259,8 +259,7 @@ class _AdguardHomeDnsUpstreamsScreenState
           _box(
             key: 'adguard-upstreams',
             controller: _upstreams,
-            hint: 'https://dns10.quad9.net/dns-query',
-            helper: 'One server per line. [/example.org/] before a server '
+              helper: 'One server per line. [/example.org/] before a server '
                 'sends only that domain to it.',
           ),
         const SizedBox(height: Insets.md),
@@ -301,7 +300,6 @@ class _AdguardHomeDnsUpstreamsScreenState
         _box(
           key: 'adguard-fallback',
           controller: _fallback,
-          hint: '9.9.9.9',
           helper: 'Asked when the upstream servers do not answer. One per '
               'line.',
         ),
@@ -310,7 +308,6 @@ class _AdguardHomeDnsUpstreamsScreenState
         _box(
           key: 'adguard-bootstrap',
           controller: _bootstrap,
-          hint: '9.9.9.10',
           helper: 'IP addresses that find the encrypted upstreams by name. '
               'One per line.',
         ),
@@ -319,7 +316,6 @@ class _AdguardHomeDnsUpstreamsScreenState
         _box(
           key: 'adguard-private',
           controller: _private,
-          hint: '192.168.1.1',
           helper: defaults.isEmpty
               ? 'For names of local addresses. The server found no default '
                   'to use.'
@@ -380,7 +376,6 @@ class _AdguardHomeDnsUpstreamsScreenState
   Widget _box({
     required String key,
     required TextEditingController controller,
-    required String hint,
     required String helper,
   }) =>
       TextField(
@@ -397,7 +392,7 @@ class _AdguardHomeDnsUpstreamsScreenState
             .bodyMedium
             ?.copyWith(fontFamily: 'monospace'),
         decoration: InputDecoration(
-          hintText: hint,
+          // No example in the box: an empty box would look set to it.
           helperText: helper,
           helperMaxLines: 4,
           border: const OutlineInputBorder(),

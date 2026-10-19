@@ -329,8 +329,9 @@ class _AdguardHomeRetentionScreenState
             style: theme.textTheme.bodyMedium
                 ?.copyWith(fontFamily: 'monospace'),
             decoration: const InputDecoration(
-              hintText: 'example.org\n*.example.com',
-              helperText: 'One rule per line',
+              helperText: 'One rule per line, such as example.org or '
+                  '*.example.com',
+              helperMaxLines: 2,
               border: OutlineInputBorder(),
             ),
           ),
