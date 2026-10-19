@@ -1,4 +1,5 @@
 import 'models/adguard_home_clients.dart';
+import 'models/adguard_home_filters.dart';
 
 /// The largest cache size the server can hold: it keeps it in 32 bits.
 const int adguardHomeMaxCacheSize = 4294967295;
@@ -33,6 +34,7 @@ class AdguardHomeClientDraft {
     required this.upstreamsCacheSize,
     required this.ignoreQueryLog,
     required this.ignoreStatistics,
+    this.schedule = const AdguardHomeSchedule(),
   });
 
   /// A client that is not there yet, as the web UI starts one: on the
@@ -52,7 +54,9 @@ class AdguardHomeClientDraft {
         upstreamsCacheEnabled = false,
         upstreamsCacheSize = '0',
         ignoreQueryLog = false,
-        ignoreStatistics = false;
+        ignoreStatistics = false,
+        // Empty, in the server's own time zone, as the web UI starts one.
+        schedule = const AdguardHomeSchedule(timeZone: 'Local');
 
   /// The settings of [client], to be changed.
   factory AdguardHomeClientDraft.of(AdguardHomeClient client) {
@@ -74,6 +78,9 @@ class AdguardHomeClientDraft {
       upstreamsCacheSize: '${client.upstreamsCacheSize}',
       ignoreQueryLog: client.ignoreQueryLog,
       ignoreStatistics: client.ignoreStatistics,
+      schedule: AdguardHomeSchedule.fromJson(
+        client.json['blocked_services_schedule'],
+      ),
     );
   }
 
@@ -101,6 +108,10 @@ class AdguardHomeClientDraft {
   final bool ignoreQueryLog;
   final bool ignoreStatistics;
 
+  /// When its own blocked services are let through. It applies only while
+  /// the client does not use the global list.
+  final AdguardHomeSchedule schedule;
+
   AdguardHomeClientDraft copyWith({
     String? name,
     List<String>? ids,
@@ -117,6 +128,7 @@ class AdguardHomeClientDraft {
     String? upstreamsCacheSize,
     bool? ignoreQueryLog,
     bool? ignoreStatistics,
+    AdguardHomeSchedule? schedule,
   }) =>
       AdguardHomeClientDraft(
         name: name ?? this.name,
@@ -136,6 +148,7 @@ class AdguardHomeClientDraft {
         upstreamsCacheSize: upstreamsCacheSize ?? this.upstreamsCacheSize,
         ignoreQueryLog: ignoreQueryLog ?? this.ignoreQueryLog,
         ignoreStatistics: ignoreStatistics ?? this.ignoreStatistics,
+        schedule: schedule ?? this.schedule,
       );
 
   /// The identifiers that will be sent: trimmed, and no empty rows. The
@@ -197,6 +210,7 @@ class AdguardHomeClientDraft {
         'upstreams_cache_size': cacheSize ?? 0,
         'ignore_querylog': ignoreQueryLog,
         'ignore_statistics': ignoreStatistics,
+        'blocked_services_schedule': schedule.toJson(),
       };
 }
 
@@ -204,13 +218,8 @@ class AdguardHomeClientDraft {
 ///
 /// Every setting is spelled out: what is left out the server takes as off,
 /// so a client added with only a name would not use the global settings.
-/// The pause schedule starts empty in the server's own time zone, as the
-/// web UI starts it.
 Map<String, dynamic> adguardHomeNewClient(AdguardHomeClientDraft draft) =>
-    <String, dynamic>{
-      ...draft.toJson(),
-      'blocked_services_schedule': <String, dynamic>{'time_zone': 'Local'},
-    };
+    draft.toJson();
 
 /// What to send for a client that was changed in the form: [current], the
 /// client as the server has it now, with the settings that differ between
