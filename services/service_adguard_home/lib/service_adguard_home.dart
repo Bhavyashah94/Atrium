@@ -20,6 +20,7 @@ export 'src/models/adguard_home_filtering.dart';
 export 'src/models/adguard_home_filters.dart';
 export 'src/models/adguard_home_query_log.dart';
 export 'src/models/adguard_home_services.dart';
+export 'src/models/adguard_home_settings.dart';
 export 'src/models/adguard_home_stats.dart';
 export 'src/models/adguard_home_status.dart';
 export 'src/screens/adguard_home_client_screen.dart';
