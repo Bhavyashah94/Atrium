@@ -195,6 +195,24 @@ String _sentence(String key) {
   return words[0].toUpperCase() + words.substring(1);
 }
 
+/// How often the lists can be fetched again, in hours, as the web UI
+/// offers them. Never is zero.
+const List<int> adguardHomeIntervalOptions = <int>[0, 1, 12, 24, 72, 168];
+
+/// How often the lists are fetched again, the way the web UI names it.
+String adguardHomeIntervalLabel(int hours) => switch (hours) {
+      0 => 'Never',
+      1 => 'Every hour',
+      72 => 'Every 3 days',
+      168 => 'Every 7 days',
+      _ => 'Every $hours hours',
+    };
+
+final DateFormat _date = DateFormat('d MMM y, HH:mm', 'en_US');
+
+/// A date and time to the minute, in the device's own time.
+String formatAdguardHomeDate(DateTime time) => _date.format(time.toLocal());
+
 /// The period the statistics cover, the way the web UI names it.
 String adguardHomePeriodLabel(Duration period) {
   final int hours = period.inHours;

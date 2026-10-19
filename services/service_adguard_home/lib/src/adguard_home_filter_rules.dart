@@ -47,3 +47,17 @@ List<String> adguardHomeRenameClientInRules(
     for (final String rule in rules) rule.replaceAll(old, renamed),
   ];
 }
+
+final RegExp _listUrl = RegExp(r'^https?://[^/\s]+(/.*)?$');
+final RegExp _listPath = RegExp(r'^([a-zA-Z]:)?[\\/]\S*[^\\/]$');
+
+/// What is wrong with [url] as the address of a filter list, or null when
+/// it will do: an http or https address, or the full path of a file on the
+/// server, as the web UI accepts.
+String? adguardHomeListUrlProblem(String url) {
+  final String address = url.trim();
+  if (address.isEmpty) return 'Enter the address of the list.';
+  if (_listUrl.hasMatch(address) || _listPath.hasMatch(address)) return null;
+  return 'An address starting with http:// or https://, or the full path of '
+      'a file on the server.';
+}

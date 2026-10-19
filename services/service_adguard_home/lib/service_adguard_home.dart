@@ -23,6 +23,7 @@ export 'src/models/adguard_home_services.dart';
 export 'src/models/adguard_home_stats.dart';
 export 'src/models/adguard_home_status.dart';
 export 'src/screens/adguard_home_client_screen.dart';
+export 'src/screens/adguard_home_filter_lists_screen.dart';
 export 'src/screens/adguard_home_services_screen.dart';
 export 'src/screens/adguard_home_top_list_screen.dart';
 export 'src/tabs/adguard_home_clients_tab.dart';
