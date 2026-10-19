@@ -221,6 +221,9 @@ class RecordingActions extends AdguardHomeActions {
     await _write();
   }
 
+  /// Every rewrite [saveRewrite] was asked to write.
+  final List<AdguardHomeRewrite> savedRewrites = <AdguardHomeRewrite>[];
+
   /// Every list of rules [saveRules] was asked to write.
   final List<List<String>> savedRules = <List<String>>[];
 
@@ -262,6 +265,7 @@ class RecordingActions extends AdguardHomeActions {
       '${original == null ? 'add' : 'change ${original.domain} to'} '
       '${rewrite.domain} ${rewrite.answer}',
     );
+    savedRewrites.add(rewrite);
     await _write();
   }
 
