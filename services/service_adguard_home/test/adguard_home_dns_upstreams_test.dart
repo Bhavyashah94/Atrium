@@ -114,6 +114,22 @@ void main() {
     });
   });
 
+  test('a draft of upstreams kept in a file has no list to send', () {
+    final AdguardHomeUpstreamDraft draft = AdguardHomeUpstreamDraft.of(
+      AdguardHomeDnsConfig(<String, dynamic>{
+        ...dnsInfoJson(),
+        'upstream_dns_file': '/opt/adguardhome/upstreams.txt',
+      }),
+    );
+
+    expect(draft.toJson().containsKey('upstream_dns'), isFalse);
+    expect(
+      AdguardHomeUpstreamDraft.of(AdguardHomeDnsConfig(dnsInfoJson()))
+          .toJson()['upstream_dns'],
+      <String>['https://dns10.quad9.net/dns-query'],
+    );
+  });
+
   testWidgets('upstreams kept in a file are said, and never sent',
       (WidgetTester tester) async {
     final Pumped pumped = await open(
