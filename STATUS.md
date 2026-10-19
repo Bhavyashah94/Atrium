@@ -207,7 +207,17 @@ Atrium is a **controller** app. Video playback was removed by design
   one editor that will not silently overwrite rules changed elsewhere
   meanwhile, the services blocked for everyone with their weekly pause
   schedule, the DNS rewrites with a switch each and one for all, and Check
-  a host, which says what the server would do with a name and why. An
+  a host, which says what the server would do with a name and why. A
+  Settings tab (added 2026-10-20) has the protection switches (filtering,
+  safe browsing, parental control, safe search by engine), how long the
+  query log and statistics keep things and what they leave out (Reset
+  statistics, Clear query log), the upstream, fallback, bootstrap and
+  private DNS servers with Test upstreams, rate limiting, EDNS client
+  subnet, DNSSEC, IPv6 and the blocking mode, the DNS cache with Clear
+  cache, and the access lists behind a question; encryption, DHCP and the
+  version are shown, not changed, and Check for updates says whether a
+  newer version is out. Each write reads the server first or sends only
+  what changed, so nothing set elsewhere is reset. An
   AdGuard Home dashboard widget shows the state with Pause or Resume, the
   queries and the blocked ones with their share as a ring, a chart of both
   over the period, and the rules on the blocklists. Signed in with HTTP
@@ -216,7 +226,6 @@ Atrium is a **controller** app. Video playback was removed by design
   sign-ins (15 minutes after five, by default), so the health dot probes
   it with no password and cannot flag a wrong one, requests leave one at a
   time, and after a refusal nothing is sent until Try again is tapped.
-  Settings are not built yet
 - **MySpeed** (added 2026-09-20 by lxBlazarxl, live-verified against 1.0.9):
   execution status with a manual run, the last 24 hours of results, a
   history with averages and a search by test id, the server's config and
