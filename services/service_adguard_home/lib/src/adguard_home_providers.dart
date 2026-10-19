@@ -442,19 +442,38 @@ class AdguardHomeActions {
   void _filteringChanged() =>
       _ref.invalidate(adguardHomeFilteringProvider(_instance));
 
-  /// Switches [list] on or off. The server takes the whole list, so its
-  /// name and address go back as they are.
+  /// The list of the kind [allowlist] says at [url], as the server has it
+  /// now. The server takes a list whole, so what a write does not change
+  /// goes back as it is now, not as the screen last read it.
+  Future<AdguardHomeFilterList> _freshList(
+    AdguardHomeApi api,
+    String url, {
+    required bool allowlist,
+  }) async {
+    final AdguardHomeFiltering now = await api.getFiltering();
+    for (final AdguardHomeFilterList list
+        in allowlist ? now.allowlists : now.blocklists) {
+      if (list.url == url) return list;
+    }
+    throw const AdguardHomeEntryGone('list');
+  }
+
+  /// Switches [list] on or off. Its name and address go back as the server
+  /// has them.
   Future<void> setListEnabled(
     AdguardHomeFilterList list, {
     required bool allowlist,
     required bool enabled,
   }) async {
     try {
-      await (await _api).updateFilterList(
-        url: list.url,
+      final AdguardHomeApi api = await _api;
+      final AdguardHomeFilterList now =
+          await _freshList(api, list.url, allowlist: allowlist);
+      await api.updateFilterList(
+        url: now.url,
         allowlist: allowlist,
-        name: list.name,
-        newUrl: list.url,
+        name: now.name,
+        newUrl: now.url,
         enabled: enabled,
       );
     } finally {
@@ -463,7 +482,7 @@ class AdguardHomeActions {
   }
 
   /// Adds a list called [name] at [url], or with an [original] changes that
-  /// one, which keeps its switch.
+  /// one, which keeps its switch as the server has it.
   Future<void> saveList({
     required bool allowlist,
     required String name,
@@ -473,18 +492,39 @@ class AdguardHomeActions {
     try {
       final AdguardHomeApi api = await _api;
       if (original == null) {
-        await api.addFilterList(name: name, url: url, allowlist: allowlist);
+        await _addList(api, name: name, url: url, allowlist: allowlist);
       } else {
+        final AdguardHomeFilterList now =
+            await _freshList(api, original.url, allowlist: allowlist);
         await api.updateFilterList(
-          url: original.url,
+          url: now.url,
           allowlist: allowlist,
           name: name,
           newUrl: url,
-          enabled: original.enabled,
+          enabled: now.enabled,
         );
       }
     } finally {
       _filteringChanged();
+    }
+  }
+
+  /// The server answers an add only once it has fetched the list. When the
+  /// answer is not waited for that long it may still have got there, and
+  /// then saying it failed would have the user add it twice.
+  Future<void> _addList(
+    AdguardHomeApi api, {
+    required String name,
+    required String url,
+    required bool allowlist,
+  }) async {
+    try {
+      await api.addFilterList(name: name, url: url, allowlist: allowlist);
+    } on NetworkTimeoutException {
+      final AdguardHomeFiltering now = await api.getFiltering();
+      final bool there = (allowlist ? now.allowlists : now.blocklists)
+          .any((AdguardHomeFilterList list) => list.url == url);
+      if (!there) rethrow;
     }
   }
 
@@ -587,29 +627,60 @@ class AdguardHomeActions {
     }
   }
 
-  /// Adds [rewrite], or with an [original] changes that one into it.
+  /// Adds [rewrite], or with an [original] changes that one into it. An
+  /// edit keeps the rewrite's switch as the server has it.
   Future<void> saveRewrite({
     required AdguardHomeRewrite rewrite,
     AdguardHomeRewrite? original,
   }) async {
-    try {
-      final AdguardHomeApi api = await _api;
-      if (original == null) {
-        await api.addRewrite(rewrite);
-      } else {
-        await api.updateRewrite(original, rewrite);
+    if (original == null) {
+      try {
+        await (await _api).addRewrite(rewrite);
+      } finally {
+        _ref.invalidate(adguardHomeRewritesProvider(_instance));
       }
-    } finally {
-      _ref.invalidate(adguardHomeRewritesProvider(_instance));
+      return;
     }
+    await _changeRewrite(
+      original,
+      (AdguardHomeRewrite now) => rewrite.copyWith(enabled: now.enabled),
+    );
   }
 
   Future<void> setRewriteEnabled(
     AdguardHomeRewrite rewrite, {
     required bool enabled,
   }) =>
-      saveRewrite(original: rewrite, rewrite: rewrite.copyWith(enabled: enabled));
+      _changeRewrite(
+        rewrite,
+        (AdguardHomeRewrite now) => now.copyWith(enabled: enabled),
+      );
 
+  /// Changes [original] into what [change] makes of it as the server has it
+  /// now. The server finds the rewrite to change by its domain and answer
+  /// alone and takes the first that matches, so a rewrite it holds more
+  /// than once is left alone rather than changed at random.
+  Future<void> _changeRewrite(
+    AdguardHomeRewrite original,
+    AdguardHomeRewrite Function(AdguardHomeRewrite now) change,
+  ) async {
+    try {
+      final AdguardHomeApi api = await _api;
+      final List<AdguardHomeRewrite> copies = (await api.getRewrites())
+          .where((AdguardHomeRewrite r) => r.sameTarget(original))
+          .toList();
+      if (copies.isEmpty) throw const AdguardHomeEntryGone('rewrite');
+      if (copies.length > 1) {
+        throw AdguardHomeRewriteRepeated(original.domain, copies.length);
+      }
+      await api.updateRewrite(copies.single, change(copies.single));
+    } finally {
+      _ref.invalidate(adguardHomeRewritesProvider(_instance));
+    }
+  }
+
+  /// Removes [rewrite]. The server removes every copy of it, as its domain
+  /// and answer go.
   Future<void> deleteRewrite(AdguardHomeRewrite rewrite) async {
     try {
       await (await _api).deleteRewrite(rewrite);

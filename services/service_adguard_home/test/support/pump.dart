@@ -31,8 +31,12 @@ class RecordingActions extends AdguardHomeActions {
     if (error != null) throw error;
   }
 
+  /// Lets the writes through again, as the session does once asked.
   @override
-  void retrySignIn() => calls.add('retry');
+  void retrySignIn() {
+    calls.add('retry');
+    writeFailure = null;
+  }
 
   @override
   void refresh() => calls.add('refresh');

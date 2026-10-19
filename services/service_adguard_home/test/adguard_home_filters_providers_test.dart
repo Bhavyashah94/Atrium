@@ -160,6 +160,137 @@ void main() {
       });
     });
 
+    /// The filtering read with the second blocklist as [change] makes it.
+    Map<String, dynamic> withOff(void Function(Map<String, dynamic>) change) {
+      final Map<String, dynamic> json = filterStatusJson();
+      change((json['filters'] as List<dynamic>).last as Map<String, dynamic>);
+      return json;
+    }
+
+    test('a switch sends the name the server has now, not the one shown',
+        () async {
+      server.on(
+        'GET',
+        'control/filtering/status',
+        withOff((Map<String, dynamic> list) => list['name'] = 'Renamed'),
+      );
+
+      await actions().setListEnabled(off, allowlist: false, enabled: true);
+
+      expect(
+        (body('POST', 'control/filtering/set_url')! as Map<String, dynamic>)[
+            'data'],
+        <String, dynamic>{'name': 'Renamed', 'url': off.url, 'enabled': true},
+      );
+    });
+
+    test('an edit keeps the switch as the server has it now', () async {
+      // Switched on elsewhere, or by this screen a moment before.
+      server.on(
+        'GET',
+        'control/filtering/status',
+        withOff((Map<String, dynamic> list) => list['enabled'] = true),
+      );
+
+      await actions().saveList(
+        original: off,
+        allowlist: false,
+        name: 'Renamed',
+        url: off.url,
+      );
+
+      expect(
+        ((body('POST', 'control/filtering/set_url')!
+                as Map<String, dynamic>)['data'] as Map<String, dynamic>)[
+            'enabled'],
+        true,
+      );
+    });
+
+    test('a list gone from the server is not written', () async {
+      server.on(
+        'GET',
+        'control/filtering/status',
+        <String, dynamic>{...filterStatusJson(), 'filters': <dynamic>[]},
+      );
+
+      await expectLater(
+        actions().setListEnabled(off, allowlist: false, enabled: true),
+        throwsA(isA<AdguardHomeEntryGone>()),
+      );
+      await expectLater(
+        actions().saveList(
+          original: off,
+          allowlist: false,
+          name: 'Renamed',
+          url: off.url,
+        ),
+        throwsA(isA<AdguardHomeEntryGone>()),
+      );
+      expect(server.to('POST', 'control/filtering/set_url'), isEmpty);
+    });
+
+    test('what makes the server fetch lists is given time for it', () async {
+      server.on('POST', 'control/filtering/refresh', <String, dynamic>{
+        'updated': 0,
+      });
+      await actions().saveList(allowlist: true, name: 'A', url: 'https://a/');
+      await actions().setListEnabled(off, allowlist: false, enabled: true);
+      await actions().refreshLists(allowlist: false);
+
+      for (final String path in <String>[
+        'control/filtering/add_url',
+        'control/filtering/set_url',
+        'control/filtering/refresh',
+      ]) {
+        expect(
+          server.single('POST', path).receiveTimeout,
+          AdguardHomeApi.listFetchTimeout,
+          reason: path,
+        );
+      }
+    });
+
+    test('an add not waited out is checked before it is called failed',
+        () async {
+      const String url = 'https://lists.example/big.txt';
+      bool added = false;
+      server
+        ..onCall('POST', 'control/filtering/add_url', (RequestOptions request) {
+          added = true;
+          throw DioException(
+            requestOptions: request,
+            type: DioExceptionType.receiveTimeout,
+          );
+        })
+        ..onCall('GET', 'control/filtering/status', (RequestOptions _) {
+          final Map<String, dynamic> json = filterStatusJson();
+          if (added) {
+            (json['filters'] as List<dynamic>).add(<String, dynamic>{
+              'url': url,
+              'name': 'Big',
+              'id': 9,
+              'rules_count': 1,
+              'enabled': true,
+            });
+          }
+          return json;
+        });
+
+      // The server got there: nothing to say.
+      await actions().saveList(allowlist: false, name: 'Big', url: url);
+
+      // It did not: the timeout is what the user hears.
+      await expectLater(
+        actions().saveList(
+          allowlist: false,
+          name: 'Other',
+          url: 'https://lists.example/other.txt',
+        ),
+        throwsA(isA<NetworkTimeoutException>()),
+      );
+    });
+
     test('the update interval keeps filtering as the server has it', () async {
       // Switched off elsewhere since the screen was drawn.
       server.on(
@@ -362,6 +493,51 @@ void main() {
         'target': rewrite.toJson(),
         'update': rewrite.copyWith(enabled: true).toJson(),
       });
+    });
+
+    test('an edit keeps the switch as the server has it now', () async {
+      server.on('GET', 'control/rewrite/list', <dynamic>[
+        rewrite.copyWith(enabled: true).toJson(),
+      ]);
+
+      await actions().saveRewrite(
+        original: rewrite,
+        rewrite: rewrite.copyWith(answer: '10.0.0.9'),
+      );
+
+      expect(body('PUT', 'control/rewrite/update'), <String, dynamic>{
+        'target': rewrite.copyWith(enabled: true).toJson(),
+        'update': rewrite.copyWith(answer: '10.0.0.9', enabled: true).toJson(),
+      });
+    });
+
+    test('one the server holds twice is not changed, nor one gone', () async {
+      server.on('GET', 'control/rewrite/list', <dynamic>[
+        rewrite.toJson(),
+        rewrite.copyWith(enabled: true).toJson(),
+      ]);
+      await expectLater(
+        actions().setRewriteEnabled(rewrite, enabled: true),
+        throwsA(
+          isA<AdguardHomeRewriteRepeated>()
+              .having((AdguardHomeRewriteRepeated e) => e.copies, 'copies', 2),
+        ),
+      );
+      await expectLater(
+        actions().saveRewrite(
+          original: rewrite,
+          rewrite: rewrite.copyWith(answer: '10.0.0.9'),
+        ),
+        throwsA(isA<AdguardHomeRewriteRepeated>()),
+      );
+
+      server.on('GET', 'control/rewrite/list', <dynamic>[]);
+      await expectLater(
+        actions().setRewriteEnabled(rewrite, enabled: true),
+        throwsA(isA<AdguardHomeEntryGone>()),
+      );
+
+      expect(server.to('PUT', 'control/rewrite/update'), isEmpty);
     });
 
     test('delete, and the overall switch, read the list again', () async {

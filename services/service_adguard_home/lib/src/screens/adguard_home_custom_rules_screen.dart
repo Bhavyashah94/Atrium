@@ -10,6 +10,7 @@ import '../adguard_home_errors.dart';
 import '../adguard_home_filter_rules.dart';
 import '../adguard_home_providers.dart';
 import '../models/adguard_home_filtering.dart';
+import '../widgets/adguard_home_failure_dialog.dart';
 import '../widgets/adguard_home_refused_view.dart';
 
 /// The custom filtering rules in one editor, saved as a whole.
@@ -36,8 +37,12 @@ class _AdguardHomeCustomRulesScreenState
   Instance get _instance => widget.instance;
 
   bool get _changed {
-    final List<String>? before = _before;
-    if (before == null) return false;
+    final List<String>? held = _before;
+    if (held == null) return false;
+    // Both sides as the editor would write them: the server can hold blank
+    // entries, which the editor drops, and a blank line is no change.
+    final List<String> before =
+        adguardHomeRulesFromText(adguardHomeRulesToText(held));
     final List<String> now = adguardHomeRulesFromText(_text.text);
     if (now.length != before.length) return true;
     for (int i = 0; i < now.length; i++) {
@@ -82,19 +87,15 @@ class _AdguardHomeCustomRulesScreenState
     } on Object catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      await showDialog<void>(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          title: const Text('Not saved'),
-          content: Text(describeAdguardHomeError(error)),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
+      final bool again = await showAdguardHomeFailure(
+        context,
+        title: 'Not saved',
+        error: error,
       );
+      if (again && mounted) {
+        ref.read(adguardHomeActionsProvider(_instance)).retrySignIn();
+        await _save(overwrite: overwrite);
+      }
       return;
     }
     if (!mounted) return;

@@ -9,6 +9,7 @@ import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 import '../adguard_home_errors.dart';
 import '../adguard_home_providers.dart';
 import '../models/adguard_home_filters.dart';
+import '../widgets/adguard_home_failure_dialog.dart';
 import '../widgets/adguard_home_pullable.dart';
 import '../widgets/adguard_home_refused_view.dart';
 
@@ -287,19 +288,9 @@ class _AdguardHomeRewriteScreenState
     super.dispose();
   }
 
-  Future<void> _explain(String title, String message) => showDialog<void>(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
+  /// After a refused sign-in, lets one more request out.
+  void _retrySignIn() =>
+      ref.read(adguardHomeActionsProvider(widget.instance)).retrySignIn();
 
   void _close(ModalRoute<Object?>? form, String message) {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
@@ -340,7 +331,15 @@ class _AdguardHomeRewriteScreenState
     } on Object catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      await _explain('Not saved', describeAdguardHomeError(error));
+      final bool again = await showAdguardHomeFailure(
+        context,
+        title: 'Not saved',
+        error: error,
+      );
+      if (again && mounted) {
+        _retrySignIn();
+        await _save();
+      }
       return;
     }
     if (!mounted) return;
@@ -350,11 +349,23 @@ class _AdguardHomeRewriteScreenState
   Future<void> _delete() async {
     final AdguardHomeRewrite? rewrite = widget.rewrite;
     if (_busy || rewrite == null) return;
+    // The server deletes every copy of a rewrite it holds more than once.
+    final int copies = ref
+            .read(adguardHomeRewritesProvider(widget.instance))
+            .value
+            ?.where(rewrite.sameTarget)
+            .length ??
+        1;
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: Text('Delete the rewrite of ${rewrite.domain}?'),
-        content: const Text('The domain will be answered as it is again.'),
+        content: Text(
+          copies > 1
+              ? 'AdGuard Home holds it $copies times, and every copy goes. '
+                  'The domain will be answered as it is again.'
+              : 'The domain will be answered as it is again.',
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -377,7 +388,15 @@ class _AdguardHomeRewriteScreenState
     } on Object catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      await _explain('Not deleted', describeAdguardHomeError(error));
+      final bool again = await showAdguardHomeFailure(
+        context,
+        title: 'Not deleted',
+        error: error,
+      );
+      if (again && mounted) {
+        _retrySignIn();
+        await _delete();
+      }
       return;
     }
     if (!mounted) return;

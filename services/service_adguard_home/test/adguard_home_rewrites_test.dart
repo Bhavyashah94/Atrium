@@ -234,6 +234,67 @@ void main() {
       expect(find.text('Rewrite deleted'), findsOneWidget);
     });
 
+    testWidgets('delete of one the server holds twice says every copy goes',
+        (WidgetTester tester) async {
+      const AdguardHomeRewrite twice = AdguardHomeRewrite(
+        domain: 'a.lan',
+        answer: '10.0.0.1',
+      );
+      await pumpRewrites(
+        tester,
+        rewrites: <AdguardHomeRewrite>[twice, twice.copyWith(enabled: false)],
+      );
+
+      await tester.tap(find.text('a.lan').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Delete rewrite'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('holds it 2 times, and every copy goes'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a save the sign-in was refused for can be tried again',
+        (WidgetTester tester) async {
+      final Pumped pumped = await pumpRewrites(tester);
+      pumped.actions.writeFailure = const AdguardHomeSignInRefused();
+
+      await tester.tap(find.byTooltip('Add rewrite'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(domainField), 'printer.home.example');
+      await tester.enterText(find.byKey(answerField), '192.168.1.60');
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Try again'));
+      await tester.pumpAndSettle();
+
+      expect(pumped.actions.calls, <String>[
+        'add printer.home.example 192.168.1.60',
+        'retry',
+        'add printer.home.example 192.168.1.60',
+      ]);
+      expect(find.text('Rewrite added'), findsOneWidget);
+    });
+
+    testWidgets('any other failure offers no Try again',
+        (WidgetTester tester) async {
+      final Pumped pumped = await pumpRewrites(tester);
+      pumped.actions.writeFailure = const AdguardHomeRequestRefused('nope');
+
+      await tester.tap(find.byTooltip('Add rewrite'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(domainField), 'printer.home.example');
+      await tester.enterText(find.byKey(answerField), '192.168.1.60');
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+
+      expect(find.text('nope'), findsOneWidget);
+      expect(find.text('Try again'), findsNothing);
+      expect(find.text('OK'), findsOneWidget);
+    });
+
     testWidgets('Save tapped twice is sent once', (WidgetTester tester) async {
       final Pumped pumped = await pumpRewrites(tester);
       pumped.actions.writeHold = Completer<void>();

@@ -342,5 +342,31 @@ void main() {
 
       expect(renamed[2], r"||ads.example^$client='Dad\'s\, laptop'");
     });
+
+    test('are found however the modifier is written', () {
+      const List<String> written = <String>[
+        r"||a.example^$important,client='Kids tablet'",
+        r"||b.example^$client='Laptop'|'Kids tablet'",
+        r'||c.example^$client=Laptop',
+        r'||d.example^$client=~"Laptop",important',
+        r"||e.example^$client='Old\,client=Laptop|Other'",
+        r"||f.example^$client='Laptop'",
+      ];
+
+      expect(adguardHomeRulesNamingClient(written, 'Kids tablet'), 2);
+      expect(adguardHomeRulesNamingClient(written, 'Laptop'), 4);
+      expect(adguardHomeRulesNamingClient(written, 'Old,client=Laptop|Other'), 1);
+      expect(
+        adguardHomeRenameClientInRules(written, 'Laptop', 'Work laptop'),
+        <String>[
+          r"||a.example^$important,client='Kids tablet'",
+          r"||b.example^$client='Work laptop'|'Kids tablet'",
+          r"||c.example^$client='Work laptop'",
+          r"||d.example^$client=~'Work laptop',important",
+          r"||e.example^$client='Old\,client=Laptop|Other'",
+          r"||f.example^$client='Work laptop'",
+        ],
+      );
+    });
   });
 }

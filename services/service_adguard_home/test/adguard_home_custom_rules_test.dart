@@ -139,6 +139,41 @@ void main() {
       expect(text(tester), '||mine.example^');
     });
 
+    testWidgets('a save the sign-in was refused for can be tried again',
+        (WidgetTester tester) async {
+      final Pumped pumped = await pumpRules(tester);
+      pumped.actions.rulesFailure = const AdguardHomeSignInRefused();
+
+      await tester.enterText(editor, '||mine.example^');
+      await tester.pump();
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+      expect(find.text('AdGuard Home refused the sign-in.'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Try again'));
+      await tester.pumpAndSettle();
+
+      expect(pumped.actions.calls, <String>['rules 1', 'retry', 'rules 1']);
+      expect(find.text('Custom rules saved'), findsOneWidget);
+      expect(text(tester), '||mine.example^');
+    });
+
+    testWidgets('blank entries on the server are not a change',
+        (WidgetTester tester) async {
+      // What the web UI sends for a box that ends in a newline.
+      await pumpAdguardHome(
+        tester,
+        const AdguardHomeCustomRulesScreen(instance: adguardHomeTestInstance),
+        filtering: AdguardHomeFiltering.fromJson(<String, dynamic>{
+          ...filterStatusJson(),
+          'user_rules': <dynamic>['||a.example^', ''],
+        }),
+        size: const Size(360, 1600),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<FilledButton>(save).onPressed, isNull);
+    });
+
     testWidgets('leaving with a change asks first', (WidgetTester tester) async {
       await pumpRules(tester);
 

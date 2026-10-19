@@ -13,6 +13,7 @@ import '../adguard_home_providers.dart';
 import '../models/adguard_home_clients.dart';
 import '../models/adguard_home_filters.dart';
 import '../models/adguard_home_services.dart';
+import '../widgets/adguard_home_failure_dialog.dart';
 import '../widgets/adguard_home_fields.dart';
 import '../widgets/adguard_home_schedule_editor.dart';
 import 'adguard_home_services_screen.dart';
@@ -156,6 +157,9 @@ class _ClientFormState extends ConsumerState<_ClientForm> {
   /// Whether something is being written. Nothing else can be started then.
   bool _busy = false;
 
+  /// Whether Delete is asking first.
+  bool _confirming = false;
+
   /// Whether Save has been asked for once. Until then an empty field is not
   /// complained about: the form opens with several.
   bool _checked = false;
@@ -251,19 +255,9 @@ class _ClientFormState extends ConsumerState<_ClientForm> {
     );
   }
 
-  Future<void> _explain(String title, String message) => showDialog<void>(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
+  /// After a refused sign-in, lets one more request out.
+  void _retrySignIn() =>
+      ref.read(adguardHomeActionsProvider(_instance)).retrySignIn();
 
   /// Brings the first field that will not do into view.
   void _showProblem(AdguardHomeClientProblems problems) {
@@ -309,7 +303,15 @@ class _ClientFormState extends ConsumerState<_ClientForm> {
     } on Object catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      await _explain('Not saved', describeAdguardHomeError(error));
+      final bool again = await showAdguardHomeFailure(
+        context,
+        title: 'Not saved',
+        error: error,
+      );
+      if (again && mounted) {
+        _retrySignIn();
+        await _save();
+      }
       return;
     }
     final String name = draft.name.trim();
@@ -338,7 +340,10 @@ class _ClientFormState extends ConsumerState<_ClientForm> {
 
   Future<void> _delete() async {
     final String? name = _originalName;
-    if (_busy || name == null) return;
+    if (_busy || _confirming || name == null) return;
+    // The rules are read before the question is asked: a second tap
+    // meanwhile would ask it twice.
+    _confirming = true;
     // Rules written for this client alone name it, and would apply to no
     // one once it is gone. When the rules cannot be read, the question is
     // asked without that part rather than not at all.
@@ -378,6 +383,7 @@ class _ClientFormState extends ConsumerState<_ClientForm> {
         ],
       ),
     );
+    _confirming = false;
     if (confirmed != true || !mounted || _busy) return;
 
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
@@ -388,7 +394,15 @@ class _ClientFormState extends ConsumerState<_ClientForm> {
     } on Object catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      await _explain('Not deleted', describeAdguardHomeError(error));
+      final bool again = await showAdguardHomeFailure(
+        context,
+        title: 'Not deleted',
+        error: error,
+      );
+      if (again && mounted) {
+        _retrySignIn();
+        await _delete();
+      }
       return;
     }
     if (!mounted) return;

@@ -37,6 +37,7 @@ export 'src/widgets/adguard_home_chart_card.dart';
 export 'src/widgets/adguard_home_client_rows.dart';
 export 'src/widgets/adguard_home_client_sheet.dart';
 export 'src/widgets/adguard_home_countdown.dart';
+export 'src/widgets/adguard_home_failure_dialog.dart';
 export 'src/widgets/adguard_home_fields.dart';
 export 'src/widgets/adguard_home_host_check.dart';
 export 'src/widgets/adguard_home_protection_card.dart';

@@ -23,16 +23,74 @@ List<String> adguardHomeRulesFromText(String text) => <String>[
 /// The custom rules as the editor shows them, one to a line.
 String adguardHomeRulesToText(List<String> rules) => rules.join('\n');
 
-/// The way a client named [name] appears in a rule's `client` modifier.
-String _clientModifier(String name) =>
-    "\$client='${adguardHomeEscapedClient(name)}'";
+/// One name in a rule's `client` modifier, where it sits in the rule.
+class _ClientName {
+  const _ClientName(this.start, this.end, this.name, {required this.negated});
 
-/// How many of [rules] are for the client called [name] alone, the kind
-/// "for this client only" writes.
-int adguardHomeRulesNamingClient(List<String> rules, String name) {
-  final String modifier = _clientModifier(name);
-  return rules.where((String rule) => rule.contains(modifier)).length;
+  /// Where it starts in the rule, a `~` included, and where it ends.
+  final int start;
+  final int end;
+
+  /// The name as the server reads it, quotes and backslashes taken off.
+  final String name;
+  final bool negated;
 }
+
+final RegExp _clientKey = RegExp(r'[$,]client=');
+
+/// Every name the `client` modifiers of [rule] list. A modifier can come
+/// after others (`$important,client=...`) and list several names at once
+/// (`'A'|'B'`), each quoted or bare and each maybe negated with `~`.
+List<_ClientName> _clientNames(String rule) {
+  final List<_ClientName> names = <_ClientName>[];
+  for (final RegExpMatch key in _clientKey.allMatches(rule)) {
+    // A `$` or `,` with a backslash before it is part of a value.
+    if (key.start > 0 && rule[key.start - 1] == r'\') continue;
+    int i = key.end;
+    while (i < rule.length) {
+      final int start = i;
+      final bool negated = rule[i] == '~';
+      if (negated) i++;
+      if (i >= rule.length) break;
+      final String quote = rule[i];
+      final StringBuffer name = StringBuffer();
+      if (quote == "'" || quote == '"') {
+        i++;
+        while (i < rule.length && rule[i] != quote) {
+          if (rule[i] == r'\' && i + 1 < rule.length) i++;
+          name.write(rule[i]);
+          i++;
+        }
+        if (i >= rule.length) break; // never closed: not a name
+        i++;
+      } else {
+        while (i < rule.length && rule[i] != '|' && rule[i] != ',') {
+          if (rule[i] == r'\' && i + 1 < rule.length) i++;
+          name.write(rule[i]);
+          i++;
+        }
+      }
+      names.add(
+        _ClientName(start, i, name.toString(), negated: negated),
+      );
+      if (i < rule.length && rule[i] == '|') {
+        i++;
+      } else {
+        break;
+      }
+    }
+  }
+  return names;
+}
+
+/// How many of [rules] name the client called [name] in a `client`
+/// modifier, alone or among others.
+int adguardHomeRulesNamingClient(List<String> rules, String name) => rules
+    .where(
+      (String rule) =>
+          _clientNames(rule).any((_ClientName found) => found.name == name),
+    )
+    .length;
 
 /// [rules] with the client called [from] named [to] instead, so the rules
 /// written for it still apply after a rename. The rest is left alone.
@@ -41,11 +99,24 @@ List<String> adguardHomeRenameClientInRules(
   String from,
   String to,
 ) {
-  final String old = _clientModifier(from);
-  final String renamed = _clientModifier(to);
+  final String renamed = "'${adguardHomeEscapedClient(to)}'";
   return <String>[
-    for (final String rule in rules) rule.replaceAll(old, renamed),
+    for (final String rule in rules) _renamed(rule, from, renamed),
   ];
+}
+
+String _renamed(String rule, String from, String renamed) {
+  String out = rule;
+  // From the end, so the places of the earlier names still hold.
+  for (final _ClientName found in _clientNames(rule).reversed) {
+    if (found.name != from) continue;
+    out = out.replaceRange(
+      found.start,
+      found.end,
+      '${found.negated ? '~' : ''}$renamed',
+    );
+  }
+  return out;
 }
 
 final RegExp _listUrl = RegExp(r'^https?://[^/\s]+(/.*)?$');

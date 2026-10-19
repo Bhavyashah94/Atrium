@@ -31,6 +31,11 @@ class AdguardHomeApi {
   /// How many entries one request for the query log asks for.
   static const int queryLogPageSize = 50;
 
+  /// How long a request that makes the server fetch lists may take. The
+  /// server answers only once every list is in, and a large one on a slow
+  /// line takes far longer than an ordinary request is given.
+  static const Duration listFetchTimeout = Duration(minutes: 3);
+
   /// `GET control/status`.
   Future<AdguardHomeStatus> getStatus() async {
     final Map<String, dynamic> json = await _get('control/status');
@@ -177,11 +182,15 @@ class AdguardHomeApi {
     required String url,
     required bool allowlist,
   }) =>
-      _post('control/filtering/add_url', <String, dynamic>{
-        'name': name,
-        'url': url,
-        'whitelist': allowlist,
-      });
+      _post(
+        'control/filtering/add_url',
+        <String, dynamic>{
+          'name': name,
+          'url': url,
+          'whitelist': allowlist,
+        },
+        listFetchTimeout,
+      );
 
   /// `POST control/filtering/set_url`: the list now at [url] gets [name],
   /// [newUrl] and [enabled]. [allowlist] has to say which kind it is.
@@ -192,15 +201,21 @@ class AdguardHomeApi {
     required String newUrl,
     required bool enabled,
   }) =>
-      _post('control/filtering/set_url', <String, dynamic>{
-        'url': url,
-        'whitelist': allowlist,
-        'data': <String, dynamic>{
-          'name': name,
-          'url': newUrl,
-          'enabled': enabled,
+      _post(
+        'control/filtering/set_url',
+        <String, dynamic>{
+          'url': url,
+          'whitelist': allowlist,
+          'data': <String, dynamic>{
+            'name': name,
+            'url': newUrl,
+            'enabled': enabled,
+          },
         },
-      });
+        // A list switched on, or given a new address, is fetched there and
+        // then.
+        listFetchTimeout,
+      );
 
   /// `POST control/filtering/remove_url`.
   Future<void> removeFilterList({
@@ -219,6 +234,7 @@ class AdguardHomeApi {
       final Response<dynamic> response = await _dio.post<dynamic>(
         'control/filtering/refresh',
         data: <String, dynamic>{'whitelist': allowlist},
+        options: Options(receiveTimeout: listFetchTimeout),
       );
       return response.data as Object?;
     });
@@ -314,9 +330,17 @@ class AdguardHomeApi {
         throw const AdguardHomeUnexpectedAnswer();
       });
 
-  Future<void> _post(String path, [Map<String, dynamic>? body]) =>
+  Future<void> _post(
+    String path, [
+    Map<String, dynamic>? body,
+    Duration? timeout,
+  ]) =>
       _session.run(() async {
-        await _dio.post<dynamic>(path, data: body);
+        await _dio.post<dynamic>(
+          path,
+          data: body,
+          options: timeout == null ? null : Options(receiveTimeout: timeout),
+        );
       });
 
   Future<void> _put(String path, Map<String, dynamic> body) =>

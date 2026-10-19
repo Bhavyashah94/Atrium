@@ -199,6 +199,11 @@ class AdguardHomeRewrite {
 
   @override
   int get hashCode => Object.hash(domain, answer, enabled);
+
+  /// Whether the server would take [other] for this one: it tells rewrites
+  /// apart by their domain and answer only.
+  bool sameTarget(AdguardHomeRewrite other) =>
+      other.domain == domain && other.answer == answer;
 }
 
 /// What the server would do with a name: `GET control/filtering/check_host`.

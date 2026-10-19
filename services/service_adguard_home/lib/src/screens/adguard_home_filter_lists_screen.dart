@@ -11,6 +11,7 @@ import '../adguard_home_filter_rules.dart';
 import '../adguard_home_format.dart';
 import '../adguard_home_providers.dart';
 import '../models/adguard_home_filtering.dart';
+import '../widgets/adguard_home_failure_dialog.dart';
 import '../widgets/adguard_home_pullable.dart';
 import '../widgets/adguard_home_refused_view.dart';
 
@@ -378,19 +379,9 @@ class _AdguardHomeFilterListScreenState
     super.dispose();
   }
 
-  Future<void> _explain(String title, String message) => showDialog<void>(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
+  /// After a refused sign-in, lets one more request out.
+  void _retrySignIn() =>
+      ref.read(adguardHomeActionsProvider(widget.instance)).retrySignIn();
 
   /// Closes this form, whatever stands over it by now.
   void _close(ModalRoute<Object?>? form, String message) {
@@ -429,7 +420,15 @@ class _AdguardHomeFilterListScreenState
     } on Object catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      await _explain('Not saved', describeAdguardHomeError(error));
+      final bool again = await showAdguardHomeFailure(
+        context,
+        title: 'Not saved',
+        error: error,
+      );
+      if (again && mounted) {
+        _retrySignIn();
+        await _save();
+      }
       return;
     }
     if (!mounted) return;
@@ -472,7 +471,15 @@ class _AdguardHomeFilterListScreenState
     } on Object catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      await _explain('Not deleted', describeAdguardHomeError(error));
+      final bool again = await showAdguardHomeFailure(
+        context,
+        title: 'Not deleted',
+        error: error,
+      );
+      if (again && mounted) {
+        _retrySignIn();
+        await _delete();
+      }
       return;
     }
     if (!mounted) return;
