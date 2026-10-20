@@ -13,6 +13,7 @@ class AdguardHomeRetention {
     this.interval = const Duration(days: 1),
     this.ignored = const <String>[],
     this.ignoredEnabled = false,
+    this.hasIgnoredSwitch = true,
     this.anonymizeClientIp,
   });
 
@@ -22,7 +23,11 @@ class AdguardHomeRetention {
         enabled: readBool(json['enabled']),
         interval: Duration(milliseconds: readInt(json['interval'])),
         ignored: readStrings(json['ignored']),
-        ignoredEnabled: readBool(json['ignored_enabled']),
+        // A server from before the switch always leaves the list out.
+        ignoredEnabled: json.containsKey('ignored_enabled')
+            ? readBool(json['ignored_enabled'])
+            : true,
+        hasIgnoredSwitch: json.containsKey('ignored_enabled'),
         anonymizeClientIp: json.containsKey('anonymize_client_ip')
             ? readBool(json['anonymize_client_ip'])
             : null,
@@ -39,6 +44,10 @@ class AdguardHomeRetention {
 
   /// Whether [ignored] is in force.
   final bool ignoredEnabled;
+
+  /// Whether the server has a switch for [ignored]. One from before it
+  /// always applies the list, and is sent no switch.
+  final bool hasIgnoredSwitch;
 
   /// The query log's alone: whether client addresses are kept short. Null
   /// for the statistics.
@@ -57,6 +66,7 @@ class AdguardHomeRetention {
         interval: interval ?? this.interval,
         ignored: ignored ?? this.ignored,
         ignoredEnabled: ignoredEnabled ?? this.ignoredEnabled,
+        hasIgnoredSwitch: hasIgnoredSwitch,
         anonymizeClientIp: anonymizeClientIp ?? this.anonymizeClientIp,
       );
 
@@ -65,7 +75,7 @@ class AdguardHomeRetention {
         'enabled': enabled,
         'interval': interval.inMilliseconds,
         'ignored': ignored,
-        'ignored_enabled': ignoredEnabled,
+        if (hasIgnoredSwitch) 'ignored_enabled': ignoredEnabled,
         if (anonymizeClientIp != null) 'anonymize_client_ip': anonymizeClientIp,
       };
 }
@@ -191,6 +201,31 @@ Map<String, dynamic> adguardHomeChangedSettings(
         if (!adguardHomeJsonEquals(before[setting.key], setting.value))
           setting.key: setting.value,
     };
+
+/// DNS settings the server takes only together. Sent alone, a blocking
+/// address or the custom EDNS address is ignored with a 200, and Custom IP
+/// is refused unless its addresses come with it (probed on v0.107.79).
+const List<Set<String>> adguardHomeDnsSettingGroups = <Set<String>>[
+  <String>{'blocking_mode', 'blocking_ipv4', 'blocking_ipv6'},
+  <String>{'edns_cs_enabled', 'edns_cs_use_custom', 'edns_cs_custom_ip'},
+];
+
+/// What a DNS write sends: the settings [after] has otherwise than
+/// [before], and with any of a group of [adguardHomeDnsSettingGroups] the
+/// rest of that group, as [after] has them.
+Map<String, dynamic> adguardHomeDnsChanges(
+  Map<String, dynamic> before,
+  Map<String, dynamic> after,
+) {
+  final Map<String, dynamic> changes = adguardHomeChangedSettings(before, after);
+  for (final Set<String> group in adguardHomeDnsSettingGroups) {
+    if (!group.any(changes.containsKey)) continue;
+    for (final String key in group) {
+      if (after.containsKey(key)) changes[key] = after[key];
+    }
+  }
+  return changes;
+}
 
 /// Whether encryption is set up, and how: `GET control/tls/status`.
 ///

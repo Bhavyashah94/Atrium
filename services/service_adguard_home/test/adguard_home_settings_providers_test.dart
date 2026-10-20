@@ -170,6 +170,27 @@ void main() {
     });
   });
 
+  test('DNS settings the server takes only together go together', () async {
+    await actions().saveDnsSettings(
+      before: <String, dynamic>{
+        'blocking_mode': 'custom_ip',
+        'blocking_ipv4': '10.0.0.1',
+        'blocking_ipv6': 'fd00::1',
+      },
+      after: <String, dynamic>{
+        'blocking_mode': 'custom_ip',
+        'blocking_ipv4': '10.0.0.2',
+        'blocking_ipv6': 'fd00::1',
+      },
+    );
+
+    expect(body('POST', 'control/dns_config'), <String, dynamic>{
+      'blocking_mode': 'custom_ip',
+      'blocking_ipv4': '10.0.0.2',
+      'blocking_ipv6': 'fd00::1',
+    });
+  });
+
   test('the access lists replace only the list that was changed', () async {
     final AdguardHomeAccessList before =
         AdguardHomeAccessList.fromJson(accessListJson());

@@ -106,6 +106,23 @@ void main() {
     });
   });
 
+  testWidgets('a lease time of no whole hours shows in minutes',
+      (WidgetTester tester) async {
+    await pump(
+      tester,
+      dhcpScreen,
+      dhcp: AdguardHomeDhcpStatus.fromJson(<String, dynamic>{
+        ...dhcpOnJson(),
+        'v4': <String, dynamic>{
+          ...(dhcpOnJson()['v4'] as Map<String, dynamic>),
+          'lease_duration': 5400,
+        },
+      }),
+    );
+
+    expect(find.text('90 minutes'), findsOneWidget);
+  });
+
   group('about', () {
     testWidgets('shows the version and the addresses, and checks nothing '
         'unasked', (WidgetTester tester) async {

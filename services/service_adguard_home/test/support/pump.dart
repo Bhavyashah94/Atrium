@@ -368,8 +368,7 @@ class RecordingActions extends AdguardHomeActions {
     required Map<String, dynamic> before,
     required Map<String, dynamic> after,
   }) async {
-    final Map<String, dynamic> changes =
-        adguardHomeChangedSettings(before, after);
+    final Map<String, dynamic> changes = adguardHomeDnsChanges(before, after);
     calls.add('dns ${changes.keys.join(',')}');
     savedDns.add(changes);
     await _write();

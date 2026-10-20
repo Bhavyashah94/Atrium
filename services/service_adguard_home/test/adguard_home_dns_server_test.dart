@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_adguard_home/service_adguard_home.dart';
 
+import 'support/adguard_home_settings_fixtures.dart';
 import 'support/adguard_home_test_instance.dart';
 import 'support/pump.dart';
 
@@ -168,6 +169,57 @@ void main() {
       'edns_cs_enabled': true,
       'edns_cs_use_custom': true,
       'edns_cs_custom_ip': '203.0.113.0',
+    });
+  });
+
+  testWidgets('an address changed under Custom IP goes with the mode',
+      (WidgetTester tester) async {
+    final Pumped pumped = await pumpAdguardHome(
+      tester,
+      const AdguardHomeDnsServerScreen(instance: adguardHomeTestInstance),
+      dnsConfig: AdguardHomeDnsConfig(<String, dynamic>{
+        ...dnsInfoJson(),
+        'blocking_mode': 'custom_ip',
+        'blocking_ipv4': '10.0.0.1',
+        'blocking_ipv6': 'fd00::1',
+      }),
+      size: const Size(360, 3600),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(field('ipv4'), '10.0.0.2');
+    await tester.pump();
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+
+    // Sent alone, the server answers 200 and keeps the old address.
+    expect(pumped.actions.savedDns.single, <String, dynamic>{
+      'blocking_mode': 'custom_ip',
+      'blocking_ipv4': '10.0.0.2',
+      'blocking_ipv6': 'fd00::1',
+    });
+  });
+
+  testWidgets('an address typed and then hidden is not sent',
+      (WidgetTester tester) async {
+    final Pumped pumped = await open(tester);
+
+    await tester.tap(find.text('Custom IP'));
+    await tester.pump();
+    await tester.enterText(field('ipv4'), '1.2.3');
+    await tester.pump();
+    await tester.tap(find.text('Default'));
+    await tester.pump();
+
+    expect(tester.widget<FilledButton>(save).onPressed, isNull);
+
+    await tester.tap(find.text('DNSSEC'));
+    await tester.pump();
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+
+    expect(pumped.actions.savedDns.single, <String, dynamic>{
+      'dnssec_enabled': false,
     });
   });
 

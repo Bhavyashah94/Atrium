@@ -54,6 +54,10 @@ class _AdguardHomeRetentionScreenState
 
   /// Whether Custom is picked, with its hours in [_hours].
   bool _custom = false;
+
+  /// The hours the form opened with. Left as they are, the retention stays
+  /// as the server has it, which need not be a whole number of hours.
+  String _hoursAsRead = '';
   bool _checked = false;
   bool _busy = false;
 
@@ -79,13 +83,16 @@ class _AdguardHomeRetentionScreenState
     _draft = read;
     _custom = !_choices.contains(read.interval);
     _hours.text = _custom ? '${read.interval.inHours}' : '';
+    _hoursAsRead = _hours.text;
     _ignored.text = adguardHomeRulesToText(read.ignored);
   }
 
   /// The form as it would be saved; null while Custom holds no number.
   AdguardHomeRetention? get _after {
     Duration interval = _draft.interval;
-    if (_custom) {
+    if (_custom && _hours.text.trim() == _hoursAsRead) {
+      interval = _before!.interval;
+    } else if (_custom) {
       final int? hours = int.tryParse(_hours.text.trim());
       if (adguardHomeRetentionProblem(hours) != null) return null;
       interval = Duration(hours: hours!);
@@ -142,9 +149,16 @@ class _AdguardHomeRetentionScreenState
       );
       if (shorter != true || !mounted) return;
     }
+    await _write(before, after);
+  }
+
+  Future<void> _write(
+    AdguardHomeRetention before,
+    AdguardHomeRetention after,
+  ) {
     final AdguardHomeActions actions =
         ref.read(adguardHomeActionsProvider(_instance));
-    await adguardHomeSaveSettings(
+    return adguardHomeSaveSettings(
       context,
       ref,
       _instance,
@@ -153,9 +167,14 @@ class _AdguardHomeRetentionScreenState
           : actions.saveStatsRetention(before: before, after: after),
       done: _log ? 'Query log settings saved' : 'Statistics settings saved',
       setBusy: (bool busy) => setState(() => _busy = busy),
-      retry: _save,
+      // Asked once already: Try again goes straight to the write.
+      retry: () => _write(before, after),
     );
   }
+
+  String get _ignoredHelp => _log
+      ? 'Queries matching these rules are not written to the query log'
+      : 'Queries matching these rules are not counted in the statistics';
 
   Future<void> _reset() async {
     final bool? reset = await showDialog<bool>(
@@ -302,19 +321,17 @@ class _AdguardHomeRetentionScreenState
             ),
           ),
         const _Inset(child: AdguardHomeHeading('Ignored domains')),
-        SwitchListTile(
-          title: const Text('Leave out these domains'),
-          subtitle: Text(
-            _log
-                ? 'Queries matching these rules are not written to the '
-                    'query log'
-                : 'Queries matching these rules are not counted in the '
-                    'statistics',
-          ),
-          value: _draft.ignoredEnabled,
-          onChanged: (bool on) =>
-              setState(() => _draft = _draft.copyWith(ignoredEnabled: on)),
-        ),
+        // A server from before the switch always leaves these out.
+        if (_draft.hasIgnoredSwitch)
+          SwitchListTile(
+            title: const Text('Leave out these domains'),
+            subtitle: Text(_ignoredHelp),
+            value: _draft.ignoredEnabled,
+            onChanged: (bool on) =>
+                setState(() => _draft = _draft.copyWith(ignoredEnabled: on)),
+          )
+        else
+          ListTile(subtitle: Text(_ignoredHelp)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: Insets.lg),
           child: TextField(

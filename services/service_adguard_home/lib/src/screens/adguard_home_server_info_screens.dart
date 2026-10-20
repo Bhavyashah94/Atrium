@@ -185,7 +185,8 @@ class AdguardHomeDhcpScreen extends ConsumerWidget {
 
   static String _length(Duration length) {
     if (length == Duration.zero) return '';
-    if (length.inHours == 0) {
+    // Not a whole number of hours: in minutes, so 90 minutes is not "1 hour".
+    if (length.inMinutes % 60 != 0) {
       return length.inMinutes == 1 ? '1 minute' : '${length.inMinutes} minutes';
     }
     return adguardHomeRetentionLabel(length);

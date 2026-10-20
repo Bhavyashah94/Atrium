@@ -115,7 +115,9 @@ class _AdguardHomeDnsUpstreamsScreenState
     _fallback.text = adguardHomeRulesToText(draft.fallback);
     _bootstrap.text = adguardHomeRulesToText(draft.bootstrap);
     _private.text = adguardHomeRulesToText(draft.privateUpstreams);
-    _timeout.text = '${draft.timeout}';
+    // An older server may have none to say; then the box starts empty and
+    // the form is not edited until something is typed there.
+    _timeout.text = draft.timeout > 0 ? '${draft.timeout}' : '';
     _mode = draft.mode;
     _usePrivate = draft.usePrivatePtrResolvers;
     _resolveClients = draft.resolveClients;
@@ -126,9 +128,16 @@ class _AdguardHomeDnsUpstreamsScreenState
           line.trim(),
       ];
 
+  /// The timeout as typed, as the server has it when left empty there
+  /// was none, or null when it will not do.
   int? get _timeoutSeconds {
-    final int? seconds = int.tryParse(_timeout.text.trim());
-    return seconds == null || seconds < 1 ? null : seconds;
+    final String text = _timeout.text.trim();
+    final AdguardHomeUpstreamDraft? before = _before;
+    if (text.isEmpty && before != null && before.timeout < 1) {
+      return before.timeout;
+    }
+    if (adguardHomeWholeNumberProblem(text, min: 1) != null) return null;
+    return int.parse(text);
   }
 
   AdguardHomeUpstreamDraft? get _after {
@@ -182,16 +191,16 @@ class _AdguardHomeDnsUpstreamsScreenState
     if (_testing) return;
     final AdguardHomeUpstreamDraft? before = _before;
     setState(() => _testing = true);
+    // The server reads a file of upstreams only for itself: what dns_info
+    // lists then is not what is in force, and is not tested as if it were.
+    final String file = before?.upstreamsFile ?? '';
     List<AdguardHomeUpstreamResult>? results;
     Object? failure;
     try {
       results = await ref
           .read(adguardHomeActionsProvider(_instance))
           .testUpstreams(
-            // Upstreams kept in a file are tested as the server has them.
-            upstreams: before != null && before.upstreamsFile.isNotEmpty
-                ? before.upstreams
-                : _lines(_upstreams),
+            upstreams: file.isEmpty ? _lines(_upstreams) : const <String>[],
             bootstrap: _lines(_bootstrap),
             fallback: _lines(_fallback),
             privateUpstreams: _lines(_private),
@@ -210,6 +219,7 @@ class _AdguardHomeDnsUpstreamsScreenState
       builder: (BuildContext context) => _UpstreamResults(
         results: results,
         failure: failure,
+        upstreamsFile: file,
       ),
     );
   }
@@ -355,7 +365,9 @@ class _AdguardHomeDnsUpstreamsScreenState
             border: const OutlineInputBorder(),
             errorText: (_checked || _timeout.text.isNotEmpty) &&
                     _timeoutSeconds == null
-                ? 'At least 1 second.'
+                ? (int.tryParse(_timeout.text.trim()) ?? 0) < 1
+                    ? 'At least 1 second.'
+                    : 'At most $adguardHomeMaxUint32 seconds.'
                 : null,
           ),
         ),
@@ -402,10 +414,18 @@ class _AdguardHomeDnsUpstreamsScreenState
 
 /// What each server said when tested.
 class _UpstreamResults extends StatelessWidget {
-  const _UpstreamResults({required this.results, required this.failure});
+  const _UpstreamResults({
+    required this.results,
+    required this.failure,
+    this.upstreamsFile = '',
+  });
 
   final List<AdguardHomeUpstreamResult>? results;
   final Object? failure;
+
+  /// Where the server keeps its upstreams, when it does: those are not
+  /// tested from here.
+  final String upstreamsFile;
 
   @override
   Widget build(BuildContext context) {
@@ -434,6 +454,13 @@ class _UpstreamResults extends StatelessWidget {
               ?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: Insets.sm),
+        if (upstreamsFile.isNotEmpty)
+          Text(
+            'The upstreams in $upstreamsFile are read by the server alone '
+            'and cannot be tested from here.',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: cs.onSurfaceVariant),
+          ),
         if (failure != null)
           Text(
             describeAdguardHomeError(failure!),

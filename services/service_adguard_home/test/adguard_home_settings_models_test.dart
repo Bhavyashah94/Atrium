@@ -134,6 +134,72 @@ void main() {
     });
   });
 
+  group('a DNS write', () {
+    final Map<String, dynamic> before = <String, dynamic>{
+      'blocking_mode': 'default',
+      'blocking_ipv4': '',
+      'blocking_ipv6': '',
+      'edns_cs_enabled': false,
+      'edns_cs_use_custom': false,
+      'edns_cs_custom_ip': '',
+      'ratelimit': 20,
+    };
+
+    test('sends the blocking mode and its addresses together', () {
+      expect(
+        adguardHomeDnsChanges(before, <String, dynamic>{
+          ...before,
+          'blocking_ipv4': '10.0.0.1',
+        }),
+        <String, dynamic>{
+          'blocking_mode': 'default',
+          'blocking_ipv4': '10.0.0.1',
+          'blocking_ipv6': '',
+        },
+      );
+    });
+
+    test('sends the EDNS settings together', () {
+      expect(
+        adguardHomeDnsChanges(before, <String, dynamic>{
+          ...before,
+          'edns_cs_custom_ip': '203.0.113.0',
+        }).keys,
+        unorderedEquals(<String>[
+          'edns_cs_enabled',
+          'edns_cs_use_custom',
+          'edns_cs_custom_ip',
+        ]),
+      );
+    });
+
+    test('sends a setting of no group alone', () {
+      expect(
+        adguardHomeDnsChanges(before, <String, dynamic>{
+          ...before,
+          'ratelimit': 25,
+        }),
+        <String, dynamic>{'ratelimit': 25},
+      );
+    });
+  });
+
+  test('retention from a server without the ignored switch keeps the list '
+      'in force, and sends no switch', () {
+    final AdguardHomeRetention old = AdguardHomeRetention.fromJson(
+      <String, dynamic>{
+        'enabled': true,
+        'interval': 86400000,
+        'ignored': <String>['a.example'],
+      },
+    );
+
+    expect(old.ignoredEnabled, isTrue);
+    expect(old.hasIgnoredSwitch, isFalse);
+    expect(old.toJson().containsKey('ignored_enabled'), isFalse);
+    expect(old.copyWith(enabled: false).hasIgnoredSwitch, isFalse);
+  });
+
   group('encryption', () {
     test('reads its status and never the certificate or key', () {
       final AdguardHomeTlsStatus tls =

@@ -923,14 +923,14 @@ class AdguardHomeActions {
   }
 
   /// Saves DNS settings: only those [after] has otherwise than [before]
-  /// are sent, and the server keeps the rest. Nothing changed, nothing is
-  /// sent.
+  /// are sent, with the rest of any group the server takes only together
+  /// (see [adguardHomeDnsChanges]), and the server keeps the others.
+  /// Nothing changed, nothing is sent.
   Future<void> saveDnsSettings({
     required Map<String, dynamic> before,
     required Map<String, dynamic> after,
   }) async {
-    final Map<String, dynamic> changes =
-        adguardHomeChangedSettings(before, after);
+    final Map<String, dynamic> changes = adguardHomeDnsChanges(before, after);
     if (changes.isEmpty) return;
     try {
       await (await _api).setDnsConfig(changes);

@@ -141,7 +141,9 @@ Future<bool> adguardHomeToggleClientAccess(
 }
 
 /// Throws the whole query log of [instance] away, after asking, and reads
-/// the now empty log again.
+/// the now empty log again where it is shown. Where it is not (from the
+/// settings, before the log tab was opened), nothing is read: taking hold
+/// of the log would start a read nobody waits for.
 Future<void> adguardHomeClearQueryLog(
   BuildContext context,
   WidgetRef ref,
@@ -150,8 +152,8 @@ Future<void> adguardHomeClearQueryLog(
   final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
   final AdguardHomeActions actions =
       ref.read(adguardHomeActionsProvider(instance));
-  final AdguardHomeQueryLog log =
-      ref.read(adguardHomeQueryLogProvider(instance).notifier);
+  final ProviderContainer container =
+      ProviderScope.containerOf(context, listen: false);
 
   void say(String message) {
     if (!messenger.mounted) return;
@@ -185,7 +187,11 @@ Future<void> adguardHomeClearQueryLog(
   try {
     await actions.clearQueryLog();
     say('Query log cleared');
-    await log.reload();
+    if (container.exists(adguardHomeQueryLogProvider(instance))) {
+      await container
+          .read(adguardHomeQueryLogProvider(instance).notifier)
+          .reload();
+    }
   } on Object catch (error) {
     say(describeAdguardHomeError(error));
   }

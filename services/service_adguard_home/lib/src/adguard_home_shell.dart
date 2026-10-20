@@ -17,7 +17,7 @@ import 'tabs/adguard_home_query_log_tab.dart';
 import 'tabs/adguard_home_settings_tab.dart';
 
 /// Which of the screen's tabs is showing: 0 Home, 1 Query log, 2 Filters,
-/// 3 Clients.
+/// 3 Clients, 4 Settings.
 /// Kept for the session, so the service opens where it was left.
 final adguardHomeTabProvider =
     StateProvider.family<int, Instance>((Ref ref, Instance _) => 0);

@@ -172,6 +172,56 @@ void main() {
     expect(pumped.actions.savedDns, isEmpty);
   });
 
+  testWidgets('upstreams kept in a file are not tested, and the sheet '
+      'says why', (WidgetTester tester) async {
+    final Pumped pumped = await open(
+      tester,
+      dns: AdguardHomeDnsConfig(<String, dynamic>{
+        ...dnsInfoJson(),
+        'upstream_dns_file': '/opt/adguardhome/upstreams.txt',
+      }),
+    );
+    pumped.actions.upstreamResults = const <AdguardHomeUpstreamResult>[];
+
+    await tester.tap(find.text('Test upstreams'));
+    await tester.pumpAndSettle();
+
+    expect(pumped.actions.calls, <String>['test ']);
+    expect(find.textContaining('cannot be tested from here'), findsOneWidget);
+  });
+
+  testWidgets('a server with no timeout opens unchanged, and keeps none',
+      (WidgetTester tester) async {
+    final Pumped pumped = await open(
+      tester,
+      dns: AdguardHomeDnsConfig(
+        <String, dynamic>{...dnsInfoJson()}..remove('upstream_timeout'),
+      ),
+    );
+
+    expect(text(tester, timeout), isEmpty);
+    expect(find.text('At least 1 second.'), findsNothing);
+    expect(tester.widget<FilledButton>(save).onPressed, isNull);
+
+    await tester.tap(find.text('Parallel requests'));
+    await tester.pump();
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+
+    expect(pumped.actions.savedDns.single, <String, dynamic>{
+      'upstream_mode': 'parallel',
+    });
+  });
+
+  testWidgets('a timeout past 32 bits says so', (WidgetTester tester) async {
+    await open(tester);
+
+    await tester.enterText(timeout, '4294967296');
+    await tester.pump();
+
+    expect(find.text('At most 4294967295 seconds.'), findsOneWidget);
+  });
+
   testWidgets('a test that fails says why', (WidgetTester tester) async {
     final Pumped pumped = await open(tester);
     pumped.actions.lookupFailure = const AdguardHomeRequestRefused('nope');

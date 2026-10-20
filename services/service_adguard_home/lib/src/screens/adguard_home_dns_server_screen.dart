@@ -34,6 +34,7 @@ class _AdguardHomeDnsServerScreenState
   final TextEditingController _blockingIpv6 = TextEditingController();
   final TextEditingController _ttl = TextEditingController();
 
+  AdguardHomeDnsConfig? _read;
   Map<String, dynamic>? _before;
   bool _edns = false;
   bool _ednsCustom = false;
@@ -84,6 +85,7 @@ class _AdguardHomeDnsServerScreenState
     _dnssec = dns.dnssecEnabled;
     _noIpv6 = dns.disableIpv6;
     _mode = dns.blockingMode;
+    _read = dns;
     _before = _json();
   }
 
@@ -129,12 +131,19 @@ class _AdguardHomeDnsServerScreenState
         'ratelimit_whitelist': _allowed,
         'edns_cs_enabled': _edns,
         'edns_cs_use_custom': _ednsCustom,
-        'edns_cs_custom_ip': _ednsIp.text.trim(),
+        // A box that is hidden goes as the server has it: what was typed
+        // there and left is not checked, and must not be sent.
+        'edns_cs_custom_ip':
+            _edns && _ednsCustom ? _ednsIp.text.trim() : _read!.ednsCustomIp,
         'dnssec_enabled': _dnssec,
         'disable_ipv6': _noIpv6,
         'blocking_mode': _mode.wire,
-        'blocking_ipv4': _blockingIpv4.text.trim(),
-        'blocking_ipv6': _blockingIpv6.text.trim(),
+        'blocking_ipv4': _mode == AdguardHomeBlockingMode.customIp
+            ? _blockingIpv4.text.trim()
+            : _read!.blockingIpv4,
+        'blocking_ipv6': _mode == AdguardHomeBlockingMode.customIp
+            ? _blockingIpv6.text.trim()
+            : _read!.blockingIpv6,
         'blocked_response_ttl': int.tryParse(_ttl.text.trim()),
       };
 

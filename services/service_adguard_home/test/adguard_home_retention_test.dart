@@ -234,6 +234,89 @@ void main() {
     expect(find.text('Statistics settings saved'), findsOneWidget);
   });
 
+  testWidgets('Try again after a refused sign-in does not ask about the '
+      'shorter retention twice', (WidgetTester tester) async {
+    final Pumped pumped = await open(tester, AdguardHomeRetentionKind.queryLog);
+    pumped.actions.writeFailure = const AdguardHomeSignInRefused();
+
+    await tester.tap(find.text('7 days'));
+    await tester.pump();
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Save').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Try again'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Keep the log for less time?'), findsNothing);
+    expect(
+      pumped.actions.calls,
+      <String>['querylog settings', 'retry', 'querylog settings'],
+    );
+  });
+
+  testWidgets('a retention of no whole hours stays as the server has it',
+      (WidgetTester tester) async {
+    const Duration odd = Duration(hours: 36, minutes: 30);
+    final Pumped pumped = await open(
+      tester,
+      AdguardHomeRetentionKind.statistics,
+      stats: const AdguardHomeRetention(interval: odd),
+    );
+
+    expect(picked(tester, 'Custom'), isTrue);
+    expect(tester.widget<FilledButton>(save).onPressed, isNull);
+
+    await tester.tap(find.text('Keep statistics'));
+    await tester.pump();
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Keep statistics for less time?'), findsNothing);
+    expect(pumped.actions.savedRetention.single.interval, odd);
+  });
+
+  testWidgets('a server without the ignored switch shows none',
+      (WidgetTester tester) async {
+    await open(
+      tester,
+      AdguardHomeRetentionKind.queryLog,
+      queryLog: AdguardHomeRetention.fromJson(<String, dynamic>{
+        'enabled': true,
+        'interval': 86400000,
+        'ignored': <String>['a.example'],
+        'anonymize_client_ip': false,
+      }),
+    );
+
+    expect(find.text('Leave out these domains'), findsNothing);
+    expect(
+      find.text(
+        'Queries matching these rules are not written to the query log',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Clear query log asks, and reads no log that is not open',
+      (WidgetTester tester) async {
+    final Pumped pumped = await open(tester, AdguardHomeRetentionKind.queryLog);
+
+    await tester.tap(find.text('Clear query log'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(pumped.actions.calls, isEmpty);
+
+    await tester.tap(find.text('Clear query log'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Clear'));
+    await tester.pumpAndSettle();
+
+    expect(pumped.actions.calls, <String>['clear log']);
+    expect(pumped.logWatched, isFalse);
+  });
+
   testWidgets('resetting statistics asks first', (WidgetTester tester) async {
     final Pumped pumped =
         await open(tester, AdguardHomeRetentionKind.statistics);
