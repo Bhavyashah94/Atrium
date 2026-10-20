@@ -123,10 +123,10 @@ void main() {
     expect(ServiceKind.gluetun.isBeta, isFalse);
   });
 
-  test('AdGuard Home is registered as a beta userPass analytics service', () {
+  test('AdGuard Home is registered as a userPass analytics service', () {
     expect(ServiceKind.adguardHome.displayName, 'AdGuard Home');
     expect(ServiceKind.adguardHome.tagline, 'Network-wide blocking');
-    expect(ServiceKind.adguardHome.isBeta, isTrue);
+    expect(ServiceKind.adguardHome.isBeta, isFalse);
     expect(ServiceKind.adguardHome.defaultPort, 80);
     expect(ServiceKind.adguardHome.authStyle, AuthStyle.userPass);
     expect(ServiceKind.adguardHome.role, ServiceRole.analytics);
