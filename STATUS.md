@@ -1,6 +1,6 @@
 # Atrium - Status
 
-> Snapshot of what genuinely works and what is left, as of 2026-10-19.
+> Snapshot of what genuinely works and what is left, as of 2026-10-20.
 > Atrium is published on F-Droid and on the GitHub releases page. It is
 > still in early development and every module is work in progress; nothing
 > here is a release promise.
@@ -174,7 +174,8 @@ Atrium is a **controller** app. Video playback was removed by design
   dashboard widget. The connection test judges the connection rather than
   the VPN behind it, and the health dot warns when Gluetun reports its VPN
   down. Update Servers on ProtonVPN says what it needs
-- **AdGuard Home** (beta, added 2026-10-07, live-verified against v0.107.79;
+- **AdGuard Home** (added 2026-10-07, out of beta since 2026-10-20,
+  live-verified against v0.107.79;
   issue #166): a Home screen with protection on/off and the five timed
   pauses the web UI offers, a countdown while paused, charts of DNS queries
   and of blocked queries with their totals, figures for malware, adult
