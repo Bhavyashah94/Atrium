@@ -9,6 +9,7 @@ import 'models/adguard_home_filters.dart';
 import 'models/adguard_home_json.dart';
 import 'models/adguard_home_query_log.dart';
 import 'models/adguard_home_services.dart';
+import 'models/adguard_home_settings.dart';
 import 'models/adguard_home_stats.dart';
 import 'models/adguard_home_status.dart';
 
@@ -317,6 +318,106 @@ class AdguardHomeApi {
         'control/rewrite/settings/update',
         <String, dynamic>{'enabled': enabled},
       );
+
+  /// `GET control/safebrowsing/status`.
+  Future<bool> getSafeBrowsing() async =>
+      readBool((await _get('control/safebrowsing/status'))['enabled']);
+
+  /// `POST control/safebrowsing/enable` or `.../disable`.
+  Future<void> setSafeBrowsing({required bool enabled}) =>
+      _post('control/safebrowsing/${enabled ? 'enable' : 'disable'}');
+
+  /// `GET control/parental/status`.
+  Future<bool> getParental() async =>
+      readBool((await _get('control/parental/status'))['enabled']);
+
+  /// `POST control/parental/enable` or `.../disable`.
+  Future<void> setParental({required bool enabled}) =>
+      _post('control/parental/${enabled ? 'enable' : 'disable'}');
+
+  /// `PUT control/safesearch/settings`. Whole: an engine left out is
+  /// switched off.
+  Future<void> setSafeSearch(AdguardHomeSafeSearch safeSearch) =>
+      _put('control/safesearch/settings', safeSearch.toJson());
+
+  /// `GET control/querylog/config`, as the settings write it back.
+  Future<AdguardHomeRetention> getQueryLogRetention() async =>
+      AdguardHomeRetention.fromJson(await _get('control/querylog/config'));
+
+  /// `PUT control/querylog/config/update`. Whole: a field left out is
+  /// refused.
+  Future<void> setQueryLogRetention(AdguardHomeRetention retention) =>
+      _put('control/querylog/config/update', retention.toJson());
+
+  /// `GET control/stats/config`.
+  Future<AdguardHomeRetention> getStatsRetention() async =>
+      AdguardHomeRetention.fromJson(await _get('control/stats/config'));
+
+  /// `PUT control/stats/config/update`. Whole, as the query log's.
+  Future<void> setStatsRetention(AdguardHomeRetention retention) =>
+      _put('control/stats/config/update', retention.toJson());
+
+  /// `POST control/stats_reset`: the statistics start again from nothing.
+  Future<void> resetStats() => _post('control/stats_reset');
+
+  /// `GET control/dns_info`.
+  Future<AdguardHomeDnsConfig> getDnsConfig() async =>
+      AdguardHomeDnsConfig(await _get('control/dns_info'));
+
+  /// `POST control/dns_config` with only what is to change: the server
+  /// keeps what is left out.
+  Future<void> setDnsConfig(Map<String, dynamic> changes) =>
+      _post('control/dns_config', changes);
+
+  /// `POST control/test_upstream_dns`: whether each server answers, for the
+  /// lists as given, saved or not.
+  Future<List<AdguardHomeUpstreamResult>> testUpstreams({
+    required List<String> upstreams,
+    required List<String> bootstrap,
+    required List<String> fallback,
+    required List<String> privateUpstreams,
+  }) async =>
+      AdguardHomeUpstreamResult.listFromJson(
+        await _postForJson('control/test_upstream_dns', <String, dynamic>{
+          'upstream_dns': upstreams,
+          'bootstrap_dns': bootstrap,
+          'fallback_dns': fallback,
+          'private_upstream': privateUpstreams,
+        }),
+      );
+
+  /// `POST control/cache_clear`.
+  Future<void> clearDnsCache() => _post('control/cache_clear');
+
+  /// `GET control/tls/status`.
+  Future<AdguardHomeTlsStatus> getTlsStatus() async =>
+      AdguardHomeTlsStatus.fromJson(await _get('control/tls/status'));
+
+  /// `GET control/dhcp/status`.
+  Future<AdguardHomeDhcpStatus> getDhcpStatus() async =>
+      AdguardHomeDhcpStatus.fromJson(await _get('control/dhcp/status'));
+
+  /// `POST control/version.json`. With [recheck] the server asks for the
+  /// latest version now rather than answering from what it last heard.
+  Future<AdguardHomeVersionCheck> checkVersion({bool recheck = false}) async =>
+      AdguardHomeVersionCheck.fromJson(
+        await _postForJson(
+          'control/version.json',
+          <String, dynamic>{'recheck_now': recheck},
+        ),
+      );
+
+  Future<Map<String, dynamic>> _postForJson(
+    String path,
+    Map<String, dynamic> body,
+  ) =>
+      _session.run(() async {
+        final Response<dynamic> response =
+            await _dio.post<dynamic>(path, data: body);
+        final Object? data = response.data;
+        if (data is Map<String, dynamic>) return data;
+        throw const AdguardHomeUnexpectedAnswer();
+      });
 
   Future<Map<String, dynamic>> _get(
     String path, [

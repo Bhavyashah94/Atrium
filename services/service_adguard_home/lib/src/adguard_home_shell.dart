@@ -14,9 +14,10 @@ import 'tabs/adguard_home_clients_tab.dart';
 import 'tabs/adguard_home_filters_tab.dart';
 import 'tabs/adguard_home_home_tab.dart';
 import 'tabs/adguard_home_query_log_tab.dart';
+import 'tabs/adguard_home_settings_tab.dart';
 
 /// Which of the screen's tabs is showing: 0 Home, 1 Query log, 2 Filters,
-/// 3 Clients.
+/// 3 Clients, 4 Settings.
 /// Kept for the session, so the service opens where it was left.
 final adguardHomeTabProvider =
     StateProvider.family<int, Instance>((Ref ref, Instance _) => 0);
@@ -46,6 +47,7 @@ class _AdguardHomeShellState extends ConsumerState<AdguardHomeShell> {
   static const int _queryLog = 1;
   static const int _filters = 2;
   static const int _clients = 3;
+  static const int _settings = 4;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -145,6 +147,10 @@ class _AdguardHomeShellState extends ConsumerState<AdguardHomeShell> {
               AdguardHomeClientsTab(instance: _instance)
             else
               const SizedBox.shrink(),
+            if (_shown.contains(_settings))
+              AdguardHomeSettingsTab(instance: _instance)
+            else
+              const SizedBox.shrink(),
           ],
         ),
         floatingActionButton: addTo == null
@@ -183,6 +189,11 @@ class _AdguardHomeShellState extends ConsumerState<AdguardHomeShell> {
               icon: Icon(Icons.devices_outlined),
               selectedIcon: Icon(Icons.devices),
               label: 'Clients',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings),
+              label: 'Settings',
             ),
           ],
         ),

@@ -9,6 +9,9 @@ import 'package:service_adguard_home/service_adguard_home.dart';
 
 import 'adguard_home_clients_fixtures.dart';
 import 'adguard_home_filters_fixtures.dart';
+import 'adguard_home_fixtures.dart';
+import 'adguard_home_query_log_fixtures.dart';
+import 'adguard_home_settings_fixtures.dart';
 import 'adguard_home_test_instance.dart';
 
 /// Stands in for [AdguardHomeActions], noting what the screen asked for
@@ -295,6 +298,135 @@ class RecordingActions extends AdguardHomeActions {
     calls.add('rewrites ${enabled ? 'on' : 'off'}');
     await _write();
   }
+
+  @override
+  Future<void> setFilteringEnabled({required bool enabled}) async {
+    calls.add('filtering ${enabled ? 'on' : 'off'}');
+    await _write();
+  }
+
+  @override
+  Future<void> setSafeBrowsing({required bool enabled}) async {
+    calls.add('safebrowsing ${enabled ? 'on' : 'off'}');
+    await _write();
+  }
+
+  @override
+  Future<void> setParental({required bool enabled}) async {
+    calls.add('parental ${enabled ? 'on' : 'off'}');
+    await _write();
+  }
+
+  /// Every safe search [setSafeSearch] was asked to write.
+  final List<AdguardHomeSafeSearch> savedSafeSearch = <AdguardHomeSafeSearch>[];
+
+  @override
+  Future<void> setSafeSearch({
+    required AdguardHomeSafeSearch before,
+    required AdguardHomeSafeSearch after,
+  }) async {
+    calls.add('safesearch');
+    savedSafeSearch.add(after);
+    await _write();
+  }
+
+  /// Every retention saved, query log and statistics alike, as it left the
+  /// form.
+  final List<AdguardHomeRetention> savedRetention = <AdguardHomeRetention>[];
+
+  @override
+  Future<void> saveQueryLogRetention({
+    required AdguardHomeRetention before,
+    required AdguardHomeRetention after,
+  }) async {
+    calls.add('querylog settings');
+    savedRetention.add(after);
+    await _write();
+  }
+
+  @override
+  Future<void> saveStatsRetention({
+    required AdguardHomeRetention before,
+    required AdguardHomeRetention after,
+  }) async {
+    calls.add('stats settings');
+    savedRetention.add(after);
+    await _write();
+  }
+
+  @override
+  Future<void> resetStats() async {
+    calls.add('reset stats');
+    await _write();
+  }
+
+  /// What each DNS save would send: only the settings that changed.
+  final List<Map<String, dynamic>> savedDns = <Map<String, dynamic>>[];
+
+  @override
+  Future<void> saveDnsSettings({
+    required Map<String, dynamic> before,
+    required Map<String, dynamic> after,
+  }) async {
+    final Map<String, dynamic> changes = adguardHomeDnsChanges(before, after);
+    calls.add('dns ${changes.keys.join(',')}');
+    savedDns.add(changes);
+    await _write();
+  }
+
+  /// What [testUpstreams] answers.
+  List<AdguardHomeUpstreamResult> upstreamResults =
+      const <AdguardHomeUpstreamResult>[
+    AdguardHomeUpstreamResult('1.1.1.1:53', 'OK'),
+  ];
+
+  @override
+  Future<List<AdguardHomeUpstreamResult>> testUpstreams({
+    required List<String> upstreams,
+    required List<String> bootstrap,
+    required List<String> fallback,
+    required List<String> privateUpstreams,
+  }) async {
+    calls.add('test ${upstreams.join(' ')}');
+    final Completer<void>? held = lookupHold;
+    if (held != null) await held.future;
+    final Object? error = lookupFailure;
+    if (error != null) throw error;
+    return upstreamResults;
+  }
+
+  @override
+  Future<void> clearDnsCache() async {
+    calls.add('clear cache');
+    await _write();
+  }
+
+  /// Every access list [saveAccessList] was asked to write.
+  final List<AdguardHomeAccessList> savedAccess = <AdguardHomeAccessList>[];
+
+  @override
+  Future<void> saveAccessList({
+    required AdguardHomeAccessList before,
+    required AdguardHomeAccessList after,
+  }) async {
+    calls.add('access');
+    savedAccess.add(after);
+    await _write();
+  }
+
+  /// What [checkVersion] answers.
+  AdguardHomeVersionCheck versionCheck =
+      const AdguardHomeVersionCheck(disabled: true);
+
+  @override
+  Future<AdguardHomeVersionCheck> checkVersion({bool recheck = false}) async {
+    calls.add('version${recheck ? ' now' : ''}');
+    final Completer<void>? held = lookupHold;
+    if (held != null) await held.future;
+    final Object? error = lookupFailure;
+    if (error != null) throw error;
+    return versionCheck;
+  }
 }
 
 /// One call to save a client, as [RecordingActions] noted it.
@@ -418,6 +550,9 @@ class Pumped {
 
   /// How many times the server's blocked services were read.
   int globalServicesReads = 0;
+
+  /// How many settings reads were made, of any of them.
+  int settingsReads = 0;
 }
 
 /// Pumps [child] with the four reads answered from fixed values and the
@@ -448,6 +583,14 @@ Future<Pumped> pumpAdguardHome(
   Object? rewritesEnabledError,
   AdguardHomeGlobalServices? globalServices,
   Object? filteringError,
+  AdguardHomeGeneralSettings? general,
+  AdguardHomeRetention? queryLogRetention,
+  AdguardHomeRetention? statsRetention,
+  AdguardHomeDnsConfig? dnsConfig,
+  AdguardHomeAccessList? accessList,
+  AdguardHomeTlsStatus? tls,
+  AdguardHomeDhcpStatus? dhcp,
+  Object? settingsError,
   Size size = const Size(360, 2400),
   double textScale = 1,
   Instance instance = adguardHomeTestInstance,
@@ -522,6 +665,51 @@ Future<Pumped> pumpAdguardHome(
           pumped.servicesReads++;
           return services ??
               AdguardHomeServiceCatalogue.fromJson(blockedServicesJson());
+        }),
+        adguardHomeGeneralSettingsProvider(instance)
+            .overrideWith((Ref ref) async {
+          pumped.settingsReads++;
+          if (settingsError != null) throw settingsError;
+          return general ??
+              AdguardHomeGeneralSettings(
+                safeBrowsing: true,
+                parental: false,
+                safeSearch: AdguardHomeSafeSearch.fromJson(safeSearchJson()),
+              );
+        }),
+        adguardHomeQueryLogRetentionProvider(instance)
+            .overrideWith((Ref ref) async {
+          pumped.settingsReads++;
+          if (settingsError != null) throw settingsError;
+          return queryLogRetention ??
+              AdguardHomeRetention.fromJson(queryLogConfigJson());
+        }),
+        adguardHomeStatsRetentionProvider(instance)
+            .overrideWith((Ref ref) async {
+          pumped.settingsReads++;
+          if (settingsError != null) throw settingsError;
+          return statsRetention ??
+              AdguardHomeRetention.fromJson(statsConfigJson());
+        }),
+        adguardHomeDnsConfigProvider(instance).overrideWith((Ref ref) async {
+          pumped.settingsReads++;
+          if (settingsError != null) throw settingsError;
+          return dnsConfig ?? AdguardHomeDnsConfig(dnsInfoJson());
+        }),
+        adguardHomeAccessListProvider(instance).overrideWith((Ref ref) async {
+          pumped.settingsReads++;
+          if (settingsError != null) throw settingsError;
+          return accessList ?? AdguardHomeAccessList.fromJson(accessListJson());
+        }),
+        adguardHomeTlsStatusProvider(instance).overrideWith((Ref ref) async {
+          pumped.settingsReads++;
+          if (settingsError != null) throw settingsError;
+          return tls ?? AdguardHomeTlsStatus.fromJson(tlsOffJson());
+        }),
+        adguardHomeDhcpStatusProvider(instance).overrideWith((Ref ref) async {
+          pumped.settingsReads++;
+          if (settingsError != null) throw settingsError;
+          return dhcp ?? AdguardHomeDhcpStatus.fromJson(dhcpOffJson());
         }),
         adguardHomeActionsProvider(instance).overrideWith(
           (Ref ref) => pumped.actions = RecordingActions(ref, instance),

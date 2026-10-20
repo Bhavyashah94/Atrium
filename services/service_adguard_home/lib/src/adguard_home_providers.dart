@@ -10,6 +10,7 @@ import 'adguard_home_client_edit.dart';
 import 'adguard_home_clients_view.dart';
 import 'adguard_home_errors.dart';
 import 'adguard_home_filter_rules.dart';
+import 'adguard_home_query_log.dart';
 import 'adguard_home_rules.dart';
 import 'adguard_home_session.dart';
 import 'models/adguard_home_access.dart';
@@ -17,6 +18,7 @@ import 'models/adguard_home_clients.dart';
 import 'models/adguard_home_filtering.dart';
 import 'models/adguard_home_filters.dart';
 import 'models/adguard_home_services.dart';
+import 'models/adguard_home_settings.dart';
 import 'models/adguard_home_stats.dart';
 import 'models/adguard_home_status.dart';
 
@@ -227,6 +229,111 @@ final adguardHomeGlobalServicesProvider =
     final AdguardHomeApi api =
         await ref.watch(adguardHomeApiProvider(instance).future);
     return api.getGlobalServices();
+  },
+  retry: (int _, Object __) => null,
+);
+
+/// The protection switches of the General settings, beside filtering on
+/// or off, which comes with the lists.
+class AdguardHomeGeneralSettings {
+  const AdguardHomeGeneralSettings({
+    required this.safeBrowsing,
+    required this.parental,
+    required this.safeSearch,
+  });
+
+  final bool safeBrowsing;
+  final bool parental;
+  final AdguardHomeSafeSearch safeSearch;
+}
+
+/// Safe browsing, parental control and safe search: three reads.
+final adguardHomeGeneralSettingsProvider =
+    FutureProvider.autoDispose.family<AdguardHomeGeneralSettings, Instance>(
+  (Ref ref, Instance instance) async {
+    ref.watch(adguardHomeSignInRetriesProvider(instance));
+    final AdguardHomeApi api =
+        await ref.watch(adguardHomeApiProvider(instance).future);
+    final bool safeBrowsing = await api.getSafeBrowsing();
+    final bool parental = await api.getParental();
+    final AdguardHomeSafeSearch safeSearch = await api.getSafeSearch();
+    return AdguardHomeGeneralSettings(
+      safeBrowsing: safeBrowsing,
+      parental: parental,
+      safeSearch: safeSearch,
+    );
+  },
+  retry: (int _, Object __) => null,
+);
+
+/// How long the query log keeps queries, and which it leaves out.
+final adguardHomeQueryLogRetentionProvider =
+    FutureProvider.autoDispose.family<AdguardHomeRetention, Instance>(
+  (Ref ref, Instance instance) async {
+    ref.watch(adguardHomeSignInRetriesProvider(instance));
+    final AdguardHomeApi api =
+        await ref.watch(adguardHomeApiProvider(instance).future);
+    return api.getQueryLogRetention();
+  },
+  retry: (int _, Object __) => null,
+);
+
+/// How long the statistics keep what they count, and what they leave out.
+final adguardHomeStatsRetentionProvider =
+    FutureProvider.autoDispose.family<AdguardHomeRetention, Instance>(
+  (Ref ref, Instance instance) async {
+    ref.watch(adguardHomeSignInRetriesProvider(instance));
+    final AdguardHomeApi api =
+        await ref.watch(adguardHomeApiProvider(instance).future);
+    return api.getStatsRetention();
+  },
+  retry: (int _, Object __) => null,
+);
+
+/// The server's DNS settings, for the Upstreams, Server and Cache screens.
+final adguardHomeDnsConfigProvider =
+    FutureProvider.autoDispose.family<AdguardHomeDnsConfig, Instance>(
+  (Ref ref, Instance instance) async {
+    ref.watch(adguardHomeSignInRetriesProvider(instance));
+    final AdguardHomeApi api =
+        await ref.watch(adguardHomeApiProvider(instance).future);
+    return api.getDnsConfig();
+  },
+  retry: (int _, Object __) => null,
+);
+
+/// Who may use the server, and which names it refuses outright.
+final adguardHomeAccessListProvider =
+    FutureProvider.autoDispose.family<AdguardHomeAccessList, Instance>(
+  (Ref ref, Instance instance) async {
+    ref.watch(adguardHomeSignInRetriesProvider(instance));
+    final AdguardHomeApi api =
+        await ref.watch(adguardHomeApiProvider(instance).future);
+    return api.getAccessList();
+  },
+  retry: (int _, Object __) => null,
+);
+
+/// Whether encryption is set up.
+final adguardHomeTlsStatusProvider =
+    FutureProvider.autoDispose.family<AdguardHomeTlsStatus, Instance>(
+  (Ref ref, Instance instance) async {
+    ref.watch(adguardHomeSignInRetriesProvider(instance));
+    final AdguardHomeApi api =
+        await ref.watch(adguardHomeApiProvider(instance).future);
+    return api.getTlsStatus();
+  },
+  retry: (int _, Object __) => null,
+);
+
+/// The server's DHCP.
+final adguardHomeDhcpStatusProvider =
+    FutureProvider.autoDispose.family<AdguardHomeDhcpStatus, Instance>(
+  (Ref ref, Instance instance) async {
+    ref.watch(adguardHomeSignInRetriesProvider(instance));
+    final AdguardHomeApi api =
+        await ref.watch(adguardHomeApiProvider(instance).future);
+    return api.getDhcpStatus();
   },
   retry: (int _, Object __) => null,
 );
@@ -702,6 +809,176 @@ class AdguardHomeActions {
       _ref.invalidate(adguardHomeRewritesEnabledProvider(_instance));
     }
   }
+
+  /// Turns filtering by the lists and rules on or off. How often the lists
+  /// are fetched goes with it, read fresh: the server resets what the write
+  /// leaves out.
+  Future<void> setFilteringEnabled({required bool enabled}) async {
+    try {
+      final AdguardHomeApi api = await _api;
+      final AdguardHomeFiltering now = await api.getFiltering();
+      await api.setFilteringConfig(
+        enabled: enabled,
+        intervalHours: now.intervalHours,
+      );
+    } finally {
+      _filteringChanged();
+    }
+  }
+
+  Future<void> setSafeBrowsing({required bool enabled}) async {
+    try {
+      await (await _api).setSafeBrowsing(enabled: enabled);
+    } finally {
+      _ref.invalidate(adguardHomeGeneralSettingsProvider(_instance));
+    }
+  }
+
+  Future<void> setParental({required bool enabled}) async {
+    try {
+      await (await _api).setParental(enabled: enabled);
+    } finally {
+      _ref.invalidate(adguardHomeGeneralSettingsProvider(_instance));
+    }
+  }
+
+  /// Turns safe search, or one engine of it, on or off. The server takes
+  /// it whole, so it is read fresh and only what [before] and [after]
+  /// differ in is changed.
+  Future<void> setSafeSearch({
+    required AdguardHomeSafeSearch before,
+    required AdguardHomeSafeSearch after,
+  }) async {
+    try {
+      final AdguardHomeApi api = await _api;
+      final AdguardHomeSafeSearch now = await api.getSafeSearch();
+      await api.setSafeSearch(
+        AdguardHomeSafeSearch.fromJson(<String, dynamic>{
+          ...now.toJson(),
+          ...adguardHomeChangedSettings(before.toJson(), after.toJson()),
+        }),
+      );
+    } finally {
+      _ref
+        ..invalidate(adguardHomeGeneralSettingsProvider(_instance))
+        ..invalidate(adguardHomeSafeSearchProvider(_instance));
+    }
+  }
+
+  /// Saves the query log's settings: read fresh, with what [before] and
+  /// [after] differ in put on top.
+  Future<void> saveQueryLogRetention({
+    required AdguardHomeRetention before,
+    required AdguardHomeRetention after,
+  }) async {
+    try {
+      final AdguardHomeApi api = await _api;
+      final AdguardHomeRetention now = await api.getQueryLogRetention();
+      await api.setQueryLogRetention(
+        AdguardHomeRetention.fromJson(_overlay(now, before, after)),
+      );
+    } finally {
+      _ref
+        ..invalidate(adguardHomeQueryLogRetentionProvider(_instance))
+        ..invalidate(adguardHomeQueryLogConfigProvider(_instance));
+    }
+  }
+
+  /// Saves the statistics' settings, as [saveQueryLogRetention].
+  Future<void> saveStatsRetention({
+    required AdguardHomeRetention before,
+    required AdguardHomeRetention after,
+  }) async {
+    try {
+      final AdguardHomeApi api = await _api;
+      final AdguardHomeRetention now = await api.getStatsRetention();
+      await api.setStatsRetention(
+        AdguardHomeRetention.fromJson(_overlay(now, before, after)),
+      );
+    } finally {
+      _ref
+        ..invalidate(adguardHomeStatsRetentionProvider(_instance))
+        ..invalidate(adguardHomeStatsPeriodProvider(_instance))
+        ..invalidate(adguardHomeStatsProvider(_instance));
+    }
+  }
+
+  static Map<String, dynamic> _overlay(
+    AdguardHomeRetention now,
+    AdguardHomeRetention before,
+    AdguardHomeRetention after,
+  ) =>
+      <String, dynamic>{
+        ...now.toJson(),
+        ...adguardHomeChangedSettings(before.toJson(), after.toJson()),
+      };
+
+  /// Empties the statistics.
+  Future<void> resetStats() async {
+    try {
+      await (await _api).resetStats();
+    } finally {
+      _ref.invalidate(adguardHomeStatsProvider(_instance));
+    }
+  }
+
+  /// Saves DNS settings: only those [after] has otherwise than [before]
+  /// are sent, with the rest of any group the server takes only together
+  /// (see [adguardHomeDnsChanges]), and the server keeps the others.
+  /// Nothing changed, nothing is sent.
+  Future<void> saveDnsSettings({
+    required Map<String, dynamic> before,
+    required Map<String, dynamic> after,
+  }) async {
+    final Map<String, dynamic> changes = adguardHomeDnsChanges(before, after);
+    if (changes.isEmpty) return;
+    try {
+      await (await _api).setDnsConfig(changes);
+    } finally {
+      _ref.invalidate(adguardHomeDnsConfigProvider(_instance));
+    }
+  }
+
+  /// Whether each server answers, for the lists as typed.
+  Future<List<AdguardHomeUpstreamResult>> testUpstreams({
+    required List<String> upstreams,
+    required List<String> bootstrap,
+    required List<String> fallback,
+    required List<String> privateUpstreams,
+  }) async =>
+      (await _api).testUpstreams(
+        upstreams: upstreams,
+        bootstrap: bootstrap,
+        fallback: fallback,
+        privateUpstreams: privateUpstreams,
+      );
+
+  Future<void> clearDnsCache() async => (await _api).clearDnsCache();
+
+  /// Saves the access lists: read fresh, with only the lists [before] and
+  /// [after] differ in replaced, as the write replaces all three.
+  Future<void> saveAccessList({
+    required AdguardHomeAccessList before,
+    required AdguardHomeAccessList after,
+  }) async {
+    try {
+      final AdguardHomeApi api = await _api;
+      final AdguardHomeAccessList now = await api.getAccessList();
+      await api.setAccessList(
+        AdguardHomeAccessList.fromJson(<String, dynamic>{
+          ...now.toJson(),
+          ...adguardHomeChangedSettings(before.toJson(), after.toJson()),
+        }),
+      );
+    } finally {
+      _ref.invalidate(adguardHomeAccessListProvider(_instance));
+    }
+  }
+
+  /// Whether a newer AdGuard Home is out. With [recheck] the server asks
+  /// for it now.
+  Future<AdguardHomeVersionCheck> checkVersion({bool recheck = false}) async =>
+      (await _api).checkVersion(recheck: recheck);
 }
 
 bool _sameList(List<String> a, List<String> b) {

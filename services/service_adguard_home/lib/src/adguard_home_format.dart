@@ -220,3 +220,48 @@ String adguardHomePeriodLabel(Duration period) {
   if (hours <= 24 || hours % 24 != 0) return 'Last $hours hours';
   return 'Last ${hours ~/ 24} days';
 }
+
+/// How long the query log or the statistics keep things, as the web UI
+/// names its choices: "6 hours", "24 hours", "7 days", and any other
+/// length in hours.
+String adguardHomeRetentionLabel(Duration interval) {
+  final int hours = interval.inHours;
+  if (hours > 24 && hours % 24 == 0) {
+    final int days = hours ~/ 24;
+    return '$days days';
+  }
+  return hours == 1 ? '1 hour' : '$hours hours';
+}
+
+/// The retention choices the web UI offers for the query log.
+const List<Duration> adguardHomeQueryLogRetentions = <Duration>[
+  Duration(hours: 6),
+  Duration(hours: 24),
+  Duration(days: 7),
+  Duration(days: 30),
+  Duration(days: 90),
+];
+
+/// The retention choices the web UI offers for the statistics.
+const List<Duration> adguardHomeStatsRetentions = <Duration>[
+  Duration(hours: 24),
+  Duration(days: 7),
+  Duration(days: 30),
+  Duration(days: 90),
+];
+
+/// A size in bytes as AdGuard Home's own defaults are thought of, in steps
+/// of 1024: 4194304 is "4 MB".
+String adguardHomeBytesLabel(int bytes) {
+  const List<String> units = <String>['bytes', 'KB', 'MB', 'GB'];
+  double value = bytes.toDouble();
+  int unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  if (unit == 0) return bytes == 1 ? '1 byte' : '$bytes bytes';
+  String figure = value.toStringAsFixed(1);
+  if (figure.endsWith('.0')) figure = figure.substring(0, figure.length - 2);
+  return '$figure ${units[unit]}';
+}

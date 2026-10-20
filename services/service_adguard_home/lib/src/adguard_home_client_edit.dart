@@ -1,5 +1,8 @@
 import 'models/adguard_home_clients.dart';
 import 'models/adguard_home_filters.dart';
+import 'models/adguard_home_json.dart';
+
+export 'models/adguard_home_json.dart' show adguardHomeJsonEquals;
 
 /// The largest cache size the server can hold: it keeps it in 32 bits.
 const int adguardHomeMaxCacheSize = 4294967295;
@@ -244,27 +247,6 @@ Map<String, dynamic> adguardHomeClientWrite({
   };
 }
 
-/// Whether two values read from JSON, or built to be sent as it, hold the
-/// same. The order of an object's properties does not count; a list's does.
-bool adguardHomeJsonEquals(Object? a, Object? b) {
-  if (a is Map<Object?, Object?> && b is Map<Object?, Object?>) {
-    if (a.length != b.length) return false;
-    for (final MapEntry<Object?, Object?> entry in a.entries) {
-      if (!b.containsKey(entry.key)) return false;
-      if (!adguardHomeJsonEquals(entry.value, b[entry.key])) return false;
-    }
-    return true;
-  }
-  if (a is List<Object?> && b is List<Object?>) {
-    if (a.length != b.length) return false;
-    for (int i = 0; i < a.length; i++) {
-      if (!adguardHomeJsonEquals(a[i], b[i])) return false;
-    }
-    return true;
-  }
-  return a == b;
-}
-
 /// The persistent client among [clients] that [id] belongs to: one that
 /// lists it, or else the one with the narrowest range it is inside, which
 /// is how the server picks. Null when it is nobody's.
@@ -372,4 +354,20 @@ int _bitsOfRangeHolding(String range, List<int> address) {
     if ((network[whole] & mask) != (address[whole] & mask)) return -1;
   }
   return bits;
+}
+
+/// What is wrong with [text] as an IP address of the kind [version] says
+/// (4, 6, or either when null), or null when it is one.
+String? adguardHomeIpProblem(String text, {int? version}) {
+  final List<int>? bytes = adguardHomeAddressBytes(text.trim());
+  final bool fits = bytes != null &&
+      (version == null ||
+          (version == 4 && bytes.length == 4) ||
+          (version == 6 && bytes.length == 16));
+  if (fits) return null;
+  return switch (version) {
+    4 => 'An IPv4 address, such as 0.0.0.0.',
+    6 => 'An IPv6 address, such as ::.',
+    _ => 'An IP address.',
+  };
 }

@@ -28,8 +28,8 @@ Supported services:
   virtual machine control
 * Gluetun - VPN status, the forwarded port and a one-tap reconnect
 * AdGuard Home - protection on, off or paused for a while, DNS statistics,
-  the query log, filter lists, custom rules, blocked services, rewrites and
-  per-client settings
+  the query log, filter lists, custom rules, blocked services, rewrites,
+  per-client settings and the server's DNS settings
 
 Features:
 

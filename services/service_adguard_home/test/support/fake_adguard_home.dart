@@ -8,6 +8,7 @@ import 'adguard_home_clients_fixtures.dart';
 import 'adguard_home_filters_fixtures.dart';
 import 'adguard_home_fixtures.dart';
 import 'adguard_home_query_log_fixtures.dart';
+import 'adguard_home_settings_fixtures.dart';
 
 typedef FakeAnswer = Object? Function(RequestOptions request);
 
@@ -52,6 +53,28 @@ class FakeAdguardHome implements HttpClientAdapter {
     on('POST', 'control/rewrite/delete', null);
     on('GET', 'control/rewrite/settings', rewriteSettingsJson());
     on('PUT', 'control/rewrite/settings/update', null);
+    on('GET', 'control/safebrowsing/status', <String, dynamic>{'enabled': true});
+    // Off here, on the test server: so a test sees which is which.
+    on('GET', 'control/parental/status', <String, dynamic>{'enabled': false});
+    for (final String path in <String>[
+      'control/safebrowsing/enable',
+      'control/safebrowsing/disable',
+      'control/parental/enable',
+      'control/parental/disable',
+      'control/stats_reset',
+      'control/cache_clear',
+      'control/dns_config',
+    ]) {
+      on('POST', path, null);
+    }
+    on('PUT', 'control/safesearch/settings', null);
+    on('PUT', 'control/querylog/config/update', null);
+    on('PUT', 'control/stats/config/update', null);
+    on('GET', 'control/dns_info', dnsInfoJson());
+    on('POST', 'control/test_upstream_dns', testUpstreamJson());
+    on('GET', 'control/tls/status', tlsOffJson());
+    on('GET', 'control/dhcp/status', dhcpOffJson());
+    on('POST', 'control/version.json', versionDisabledJson());
   }
 
   /// What the server says of each id it is asked about: the captured answer
