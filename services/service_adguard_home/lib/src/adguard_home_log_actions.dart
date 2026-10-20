@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import 'adguard_home_errors.dart';
 import 'adguard_home_providers.dart';
 import 'adguard_home_query_log.dart';
 import 'models/adguard_home_access.dart';
+import 'widgets/adguard_home_failure_dialog.dart';
 
 /// Shuts the client at [address] out of the server, or lets it back in when
 /// it is [disallowed] now, after saying what that will do and asking.
@@ -184,15 +187,29 @@ Future<void> adguardHomeClearQueryLog(
   );
   if (confirmed != true) return;
 
-  try {
-    await actions.clearQueryLog();
-    say('Query log cleared');
-    if (container.exists(adguardHomeQueryLogProvider(instance))) {
-      await container
-          .read(adguardHomeQueryLogProvider(instance).notifier)
-          .reload();
+  // Asked already: Try again comes back here, not to the question.
+  Future<void> clear() async {
+    try {
+      await actions.clearQueryLog();
+      say('Query log cleared');
+      if (container.exists(adguardHomeQueryLogProvider(instance))) {
+        await container
+            .read(adguardHomeQueryLogProvider(instance).notifier)
+            .reload();
+      }
+    } on Object catch (error) {
+      if (!messenger.mounted) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          adguardHomeFailureSnackBar(
+            error,
+            retrySignIn: actions.retrySignIn,
+            again: () => unawaited(clear()),
+          ),
+        );
     }
-  } on Object catch (error) {
-    say(describeAdguardHomeError(error));
   }
+
+  await clear();
 }

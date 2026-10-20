@@ -123,6 +123,33 @@ void main() {
     expect(find.text('90 minutes'), findsOneWidget);
   });
 
+  testWidgets('where DHCP cannot run, says so and does not ask about it',
+      (WidgetTester tester) async {
+    final Pumped pumped = await pumpAdguardHome(
+      tester,
+      dhcpScreen,
+      status: AdguardHomeStatus.fromJson(
+        <String, dynamic>{...statusJson(), 'dhcp_available': false},
+        readAt: DateTime(2026, 10, 20),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('DHCP is not available on this server'), findsOneWidget);
+    expect(pumped.settingsReads, 0);
+  });
+
+  test('a status that says nothing of DHCP takes it as available', () {
+    expect(
+      AdguardHomeStatus.fromJson(
+        <String, dynamic>{...statusJson()}..remove('dhcp_available'),
+        readAt: DateTime(2026),
+      ).dhcpAvailable,
+      isTrue,
+    );
+    expect(status.dhcpAvailable, isTrue);
+  });
+
   group('about', () {
     testWidgets('shows the version and the addresses, and checks nothing '
         'unasked', (WidgetTester tester) async {
@@ -169,6 +196,28 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('This is the latest version.'), findsOneWidget);
+    });
+
+    testWidgets('a check refused for the sign-in is tried again on the '
+        'button', (WidgetTester tester) async {
+      final Pumped pumped = await pump(tester, about);
+      pumped.actions.lookupFailure = const AdguardHomeSignInRefused();
+
+      await tester.tap(find.text('Check for updates'));
+      await tester.pumpAndSettle();
+      expect(find.text('AdGuard Home refused the sign-in.'), findsOneWidget);
+
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+
+      expect(
+        pumped.actions.calls,
+        <String>['version now', 'retry', 'version now'],
+      );
+      expect(
+        find.text('Update checks are off on this server.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a check that fails says why', (WidgetTester tester) async {

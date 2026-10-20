@@ -317,6 +317,46 @@ void main() {
     expect(pumped.logWatched, isFalse);
   });
 
+  testWidgets('a reset refused for the sign-in offers Try again',
+      (WidgetTester tester) async {
+    final Pumped pumped =
+        await open(tester, AdguardHomeRetentionKind.statistics);
+    pumped.actions.writeFailure = const AdguardHomeSignInRefused();
+
+    await tester.tap(find.text('Reset statistics'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Reset'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(SnackBarAction, 'Try again'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reset statistics?'), findsNothing);
+    expect(
+      pumped.actions.calls,
+      <String>['reset stats', 'retry', 'reset stats'],
+    );
+    expect(find.text('Statistics reset'), findsOneWidget);
+  });
+
+  testWidgets('a clear of the log refused for the sign-in offers Try again',
+      (WidgetTester tester) async {
+    final Pumped pumped = await open(tester, AdguardHomeRetentionKind.queryLog);
+    pumped.actions.writeFailure = const AdguardHomeSignInRefused();
+
+    await tester.tap(find.text('Clear query log'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Clear'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(SnackBarAction, 'Try again'));
+    await tester.pumpAndSettle();
+
+    expect(
+      pumped.actions.calls,
+      <String>['clear log', 'retry', 'clear log'],
+    );
+    expect(find.text('Query log cleared'), findsOneWidget);
+  });
+
   testWidgets('resetting statistics asks first', (WidgetTester tester) async {
     final Pumped pumped =
         await open(tester, AdguardHomeRetentionKind.statistics);

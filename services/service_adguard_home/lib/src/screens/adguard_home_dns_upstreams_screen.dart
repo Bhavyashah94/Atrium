@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
@@ -216,10 +218,19 @@ class _AdguardHomeDnsUpstreamsScreenState
       showDragHandle: true,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (BuildContext context) => _UpstreamResults(
+      builder: (BuildContext sheet) => _UpstreamResults(
         results: results,
         failure: failure,
         upstreamsFile: file,
+        // After a refused sign-in nothing is sent until asked; this asks,
+        // and tests again.
+        onTryAgain: failure is AdguardHomeSignInRefused
+            ? () {
+                Navigator.of(sheet).pop();
+                ref.read(adguardHomeActionsProvider(_instance)).retrySignIn();
+                unawaited(_test());
+              }
+            : null,
       ),
     );
   }
@@ -418,6 +429,7 @@ class _UpstreamResults extends StatelessWidget {
     required this.results,
     required this.failure,
     this.upstreamsFile = '',
+    this.onTryAgain,
   });
 
   final List<AdguardHomeUpstreamResult>? results;
@@ -426,6 +438,9 @@ class _UpstreamResults extends StatelessWidget {
   /// Where the server keeps its upstreams, when it does: those are not
   /// tested from here.
   final String upstreamsFile;
+
+  /// Offered when the test was refused for the sign-in.
+  final VoidCallback? onTryAgain;
 
   @override
   Widget build(BuildContext context) {
@@ -465,6 +480,18 @@ class _UpstreamResults extends StatelessWidget {
           Text(
             describeAdguardHomeError(failure!),
             style: theme.textTheme.bodyMedium?.copyWith(color: cs.error),
+          ),
+        if (onTryAgain != null)
+          Padding(
+            padding: const EdgeInsets.only(top: Insets.md),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FilledButton.tonalIcon(
+                onPressed: onTryAgain,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Try again'),
+              ),
+            ),
           ),
         for (final AdguardHomeUpstreamResult result in all)
           ListTile(

@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../adguard_home_errors.dart';
 import '../adguard_home_filter_rules.dart';
 import '../adguard_home_format.dart';
 import '../adguard_home_log_actions.dart';
 import '../adguard_home_providers.dart';
 import '../models/adguard_home_settings.dart';
+import '../widgets/adguard_home_failure_dialog.dart';
 import '../widgets/adguard_home_fields.dart';
 import '../widgets/adguard_home_settings_form.dart';
 
@@ -201,19 +201,31 @@ class _AdguardHomeRetentionScreenState
         ],
       ),
     );
-    if (reset != true || !mounted) return;
+    if (reset != true) return;
+    await _resetAsked();
+  }
+
+  /// Resets the statistics, asked already: Try again comes back here.
+  Future<void> _resetAsked() async {
+    if (!mounted) return;
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final AdguardHomeActions actions =
+        ref.read(adguardHomeActionsProvider(_instance));
     setState(() => _busy = true);
-    String said = 'Statistics reset';
+    SnackBar said = const SnackBar(content: Text('Statistics reset'));
     try {
-      await ref.read(adguardHomeActionsProvider(_instance)).resetStats();
+      await actions.resetStats();
     } on Object catch (error) {
-      said = describeAdguardHomeError(error);
+      said = adguardHomeFailureSnackBar(
+        error,
+        retrySignIn: actions.retrySignIn,
+        again: () => unawaited(_resetAsked()),
+      );
     }
     if (mounted) setState(() => _busy = false);
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(said)));
+      ..showSnackBar(said);
   }
 
   @override

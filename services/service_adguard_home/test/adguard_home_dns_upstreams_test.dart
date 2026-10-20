@@ -222,6 +222,27 @@ void main() {
     expect(find.text('At most 4294967295 seconds.'), findsOneWidget);
   });
 
+  testWidgets('a test refused for the sign-in is tried again from the sheet',
+      (WidgetTester tester) async {
+    final Pumped pumped = await open(tester);
+    pumped.actions.lookupFailure = const AdguardHomeSignInRefused();
+
+    await tester.tap(find.text('Test upstreams'));
+    await tester.pumpAndSettle();
+    expect(find.text('Not tested'), findsOneWidget);
+
+    pumped.actions.lookupFailure = null;
+    await tester.tap(find.text('Try again'));
+    await tester.pumpAndSettle();
+
+    expect(pumped.actions.calls, <String>[
+      'test https://dns10.quad9.net/dns-query',
+      'retry',
+      'test https://dns10.quad9.net/dns-query',
+    ]);
+    expect(find.text('Every server answered'), findsOneWidget);
+  });
+
   testWidgets('a test that fails says why', (WidgetTester tester) async {
     final Pumped pumped = await open(tester);
     pumped.actions.lookupFailure = const AdguardHomeRequestRefused('nope');

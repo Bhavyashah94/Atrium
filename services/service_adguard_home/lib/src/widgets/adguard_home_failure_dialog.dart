@@ -34,3 +34,25 @@ Future<bool> showAdguardHomeFailure(
   );
   return again ?? false;
 }
+
+/// A snackbar that says why something was not done. For a refused sign-in
+/// it offers Try again, which lets one more request out and runs [again]:
+/// without it the next tap would only get the same refusal back, without
+/// a word to the server.
+SnackBar adguardHomeFailureSnackBar(
+  Object error, {
+  required VoidCallback retrySignIn,
+  required VoidCallback again,
+}) =>
+    SnackBar(
+      content: Text(describeAdguardHomeError(error)),
+      action: error is AdguardHomeSignInRefused
+          ? SnackBarAction(
+              label: 'Try again',
+              onPressed: () {
+                retrySignIn();
+                again();
+              },
+            )
+          : null,
+    );

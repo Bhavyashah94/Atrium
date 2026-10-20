@@ -125,6 +125,35 @@ class AdguardHomeDhcpScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // The status, polled anyway, says whether the server can run DHCP at
+    // all. Where it cannot, its DHCP is not asked about: that read would
+    // only fail, and say less.
+    final AsyncValue<AdguardHomeStatus> statusRead =
+        ref.watch(adguardHomeStatusProvider(instance));
+    final AdguardHomeStatus? status = statusRead.value;
+    if (status == null && !statusRead.hasError) {
+      // Polled for the other tabs, so nearly always in by now.
+      return Scaffold(
+        appBar: AppBar(title: const Text('DHCP')),
+        body: const Center(child: ExpressiveProgressIndicator()),
+      );
+    }
+    if (status != null && !status.dhcpAvailable) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('DHCP')),
+        body: const _InfoList(
+          children: <Widget>[
+            _State(
+              on: false,
+              title: 'DHCP is not available on this server',
+              detail: 'AdGuard Home cannot hand out addresses where it '
+                  'runs, for example in a container without the host\'s '
+                  'network.',
+            ),
+          ],
+        ),
+      );
+    }
     final AsyncValue<AdguardHomeDhcpStatus> read =
         ref.watch(adguardHomeDhcpStatusProvider(instance));
     final AdguardHomeDhcpStatus? dhcp = read.value;
@@ -234,6 +263,11 @@ class _AdguardHomeAboutScreenState
 
   Future<void> _checkVersion() async {
     if (_checking) return;
+    // After a refused sign-in nothing is sent until asked; checking again
+    // is the asking.
+    if (_error is AdguardHomeSignInRefused) {
+      ref.read(adguardHomeActionsProvider(widget.instance)).retrySignIn();
+    }
     setState(() {
       _checking = true;
       _error = null;
@@ -310,7 +344,11 @@ class _AdguardHomeAboutScreenState
                   child: ExpressiveProgressIndicator(),
                 )
               : const Icon(Icons.system_update_alt),
-          label: const Text('Check for updates'),
+          label: Text(
+            error is AdguardHomeSignInRefused
+                ? 'Try again'
+                : 'Check for updates',
+          ),
         ),
       ),
     ];

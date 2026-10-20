@@ -1,13 +1,15 @@
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../adguard_home_errors.dart';
 import '../adguard_home_format.dart';
 import '../adguard_home_providers.dart';
 import '../models/adguard_home_settings.dart';
+import '../widgets/adguard_home_failure_dialog.dart';
 import '../widgets/adguard_home_settings_form.dart';
 
 /// The DNS cache: on or off, how big, how long answers are kept, and
@@ -133,19 +135,31 @@ class _AdguardHomeDnsCacheScreenState
         ],
       ),
     );
-    if (clear != true || !mounted) return;
+    if (clear != true) return;
+    await _clearAsked();
+  }
+
+  /// Clears the cache, asked already: Try again comes back here.
+  Future<void> _clearAsked() async {
+    if (!mounted) return;
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final AdguardHomeActions actions =
+        ref.read(adguardHomeActionsProvider(_instance));
     setState(() => _busy = true);
-    String said = 'DNS cache cleared';
+    SnackBar said = const SnackBar(content: Text('DNS cache cleared'));
     try {
-      await ref.read(adguardHomeActionsProvider(_instance)).clearDnsCache();
+      await actions.clearDnsCache();
     } on Object catch (error) {
-      said = describeAdguardHomeError(error);
+      said = adguardHomeFailureSnackBar(
+        error,
+        retrySignIn: actions.retrySignIn,
+        again: () => unawaited(_clearAsked()),
+      );
     }
     if (mounted) setState(() => _busy = false);
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(said)));
+      ..showSnackBar(said);
   }
 
   @override

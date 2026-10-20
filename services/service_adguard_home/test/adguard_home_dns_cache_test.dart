@@ -106,6 +106,40 @@ void main() {
     expect(find.text('DNS cache cleared'), findsOneWidget);
   });
 
+  testWidgets('a clear refused for the sign-in offers Try again, which '
+      'does not ask again', (WidgetTester tester) async {
+    final Pumped pumped = await open(tester);
+    pumped.actions.writeFailure = const AdguardHomeSignInRefused();
+
+    await tester.tap(find.text('Clear cache'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Clear'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(SnackBarAction, 'Try again'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Clear the DNS cache?'), findsNothing);
+    expect(
+      pumped.actions.calls,
+      <String>['clear cache', 'retry', 'clear cache'],
+    );
+    expect(find.text('DNS cache cleared'), findsOneWidget);
+  });
+
+  testWidgets('any other failure says why, with no Try again',
+      (WidgetTester tester) async {
+    final Pumped pumped = await open(tester);
+    pumped.actions.writeFailure = const AdguardHomeRequestRefused('nope');
+
+    await tester.tap(find.text('Clear cache'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Clear'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('nope'), findsOneWidget);
+    expect(find.byType(SnackBarAction), findsNothing);
+  });
+
   for (final double width in <double>[320, 411]) {
     for (final double scale in <double>[1, 2]) {
       testWidgets('layout holds at $width wide and $scale text',
