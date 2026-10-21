@@ -1,6 +1,6 @@
 # Atrium - Status
 
-> Snapshot of what genuinely works and what is left, as of 2026-10-20.
+> Snapshot of what genuinely works and what is left, as of 2026-10-21.
 > Atrium is published on F-Droid and on the GitHub releases page. It is
 > still in early development and every module is work in progress; nothing
 > here is a release promise.
@@ -19,7 +19,7 @@ Atrium is a **controller** app. Video playback was removed by design
   Streaming (backdrop session cards from Plex / Jellyfin / Emby /
   Tautulli, tap-through to each module's now-playing screen) and
   Transfers (qBittorrent downloads *and active uploads*, Deluge,
-  Transmission and rTorrent transfers,
+  Transmission, rTorrent and aria2 transfers,
   SABnzbd slots,
   NZBGet groups, Sonarr/Radarr queues). Per-instance resilience: an unreachable server
   degrades to a chip, never blocks the feed
@@ -291,6 +291,31 @@ Atrium is a **controller** app. Video playback was removed by design
   app downloads the file itself and sends the bytes, which does work. That
   fetch deliberately uses a bare Dio rather than the instance one, so an
   instance's credentials are never sent to whatever host a pasted link names
+
+- **aria2** (added 2026-10-21, beta, live-verified against 1.37.0): the other
+  client that speaks its own protocol rather than a REST API - JSON-RPC over
+  `POST /jsonrpc`, with the daemon's `--rpc-secret` sent as the first
+  parameter of every call and nowhere else. It is a parameter, not a header,
+  so the secret never rides to a proxy by accident, and it is optional: a
+  daemon started without one answers anyone, so the instance form asks for it
+  but does not demand it. One batched `system.multicall` poll asks for the
+  three download lists, the daemon's totals and its version in a single
+  request; aria2's numbers arrive as strings, so the models read both
+  shapes. Active / Queued / Stopped lists with a card per download (name,
+  status, sizes, speed, ETA, progress), a detail screen with the files, the
+  sources and the download's own actions (pause, resume, remove, clear the
+  result, move to the top of the queue), pause all / resume all, a global
+  speed limit, add by magnet / .torrent URL / file, the Active downloads
+  dashboard widget and the shared Activity feed. A refused secret is
+  reported as such: aria2 answers a wrong secret with HTTP 400 and an
+  `error` envelope, so the health dot warns instead of calling the daemon
+  healthy. The health probe reads the JSON-RPC envelope rather than trusting
+  the status alone. Verified against a real aria2 1.37.0 daemon: a download
+  really transfers and the bytes land on disk, a download really pauses and
+  resumes, the global limits really take effect, a `.torrent` really is
+  accepted, and a wrong secret really is refused. The live test that does
+  this lives in the package (`test/live_aria2_test.dart`) and needs
+  `ARIA2_URL` and `ARIA2_SECRET` to run
 
 - **iOS**: the target exists and CI builds it unsigned on macOS on every
   change, so it cannot rot unnoticed. Deep links already no-op off Android and
