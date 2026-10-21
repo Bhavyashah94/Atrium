@@ -36,6 +36,7 @@ void main() {
         'ombi',
         'myspeed',
         'adguardHome',
+        'aria2',
       ],
     );
   });
@@ -131,6 +132,19 @@ void main() {
     expect(ServiceKind.adguardHome.authStyle, AuthStyle.userPass);
     expect(ServiceKind.adguardHome.role, ServiceRole.analytics);
     expect(ServiceKind.adguardHome.acceptsTorrents, isFalse);
+  });
+
+  test('aria2 is registered as an apiKey download client', () {
+    expect(ServiceKind.aria2.displayName, 'aria2');
+    expect(ServiceKind.aria2.tagline, 'Download client');
+    expect(ServiceKind.aria2.isBeta, isTrue);
+    expect(ServiceKind.aria2.defaultPort, 6800);
+    // The credential is the daemon's `--rpc-secret`, which travels as the
+    // first RPC parameter rather than as a header.
+    expect(ServiceKind.aria2.authStyle, AuthStyle.apiKey);
+    expect(ServiceKind.aria2.role, ServiceRole.downloader);
+    // aria2 speaks BitTorrent as well as plain HTTP.
+    expect(ServiceKind.aria2.acceptsTorrents, isTrue);
   });
 
   test('existing services retain their default ports', () {
