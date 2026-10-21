@@ -11,6 +11,7 @@ import 'package:service_qbittorrent/service_qbittorrent.dart';
 import 'package:service_rtorrent/service_rtorrent.dart';
 import 'package:service_sabnzbd/service_sabnzbd.dart';
 import 'package:service_transmission/service_transmission.dart';
+import 'package:service_aria2/service_aria2.dart';
 
 import '../dashboard_widget_card.dart';
 import '../dashboard_widget_kind.dart';
@@ -85,6 +86,17 @@ final activeDownloadCountProvider = Provider.autoDispose<int>((Ref ref) {
       count += torrents
           .where((RtorrentTorrent t) => t.status.isDownloading)
           .length;
+    } else if (i.kind == ServiceKind.aria2) {
+      // aria2 keeps finished downloads in its own list, so only the running
+      // and the queued ones count. A paused download is not on its way.
+      final Aria2Snapshot? snapshot =
+          ref.watch(aria2SnapshotProvider(i)).value;
+      if (snapshot != null) {
+        count += snapshot.active.length;
+        count += snapshot.waiting
+            .where((Aria2Download d) => d.status == 'waiting')
+            .length;
+      }
     }
   }
   return count;
@@ -140,6 +152,7 @@ class DashboardDownloadsWidget extends ConsumerWidget {
     required this.delugeInstances,
     required this.transmissionInstances,
     required this.rtorrentInstances,
+    required this.aria2Instances,
     super.key,
   });
 
@@ -149,6 +162,7 @@ class DashboardDownloadsWidget extends ConsumerWidget {
   final List<Instance> delugeInstances;
   final List<Instance> transmissionInstances;
   final List<Instance> rtorrentInstances;
+  final List<Instance> aria2Instances;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -267,6 +281,29 @@ class DashboardDownloadsWidget extends ConsumerWidget {
       }
       totalSpeed += ref.watch(rtorrentGlobalProvider(i)).value?.downRate ?? 0;
     }
+    for (final Instance i in aria2Instances) {
+      final AsyncValue<Aria2Snapshot> snapshot =
+          ref.watch(aria2SnapshotProvider(i));
+      anyLoading |= snapshot.isLoading && !snapshot.hasValue;
+      anyError |= snapshot.hasError;
+      final Aria2Snapshot? data = snapshot.value;
+      if (data != null) {
+        totalSpeed += data.stat.downloadSpeed;
+        for (final Aria2Download d in <Aria2Download>[
+          ...data.active,
+          ...data.waiting.where((Aria2Download d) => d.status == 'waiting'),
+        ]) {
+          rows.add(_DownloadRow(
+            name: d.displayName,
+            progress: d.progress,
+            instance: i,
+            // A queued download is not moving yet, so it sorts below the ones
+            // that are - the same rule the other clients follow.
+            moving: d.isActive,
+          ));
+        }
+      }
+    }
 
     // What is moving comes first, then furthest along. Progress alone let a
     // queue full of nearly-complete torrents push the live download off a card
@@ -343,6 +380,9 @@ class DashboardDownloadsWidget extends ConsumerWidget {
     for (final Instance i in rtorrentInstances) {
       ref.invalidate(rtorrentRawTorrentsProvider(i));
       ref.invalidate(rtorrentGlobalProvider(i));
+    }
+    for (final Instance i in aria2Instances) {
+      ref.invalidate(aria2SnapshotProvider(i));
     }
   }
 }

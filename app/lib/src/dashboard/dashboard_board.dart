@@ -24,6 +24,7 @@ import 'package:service_rtorrent/service_rtorrent.dart';
 import 'package:service_transmission/service_transmission.dart';
 import 'package:service_gluetun/service_gluetun.dart';
 import 'package:service_myspeed/service_myspeed.dart';
+import 'package:service_aria2/service_aria2.dart';
 
 import '../health_providers.dart';
 import '../screens/calendar_screen.dart';
@@ -158,6 +159,7 @@ class DashboardBoard extends ConsumerWidget {
           delugeInstances: _byKind(instances, ServiceKind.deluge),
           transmissionInstances: _byKind(instances, ServiceKind.transmission),
           rtorrentInstances: _byKind(instances, ServiceKind.rtorrent),
+          aria2Instances: _byKind(instances, ServiceKind.aria2),
         );
       case DashboardWidgetKind.streams:
         return DashboardStreamsWidget(
@@ -241,6 +243,8 @@ class DashboardBoard extends ConsumerWidget {
         case ServiceKind.rtorrent:
           ref.invalidate(rtorrentRawTorrentsProvider(i));
           ref.invalidate(rtorrentGlobalProvider(i));
+        case ServiceKind.aria2:
+          ref.invalidate(aria2SnapshotProvider(i));
         case ServiceKind.tautulli:
           ref.invalidate(tautulliActivityProvider(i));
         case ServiceKind.jellyfin:
