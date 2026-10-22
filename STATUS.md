@@ -93,7 +93,10 @@ Atrium is a **controller** app. Video playback was removed by design
   selection), requests management (approve/decline/delete/retry). The
   requests list reads its pages in parallel once the server has said how
   many there are, and refreshes only after a read has finished, so a server
-  with thousands of requests finishes loading (fixed 2026-10-12, #185)
+  with thousands of requests finishes loading (fixed 2026-10-12, #185).
+  The requests list is filtered by status (pending, approved, completed,
+  declined, failed) on the phone, as Seerr's own filters split them, and
+  the chip picked stays across tab switches (#196)
 - **Ombi** (added 2026-09-19, out of beta since 2026-10-05, live-verified
   against 4.53, restyled 2026-10-02): its own screen with a bottom bar for Requests and Discover
   and search in the app bar. Requests for movies, TV and, where Lidarr is
