@@ -59,10 +59,10 @@ final aria2DownloadProvider = FutureProvider.autoDispose
           try {
             return await api.tellStatus(gid);
           } on Aria2RpcException catch (e) {
-            // Only aria2's "GID is not found" (code 1) means the download was
-            // removed and purged. Any other error (wrong secret, proxy error,
-            // network failure) rethrows so the honest error state is shown.
-            if (e.message.contains('is not found') || e.code == 1) {
+            // Only "GID is not found" means the download was removed and
+            // purged. Any other error (a wrong secret, a proxy error) is
+            // shown as an error.
+            if (e.isGidNotFound) {
               return null;
             }
             rethrow;
@@ -91,7 +91,7 @@ final aria2PeersProvider = FutureProvider.autoDispose
           try {
             return await api.getPeers(gid);
           } on Aria2RpcException catch (e) {
-            if (e.message.contains('is not found') || e.code == 1) {
+            if (e.isGidNotFound) {
               return const <Aria2Peer>[];
             }
             rethrow;
@@ -109,7 +109,7 @@ final aria2DownloadOptionProvider = FutureProvider.autoDispose
       try {
         return await api.getOption(gid);
       } on Aria2RpcException catch (e) {
-        if (e.message.contains('is not found') || e.code == 1) {
+        if (e.isGidNotFound) {
           return const <String, dynamic>{};
         }
         rethrow;

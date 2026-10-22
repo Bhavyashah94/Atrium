@@ -887,11 +887,17 @@ class _Aria2DownloadsTabState extends ConsumerState<Aria2DownloadsTab> {
                               }
                             },
                             onRetry: () => _run(context, (Aria2Api api) async {
-                              final List<String> uris = download.files
-                                  .expand((Aria2File f) => f.uris)
-                                  .map((Aria2Uri u) => u.uri)
-                                  .where((String u) => u.isNotEmpty)
-                                  .toList();
+                              // The URIs of one file are its mirrors, and
+                              // addUri reads every URI it gets as a mirror of
+                              // one file, so only a single-file download can
+                              // be rebuilt from them.
+                              final List<String> uris =
+                                  download.files.length == 1
+                                  ? download.files.single.uris
+                                        .map((Aria2Uri u) => u.uri)
+                                        .where((String u) => u.isNotEmpty)
+                                        .toList()
+                                  : const <String>[];
 
                               // Fetch original options to preserve user-specified settings
                               Map<String, dynamic> oldOptions =
@@ -915,7 +921,15 @@ class _Aria2DownloadsTabState extends ConsumerState<Aria2DownloadsTab> {
                                 'https-proxy',
                                 'user-agent',
                               ]) {
-                                final dynamic val = oldOptions[key];
+                                dynamic val = oldOptions[key];
+                                // aria2 hands headers back as one string, a
+                                // header per line; they go out as a list.
+                                if (key == 'header' && val is String) {
+                                  val = val
+                                      .split('\n')
+                                      .where((String h) => h.isNotEmpty)
+                                      .toList();
+                                }
                                 if (val != null &&
                                     (val is! String || val.isNotEmpty) &&
                                     (val is! List || val.isNotEmpty)) {
@@ -927,21 +941,23 @@ class _Aria2DownloadsTabState extends ConsumerState<Aria2DownloadsTab> {
                                 preserved['dir'] = download.dir;
                               }
 
-                              if (uris.isNotEmpty) {
-                                await api.addUri(uris, options: preserved);
-                              } else if (download.infoHash.isNotEmpty) {
+                              // A torrent comes back from its info-hash, even
+                              // when its files list web seeds.
+                              if (download.infoHash.isNotEmpty) {
                                 final String magnet =
                                     'magnet:?xt=urn:btih:${download.infoHash}';
                                 await api.addUri(
                                   <String>[magnet],
                                   options: preserved,
                                 );
+                              } else if (uris.isNotEmpty) {
+                                await api.addUri(uris, options: preserved);
                               } else {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
-                                        'Cannot retry: download has no source URI or info-hash',
+                                        'Cannot retry this download here. Add it again instead.',
                                       ),
                                     ),
                                   );

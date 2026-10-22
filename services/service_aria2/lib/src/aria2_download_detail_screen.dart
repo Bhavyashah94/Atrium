@@ -321,7 +321,13 @@ class _DetailBody extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: Insets.md),
-                _Row(label: 'Status', value: aria2StatusLabel(download.status)),
+                _Row(
+                  label: 'Status',
+                  value: aria2StatusLabel(
+                    download.status,
+                    seeder: download.isSeeding,
+                  ),
+                ),
                 _Row(
                   label: 'Size',
                   value:
@@ -440,7 +446,7 @@ class _DetailBody extends ConsumerWidget {
                   if (confirmed == true && context.mounted) {
                     await onAction((Aria2Api api) => api.remove(download.gid));
                     if (context.mounted) {
-                      Navigator.of(context).maybePop();
+                      await Navigator.of(context).maybePop();
                     }
                   }
                 },

@@ -266,6 +266,23 @@ void main() {
     expect(api.getSnapshot, throwsA(isA<Aria2RpcException>()));
   });
 
+  test('only a missing GID reads as gone, not any code 1', () {
+    // aria2 sends code 1 for every failure, a refused secret included.
+    expect(
+      const Aria2RpcException('GID 2089b05ecca3d829 is not found', code: 1)
+          .isGidNotFound,
+      isTrue,
+    );
+    expect(
+      const Aria2RpcException('Unauthorized', code: 1).isGidNotFound,
+      isFalse,
+    );
+    expect(
+      const Aria2RpcException('Invalid GID xyz', code: 1).isGidNotFound,
+      isFalse,
+    );
+  });
+
   test('addUri sends the uris and options and returns the new gid', () async {
     final List<RequestOptions> log = <RequestOptions>[];
     final Aria2Api api = _api(
@@ -568,7 +585,11 @@ void main() {
           data: <String, dynamic>{
             'result': <dynamic>[
               <dynamic>['OK'],
-              <String, dynamic>{'faultCode': 1, 'faultString': 'Cannot pause'},
+              // A failed call, in the shape aria2 sends it over JSON-RPC.
+              <String, dynamic>{
+                'code': 1,
+                'message': 'GID gid2 is not found',
+              },
             ],
           },
         ),

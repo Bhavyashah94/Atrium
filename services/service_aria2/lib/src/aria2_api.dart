@@ -21,7 +21,15 @@ class Aria2RpcException implements Exception {
   final String message;
 
   /// aria2's numeric error code, when it sent one.
+  ///
+  /// aria2 sends 1 for every failure, a refused secret included, so the code
+  /// alone says nothing about what went wrong.
   final int? code;
+
+  /// Whether the daemon has no download under the GID asked for: it was
+  /// removed and its result purged. Only the message tells this apart.
+  bool get isGidNotFound =>
+      message.startsWith('GID ') && message.endsWith(' is not found');
 
   @override
   String toString() => 'Aria2RpcException: $message';
@@ -480,6 +488,15 @@ class Aria2Api {
   /// Resumes every paused download daemon-wide.
   Future<void> unpauseAll() => _command('aria2.unpauseAll');
 
+  /// Counts the calls of a multicall answer that went through.
+  ///
+  /// A call that worked comes back as a one-item array and a failed one as
+  /// an error struct, `{code, message}` over JSON-RPC.
+  ({int succeeded, int failed}) _tally(List<dynamic> results) {
+    final int failed = results.whereType<Map<dynamic, dynamic>>().length;
+    return (succeeded: results.length - failed, failed: failed);
+  }
+
   /// Batches pause calls for specific GIDs into a single system.multicall.
   Future<({int succeeded, int failed})> pauseGids(Iterable<String> gids) async {
     final List<String> list = gids.toList();
@@ -489,16 +506,7 @@ class Aria2Api {
           .map((String gid) => (method: 'aria2.pause', params: <dynamic>[gid]))
           .toList(),
     );
-    int succeeded = 0;
-    int failed = 0;
-    for (final dynamic res in results) {
-      if (res is Map && res.containsKey('faultCode')) {
-        failed++;
-      } else {
-        succeeded++;
-      }
-    }
-    return (succeeded: succeeded, failed: failed);
+    return _tally(results);
   }
 
   /// Batches unpause calls for specific GIDs into a single system.multicall.
@@ -512,16 +520,7 @@ class Aria2Api {
           .map((String gid) => (method: 'aria2.unpause', params: <dynamic>[gid]))
           .toList(),
     );
-    int succeeded = 0;
-    int failed = 0;
-    for (final dynamic res in results) {
-      if (res is Map && res.containsKey('faultCode')) {
-        failed++;
-      } else {
-        succeeded++;
-      }
-    }
-    return (succeeded: succeeded, failed: failed);
+    return _tally(results);
   }
 
   /// Batches removal calls for specific GIDs into a single system.multicall.
@@ -538,16 +537,7 @@ class Aria2Api {
     ];
     if (calls.isEmpty) return (succeeded: 0, failed: 0);
     final List<dynamic> results = await _multicall(calls);
-    int succeeded = 0;
-    int failed = 0;
-    for (final dynamic res in results) {
-      if (res is Map && res.containsKey('faultCode')) {
-        failed++;
-      } else {
-        succeeded++;
-      }
-    }
-    return (succeeded: succeeded, failed: failed);
+    return _tally(results);
   }
 
   /// Removes a download: it stops and its files are left alone.
