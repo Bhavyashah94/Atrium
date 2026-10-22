@@ -44,13 +44,18 @@ String aria2FormatEta(int seconds) {
 }
 
 /// A human label for aria2's own status strings.
-String aria2StatusLabel(String status) => switch (status) {
-  'active' => 'Downloading',
-  'waiting' => 'Queued',
-  'paused' => 'Paused',
-  'complete' => 'Complete',
-  'error' => 'Error',
-  'removed' => 'Removed',
-  '' => 'Unknown',
-  _ => status,
-};
+String aria2StatusLabel(String status, {bool seeder = false}) {
+  if (status == 'active' && seeder) {
+    return 'Seeding';
+  }
+  return switch (status) {
+    'active' => 'Downloading',
+    'waiting' => 'Queued',
+    'paused' => 'Paused',
+    'complete' => 'Complete',
+    'error' => 'Error',
+    'removed' => 'Removed',
+    '' => 'Unknown',
+    _ => status,
+  };
+}

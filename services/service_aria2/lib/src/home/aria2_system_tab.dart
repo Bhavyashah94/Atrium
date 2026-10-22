@@ -257,7 +257,10 @@ class _Aria2SystemTabState extends ConsumerState<Aria2SystemTab> {
                       ),
                       _Row(
                         label: 'Secret Protected',
-                        value: widget.instance.auth is InstanceAuthApiKey
+                        value: (widget.instance.auth is InstanceAuthApiKey &&
+                                (widget.instance.auth as InstanceAuthApiKey)
+                                    .apiKey
+                                    .isNotEmpty)
                             ? 'Yes (token configured)'
                             : 'No (open RPC)',
                       ),

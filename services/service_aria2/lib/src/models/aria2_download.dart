@@ -88,6 +88,11 @@ abstract class Aria2Download with _$Aria2Download {
   /// In the queue but not started - and not paused either.
   bool get isWaiting => status == 'waiting';
 
+  /// A completed torrent that remains active in the daemon for seeding.
+  bool get isSeeding =>
+      seeder ||
+      (status == 'active' && totalLength > 0 && completedLength >= totalLength);
+
   bool get isComplete => status == 'complete';
   bool get isError => status == 'error';
   bool get isRemoved => status == 'removed';

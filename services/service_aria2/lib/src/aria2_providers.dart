@@ -30,16 +30,19 @@ final aria2ApiProvider = FutureProvider.family<Aria2Api, Instance>((
     InstanceAuthUserPass() || InstanceAuthPlex() || InstanceAuthCookie() => '',
   };
   return Aria2Api(dio, secret: secret);
-});
+}, retry: (_, _) => null);
 
 /// The whole daemon in one poll: the three download lists, the global
 /// counters and the version.
 final aria2SnapshotProvider = FutureProvider.autoDispose
-    .family<Aria2Snapshot, Instance>((Ref ref, Instance instance) async {
-      ref.pollEvery(aria2PollInterval);
-      final Aria2Api api = await ref.watch(aria2ApiProvider(instance).future);
-      return api.getSnapshot();
-    });
+    .family<Aria2Snapshot, Instance>((Ref ref, Instance instance) => ref.polled(
+          aria2PollInterval,
+          () async {
+            final Aria2Api api =
+                await ref.watch(aria2ApiProvider(instance).future);
+            return api.getSnapshot();
+          },
+        ), retry: (_, _) => null);
 
 /// One download's own status, for the detail screen.
 ///
@@ -49,17 +52,22 @@ final aria2DownloadProvider = FutureProvider.autoDispose
     .family<Aria2Download?, (Instance, String)>((
       Ref ref,
       (Instance, String) key,
-    ) async {
-      ref.pollEvery(aria2DetailPollInterval);
-      final (Instance instance, String gid) = key;
-      final Aria2Api api = await ref.watch(aria2ApiProvider(instance).future);
-      try {
-        return await api.tellStatus(gid);
-      } on Aria2RpcException {
-        // The daemon answers "no such download" for a GID it has forgotten.
-        return null;
-      }
-    });
+    ) => ref.polled(aria2DetailPollInterval, () async {
+          final (Instance instance, String gid) = key;
+          final Aria2Api api =
+              await ref.watch(aria2ApiProvider(instance).future);
+          try {
+            return await api.tellStatus(gid);
+          } on Aria2RpcException catch (e) {
+            // Only aria2's "GID is not found" (code 1) means the download was
+            // removed and purged. Any other error (wrong secret, proxy error,
+            // network failure) rethrows so the honest error state is shown.
+            if (e.message.contains('is not found') || e.code == 1) {
+              return null;
+            }
+            rethrow;
+          }
+        }), retry: (_, _) => null);
 
 /// The daemon's global options, read on demand.
 ///
@@ -69,27 +77,30 @@ final aria2GlobalOptionsProvider = FutureProvider.autoDispose
     .family<Map<String, String>, Instance>((Ref ref, Instance instance) async {
       final Aria2Api api = await ref.watch(aria2ApiProvider(instance).future);
       return api.getGlobalOption();
-    });
+    }, retry: (_, _) => null);
 
 /// Active peers for a BitTorrent download.
 final aria2PeersProvider = FutureProvider.autoDispose
     .family<List<Aria2Peer>, (Instance, String)>((
       Ref ref,
       (Instance, String) key,
-    ) async {
-      ref.pollEvery(aria2DetailPollInterval);
-      final (Instance instance, String gid) = key;
-      final Aria2Api api = await ref.watch(aria2ApiProvider(instance).future);
-      try {
-        return await api.getPeers(gid);
-      } catch (_) {
-        return const <Aria2Peer>[];
-      }
-    });
+    ) => ref.polled(aria2DetailPollInterval, () async {
+          final (Instance instance, String gid) = key;
+          final Aria2Api api =
+              await ref.watch(aria2ApiProvider(instance).future);
+          try {
+            return await api.getPeers(gid);
+          } on Aria2RpcException catch (e) {
+            if (e.message.contains('is not found') || e.code == 1) {
+              return const <Aria2Peer>[];
+            }
+            rethrow;
+          }
+        }), retry: (_, _) => null);
 
 /// Options of one specific download.
 final aria2DownloadOptionProvider = FutureProvider.autoDispose
-    .family<Map<String, String>, (Instance, String)>((
+    .family<Map<String, dynamic>, (Instance, String)>((
       Ref ref,
       (Instance, String) key,
     ) async {
@@ -97,10 +108,13 @@ final aria2DownloadOptionProvider = FutureProvider.autoDispose
       final Aria2Api api = await ref.watch(aria2ApiProvider(instance).future);
       try {
         return await api.getOption(gid);
-      } catch (_) {
-        return const <String, String>{};
+      } on Aria2RpcException catch (e) {
+        if (e.message.contains('is not found') || e.code == 1) {
+          return const <String, dynamic>{};
+        }
+        rethrow;
       }
-    });
+    }, retry: (_, _) => null);
 
 // -----------------------------------------------------------------------------
 // UI State & Filtering Providers

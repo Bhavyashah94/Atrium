@@ -87,12 +87,15 @@ final activeDownloadCountProvider = Provider.autoDispose<int>((Ref ref) {
           .where((RtorrentTorrent t) => t.status.isDownloading)
           .length;
     } else if (i.kind == ServiceKind.aria2) {
-      // aria2 keeps finished downloads in its own list, so only the running
-      // and the queued ones count. A paused download is not on its way.
+      // aria2 keeps finished downloads in its stopped list, but finished
+      // torrents remain active to seed. Idle seeds stay out of the download
+      // count, and paused downloads are not on their way.
       final Aria2Snapshot? snapshot =
           ref.watch(aria2SnapshotProvider(i)).value;
       if (snapshot != null) {
-        count += snapshot.active.length;
+        count += snapshot.active
+            .where((Aria2Download d) => !d.isSeeding)
+            .length;
         count += snapshot.waiting.where((Aria2Download d) => d.isWaiting).length;
       }
     }

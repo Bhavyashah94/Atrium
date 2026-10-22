@@ -358,9 +358,10 @@ bool _isSpeedtestResultsEnvelope(Object? data) =>
 
 /// Whether an aria2 JSON-RPC answer proves the daemon is there.
 ///
-/// The probe asks for `aria2.getVersion`, so a good answer carries a `result`
-/// object and a refused secret carries an `error` object. Both arrive with
-/// HTTP 200, which is why the envelope has to be read.
+/// The probe asks for `aria2.getVersion`. While aria2 rejects a refused secret
+/// with HTTP 400, some reverse proxies or RPC gateways reply with HTTP 200 and
+/// an `error` envelope. `_aria2SaysOk` ensures only a valid `result` envelope
+/// is accepted as healthy.
 bool _aria2SaysOk(Object? data) {
   Object? body = data;
   if (body is String) {

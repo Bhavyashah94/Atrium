@@ -325,7 +325,7 @@ Atrium is a **controller** app. Video playback was removed by design
     configured in `aria2.conf` (disk cache, DHT, listen port).
   - **System Diagnostics Tab**: Real-time daemon session ID, enabled features list (Async DNS,
     BitTorrent, Firefox3 Cookie, GZip, HTTPS, Message Digest, Metalink, XML-RPC), session flush
-    to disk, and graceful daemon shutdown / restart trigger with confirmation dialog.
+    to disk, and graceful daemon shutdown trigger with confirmation dialog.
   A refused secret is reported honestly: aria2 answers a wrong secret with HTTP 400 and an
   `error` envelope, so the health dot warns instead of calling the daemon healthy.
   The health probe inspects the JSON-RPC envelope rather than trusting the status alone.

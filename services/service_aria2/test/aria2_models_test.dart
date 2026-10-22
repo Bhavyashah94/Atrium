@@ -135,10 +135,72 @@ void main() {
 
   test('aria2StatusLabel names the statuses the daemon sends', () {
     expect(aria2StatusLabel('active'), 'Downloading');
+    expect(aria2StatusLabel('active', seeder: true), 'Seeding');
     expect(aria2StatusLabel('waiting'), 'Queued');
     expect(aria2StatusLabel('paused'), 'Paused');
     expect(aria2StatusLabel('complete'), 'Complete');
     expect(aria2StatusLabel('error'), 'Error');
     expect(aria2StatusLabel(''), 'Unknown');
+  });
+
+  test('Aria2Download isSeeding detects BitTorrent seeders', () {
+    final Aria2Download flaggedSeeder = Aria2Download.fromJson(<String, dynamic>{
+      'gid': '1',
+      'status': 'active',
+      'seeder': 'true',
+    });
+    expect(flaggedSeeder.isSeeding, isTrue);
+
+    final Aria2Download completedActive = Aria2Download.fromJson(<String, dynamic>{
+      'gid': '2',
+      'status': 'active',
+      'totalLength': '1000',
+      'completedLength': '1000',
+      'seeder': 'false',
+    });
+    expect(completedActive.isSeeding, isTrue);
+
+    final Aria2Download downloading = Aria2Download.fromJson(<String, dynamic>{
+      'gid': '3',
+      'status': 'active',
+      'totalLength': '1000',
+      'completedLength': '500',
+      'seeder': 'false',
+    });
+    expect(downloading.isSeeding, isFalse);
+
+    final Aria2Download stopped = Aria2Download.fromJson(<String, dynamic>{
+      'gid': '4',
+      'status': 'complete',
+      'totalLength': '1000',
+      'completedLength': '1000',
+      'seeder': 'true',
+    });
+    // Complete transfers are not active seeders
+    expect(stopped.isSeeding, isTrue);
+  });
+
+  group('parseAria2SpeedBytes', () {
+    test('parses bytes and common unit suffixes', () {
+      expect(parseAria2SpeedBytes(''), 0);
+      expect(parseAria2SpeedBytes('   '), 0);
+      expect(parseAria2SpeedBytes('0'), 0);
+      expect(parseAria2SpeedBytes('512'), 512 * 1024);
+      expect(parseAria2SpeedBytes('512 B'), 512);
+      expect(parseAria2SpeedBytes('512b'), 512);
+      expect(parseAria2SpeedBytes('1 KB'), 1024);
+      expect(parseAria2SpeedBytes('1.5 kb'), 1536);
+      expect(parseAria2SpeedBytes('2 MB'), 2 * 1024 * 1024);
+      expect(parseAria2SpeedBytes('1 GB'), 1024 * 1024 * 1024);
+    });
+
+    test('rejects unknown or invalid formats by returning null', () {
+      expect(parseAria2SpeedBytes('abc'), isNull);
+      expect(parseAria2SpeedBytes('-500'), isNull);
+      expect(parseAria2SpeedBytes('10 TB'), isNull);
+      expect(parseAria2SpeedBytes('5 PB'), isNull);
+      expect(parseAria2SpeedBytes('100 foo'), isNull);
+      expect(parseAria2SpeedBytes('1.2.3.4'), isNull);
+    });
   });
 }

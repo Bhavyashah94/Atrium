@@ -54,18 +54,19 @@ class Aria2DownloadDetailScreen extends ConsumerWidget {
     WidgetRef ref,
     Aria2Download download,
   ) async {
-    Map<String, String> options = const <String, String>{};
+    Map<String, dynamic> options = const <String, dynamic>{};
     try {
       final Aria2Api api = await ref.read(aria2ApiProvider(instance).future);
       options = await api.getOption(gid);
     } catch (_) {
       options =
           ref.read(aria2DownloadOptionProvider((instance, gid))).value ??
-          const <String, String>{};
+          const <String, dynamic>{};
     }
     final int currentDl =
-        int.tryParse(options['max-download-limit'] ?? '') ?? 0;
-    final int currentUl = int.tryParse(options['max-upload-limit'] ?? '') ?? 0;
+        int.tryParse(options['max-download-limit']?.toString() ?? '') ?? 0;
+    final int currentUl =
+        int.tryParse(options['max-upload-limit']?.toString() ?? '') ?? 0;
 
     if (!context.mounted) return;
 
@@ -416,8 +417,33 @@ class _DetailBody extends ConsumerWidget {
               ),
             if (download.isLive)
               OutlinedButton.icon(
-                onPressed: () =>
-                    onAction((Aria2Api api) => api.remove(download.gid)),
+                onPressed: () async {
+                  final bool? confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext ctx) => AlertDialog(
+                      title: const Text('Remove download?'),
+                      content: Text(
+                        'Are you sure you want to stop and remove "${download.displayName}"?',
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: const Text('Remove'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true && context.mounted) {
+                    await onAction((Aria2Api api) => api.remove(download.gid));
+                    if (context.mounted) {
+                      Navigator.of(context).maybePop();
+                    }
+                  }
+                },
                 icon: const Icon(Icons.delete_outline),
                 label: const Text('Remove'),
               ),

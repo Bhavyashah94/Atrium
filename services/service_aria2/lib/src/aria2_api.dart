@@ -204,10 +204,31 @@ class Aria2Api {
   // Reads
   // -------------------------------------------------------------------------
 
+  /// Keys requested for transfers list views to avoid transferring heavy fields
+  /// like `bitfield` every polling cycle.
+  static const List<String> snapshotKeys = <String>[
+    'gid',
+    'status',
+    'totalLength',
+    'completedLength',
+    'uploadLength',
+    'downloadSpeed',
+    'uploadSpeed',
+    'connections',
+    'numSeeders',
+    'seeder',
+    'errorCode',
+    'errorMessage',
+    'dir',
+    'infoHash',
+    'bittorrent',
+    'files',
+  ];
+
   /// Everything the screen needs, in one batched request.
   ///
-  /// The stopped list is asked for oldest-first and reversed here, because
-  /// aria2 hands it out from the least recently stopped download.
+  /// The stopped list is asked with offset -1 so aria2 hands out the most
+  /// recently stopped downloads first.
   Future<Aria2Snapshot> getSnapshot({
     int waitingLimit = 1000,
     int stoppedLimit = 200,
@@ -216,9 +237,9 @@ class Aria2Api {
       <({String method, List<dynamic> params})>[
         (method: 'aria2.getGlobalStat', params: const <dynamic>[]),
         (method: 'aria2.getVersion', params: const <dynamic>[]),
-        (method: 'aria2.tellActive', params: const <dynamic>[]),
-        (method: 'aria2.tellWaiting', params: <dynamic>[0, waitingLimit]),
-        (method: 'aria2.tellStopped', params: <dynamic>[0, stoppedLimit]),
+        (method: 'aria2.tellActive', params: const <dynamic>[snapshotKeys]),
+        (method: 'aria2.tellWaiting', params: <dynamic>[0, waitingLimit, snapshotKeys]),
+        (method: 'aria2.tellStopped', params: <dynamic>[-1, stoppedLimit, snapshotKeys]),
       ],
     );
 
@@ -236,7 +257,7 @@ class Aria2Api {
     );
     final List<Aria2Download> stopped = _asDownloads(
       _multicallValue(results, 4),
-    ).reversed.toList(growable: false);
+    );
 
     return Aria2Snapshot(
       stat: stat,
@@ -253,20 +274,38 @@ class Aria2Api {
   Future<Aria2Version> getVersion() async =>
       Aria2Version.fromJson(_asMap(await _call('aria2.getVersion')));
 
-  Future<List<Aria2Download>> tellActive() async =>
-      _asDownloads(await _call('aria2.tellActive'));
+  Future<List<Aria2Download>> tellActive({List<String>? keys}) async {
+    final List<dynamic> params = <dynamic>[
+      ?keys,
+    ];
+    return _asDownloads(await _call('aria2.tellActive', params));
+  }
 
   Future<List<Aria2Download>> tellWaiting({
     int offset = 0,
     int num = 1000,
-  }) async =>
-      _asDownloads(await _call('aria2.tellWaiting', <dynamic>[offset, num]));
+    List<String>? keys,
+  }) async {
+    final List<dynamic> params = <dynamic>[
+      offset,
+      num,
+      ?keys,
+    ];
+    return _asDownloads(await _call('aria2.tellWaiting', params));
+  }
 
   Future<List<Aria2Download>> tellStopped({
-    int offset = 0,
+    int offset = -1,
     int num = 200,
-  }) async =>
-      _asDownloads(await _call('aria2.tellStopped', <dynamic>[offset, num]));
+    List<String>? keys,
+  }) async {
+    final List<dynamic> params = <dynamic>[
+      offset,
+      num,
+      ?keys,
+    ];
+    return _asDownloads(await _call('aria2.tellStopped', params));
+  }
 
   /// One download's own status.
   Future<Aria2Download> tellStatus(String gid) async => Aria2Download.fromJson(
@@ -342,15 +381,12 @@ class Aria2Api {
   }
 
   /// The options of one download (`aria2.getOption`).
-  Future<Map<String, String>> getOption(String gid) async {
+  Future<Map<String, dynamic>> getOption(String gid) async {
     final dynamic result = await _call('aria2.getOption', <dynamic>[gid]);
     if (result is! Map) {
-      return const <String, String>{};
+      return const <String, dynamic>{};
     }
-    return <String, String>{
-      for (final MapEntry<Object?, Object?> entry in result.entries)
-        entry.key.toString(): entry.value.toString(),
-    };
+    return result.cast<String, dynamic>();
   }
 
   // -------------------------------------------------------------------------
@@ -363,7 +399,7 @@ class Aria2Api {
   /// `addUri` means. Returns the new GID.
   Future<String> addUri(
     List<String> uris, {
-    Map<String, String> options = const <String, String>{},
+    Map<String, dynamic> options = const <String, dynamic>{},
     int? position,
   }) async {
     final List<dynamic> params = <dynamic>[uris];
@@ -384,7 +420,7 @@ class Aria2Api {
   Future<String> addTorrent(
     String torrentBase64, {
     List<String> uris = const <String>[],
-    Map<String, String> options = const <String, String>{},
+    Map<String, dynamic> options = const <String, dynamic>{},
     int? position,
   }) async {
     // The list of sources goes out even when it is empty, and for the same
@@ -408,7 +444,7 @@ class Aria2Api {
   /// Returns the list of GIDs added.
   Future<List<String>> addMetalink(
     String metalinkBase64, {
-    Map<String, String> options = const <String, String>{},
+    Map<String, dynamic> options = const <String, dynamic>{},
     int? position,
   }) async {
     final List<dynamic> params = <dynamic>[metalinkBase64];
@@ -435,14 +471,84 @@ class Aria2Api {
   /// Resumes a paused download.
   Future<void> unpause(String gid) => _command('aria2.unpause', <dynamic>[gid]);
 
-  /// Pauses every active download.
+  /// Pauses every active download daemon-wide.
   Future<void> pauseAll() => _command('aria2.pauseAll');
 
-  /// Pauses every active download without waiting for them to stop first.
+  /// Pauses every active download daemon-wide without waiting for them to stop first.
   Future<void> forcePauseAll() => _command('aria2.forcePauseAll');
 
-  /// Resumes every paused download.
+  /// Resumes every paused download daemon-wide.
   Future<void> unpauseAll() => _command('aria2.unpauseAll');
+
+  /// Batches pause calls for specific GIDs into a single system.multicall.
+  Future<({int succeeded, int failed})> pauseGids(Iterable<String> gids) async {
+    final List<String> list = gids.toList();
+    if (list.isEmpty) return (succeeded: 0, failed: 0);
+    final List<dynamic> results = await _multicall(
+      list
+          .map((String gid) => (method: 'aria2.pause', params: <dynamic>[gid]))
+          .toList(),
+    );
+    int succeeded = 0;
+    int failed = 0;
+    for (final dynamic res in results) {
+      if (res is Map && res.containsKey('faultCode')) {
+        failed++;
+      } else {
+        succeeded++;
+      }
+    }
+    return (succeeded: succeeded, failed: failed);
+  }
+
+  /// Batches unpause calls for specific GIDs into a single system.multicall.
+  Future<({int succeeded, int failed})> unpauseGids(
+    Iterable<String> gids,
+  ) async {
+    final List<String> list = gids.toList();
+    if (list.isEmpty) return (succeeded: 0, failed: 0);
+    final List<dynamic> results = await _multicall(
+      list
+          .map((String gid) => (method: 'aria2.unpause', params: <dynamic>[gid]))
+          .toList(),
+    );
+    int succeeded = 0;
+    int failed = 0;
+    for (final dynamic res in results) {
+      if (res is Map && res.containsKey('faultCode')) {
+        failed++;
+      } else {
+        succeeded++;
+      }
+    }
+    return (succeeded: succeeded, failed: failed);
+  }
+
+  /// Batches removal calls for specific GIDs into a single system.multicall.
+  Future<({int succeeded, int failed})> removeGids({
+    Iterable<String> activeOrWaitingGids = const <String>[],
+    Iterable<String> stoppedGids = const <String>[],
+  }) async {
+    final List<({String method, List<dynamic> params})> calls =
+        <({String method, List<dynamic> params})>[
+      for (final String gid in activeOrWaitingGids)
+        (method: 'aria2.remove', params: <dynamic>[gid]),
+      for (final String gid in stoppedGids)
+        (method: 'aria2.removeDownloadResult', params: <dynamic>[gid]),
+    ];
+    if (calls.isEmpty) return (succeeded: 0, failed: 0);
+    final List<dynamic> results = await _multicall(calls);
+    int succeeded = 0;
+    int failed = 0;
+    for (final dynamic res in results) {
+      if (res is Map && res.containsKey('faultCode')) {
+        failed++;
+      } else {
+        succeeded++;
+      }
+    }
+    return (succeeded: succeeded, failed: failed);
+  }
 
   /// Removes a download: it stops and its files are left alone.
   Future<void> remove(String gid) => _command('aria2.remove', <dynamic>[gid]);
@@ -466,11 +572,11 @@ class Aria2Api {
       _command('aria2.changePosition', <dynamic>[gid, position, how]);
 
   /// Changes the options of one download.
-  Future<void> changeOption(String gid, Map<String, String> options) =>
+  Future<void> changeOption(String gid, Map<String, dynamic> options) =>
       _command('aria2.changeOption', <dynamic>[gid, options]);
 
   /// Changes the daemon's global options.
-  Future<void> changeGlobalOption(Map<String, String> options) =>
+  Future<void> changeGlobalOption(Map<String, dynamic> options) =>
       _command('aria2.changeGlobalOption', <dynamic>[options]);
 
   /// Sets the global download limit in bytes per second; 0 removes it.

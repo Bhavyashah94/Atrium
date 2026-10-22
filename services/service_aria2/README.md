@@ -26,7 +26,7 @@ The daemon's RPC secret (`--rpc-secret`) is passed as `token:<secret>` as the ve
 To minimize network overhead and eliminate race conditions across multiple lists, polling is batched into a single `system.multicall` request:
 1. `aria2.tellActive`
 2. `aria2.tellWaiting` (offset: 0, num: 1000)
-3. `aria2.tellStopped` (offset: 0, num: 1000)
+3. `aria2.tellStopped` (offset: -1, num: 200)
 4. `aria2.getGlobalStat`
 5. `aria2.getVersion`
 
@@ -67,6 +67,10 @@ The user interface follows a modern transfers workflow designed specifically for
 - **Add Download Sheet**:
   - Supports HTTP/HTTPS URLs, FTP, BitTorrent magnet links, and local `.torrent` file selection.
   - Optional custom download directory override, request headers, and connection split configuration.
+
+## Dependencies
+
+- Uses `file_picker: ^12.0.0-beta.7` (hosted dependency shared with five other Atrium services) for picking `.torrent` files in the Add Download sheet.
 
 ## Dynamic Theming & Material 3 Compliance
 

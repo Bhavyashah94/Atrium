@@ -31,9 +31,16 @@ String aria2SpeedLimitLabel(int bytesPerSec) {
 /// Parses an entered speed string into bytes per second.
 ///
 /// Accepts:
-/// - Plain number: treated as KB/s unless suffixed with 'b'/'B'.
-/// - Suffixes: 'B' / 'B/s' (bytes), 'K' / 'KB' (kilobytes), 'M' / 'MB' (megabytes).
-int? _parseSpeedBytes(String input) {
+/// - Plain number: treated as KB/s (e.g. "512" -> 524288, "0" -> 0).
+/// - Explicit units:
+///   - Bytes: 'b', 'b/s', 'byte', 'bytes', 'bps'
+///   - Kilobytes: 'k', 'kb', 'kb/s', 'kib', 'kib/s'
+///   - Megabytes: 'm', 'mb', 'mb/s', 'mib', 'mib/s'
+///   - Gigabytes: 'g', 'gb', 'gb/s', 'gib', 'gib/s'
+///
+/// Returns null if the unit is unrecognised, number is invalid/negative,
+/// or formatting cannot be parsed. Empty or "0" returns 0 (unlimited).
+int? parseAria2SpeedBytes(String input) {
   final String trimmed = input.trim();
   if (trimmed.isEmpty || trimmed == '0') return 0;
 
@@ -44,15 +51,41 @@ int? _parseSpeedBytes(String input) {
   final double? val = double.tryParse(match.group(1)!);
   if (val == null || val < 0) return null;
 
-  final String unit = (match.group(2) ?? '').toLowerCase();
-  if (unit.startsWith('b') && !unit.startsWith('bit')) {
-    return val.round();
-  } else if (unit.startsWith('m')) {
-    return (val * 1024 * 1024).round();
-  } else {
-    // Default unit is KB/s
+  final String rawUnit = (match.group(2) ?? '').toLowerCase();
+  if (rawUnit.isEmpty) {
     return (val * 1024).round();
   }
+
+  if (rawUnit == 'b' ||
+      rawUnit == 'b/s' ||
+      rawUnit == 'byte' ||
+      rawUnit == 'bytes' ||
+      rawUnit == 'bps') {
+    return val.round();
+  }
+  if (rawUnit == 'k' ||
+      rawUnit == 'kb' ||
+      rawUnit == 'kb/s' ||
+      rawUnit == 'kib' ||
+      rawUnit == 'kib/s') {
+    return (val * 1024).round();
+  }
+  if (rawUnit == 'm' ||
+      rawUnit == 'mb' ||
+      rawUnit == 'mb/s' ||
+      rawUnit == 'mib' ||
+      rawUnit == 'mib/s') {
+    return (val * 1024 * 1024).round();
+  }
+  if (rawUnit == 'g' ||
+      rawUnit == 'gb' ||
+      rawUnit == 'gb/s' ||
+      rawUnit == 'gib' ||
+      rawUnit == 'gib/s') {
+    return (val * 1024 * 1024 * 1024).round();
+  }
+
+  return null;
 }
 
 /// Formats bytes into a concise editable text representation.
@@ -88,11 +121,21 @@ class _GlobalSpeedDialogContentState extends State<_GlobalSpeedDialogContent> {
   late final TextEditingController _custom = TextEditingController(
     text: _bytesToEditable(widget.currentBytes),
   );
+  String? _errorText;
 
   @override
   void dispose() {
     _custom.dispose();
     super.dispose();
+  }
+
+  void _submit() {
+    final int? bytes = parseAria2SpeedBytes(_custom.text);
+    if (bytes == null) {
+      setState(() => _errorText = 'Invalid speed (e.g. 512, 10M, 1500 B)');
+      return;
+    }
+    Navigator.of(context).pop(bytes);
   }
 
   @override
@@ -115,16 +158,19 @@ class _GlobalSpeedDialogContentState extends State<_GlobalSpeedDialogContent> {
             const SizedBox(height: Insets.sm),
             TextField(
               controller: _custom,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Custom limit',
                 hintText: 'e.g. 512, 10M, 1500 B',
                 helperText: 'Numbers default to KB/s; 0 for unlimited',
-                border: OutlineInputBorder(),
+                errorText: _errorText,
+                border: const OutlineInputBorder(),
               ),
-              onSubmitted: (String value) {
-                final int? bytes = _parseSpeedBytes(value);
-                if (bytes != null) Navigator.of(context).pop(bytes);
+              onChanged: (_) {
+                if (_errorText != null) {
+                  setState(() => _errorText = null);
+                }
               },
+              onSubmitted: (_) => _submit(),
             ),
           ],
         ),
@@ -135,10 +181,7 @@ class _GlobalSpeedDialogContentState extends State<_GlobalSpeedDialogContent> {
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: () {
-            final int? bytes = _parseSpeedBytes(_custom.text);
-            if (bytes != null) Navigator.of(context).pop(bytes);
-          },
+          onPressed: _submit,
           child: const Text('Set'),
         ),
       ],
@@ -182,12 +225,27 @@ class _TaskSpeedDialogContentState extends State<_TaskSpeedDialogContent> {
   late final TextEditingController _ulController = TextEditingController(
     text: _bytesToEditable(widget.currentUlBytes),
   );
+  String? _dlErrorText;
+  String? _ulErrorText;
 
   @override
   void dispose() {
     _dlController.dispose();
     _ulController.dispose();
     super.dispose();
+  }
+
+  void _submit() {
+    final int? dl = parseAria2SpeedBytes(_dlController.text);
+    final int? ul = parseAria2SpeedBytes(_ulController.text);
+    if (dl == null || ul == null) {
+      setState(() {
+        _dlErrorText = dl == null ? 'Invalid speed (e.g. 512, 5M, 1500 B)' : null;
+        _ulErrorText = ul == null ? 'Invalid speed (e.g. 256, 2M, 1500 B)' : null;
+      });
+      return;
+    }
+    Navigator.of(context).pop((dlBytes: dl, ulBytes: ul));
   }
 
   @override
@@ -199,22 +257,34 @@ class _TaskSpeedDialogContentState extends State<_TaskSpeedDialogContent> {
         children: <Widget>[
           TextField(
             controller: _dlController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Download limit',
               hintText: 'e.g. 512, 5M, 1500 B',
               helperText: '0 or empty for unlimited (default KB/s)',
-              border: OutlineInputBorder(),
+              errorText: _dlErrorText,
+              border: const OutlineInputBorder(),
             ),
+            onChanged: (_) {
+              if (_dlErrorText != null) {
+                setState(() => _dlErrorText = null);
+              }
+            },
           ),
           const SizedBox(height: Insets.md),
           TextField(
             controller: _ulController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Upload limit',
               hintText: 'e.g. 256, 2M, 1500 B',
               helperText: '0 or empty for unlimited (default KB/s)',
-              border: OutlineInputBorder(),
+              errorText: _ulErrorText,
+              border: const OutlineInputBorder(),
             ),
+            onChanged: (_) {
+              if (_ulErrorText != null) {
+                setState(() => _ulErrorText = null);
+              }
+            },
           ),
         ],
       ),
@@ -224,11 +294,7 @@ class _TaskSpeedDialogContentState extends State<_TaskSpeedDialogContent> {
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: () {
-            final int dl = _parseSpeedBytes(_dlController.text) ?? 0;
-            final int ul = _parseSpeedBytes(_ulController.text) ?? 0;
-            Navigator.of(context).pop((dlBytes: dl, ulBytes: ul));
-          },
+          onPressed: _submit,
           child: const Text('Save'),
         ),
       ],

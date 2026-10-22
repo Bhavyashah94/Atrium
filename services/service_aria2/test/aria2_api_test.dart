@@ -132,6 +132,20 @@ void main() {
         ],
       );
 
+      // Verify that snapshotKeys and offset -1 are passed to avoid transferring heavy fields
+      expect(
+        (calls[2] as Map<String, dynamic>)['params'],
+        <dynamic>[Aria2Api.snapshotKeys],
+      );
+      expect(
+        (calls[3] as Map<String, dynamic>)['params'],
+        <dynamic>[0, 1000, Aria2Api.snapshotKeys],
+      );
+      expect(
+        (calls[4] as Map<String, dynamic>)['params'],
+        <dynamic>[-1, 200, Aria2Api.snapshotKeys],
+      );
+
       // The daemon's own numbers arrive as strings.
       expect(snapshot.stat.downloadSpeed, 2048);
       expect(snapshot.stat.numStoppedTotal, 7);
@@ -519,6 +533,104 @@ void main() {
       );
       expect(_body(log.single)['method'], 'aria2.changeUri');
       expect(res, <int>[1, 2]);
+    },
+  );
+
+  test('addUri accepts header list in options map', () async {
+    final List<RequestOptions> log = <RequestOptions>[];
+    final Aria2Api api = _api(
+      (RequestOptions o) =>
+          (status: 200, data: <String, dynamic>{'result': 'gid123'}),
+      log: log,
+    );
+    await api.addUri(
+      <String>['https://host/file.iso'],
+      options: <String, dynamic>{
+        'header': <String>['Authorization: Bearer xyz', 'Cookie: session=1'],
+      },
+    );
+    final Map<String, dynamic> body = _body(log.single);
+    expect(body['params'], <dynamic>[
+      <String>['https://host/file.iso'],
+      <String, dynamic>{
+        'header': <String>['Authorization: Bearer xyz', 'Cookie: session=1'],
+      },
+    ]);
+  });
+
+  test(
+    'pauseGids batches calls in multicall and reports success and fault counts',
+    () async {
+      final List<RequestOptions> log = <RequestOptions>[];
+      final Aria2Api api = _api(
+        (RequestOptions o) => (
+          status: 200,
+          data: <String, dynamic>{
+            'result': <dynamic>[
+              <dynamic>['OK'],
+              <String, dynamic>{'faultCode': 1, 'faultString': 'Cannot pause'},
+            ],
+          },
+        ),
+        log: log,
+      );
+      final ({int succeeded, int failed}) res = await api.pauseGids(<String>[
+        'gid1',
+        'gid2',
+      ]);
+      expect(res.succeeded, 1);
+      expect(res.failed, 1);
+
+      final Map<String, dynamic> body = _body(log.single);
+      expect(body['method'], 'system.multicall');
+      final List<dynamic> calls =
+          (body['params'] as List<dynamic>).single as List<dynamic>;
+      expect(calls.length, 2);
+      expect((calls[0] as Map<String, dynamic>)['methodName'], 'aria2.pause');
+      expect((calls[0] as Map<String, dynamic>)['params'], <dynamic>['gid1']);
+      expect((calls[1] as Map<String, dynamic>)['methodName'], 'aria2.pause');
+      expect((calls[1] as Map<String, dynamic>)['params'], <dynamic>['gid2']);
+    },
+  );
+
+  test(
+    'removeGids batches remove for active and removeDownloadResult for stopped',
+    () async {
+      final List<RequestOptions> log = <RequestOptions>[];
+      final Aria2Api api = _api(
+        (RequestOptions o) => (
+          status: 200,
+          data: <String, dynamic>{
+            'result': <dynamic>[
+              <dynamic>['OK'],
+              <dynamic>['OK'],
+            ],
+          },
+        ),
+        log: log,
+      );
+      final ({int succeeded, int failed}) res = await api.removeGids(
+        activeOrWaitingGids: <String>['live1'],
+        stoppedGids: <String>['stopped1'],
+      );
+      expect(res.succeeded, 2);
+      expect(res.failed, 0);
+
+      final Map<String, dynamic> body = _body(log.single);
+      expect(body['method'], 'system.multicall');
+      final List<dynamic> calls =
+          (body['params'] as List<dynamic>).single as List<dynamic>;
+      expect(calls.length, 2);
+      expect((calls[0] as Map<String, dynamic>)['methodName'], 'aria2.remove');
+      expect((calls[0] as Map<String, dynamic>)['params'], <dynamic>['live1']);
+      expect(
+        (calls[1] as Map<String, dynamic>)['methodName'],
+        'aria2.removeDownloadResult',
+      );
+      expect(
+        (calls[1] as Map<String, dynamic>)['params'],
+        <dynamic>['stopped1'],
+      );
     },
   );
 }

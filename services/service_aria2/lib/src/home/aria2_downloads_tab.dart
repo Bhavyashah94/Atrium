@@ -281,18 +281,16 @@ class _Aria2DownloadsTabState extends ConsumerState<Aria2DownloadsTab> {
                       );
                       return;
                     }
-                    int success = 0;
-                    for (final String gid in targets) {
-                      try {
-                        await api.pause(gid);
-                        success++;
-                      } catch (_) {}
-                    }
+                    final ({int succeeded, int failed}) res =
+                        await api.pauseGids(targets);
                     ref.read(aria2SelectionProvider(widget.instance).notifier).state =
                         <String>{};
                     if (context.mounted) {
+                      final String message = res.failed == 0
+                          ? 'Paused ${res.succeeded} download(s)'
+                          : 'Paused ${res.succeeded} of ${res.succeeded + res.failed} download(s) (${res.failed} failed)';
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Paused $success download(s)')),
+                        SnackBar(content: Text(message)),
                       );
                     }
                   }),
@@ -320,18 +318,16 @@ class _Aria2DownloadsTabState extends ConsumerState<Aria2DownloadsTab> {
                       );
                       return;
                     }
-                    int success = 0;
-                    for (final String gid in targets) {
-                      try {
-                        await api.unpause(gid);
-                        success++;
-                      } catch (_) {}
-                    }
+                    final ({int succeeded, int failed}) res =
+                        await api.unpauseGids(targets);
                     ref.read(aria2SelectionProvider(widget.instance).notifier).state =
                         <String>{};
                     if (context.mounted) {
+                      final String message = res.failed == 0
+                          ? 'Resumed ${res.succeeded} download(s)'
+                          : 'Resumed ${res.succeeded} of ${res.succeeded + res.failed} download(s) (${res.failed} failed)';
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Resumed $success download(s)')),
+                        SnackBar(content: Text(message)),
                       );
                     }
                   }),
@@ -361,23 +357,27 @@ class _Aria2DownloadsTabState extends ConsumerState<Aria2DownloadsTab> {
                     );
                     if (confirmed != true || !context.mounted) return;
                     await _run(context, (Aria2Api api) async {
-                      int success = 0;
-                      for (final String gid in selection) {
-                        try {
-                          await api.remove(gid);
-                          success++;
-                        } catch (_) {
-                          try {
-                            await api.removeDownloadResult(gid);
-                            success++;
-                          } catch (_) {}
-                        }
-                      }
+                      final Aria2Snapshot? s = snapshot.value;
+                      final Set<String> stoppedGids =
+                          s?.stopped.map((d) => d.gid).toSet() ?? <String>{};
+                      final List<String> stoppedTargets =
+                          selection.where(stoppedGids.contains).toList();
+                      final List<String> activeOrWaitingTargets = selection
+                          .where((String gid) => !stoppedGids.contains(gid))
+                          .toList();
+                      final ({int succeeded, int failed}) res =
+                          await api.removeGids(
+                        activeOrWaitingGids: activeOrWaitingTargets,
+                        stoppedGids: stoppedTargets,
+                      );
                       ref.read(aria2SelectionProvider(widget.instance).notifier).state =
                           <String>{};
                       if (context.mounted) {
+                        final String message = res.failed == 0
+                            ? 'Removed ${res.succeeded} download(s)'
+                            : 'Removed ${res.succeeded} of ${res.succeeded + res.failed} download(s) (${res.failed} failed)';
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Removed $success download(s)')),
+                          SnackBar(content: Text(message)),
                         );
                       }
                     });
@@ -608,282 +608,367 @@ class _Aria2DownloadsTabState extends ConsumerState<Aria2DownloadsTab> {
           return EasyRefresh(
             header: const ClassicHeader(),
             onRefresh: () async => _refresh(),
-            child: ListView(
+            child: CustomScrollView(
               controller: _scrollController,
-              padding: const EdgeInsets.only(bottom: 90),
-              children: <Widget>[
+              slivers: <Widget>[
                 // Global Telemetry Hero Card
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    Insets.md,
-                    Insets.sm,
-                    Insets.md,
-                    Insets.xs,
-                  ),
-                  child: Material(
-                    color: cs.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(Insets.md),
-                      child: Column(
-                        children: <Widget>[
-                          Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: _HeroMetric(
-                                  icon: Icons.arrow_downward_rounded,
-                                  value: aria2FmtRate(data.stat.downloadSpeed),
-                                  label: 'Download',
-                                  color: cs.primary,
-                                ),
-                              ),
-                              Expanded(
-                                child: _HeroMetric(
-                                  icon: Icons.arrow_upward_rounded,
-                                  value: aria2FmtRate(data.stat.uploadSpeed),
-                                  label: 'Upload',
-                                  color: cs.tertiary,
-                                ),
-                              ),
-                              Expanded(
-                                child: _HeroMetric(
-                                  icon: data.version.version.isNotEmpty
-                                      ? Icons.info_outline
-                                      : Icons.swap_vert_rounded,
-                                  value: data.version.version.isNotEmpty
-                                      ? data.version.version
-                                      : '$activeCount / ${data.waiting.length}',
-                                  label: data.version.version.isNotEmpty
-                                      ? 'aria2'
-                                      : 'Active / Queued',
-                                  color: cs.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (data.stopped.isNotEmpty || data.stat.numStopped > 0) ...<Widget>[
-                            const SizedBox(height: Insets.sm),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      Insets.md,
+                      Insets.sm,
+                      Insets.md,
+                      Insets.xs,
+                    ),
+                    child: Material(
+                      color: cs.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(Insets.md),
+                        child: Column(
+                          children: <Widget>[
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
                               children: <Widget>[
-                                TextButton.icon(
-                                  icon: const Icon(
-                                    Icons.cleaning_services_outlined,
-                                    size: 16,
+                                Expanded(
+                                  child: _HeroMetric(
+                                    icon: Icons.arrow_downward_rounded,
+                                    value: aria2FmtRate(data.stat.downloadSpeed),
+                                    label: 'Download',
+                                    color: cs.primary,
                                   ),
-                                  label: Text(
-                                    'Clear finished (${data.stat.numStopped > 0 ? data.stat.numStopped : data.stopped.length})',
+                                ),
+                                Expanded(
+                                  child: _HeroMetric(
+                                    icon: Icons.arrow_upward_rounded,
+                                    value: aria2FmtRate(data.stat.uploadSpeed),
+                                    label: 'Upload',
+                                    color: cs.tertiary,
                                   ),
-                                  onPressed: () => _run(
-                                    context,
-                                    (Aria2Api api) => api.purgeDownloadResult(),
+                                ),
+                                Expanded(
+                                  child: _HeroMetric(
+                                    icon: data.version.version.isNotEmpty
+                                        ? Icons.info_outline
+                                        : Icons.swap_vert_rounded,
+                                    value: data.version.version.isNotEmpty
+                                        ? data.version.version
+                                        : '$activeCount / ${data.waiting.length}',
+                                    label: data.version.version.isNotEmpty
+                                        ? 'aria2'
+                                        : 'Active / Queued',
+                                    color: cs.onSurfaceVariant,
                                   ),
                                 ),
                               ],
                             ),
+                            if (data.stopped.isNotEmpty || data.stat.numStopped > 0) ...<Widget>[
+                              const SizedBox(height: Insets.sm),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: <Widget>[
+                                  TextButton.icon(
+                                    icon: const Icon(
+                                      Icons.cleaning_services_outlined,
+                                      size: 16,
+                                    ),
+                                    label: Text(
+                                      'Clear finished (${data.stat.numStopped > 0 ? data.stat.numStopped : data.stopped.length})',
+                                    ),
+                                    onPressed: () => _run(
+                                      context,
+                                      (Aria2Api api) => api.purgeDownloadResult(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
 
                 // Unified Filter Segmented Chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Insets.md,
-                    vertical: Insets.xs,
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      for (final Aria2TransfersFilter f
-                          in Aria2TransfersFilter.values) ...<Widget>[
-                        FilterChip(
-                          label: Text(switch (f) {
-                            Aria2TransfersFilter.all =>
-                              '${f.label} (${allDownloads.length})',
-                            Aria2TransfersFilter.active =>
-                              '${f.label} ($activeCount)',
-                            Aria2TransfersFilter.waiting =>
-                              '${f.label} ($waitingCount)',
-                            Aria2TransfersFilter.completed =>
-                              '${f.label} ($completedCount)',
-                            Aria2TransfersFilter.paused =>
-                              '${f.label} ($pausedCount)',
-                            Aria2TransfersFilter.error =>
-                              '${f.label} ($errorCount)',
-                          }),
-                          selected: filter == f,
-                          onSelected: (bool selected) {
-                            if (selected) {
-                              ref
-                                      .read(
-                                        aria2TransfersFilterProvider(
-                                          widget.instance,
-                                        ).notifier,
-                                      )
-                                      .state =
-                                  f;
-                            }
-                          },
-                        ),
-                        const SizedBox(width: Insets.xs),
+                SliverToBoxAdapter(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Insets.md,
+                      vertical: Insets.xs,
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        for (final Aria2TransfersFilter f
+                            in Aria2TransfersFilter.values) ...<Widget>[
+                          FilterChip(
+                            label: Text(switch (f) {
+                              Aria2TransfersFilter.all =>
+                                '${f.label} (${allDownloads.length})',
+                              Aria2TransfersFilter.active =>
+                                '${f.label} ($activeCount)',
+                              Aria2TransfersFilter.waiting =>
+                                '${f.label} ($waitingCount)',
+                              Aria2TransfersFilter.completed =>
+                                '${f.label} ($completedCount)',
+                              Aria2TransfersFilter.paused =>
+                                '${f.label} ($pausedCount)',
+                              Aria2TransfersFilter.error =>
+                                '${f.label} ($errorCount)',
+                            }),
+                            selected: filter == f,
+                            onSelected: (bool selected) {
+                              if (selected) {
+                                ref
+                                    .read(
+                                      aria2TransfersFilterProvider(
+                                        widget.instance,
+                                      ).notifier,
+                                    )
+                                    .state = f;
+                              }
+                            },
+                          ),
+                          const SizedBox(width: Insets.xs),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
 
                 if (visibleDownloads.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: Insets.xl * 2),
-                    child: EmptyView(
-                      icon: switch (filter) {
-                        Aria2TransfersFilter.all =>
-                          Icons.download_done_outlined,
-                        Aria2TransfersFilter.active => Icons.arrow_downward,
-                        Aria2TransfersFilter.waiting => Icons.schedule,
-                        Aria2TransfersFilter.completed =>
-                          Icons.check_circle_outline,
-                        Aria2TransfersFilter.paused => Icons.pause,
-                        Aria2TransfersFilter.error => Icons.error_outline,
-                      },
-                      title: switch (filter) {
-                        Aria2TransfersFilter.all => 'No downloads yet',
-                        Aria2TransfersFilter.active =>
-                          'Nothing downloading right now',
-                        Aria2TransfersFilter.waiting => 'Queue is empty',
-                        Aria2TransfersFilter.completed =>
-                          'No completed downloads',
-                        Aria2TransfersFilter.paused => 'No paused downloads',
-                        Aria2TransfersFilter.error => 'No errored downloads',
-                      },
-                      message: query.isNotEmpty
-                          ? 'No downloads match "$query".'
-                          : 'Tap "+" below to add a direct URL, magnet, or torrent file.',
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: Insets.xl * 2),
+                      child: EmptyView(
+                        icon: switch (filter) {
+                          Aria2TransfersFilter.all =>
+                            Icons.download_done_outlined,
+                          Aria2TransfersFilter.active => Icons.arrow_downward,
+                          Aria2TransfersFilter.waiting => Icons.schedule,
+                          Aria2TransfersFilter.completed =>
+                            Icons.check_circle_outline,
+                          Aria2TransfersFilter.paused => Icons.pause,
+                          Aria2TransfersFilter.error => Icons.error_outline,
+                        },
+                        title: switch (filter) {
+                          Aria2TransfersFilter.all => 'No downloads yet',
+                          Aria2TransfersFilter.active =>
+                            'Nothing downloading right now',
+                          Aria2TransfersFilter.waiting => 'Queue is empty',
+                          Aria2TransfersFilter.completed =>
+                            'No completed downloads',
+                          Aria2TransfersFilter.paused => 'No paused downloads',
+                          Aria2TransfersFilter.error => 'No errored downloads',
+                        },
+                        message: query.isNotEmpty
+                            ? 'No downloads match "$query".'
+                            : 'Tap "+" below to add a direct URL, magnet, or torrent file.',
+                      ),
                     ),
                   )
                 else
-                  for (final Aria2Download download in visibleDownloads)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        Insets.md,
-                        Insets.xs,
-                        Insets.md,
-                        Insets.xs,
-                      ),
-                      child: _UnifiedTransferCard(
-                        download: download,
-                        isSelected: selection.contains(download.gid),
-                        isSelecting: isSelecting,
-                        errorMessage: download.isError
-                            ? _decodeError(
-                                download.errorCode,
-                                download.errorMessage,
-                              )
-                            : '',
-                        onToggleSelect: () {
-                          final Set<String> updated = Set<String>.from(
-                            selection,
-                          );
-                          if (updated.contains(download.gid)) {
-                            updated.remove(download.gid);
-                          } else {
-                            updated.add(download.gid);
-                          }
-                          ref
+                  SliverPadding(
+                    padding: const EdgeInsets.only(bottom: 90),
+                    sliver: SliverList.builder(
+                      itemCount: visibleDownloads.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final Aria2Download download = visibleDownloads[index];
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            Insets.md,
+                            Insets.xs,
+                            Insets.md,
+                            Insets.xs,
+                          ),
+                          child: _UnifiedTransferCard(
+                            download: download,
+                            isSelected: selection.contains(download.gid),
+                            isSelecting: isSelecting,
+                            errorMessage: download.isError
+                                ? _decodeError(
+                                    download.errorCode,
+                                    download.errorMessage,
+                                  )
+                                : '',
+                            onToggleSelect: () {
+                              final Set<String> updated = Set<String>.from(
+                                selection,
+                              );
+                              if (updated.contains(download.gid)) {
+                                updated.remove(download.gid);
+                              } else {
+                                updated.add(download.gid);
+                              }
+                              ref
                                   .read(
                                     aria2SelectionProvider(
                                       widget.instance,
                                     ).notifier,
                                   )
-                                  .state =
-                              updated;
-                        },
-                        onTap: () {
-                          if (isSelecting) {
-                            final Set<String> updated = Set<String>.from(
-                              selection,
-                            );
-                            if (updated.contains(download.gid)) {
-                              updated.remove(download.gid);
-                            } else {
-                              updated.add(download.gid);
-                            }
-                            ref
+                                  .state = updated;
+                            },
+                            onTap: () {
+                              if (isSelecting) {
+                                final Set<String> updated = Set<String>.from(
+                                  selection,
+                                );
+                                if (updated.contains(download.gid)) {
+                                  updated.remove(download.gid);
+                                } else {
+                                  updated.add(download.gid);
+                                }
+                                ref
                                     .read(
                                       aria2SelectionProvider(
                                         widget.instance,
                                       ).notifier,
                                     )
-                                    .state =
-                                updated;
-                          } else {
-                            pushScreen<void>(
-                              context,
-                              Aria2DownloadDetailScreen(
-                                instance: widget.instance,
-                                gid: download.gid,
-                                initialName: download.displayName,
-                              ),
-                            );
-                          }
-                        },
-                        onPauseResume: () => _run(
-                          context,
-                          (Aria2Api api) => download.canResume
-                              ? api.unpause(download.gid)
-                              : api.pause(download.gid),
-                        ),
-                        onMoveTop: () => _run(
-                          context,
-                          (Aria2Api api) =>
-                              api.changePosition(download.gid, 0, 'POS_SET'),
-                        ),
-                        onDeleteOrClear: () => _run(
-                          context,
-                          (Aria2Api api) => download.isStopped
-                              ? api.removeDownloadResult(download.gid)
-                              : api.remove(download.gid),
-                        ),
-                        onRetry: () => _run(context, (Aria2Api api) async {
-                          final List<String> uris = download.files
-                              .expand((Aria2File f) => f.uris)
-                              .map((Aria2Uri u) => u.uri)
-                              .where((String u) => u.isNotEmpty)
-                              .toList();
-                          if (uris.isNotEmpty) {
-                            await api.addUri(
-                              uris,
-                              options: <String, String>{
-                                if (download.dir.isNotEmpty)
-                                  'dir': download.dir,
-                              },
-                            );
-                          } else if (download.infoHash.isNotEmpty) {
-                            final String magnet =
-                                'magnet:?xt=urn:btih:${download.infoHash}';
-                            await api.addUri(
-                              <String>[magnet],
-                              options: <String, String>{
-                                if (download.dir.isNotEmpty)
-                                  'dir': download.dir,
-                              },
-                            );
-                          } else {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Cannot retry: download has no source URI or info-hash',
+                                    .state = updated;
+                              } else {
+                                pushScreen<void>(
+                                  context,
+                                  Aria2DownloadDetailScreen(
+                                    instance: widget.instance,
+                                    gid: download.gid,
+                                    initialName: download.displayName,
                                   ),
-                                ),
-                              );
-                            }
-                          }
-                        }),
-                      ),
+                                );
+                              }
+                            },
+                            onPauseResume: () => _run(
+                              context,
+                              (Aria2Api api) => download.canResume
+                                  ? api.unpause(download.gid)
+                                  : api.pause(download.gid),
+                            ),
+                            onMoveTop: () => _run(
+                              context,
+                              (Aria2Api api) => api.changePosition(
+                                download.gid,
+                                0,
+                                'POS_SET',
+                              ),
+                            ),
+                            onDeleteOrClear: () async {
+                              if (download.isLive) {
+                                final bool? confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (BuildContext ctx) => AlertDialog(
+                                    title: const Text('Remove download?'),
+                                    content: Text(
+                                      'Are you sure you want to stop and remove "${download.displayName}"?',
+                                    ),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(ctx).pop(false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      FilledButton(
+                                        onPressed: () =>
+                                            Navigator.of(ctx).pop(true),
+                                        child: const Text('Remove'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed != true || !context.mounted) return;
+                                await _run(
+                                  context,
+                                  (Aria2Api api) => api.remove(download.gid),
+                                );
+                              } else {
+                                await _run(
+                                  context,
+                                  (Aria2Api api) =>
+                                      api.removeDownloadResult(download.gid),
+                                );
+                              }
+                            },
+                            onRetry: () => _run(context, (Aria2Api api) async {
+                              final List<String> uris = download.files
+                                  .expand((Aria2File f) => f.uris)
+                                  .map((Aria2Uri u) => u.uri)
+                                  .where((String u) => u.isNotEmpty)
+                                  .toList();
+
+                              // Fetch original options to preserve user-specified settings
+                              Map<String, dynamic> oldOptions =
+                                  const <String, dynamic>{};
+                              try {
+                                oldOptions = await api.getOption(download.gid);
+                              } catch (_) {
+                                // Ignore if daemon cannot find options for stopped entry
+                              }
+
+                              final Map<String, dynamic> preserved =
+                                  <String, dynamic>{};
+                              for (final String key in const <String>[
+                                'dir',
+                                'out',
+                                'header',
+                                'split',
+                                'max-connection-per-server',
+                                'all-proxy',
+                                'http-proxy',
+                                'https-proxy',
+                                'user-agent',
+                              ]) {
+                                final dynamic val = oldOptions[key];
+                                if (val != null &&
+                                    (val is! String || val.isNotEmpty) &&
+                                    (val is! List || val.isNotEmpty)) {
+                                  preserved[key] = val;
+                                }
+                              }
+                              if (!preserved.containsKey('dir') &&
+                                  download.dir.isNotEmpty) {
+                                preserved['dir'] = download.dir;
+                              }
+
+                              if (uris.isNotEmpty) {
+                                await api.addUri(uris, options: preserved);
+                              } else if (download.infoHash.isNotEmpty) {
+                                final String magnet =
+                                    'magnet:?xt=urn:btih:${download.infoHash}';
+                                await api.addUri(
+                                  <String>[magnet],
+                                  options: preserved,
+                                );
+                              } else {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Cannot retry: download has no source URI or info-hash',
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return;
+                              }
+
+                              // Remove the failed download result from daemon memory to avoid duplicate
+                              try {
+                                await api.removeDownloadResult(download.gid);
+                              } catch (_) {
+                                // Ignore if already purged
+                              }
+
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Download restarted'),
+                                  ),
+                                );
+                              }
+                            }),
+                          ),
+                        );
+                      },
                     ),
+                  ),
               ],
             ),
           );
@@ -1129,9 +1214,7 @@ class _UnifiedTransferCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
-                  if (download.isStopped &&
-                      download.files.isNotEmpty &&
-                      download.files.first.uris.isNotEmpty)
+                  if (download.isError)
                     TextButton.icon(
                       icon: const Icon(Icons.refresh, size: 16),
                       label: const Text('Retry'),

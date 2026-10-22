@@ -694,29 +694,29 @@ List<ActivityDownload> _aria2Downloads(
   Aria2Snapshot snapshot,
 ) {
   return <ActivityDownload>[
-    // Only the downloads that are still going: aria2 keeps every finished
-    // download in its stopped list until the result is purged, and a wall of
-    // completed transfers is not activity.
+    // Active transfers: incomplete downloads plus active seeds moving bytes.
+    // Idle seeds and paused downloads stay out of the activity feed.
     for (final Aria2Download d in <Aria2Download>[
       ...snapshot.active,
       ...snapshot.waiting,
     ])
-      ActivityDownload(
-        key: '${instance.id}:${d.gid}',
-        instance: instance,
-        sourceKind: instance.kind,
-        title: d.displayName,
-        progress: d.progress,
-        speedBps: d.downloadSpeed > 0 ? d.downloadSpeed : null,
-        upSpeedBps: d.uploadSpeed > 0 ? d.uploadSpeed : null,
-        eta: d.etaSeconds == null ? null : _fmtEtaSeconds(d.etaSeconds!),
-        status: aria2StatusLabel(d.status),
-        onOpenBuilder: (BuildContext _) => Aria2DownloadDetailScreen(
+      if (!d.isPaused && (!d.isSeeding || d.uploadSpeed > 0))
+        ActivityDownload(
+          key: '${instance.id}:${d.gid}',
           instance: instance,
-          gid: d.gid,
-          initialName: d.displayName,
+          sourceKind: instance.kind,
+          title: d.displayName,
+          progress: d.progress,
+          speedBps: d.downloadSpeed > 0 ? d.downloadSpeed : null,
+          upSpeedBps: d.uploadSpeed > 0 ? d.uploadSpeed : null,
+          eta: d.etaSeconds == null ? null : _fmtEtaSeconds(d.etaSeconds!),
+          status: aria2StatusLabel(d.status, seeder: d.isSeeding),
+          onOpenBuilder: (BuildContext _) => Aria2DownloadDetailScreen(
+            instance: instance,
+            gid: d.gid,
+            initialName: d.displayName,
+          ),
         ),
-      ),
   ];
 }
 

@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'aria2_api.dart';
 import 'aria2_providers.dart';
+import 'aria2_speed_dialog.dart';
 
 /// One `.torrent` or `.metalink` handed to the sheet, as bytes plus a name to show.
 typedef TorrentFileArg = ({Uint8List bytes, String? name});
@@ -149,18 +150,35 @@ class _AddDownloadFormState extends ConsumerState<_AddDownloadForm> {
         aria2ApiProvider(widget.instance).future,
       );
 
-      final Map<String, String> options = <String, String>{
+      int? speedBytes;
+      if (_speedLimit.text.trim().isNotEmpty) {
+        speedBytes = parseAria2SpeedBytes(_speedLimit.text.trim());
+        if (speedBytes == null) {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Invalid speed limit format (e.g. 512, 10M, 1500 B)'),
+            ),
+          );
+          return;
+        }
+      }
+
+      final List<String> headerLines = _headers.text
+          .split('\n')
+          .map((String s) => s.trim())
+          .where((String s) => s.isNotEmpty)
+          .toList();
+
+      final Map<String, dynamic> options = <String, dynamic>{
         if (_dir.text.trim().isNotEmpty) 'dir': _dir.text.trim(),
         if (uris.length == 1 && _out.text.trim().isNotEmpty)
           'out': _out.text.trim(),
         if (_split.text.trim().isNotEmpty) 'split': _split.text.trim(),
         if (_maxConn.text.trim().isNotEmpty)
           'max-connection-per-server': _maxConn.text.trim(),
-        if (_speedLimit.text.trim().isNotEmpty) ...<String, String>{
-          'max-download-limit':
-              '${(int.tryParse(_speedLimit.text.trim()) ?? 0) * 1024}',
-        },
-        if (_headers.text.trim().isNotEmpty) 'header': _headers.text.trim(),
+        if (speedBytes != null && speedBytes > 0)
+          'max-download-limit': '$speedBytes',
+        if (headerLines.isNotEmpty) 'header': headerLines,
         if (_pause) 'pause': 'true',
       };
 
