@@ -41,6 +41,7 @@ void main() {
       expect(ids(SeerrRequestFilter.approved), <int>[2]);
       expect(ids(SeerrRequestFilter.declined), <int>[4]);
       expect(ids(SeerrRequestFilter.completed), <int>[6]);
+      expect(ids(SeerrRequestFilter.failed), <int>[5]);
     });
 
     test('failed and completed have their own labels', () {
@@ -65,6 +66,9 @@ void main() {
               onRead?.call();
               return requests;
             }),
+            seerrIssuesProvider.overrideWith(
+              (Ref ref, SeerrIssuesArgs a) async => const <SeerrIssue>[],
+            ),
           ],
           child: const MaterialApp(
             home: Scaffold(body: SeerrHome(instance: _instance)),
@@ -98,6 +102,7 @@ void main() {
         'Approved',
         'Completed',
         'Declined',
+        'Failed',
       ]) {
         expect(await chip(tester, label), findsOneWidget);
       }
@@ -128,9 +133,44 @@ void main() {
       expect(find.text('Status: Declined'), findsOneWidget);
       expect(find.textContaining('Status: '), findsOneWidget);
 
+      await pick(tester, 'Failed');
+      expect(find.text('Status: Failed'), findsOneWidget);
+      expect(find.textContaining('Status: '), findsOneWidget);
+
       await pick(tester, 'All');
       expect(find.textContaining('Status: '), findsNWidgets(6));
       expect(reads, 1);
+    });
+
+    testWidgets('the chip picked stays across a trip to another tab',
+        (WidgetTester tester) async {
+      await pump(tester, _requests);
+      await pick(tester, 'Approved');
+
+      await tester.tap(find.widgetWithText(Tab, 'Issues'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(Tab, 'Requests'));
+      await tester.pumpAndSettle();
+
+      final FilterChip approved = tester.widget(await chip(tester, 'Approved'));
+      expect(approved.selected, isTrue);
+      expect(find.textContaining('Status: '), findsOneWidget);
+    });
+
+    testWidgets('the Issues chip picked stays across a trip as well',
+        (WidgetTester tester) async {
+      await pump(tester, _requests);
+      await tester.tap(find.widgetWithText(Tab, 'Issues'));
+      await tester.pumpAndSettle();
+      await pick(tester, 'Open');
+
+      await tester.tap(find.widgetWithText(Tab, 'Requests'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(Tab, 'Issues'));
+      await tester.pumpAndSettle();
+
+      final FilterChip open = tester.widget(await chip(tester, 'Open'));
+      expect(open.selected, isTrue);
     });
 
     testWidgets('an empty chip says what it has none of, chips still there',

@@ -1,9 +1,9 @@
 import 'models/seerr_request.dart';
 
 /// The chips over the Requests tab. Each one keeps the requests of one
-/// request status (1 pending, 2 approved, 3 declined, 5 completed), as
-/// Seerr's own filters do: a request moves from approved to completed once
-/// its media is available. [all] keeps every one, failed requests included.
+/// request status (1 pending, 2 approved, 3 declined, 4 failed,
+/// 5 completed), as Seerr's own filters do: a request moves from approved
+/// to completed once its media is available. [all] keeps every one.
 enum SeerrRequestFilter {
   all('All', 'No requests', 'No media requests yet.'),
   pending('Pending', 'No pending requests', 'Nothing is waiting for approval.'),
@@ -11,9 +11,14 @@ enum SeerrRequestFilter {
   completed(
     'Completed',
     'No completed requests',
-    'No approved request is available yet.',
+    'Requests show here once their media is available.',
   ),
-  declined('Declined', 'No declined requests', 'No request has been declined.');
+  declined('Declined', 'No declined requests', 'No request has been declined.'),
+  failed(
+    'Failed',
+    'No failed requests',
+    'Every approved request reached Sonarr or Radarr.',
+  );
 
   const SeerrRequestFilter(this.label, this.emptyTitle, this.emptyMessage);
 
@@ -28,6 +33,7 @@ enum SeerrRequestFilter {
         SeerrRequestFilter.approved => request.status == 2,
         SeerrRequestFilter.declined => request.status == 3,
         SeerrRequestFilter.completed => request.status == 5,
+        SeerrRequestFilter.failed => request.status == 4,
       };
 
   /// [requests] cut down to this chip, in the order they came.

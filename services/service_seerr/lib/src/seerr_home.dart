@@ -7,11 +7,13 @@ import 'models/seerr_discover.dart';
 import 'models/seerr_request.dart';
 import 'seerr_api.dart';
 import 'seerr_discover_screen.dart';
+import 'seerr_filter_chips.dart';
 import 'seerr_issues_screen.dart';
 import 'seerr_item_detail.dart';
 import 'seerr_media_card.dart';
 import 'seerr_providers.dart';
 import 'seerr_request_filter.dart';
+import 'seerr_status_badge.dart';
 
 /// Seerr's per-instance UI: the recent request list. Pending requests get
 /// approve / decline actions - the key thing you want to do from a phone.
@@ -48,9 +50,9 @@ class SeerrHome extends StatelessWidget {
   }
 }
 
-/// The Requests tab body: All / Pending / Approved / Completed / Declined
-/// filter chips over the polled request list. The chips cut down the list
-/// already read, so switching them sends nothing.
+/// The Requests tab body: a chip for each request status over the polled
+/// request list. The chips cut down the list already read, so switching
+/// them sends nothing, and the chip picked stays across tab switches.
 class _SeerrRequestsTab extends ConsumerStatefulWidget {
   const _SeerrRequestsTab({required this.instance});
 
@@ -60,8 +62,13 @@ class _SeerrRequestsTab extends ConsumerStatefulWidget {
   ConsumerState<_SeerrRequestsTab> createState() => _SeerrRequestsTabState();
 }
 
-class _SeerrRequestsTabState extends ConsumerState<_SeerrRequestsTab> {
-  SeerrRequestFilter _filter = SeerrRequestFilter.all;
+class _SeerrRequestsTabState extends ConsumerState<_SeerrRequestsTab>
+    with SeerrKeptFilter<_SeerrRequestsTab, SeerrRequestFilter> {
+  @override
+  Object get filterKey => 'seerr-requests-${widget.instance.id}';
+
+  @override
+  SeerrRequestFilter get firstFilter => SeerrRequestFilter.all;
 
   void _refresh() {
     ref.invalidate(seerrRequestsProvider(widget.instance));
@@ -75,34 +82,18 @@ class _SeerrRequestsTabState extends ConsumerState<_SeerrRequestsTab> {
 
     return Column(
       children: <Widget>[
-        SizedBox(
-          height: 52,
-          // Five chips are wider than a phone: the row scrolls sideways.
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: Insets.pageH,
-            child: Row(
-              children: <Widget>[
-                for (final SeerrRequestFilter filter
-                    in SeerrRequestFilter.values)
-                  Padding(
-                    padding: const EdgeInsets.only(right: Insets.sm),
-                    child: FilterChip(
-                      label: Text(filter.label),
-                      selected: _filter == filter,
-                      onSelected: (_) => setState(() => _filter = filter),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+        SeerrFilterChips<SeerrRequestFilter>(
+          values: SeerrRequestFilter.values,
+          label: (SeerrRequestFilter f) => f.label,
+          selected: filter,
+          onSelected: pickFilter,
         ),
         Expanded(
           child: AsyncValueView<List<SeerrRequest>>(
             value: requests,
             onRetry: _refresh,
             data: (List<SeerrRequest> all) {
-              final List<SeerrRequest> list = _filter.apply(all);
+              final List<SeerrRequest> list = filter.apply(all);
               return EasyRefresh(
                 header: const ClassicHeader(
                   dragText: 'Pull to refresh',
@@ -121,8 +112,8 @@ class _SeerrRequestsTabState extends ConsumerState<_SeerrRequestsTab> {
                           const SizedBox(height: 100),
                           EmptyView(
                             icon: Icons.playlist_add_check_outlined,
-                            title: _filter.emptyTitle,
-                            message: _filter.emptyMessage,
+                            title: filter.emptyTitle,
+                            message: filter.emptyMessage,
                           ),
                         ],
                       )
@@ -242,7 +233,7 @@ class _RequestTileState extends ConsumerState<_RequestTile> {
           borderRadius: BorderRadius.circular(20),
           child: SeerrRequestCard(
             item: item,
-              api: ref.watch(seerrApiProvider(widget.instance)).value,
+            api: ref.watch(seerrApiProvider(widget.instance)).value,
             requestedBy: request.requestedBy?.displayName,
             mediaStatus: request.media?.status,
             requestStatus: request.status,
@@ -334,20 +325,6 @@ class _RequestTileState extends ConsumerState<_RequestTile> {
     );
   }
 
-  String _statusString(int status) {
-    switch (status) {
-      case 1:
-        return 'Pending';
-      case 2:
-        return 'Approved';
-      case 3:
-        return 'Declined';
-      case 4:
-        return 'Failed';
-      case 5:
-        return 'Completed';
-      default:
-        return 'Unknown ($status)';
-    }
-  }
+  String _statusString(int status) =>
+      seerrRequestStatusStyle(status)?.label ?? 'Unknown ($status)';
 }
