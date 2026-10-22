@@ -579,6 +579,29 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
             ),
           ];
         }
+        // aria2's credential is its `--rpc-secret`, which the daemon reads
+        // from the first parameter of every RPC call rather than from a
+        // header - so the field says so. It is optional: a daemon started
+        // without a secret answers anyone, and demanding one would lock the
+        // user out of a perfectly reachable server.
+        if (_kind == ServiceKind.aria2) {
+          return <Widget>[
+            TextFormField(
+              controller: _apiKey,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'RPC secret (optional)',
+                helperText: 'aria2\'s --rpc-secret, sent as the first '
+                    'parameter of every RPC call. Leave empty if the daemon '
+                    'has no secret.',
+              ),
+              autocorrect: false,
+              enableSuggestions: false,
+              onChanged: _clearConnectionTest,
+              validator: (String? v) => null,
+            ),
+          ];
+        }
         // Gluetun's control server can run without auth, through a role with
         // auth = "none", and then there is no key to give.
         final bool keyOptional = _kind == ServiceKind.gluetun;

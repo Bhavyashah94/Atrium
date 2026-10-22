@@ -1,6 +1,6 @@
 # Atrium - Status
 
-> Snapshot of what genuinely works and what is left, as of 2026-10-20.
+> Snapshot of what genuinely works and what is left, as of 2026-10-21.
 > Atrium is published on F-Droid and on the GitHub releases page. It is
 > still in early development and every module is work in progress; nothing
 > here is a release promise.
@@ -19,7 +19,7 @@ Atrium is a **controller** app. Video playback was removed by design
   Streaming (backdrop session cards from Plex / Jellyfin / Emby /
   Tautulli, tap-through to each module's now-playing screen) and
   Transfers (qBittorrent downloads *and active uploads*, Deluge,
-  Transmission and rTorrent transfers,
+  Transmission, rTorrent and aria2 transfers,
   SABnzbd slots,
   NZBGet groups, Sonarr/Radarr queues). Per-instance resilience: an unreachable server
   degrades to a chip, never blocks the feed
@@ -294,6 +294,48 @@ Atrium is a **controller** app. Video playback was removed by design
   app downloads the file itself and sends the bytes, which does work. That
   fetch deliberately uses a bare Dio rather than the instance one, so an
   instance's credentials are never sent to whatever host a pasted link names
+
+- **aria2** (added 2026-10-21, modernized 2026-10-22, live-verified against 1.37.0): the
+  client that speaks its own protocol rather than a REST API - JSON-RPC over
+  `POST /jsonrpc`, with the daemon's `--rpc-secret` sent as `token:<secret>` as the first
+  parameter of every call and nowhere else. It is a parameter, not a header,
+  so the secret never rides to a proxy by accident, and it is optional: a
+  daemon started without one answers anyone, so the instance form asks for it
+  but does not demand it. One batched `system.multicall` poll asks for the
+  three download lists, the daemon's totals, and its version in a single
+  atomic round-trip; aria2's numbers arrive as strings, so the models parse both
+  primitive and string representations robustly.
+  The UI features a streamlined transfers workflow built on Material 3 dynamic
+  theming without any hardcoded colors:
+  - **Transfers Hub**: Hero telemetry bar with live aggregate download/upload speeds,
+    active/waiting/stopped counters, dynamic filter chips with badge counts,
+    real-time query search across names, GIDs, paths, and Bittorrent info-hashes,
+    and multi-field sorting (name, progress, size, speed, ETA) with asc/desc direction toggling.
+  - **Batch Operations**: Multi-select mode with master select all / clear all, and
+    batch actions (pause active, resume queued, remove with confirmation dialog).
+  - **Transfer Cards**: Clean transfer rows displaying progress bars, speed metrics,
+    ETA, completed/total size, pause/resume toggle, and quick access to top-of-queue
+    or detail inspection.
+  - **Deep Inspector**: Dedicated detail screen featuring:
+    - *Overview*: GID, directory path, info-hash, piece length, piece count, error codes, and live transfer rates.
+    - *Files*: Interactive file list with completion status and per-file selection checkboxes for multi-file torrents.
+    - *Sources & Mirrors*: Live connection states, active mirror URIs, dynamic mirror injection dialog (`changeUri`), and mirror removal.
+    - *BitTorrent Peers*: Real-time peer list from `getPeers` displaying peer IP/port, decoded client software name, choking/seeding flags, and transfer rates.
+    - *Speed Overrides*: Live per-download rate limiting (`changeOption` for `max-download-limit` and `max-upload-limit`).
+  - **Settings Tab**: Daemon global options editor categorized into Bandwidth, Concurrency,
+    Storage, and BitTorrent, supporting inline modification of global limits, connection splits,
+    file allocation, and max peers, with clear read-only indicators for daemon startup options
+    configured in `aria2.conf` (disk cache, DHT, listen port).
+  - **System Diagnostics Tab**: Real-time daemon session ID, enabled features list (Async DNS,
+    BitTorrent, Firefox3 Cookie, GZip, HTTPS, Message Digest, Metalink, XML-RPC), session flush
+    to disk, and graceful daemon shutdown trigger with confirmation dialog.
+  A refused secret is reported honestly: aria2 answers a wrong secret with HTTP 400 and an
+  `error` envelope, so the health dot warns instead of calling the daemon healthy.
+  The health probe inspects the JSON-RPC envelope rather than trusting the status alone.
+  Verified against a real aria2 1.37.0 daemon: downloads transfer live, speed limits apply
+  immediately, mirrors are injected and removed on the fly, `.torrent` files and magnets load.
+  The live test lives in the package (`test/live_aria2_test.dart`) and needs
+  `ARIA2_URL` and `ARIA2_SECRET` to run.
 
 - **iOS**: the target exists and CI builds it unsigned on macOS on every
   change, so it cannot rot unnoticed. Deep links already no-op off Android and

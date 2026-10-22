@@ -14,6 +14,7 @@ export const servicesList = [
   'deluge',
   'transmission',
   'rtorrent',
+  'aria2',
   'tracearr',
   'sabnzbd',
   'nzbget',
@@ -243,6 +244,25 @@ export const servicesData = {
       'Real-Time Transfer Rates & Peer Ratios',
       'Granular Pause, Resume & Remove Actions',
       'Detailed Tracker Status & Hash Checks'
+    ]
+  },
+  aria2: {
+    name: 'aria2',
+    category: 'Downloads & Utilities',
+    icon: asset('assets/service_icons/aria2.png'),
+    screenshots: [
+      asset('assets/service_previews/aria2/aria2_1.png'),
+      asset('assets/service_previews/aria2/aria2_2.png'),
+      asset('assets/service_previews/aria2/aria2_3.png'),
+      asset('assets/service_previews/aria2/aria2_4.png')
+    ],
+    description: 'Lightweight multi-protocol download utility client. Supervise active tasks with real-time throughput telemetry, adjust individual speed limits, inject live mirrors, and manage global daemon options.',
+    features: [
+      'Unified Transfers Hub with Real-Time Speed Telemetry',
+      'Multi-Field Sorting & Live Search Filtering',
+      'Batch Multi-Select Pause, Resume & Remove Actions',
+      'Per-Task Speed Limits & Live Mirror Injection',
+      'Full Daemon Settings Editor & System Diagnostics'
     ]
   },
   tracearr: {

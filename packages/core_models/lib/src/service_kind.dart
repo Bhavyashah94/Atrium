@@ -31,6 +31,7 @@ enum ServiceKind {
   ombi,
   myspeed,
   adguardHome,
+  aria2,
 }
 
 /// Static metadata about a [ServiceKind] - display name, default port, the
@@ -67,6 +68,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.ombi => 'Ombi',
         ServiceKind.myspeed => 'MySpeed',
         ServiceKind.adguardHome => 'AdGuard Home',
+        ServiceKind.aria2 => 'aria2',
       };
 
   /// One-line role description.
@@ -98,13 +100,14 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.ombi => 'Requests',
         ServiceKind.myspeed => 'Internet speed',
         ServiceKind.adguardHome => 'Network-wide blocking',
+        ServiceKind.aria2 => 'Download client',
       };
 
   /// Whether this service's integration is still in beta. Surfaced as a
   /// "BETA" badge in the service picker, on the instance tile, and on the
   /// service's own screen so users know it is not yet fully stable.
   bool get isBeta => switch (this) {
-        ServiceKind.deluge || ServiceKind.rtorrent => true,
+        ServiceKind.deluge || ServiceKind.rtorrent || ServiceKind.aria2 => true,
         _ => false,
       };
 
@@ -146,6 +149,8 @@ extension ServiceKindX on ServiceKind {
         // Where the admin page listens once the setup wizard has run. Port
         // 3000 is only the wizard's.
         ServiceKind.adguardHome => 80,
+        // aria2's own RPC port, and the one the docs use.
+        ServiceKind.aria2 => 6800,
       };
 
   /// What auth flow the service uses by default. Some services (Jellyfin) can
@@ -165,6 +170,11 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.myspeed ||
         ServiceKind.ombi =>
           AuthStyle.apiKey,
+        // aria2's credential is its `--rpc-secret`, which is sent as the
+        // first RPC parameter rather than as a header. It is optional - a
+        // daemon with no secret answers anyone - so the form must not
+        // demand one.
+        ServiceKind.aria2 => AuthStyle.apiKey,
         // Transmission and rTorrent both use HTTP Basic, and for both it is
         // *optional* - rTorrent's XML-RPC has no auth of its own and is only
         // protected when someone puts a proxy in front - so the form must not
@@ -210,7 +220,8 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.nzbget ||
         ServiceKind.deluge ||
         ServiceKind.transmission ||
-        ServiceKind.rtorrent =>
+        ServiceKind.rtorrent ||
+        ServiceKind.aria2 =>
           ServiceRole.downloader,
         ServiceKind.glances => ServiceRole.analytics,
         ServiceKind.speedtestTracker => ServiceRole.analytics,
@@ -233,7 +244,8 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.qbittorrent ||
         ServiceKind.deluge ||
         ServiceKind.transmission ||
-        ServiceKind.rtorrent =>
+        ServiceKind.rtorrent ||
+        ServiceKind.aria2 =>
           true,
         _ => false,
       };

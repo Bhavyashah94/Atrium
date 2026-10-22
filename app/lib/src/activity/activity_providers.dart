@@ -14,6 +14,7 @@ import 'package:service_radarr/service_radarr.dart';
 import 'package:service_sabnzbd/service_sabnzbd.dart';
 import 'package:service_sonarr/service_sonarr.dart';
 import 'package:service_tautulli/service_tautulli.dart';
+import 'package:service_aria2/service_aria2.dart';
 
 /// One active playback session, normalized across Plex / Jellyfin / Emby /
 /// Tautulli for the cross-service Activity feed (and future dashboard
@@ -258,6 +259,12 @@ final activityDownloadsProvider =
           (List<RtorrentTorrent> torrents) =>
               _rtorrentDownloads(instance, torrents),
         );
+      case ServiceKind.aria2:
+        collect(
+          instance,
+          ref.watch(aria2SnapshotProvider(instance)),
+          (Aria2Snapshot snapshot) => _aria2Downloads(instance, snapshot),
+        );
       case ServiceKind.sonarr:
         collect(
           instance,
@@ -325,6 +332,8 @@ void refreshActivity(WidgetRef ref) {
         ref.invalidate(transmissionRawTorrentsProvider(instance));
       case ServiceKind.rtorrent:
         ref.invalidate(rtorrentRawTorrentsProvider(instance));
+      case ServiceKind.aria2:
+        ref.invalidate(aria2SnapshotProvider(instance));
       case ServiceKind.sonarr:
         ref.invalidate(sonarrQueueProvider(instance));
       case ServiceKind.radarr:
@@ -675,6 +684,37 @@ List<ActivityDownload> _rtorrentDownloads(
             instance: instance,
             hash: t.hash,
             initialName: t.name,
+          ),
+        ),
+  ];
+}
+
+List<ActivityDownload> _aria2Downloads(
+  Instance instance,
+  Aria2Snapshot snapshot,
+) {
+  return <ActivityDownload>[
+    // Active transfers: incomplete downloads plus active seeds moving bytes.
+    // Idle seeds and paused downloads stay out of the activity feed.
+    for (final Aria2Download d in <Aria2Download>[
+      ...snapshot.active,
+      ...snapshot.waiting,
+    ])
+      if (!d.isPaused && (!d.isSeeding || d.uploadSpeed > 0))
+        ActivityDownload(
+          key: '${instance.id}:${d.gid}',
+          instance: instance,
+          sourceKind: instance.kind,
+          title: d.displayName,
+          progress: d.progress,
+          speedBps: d.downloadSpeed > 0 ? d.downloadSpeed : null,
+          upSpeedBps: d.uploadSpeed > 0 ? d.uploadSpeed : null,
+          eta: d.etaSeconds == null ? null : _fmtEtaSeconds(d.etaSeconds!),
+          status: aria2StatusLabel(d.status, seeder: d.isSeeding),
+          onOpenBuilder: (BuildContext _) => Aria2DownloadDetailScreen(
+            instance: instance,
+            gid: d.gid,
+            initialName: d.displayName,
           ),
         ),
   ];
