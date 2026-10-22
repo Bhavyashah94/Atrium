@@ -290,8 +290,9 @@ class DashboardDownloadsWidget extends ConsumerWidget {
       final Aria2Snapshot? data = snapshot.value;
       if (data != null) {
         totalSpeed += data.stat.downloadSpeed;
+        // Finished seeds are not downloads.
         for (final Aria2Download d in <Aria2Download>[
-          ...data.active,
+          ...data.active.where((Aria2Download d) => !d.isSeeding),
           ...data.waiting.where((Aria2Download d) => d.status == 'waiting'),
         ]) {
           rows.add(_DownloadRow(
