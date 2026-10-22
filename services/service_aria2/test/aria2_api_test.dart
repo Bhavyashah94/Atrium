@@ -415,4 +415,110 @@ void main() {
     final Aria2Api api = Aria2Api(dio);
     expect(api.getVersion, throwsA(isA<Aria2RpcException>()));
   });
+
+  test('getPeers parses peer list', () async {
+    final List<RequestOptions> log = <RequestOptions>[];
+    final Aria2Api api = _api(
+      (RequestOptions o) => (
+        status: 200,
+        data: <String, dynamic>{
+          'result': <dynamic>[
+            <String, dynamic>{
+              'peerId': 'peer123',
+              'ip': '1.2.3.4',
+              'port': '6881',
+              'bitfield': 'ff',
+              'amChoking': 'false',
+              'peerChoking': 'false',
+              'downloadSpeed': '1024',
+              'uploadSpeed': '512',
+              'seeder': 'true',
+            },
+          ],
+        },
+      ),
+      log: log,
+    );
+    final List<Aria2Peer> peers = await api.getPeers('2089b05ecca3d829');
+    expect(_body(log.single)['method'], 'aria2.getPeers');
+    expect(peers.length, 1);
+    expect(peers.first.ip, '1.2.3.4');
+    expect(peers.first.port, 6881);
+    expect(peers.first.seeder, true);
+    expect(peers.first.downloadSpeed, 1024);
+  });
+
+  test('getServers parses connected servers', () async {
+    final List<RequestOptions> log = <RequestOptions>[];
+    final Aria2Api api = _api(
+      (RequestOptions o) => (
+        status: 200,
+        data: <String, dynamic>{
+          'result': <dynamic>[
+            <String, dynamic>{
+              'index': '1',
+              'servers': <dynamic>[
+                <String, dynamic>{
+                  'uri': 'http://mirror1.com/file',
+                  'currentUri': 'http://mirror1.com/file',
+                  'downloadSpeed': '5000',
+                },
+              ],
+            },
+          ],
+        },
+      ),
+      log: log,
+    );
+    final List<Aria2Server> servers = await api.getServers('2089b05ecca3d829');
+    expect(_body(log.single)['method'], 'aria2.getServers');
+    expect(servers.length, 1);
+    expect(servers.first.servers.first.uri, 'http://mirror1.com/file');
+    expect(servers.first.servers.first.downloadSpeed, 5000);
+  });
+
+  test(
+    'saveSession, shutdown, and forcePauseAll call expected RPC methods',
+    () async {
+      final List<RequestOptions> log = <RequestOptions>[];
+      final Aria2Api api = _api(
+        (RequestOptions o) =>
+            (status: 200, data: <String, dynamic>{'result': 'OK'}),
+        log: log,
+      );
+      await api.saveSession();
+      await api.shutdown();
+      await api.forceShutdown();
+      await api.forcePauseAll();
+
+      expect(_body(log[0])['method'], 'aria2.saveSession');
+      expect(_body(log[1])['method'], 'aria2.shutdown');
+      expect(_body(log[2])['method'], 'aria2.forceShutdown');
+      expect(_body(log[3])['method'], 'aria2.forcePauseAll');
+    },
+  );
+
+  test(
+    'changeUri sends proper arguments and returns deleted/added counts',
+    () async {
+      final List<RequestOptions> log = <RequestOptions>[];
+      final Aria2Api api = _api(
+        (RequestOptions o) => (
+          status: 200,
+          data: <String, dynamic>{
+            'result': <dynamic>[1, 2],
+          },
+        ),
+        log: log,
+      );
+      final List<int> res = await api.changeUri(
+        'gid123',
+        1,
+        delUris: <String>['http://old.com'],
+        addUris: <String>['http://new1.com', 'http://new2.com'],
+      );
+      expect(_body(log.single)['method'], 'aria2.changeUri');
+      expect(res, <int>[1, 2]);
+    },
+  );
 }
