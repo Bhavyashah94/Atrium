@@ -1,9 +1,12 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_networking/core_networking.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import 'aria2_api.dart';
 import 'models/aria2_download.dart';
+import 'models/aria2_file.dart';
+import 'models/aria2_peer.dart';
 import 'models/aria2_snapshot.dart';
 
 /// How often the download lists refresh while a screen is visible.
@@ -68,3 +71,143 @@ final aria2GlobalOptionsProvider = FutureProvider.autoDispose
       final Aria2Api api = await ref.watch(aria2ApiProvider(instance).future);
       return api.getGlobalOption();
     });
+
+/// Active peers for a BitTorrent download.
+final aria2PeersProvider = FutureProvider.autoDispose
+    .family<List<Aria2Peer>, (Instance, String)>((
+      Ref ref,
+      (Instance, String) key,
+    ) async {
+      ref.pollEvery(aria2DetailPollInterval);
+      final (Instance instance, String gid) = key;
+      final Aria2Api api = await ref.watch(aria2ApiProvider(instance).future);
+      try {
+        return await api.getPeers(gid);
+      } catch (_) {
+        return const <Aria2Peer>[];
+      }
+    });
+
+/// URIs for a download.
+final aria2UrisProvider = FutureProvider.autoDispose
+    .family<List<Aria2Uri>, (Instance, String)>((
+      Ref ref,
+      (Instance, String) key,
+    ) async {
+      ref.pollEvery(aria2DetailPollInterval);
+      final (Instance instance, String gid) = key;
+      final Aria2Api api = await ref.watch(aria2ApiProvider(instance).future);
+      try {
+        return await api.getUris(gid);
+      } catch (_) {
+        return const <Aria2Uri>[];
+      }
+    });
+
+/// Options of one specific download.
+final aria2DownloadOptionProvider = FutureProvider.autoDispose
+    .family<Map<String, String>, (Instance, String)>((
+      Ref ref,
+      (Instance, String) key,
+    ) async {
+      final (Instance instance, String gid) = key;
+      final Aria2Api api = await ref.watch(aria2ApiProvider(instance).future);
+      try {
+        return await api.getOption(gid);
+      } catch (_) {
+        return const <String, String>{};
+      }
+    });
+
+// -----------------------------------------------------------------------------
+// UI State & Filtering Providers
+// -----------------------------------------------------------------------------
+
+/// Unified filter settings for transfers.
+enum Aria2TransfersFilter {
+  all('All'),
+  active('Active'),
+  waiting('Queued'),
+  completed('Completed'),
+  paused('Paused'),
+  error('Errors');
+
+  const Aria2TransfersFilter(this.label);
+  final String label;
+}
+
+/// Filter settings for stopped transfers.
+enum Aria2ActivityFilter {
+  all('All'),
+  complete('Completed'),
+  error('Errored'),
+  removed('Removed');
+
+  const Aria2ActivityFilter(this.label);
+  final String label;
+}
+
+/// Sorting fields supported by transfers.
+enum Aria2SortField {
+  name('Name'),
+  size('Size'),
+  progress('Progress'),
+  downloadSpeed('Download Speed'),
+  uploadSpeed('Upload Speed'),
+  eta('ETA');
+
+  const Aria2SortField(this.label);
+  final String label;
+}
+
+/// Active tab index in Aria2Home (0: Transfers, 1: Activity, 2: Settings, 3: System).
+final aria2ActiveTabProvider = StateProvider.family<int, Instance>(
+  (Ref ref, Instance instance) => 0,
+);
+
+/// Visibility of the bottom navigation bar.
+final aria2BottomNavVisibleProvider = StateProvider.family<bool, Instance>(
+  (Ref ref, Instance instance) => true,
+);
+
+/// Search query for active & queued transfers.
+final aria2SearchQueryProvider = StateProvider.family<String, Instance>(
+  (Ref ref, Instance instance) => '',
+);
+
+/// Search query for completed & stopped activity.
+final aria2ActivitySearchQueryProvider = StateProvider.family<String, Instance>(
+  (Ref ref, Instance instance) => '',
+);
+
+/// Filter for active & queued transfers.
+final aria2TransfersFilterProvider =
+    StateProvider.family<Aria2TransfersFilter, Instance>(
+      (Ref ref, Instance instance) => Aria2TransfersFilter.all,
+    );
+
+/// Filter for stopped history items.
+final aria2ActivityFilterProvider =
+    StateProvider.family<Aria2ActivityFilter, Instance>(
+      (Ref ref, Instance instance) => Aria2ActivityFilter.all,
+    );
+
+/// Sort field for transfers.
+final aria2SortFieldProvider = StateProvider.family<Aria2SortField, Instance>(
+  (Ref ref, Instance instance) => Aria2SortField.name,
+);
+
+/// Sort ascending toggle.
+final aria2SortAscendingProvider = StateProvider.family<bool, Instance>(
+  (Ref ref, Instance instance) => true,
+);
+
+/// Set of selected GIDs for multi-selection.
+final aria2SelectionProvider = StateProvider.family<Set<String>, Instance>(
+  (Ref ref, Instance instance) => <String>{},
+);
+
+/// Scroll-to-top event bus per tab.
+final aria2ScrollToTopProvider = StateProvider.family<int, (Instance, int)>(
+  (Ref ref, (Instance, int) key) => 0,
+);

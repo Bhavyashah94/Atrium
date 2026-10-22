@@ -6,6 +6,8 @@ import 'package:dio/dio.dart';
 import 'models/aria2_download.dart';
 import 'models/aria2_file.dart';
 import 'models/aria2_global_stat.dart';
+import 'models/aria2_peer.dart';
+import 'models/aria2_server.dart';
 import 'models/aria2_snapshot.dart';
 import 'models/aria2_version.dart';
 
@@ -303,6 +305,54 @@ class Aria2Api {
     return info['sessionId']?.toString() ?? '';
   }
 
+  /// The active peers for a BitTorrent download (`aria2.getPeers`).
+  Future<List<Aria2Peer>> getPeers(String gid) async {
+    final dynamic result = await _call('aria2.getPeers', <dynamic>[gid]);
+    if (result is! List) {
+      return const <Aria2Peer>[];
+    }
+    return <Aria2Peer>[
+      for (final dynamic item in result)
+        if (item is Map) Aria2Peer.fromJson(item.cast<String, dynamic>()),
+    ];
+  }
+
+  /// The active server connections for a download (`aria2.getServers`).
+  Future<List<Aria2Server>> getServers(String gid) async {
+    final dynamic result = await _call('aria2.getServers', <dynamic>[gid]);
+    if (result is! List) {
+      return const <Aria2Server>[];
+    }
+    return <Aria2Server>[
+      for (final dynamic item in result)
+        if (item is Map) Aria2Server.fromJson(item.cast<String, dynamic>()),
+    ];
+  }
+
+  /// The URIs used for a download (`aria2.getUris`).
+  Future<List<Aria2Uri>> getUris(String gid) async {
+    final dynamic result = await _call('aria2.getUris', <dynamic>[gid]);
+    if (result is! List) {
+      return const <Aria2Uri>[];
+    }
+    return <Aria2Uri>[
+      for (final dynamic item in result)
+        if (item is Map) Aria2Uri.fromJson(item.cast<String, dynamic>()),
+    ];
+  }
+
+  /// The options of one download (`aria2.getOption`).
+  Future<Map<String, String>> getOption(String gid) async {
+    final dynamic result = await _call('aria2.getOption', <dynamic>[gid]);
+    if (result is! Map) {
+      return const <String, String>{};
+    }
+    return <String, String>{
+      for (final MapEntry<Object?, Object?> entry in result.entries)
+        entry.key.toString(): entry.value.toString(),
+    };
+  }
+
   // -------------------------------------------------------------------------
   // Writes
   // -------------------------------------------------------------------------
@@ -353,6 +403,28 @@ class Aria2Api {
     return _asGid(await _call('aria2.addTorrent', params));
   }
 
+  /// Adds a metalink download from base64 encoded bytes (`aria2.addMetalink`).
+  ///
+  /// Returns the list of GIDs added.
+  Future<List<String>> addMetalink(
+    String metalinkBase64, {
+    Map<String, String> options = const <String, String>{},
+    int? position,
+  }) async {
+    final List<dynamic> params = <dynamic>[metalinkBase64];
+    if (options.isNotEmpty || position != null) {
+      params.add(options);
+    }
+    if (position != null) {
+      params.add(position);
+    }
+    final dynamic result = await _call('aria2.addMetalink', params);
+    if (result is! List) {
+      return const <String>[];
+    }
+    return result.map((dynamic item) => item.toString()).toList();
+  }
+
   /// Pauses a download (active or waiting).
   Future<void> pause(String gid) => _command('aria2.pause', <dynamic>[gid]);
 
@@ -365,6 +437,9 @@ class Aria2Api {
 
   /// Pauses every active download.
   Future<void> pauseAll() => _command('aria2.pauseAll');
+
+  /// Pauses every active download without waiting for them to stop first.
+  Future<void> forcePauseAll() => _command('aria2.forcePauseAll');
 
   /// Resumes every paused download.
   Future<void> unpauseAll() => _command('aria2.unpauseAll');
@@ -407,6 +482,39 @@ class Aria2Api {
   Future<void> setGlobalUploadLimit(int bytesPerSec) => changeGlobalOption(
     <String, String>{'max-overall-upload-limit': '$bytesPerSec'},
   );
+
+  /// Adds or removes mirror URIs for a download (`aria2.changeUri`).
+  ///
+  /// Returns `[deletedCount, addedCount]`.
+  Future<List<int>> changeUri(
+    String gid,
+    int fileIndex, {
+    List<String> delUris = const <String>[],
+    List<String> addUris = const <String>[],
+    int? position,
+  }) async {
+    final List<dynamic> params = <dynamic>[gid, fileIndex, delUris, addUris];
+    if (position != null) {
+      params.add(position);
+    }
+    final dynamic result = await _call('aria2.changeUri', params);
+    if (result is! List) {
+      return const <int>[0, 0];
+    }
+    return <int>[
+      for (final dynamic v in result)
+        if (v is int) v else int.tryParse(v.toString()) ?? 0,
+    ];
+  }
+
+  /// Flushes the current session to disk (`aria2.saveSession`).
+  Future<void> saveSession() => _command('aria2.saveSession');
+
+  /// Shuts down the aria2 daemon gracefully (`aria2.shutdown`).
+  Future<void> shutdown() => _command('aria2.shutdown');
+
+  /// Forcefully shuts down the aria2 daemon (`aria2.forceShutdown`).
+  Future<void> forceShutdown() => _command('aria2.forceShutdown');
 
   // -------------------------------------------------------------------------
   // Helpers

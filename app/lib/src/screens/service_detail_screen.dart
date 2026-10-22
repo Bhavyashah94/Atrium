@@ -162,6 +162,15 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
         ),
       );
     }
+    if (instance.kind == ServiceKind.aria2) {
+      return Aria2Home(
+        instance: instance,
+        drawer: ServicesDrawer(
+          instances: ref.watch(activeInstancesProvider),
+          profile: ref.watch(activeProfileProvider),
+        ),
+      );
+    }
     return PopScope<Object?>(
         canPop: false,
         onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -377,7 +386,8 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       ServiceKind.myspeed => const SizedBox.shrink(),
       // Owns its own scaffold, handled above.
       ServiceKind.adguardHome => const SizedBox.shrink(),
-      ServiceKind.aria2 => Aria2Home(instance: instance),
+      // Owns its own scaffold, handled above.
+      ServiceKind.aria2 => const SizedBox.shrink(),
     };
   }
 }

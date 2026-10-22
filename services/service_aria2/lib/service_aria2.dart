@@ -17,5 +17,7 @@ export 'src/models/aria2_download.dart';
 export 'src/models/aria2_file.dart';
 export 'src/models/aria2_global_stat.dart';
 export 'src/models/aria2_json.dart';
+export 'src/models/aria2_peer.dart';
+export 'src/models/aria2_server.dart';
 export 'src/models/aria2_snapshot.dart';
 export 'src/models/aria2_version.dart';

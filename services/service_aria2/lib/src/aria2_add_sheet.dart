@@ -10,17 +10,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'aria2_api.dart';
 import 'aria2_providers.dart';
 
-/// One `.torrent` handed to the sheet, as bytes plus a name to show.
-///
-/// A record rather than a class so the app can pass these in without the
-/// service packages needing a shared type to depend on.
+/// One `.torrent` or `.metalink` handed to the sheet, as bytes plus a name to show.
 typedef TorrentFileArg = ({Uint8List bytes, String? name});
 
 /// Opens the add-download sheet for [instance].
-///
-/// The optional arguments prefill the sheet when another app shares torrents
-/// with Atrium: [initialLink] for a magnet or a `.torrent` URL, or
-/// [initialFiles] for one or more `.torrent` files handed over as bytes.
 Future<void> showAria2AddSheet(
   BuildContext context,
   Instance instance, {
@@ -29,8 +22,6 @@ Future<void> showAria2AddSheet(
 }) {
   return showModalBottomSheet<void>(
     context: context,
-    // The sheet is a route too, so it needs the root navigator for the same
-    // reason a pushed page does.
     useRootNavigator: true,
     isScrollControlled: true,
     showDragHandle: true,
@@ -66,11 +57,14 @@ class _AddDownloadFormState extends ConsumerState<_AddDownloadForm> {
   final TextEditingController _uris = TextEditingController();
   final TextEditingController _dir = TextEditingController();
   final TextEditingController _out = TextEditingController();
+  final TextEditingController _split = TextEditingController();
+  final TextEditingController _maxConn = TextEditingController();
+  final TextEditingController _speedLimit = TextEditingController();
+  final TextEditingController _headers = TextEditingController();
 
-  /// The `.torrent` files staged for adding, base64 encoded as aria2 wants
-  /// them.
-  final List<({String name, String base64})> _files =
-      <({String name, String base64})>[];
+  /// Staged files for adding, base64 encoded as aria2 wants them.
+  final List<({String name, String base64, bool isMetalink})> _files =
+      <({String name, String base64, bool isMetalink})>[];
 
   bool _pause = false;
   bool _busy = false;
@@ -82,8 +76,11 @@ class _AddDownloadFormState extends ConsumerState<_AddDownloadForm> {
     if (shared != null && shared.isNotEmpty) {
       _files.addAll(
         shared.map(
-          (TorrentFileArg f) =>
-              (name: f.name ?? 'torrent', base64: base64Encode(f.bytes)),
+          (TorrentFileArg f) => (
+            name: f.name ?? 'torrent',
+            base64: base64Encode(f.bytes),
+            isMetalink: f.name?.toLowerCase().endsWith('.metalink') ?? false,
+          ),
         ),
       );
     } else if (widget.initialLink != null) {
@@ -96,10 +93,13 @@ class _AddDownloadFormState extends ConsumerState<_AddDownloadForm> {
     _uris.dispose();
     _dir.dispose();
     _out.dispose();
+    _split.dispose();
+    _maxConn.dispose();
+    _speedLimit.dispose();
+    _headers.dispose();
     super.dispose();
   }
 
-  /// The URIs typed in, one per line, blanks dropped.
   List<String> get _lines => _uris.text
       .split(RegExp(r'[\r\n]+'))
       .map((String line) => line.trim())
@@ -109,37 +109,38 @@ class _AddDownloadFormState extends ConsumerState<_AddDownloadForm> {
   bool get _byFile => _files.isNotEmpty;
 
   String get _fileLabel => switch (_files.length) {
-    0 => 'Or pick a .torrent file',
+    0 => 'Or pick a .torrent / .metalink file',
     1 => _files.first.name,
-    final int n => '$n torrents',
+    final int n => '$n files selected',
   };
 
   Future<void> _pickFile() async {
     final FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.custom,
-      allowedExtensions: <String>['torrent'],
+      allowedExtensions: <String>['torrent', 'metalink'],
     );
-    if (result == null) {
-      return;
-    }
-    final List<({String name, String base64})> picked =
-        <({String name, String base64})>[];
+    if (result == null) return;
+
+    final List<({String name, String base64, bool isMetalink})> picked =
+        <({String name, String base64, bool isMetalink})>[];
     for (final PlatformFile file in result.files) {
       final Uint8List bytes = await file.readAsBytes();
-      picked.add((name: file.name, base64: base64Encode(bytes)));
+      final bool isMetalink = file.name.toLowerCase().endsWith('.metalink');
+      picked.add((
+        name: file.name,
+        base64: base64Encode(bytes),
+        isMetalink: isMetalink,
+      ));
     }
-    if (picked.isEmpty) {
-      return;
-    }
+    if (picked.isEmpty) return;
     setState(() => _files.addAll(picked));
   }
 
   Future<void> _submit() async {
     final List<String> uris = _lines;
     final bool byFile = _byFile;
-    if (!byFile && uris.isEmpty) {
-      return;
-    }
+    if (!byFile && uris.isEmpty) return;
+
     setState(() => _busy = true);
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final NavigatorState navigator = Navigator.of(context);
@@ -147,37 +148,45 @@ class _AddDownloadFormState extends ConsumerState<_AddDownloadForm> {
       final Aria2Api api = await ref.read(
         aria2ApiProvider(widget.instance).future,
       );
+
       final Map<String, String> options = <String, String>{
         if (_dir.text.trim().isNotEmpty) 'dir': _dir.text.trim(),
-        // A file name only makes sense for a single download.
         if (uris.length == 1 && _out.text.trim().isNotEmpty)
           'out': _out.text.trim(),
+        if (_split.text.trim().isNotEmpty) 'split': _split.text.trim(),
+        if (_maxConn.text.trim().isNotEmpty)
+          'max-connection-per-server': _maxConn.text.trim(),
+        if (_speedLimit.text.trim().isNotEmpty) ...<String, String>{
+          'max-download-limit':
+              '${(int.tryParse(_speedLimit.text.trim()) ?? 0) * 1024}',
+        },
+        if (_headers.text.trim().isNotEmpty) 'header': _headers.text.trim(),
         if (_pause) 'pause': 'true',
       };
+
       if (byFile) {
-        for (final ({String name, String base64}) file in _files) {
-          await api.addTorrent(file.base64, options: options);
+        for (final ({String name, String base64, bool isMetalink}) file
+            in _files) {
+          if (file.isMetalink) {
+            await api.addMetalink(file.base64, options: options);
+          } else {
+            await api.addTorrent(file.base64, options: options);
+          }
         }
       } else if (uris.length == 1) {
         await api.addUri(uris, options: options);
       } else {
-        // aria2's `addUri` treats every URI as a mirror of the same file, so
-        // a list of links is added one download at a time - which is what
-        // someone pasting four links into a download box means.
         for (final String uri in uris) {
           await api.addUri(<String>[uri], options: options);
         }
       }
-      if (!mounted) {
-        return;
-      }
+
+      if (!mounted) return;
       ref.invalidate(aria2SnapshotProvider(widget.instance));
       navigator.pop();
       messenger.showSnackBar(const SnackBar(content: Text('Added')));
     } catch (e) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() => _busy = false);
       messenger.showSnackBar(SnackBar(content: Text('Add failed: $e')));
     }
@@ -204,8 +213,7 @@ class _AddDownloadFormState extends ConsumerState<_AddDownloadForm> {
                 labelText: 'URI or magnet link',
                 hintText: 'magnet:?xt=urn:btih:... or https://host/file',
                 helperText:
-                    'One per line. Each line is added as its own '
-                    'download.',
+                    'One per line. Each line is added as its own download.',
               ),
               autocorrect: false,
             ),
@@ -220,49 +228,95 @@ class _AddDownloadFormState extends ConsumerState<_AddDownloadForm> {
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
                   onPressed: () => setState(_files.clear),
-                  icon: const Icon(Icons.close),
-                  label: const Text('Use a link instead'),
+                  icon: const Icon(Icons.close, size: 16),
+                  label: const Text('Clear selected files'),
                 ),
               ),
-            const SizedBox(height: Insets.md),
-            TextField(
-              controller: _dir,
-              decoration: const InputDecoration(
-                labelText: 'Directory (optional)',
-                hintText: '/downloads',
-                helperText: 'Left empty, the daemon\'s own default is used.',
-              ),
-              autocorrect: false,
-            ),
             const SizedBox(height: Insets.sm),
-            TextField(
-              controller: _out,
-              enabled: !byFile && _lines.length == 1,
-              decoration: const InputDecoration(
-                labelText: 'File name (optional)',
-                helperText: 'Only for a single link.',
-              ),
-              autocorrect: false,
+            ExpansionTile(
+              title: const Text('Advanced Options'),
+              tilePadding: EdgeInsets.zero,
+              children: <Widget>[
+                TextField(
+                  controller: _dir,
+                  decoration: const InputDecoration(
+                    labelText: 'Download directory (optional)',
+                    hintText: '/downloads/custom',
+                  ),
+                ),
+                if (!byFile) ...<Widget>[
+                  const SizedBox(height: Insets.sm),
+                  TextField(
+                    controller: _out,
+                    decoration: const InputDecoration(
+                      labelText: 'Custom output filename (single URI only)',
+                      hintText: 'my_file.zip',
+                    ),
+                  ),
+                ],
+                const SizedBox(height: Insets.sm),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: TextField(
+                        controller: _split,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Split pieces',
+                          hintText: 'e.g. 8',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: Insets.sm),
+                    Expanded(
+                      child: TextField(
+                        controller: _maxConn,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Conn per server',
+                          hintText: 'e.g. 4',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: Insets.sm),
+                TextField(
+                  controller: _speedLimit,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Download speed limit (KB/s)',
+                    hintText: '0 for unlimited',
+                  ),
+                ),
+                const SizedBox(height: Insets.sm),
+                TextField(
+                  controller: _headers,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Custom HTTP Headers',
+                    hintText: 'Cookie: ... or Authorization: ...',
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: Insets.sm),
-            SwitchListTile(
-              value: _pause,
-              onChanged: (bool value) => setState(() => _pause = value),
-              title: const Text('Add paused'),
-              subtitle: const Text('The download waits until you start it.'),
+            const SizedBox(height: Insets.xs),
+            CheckboxListTile(
               contentPadding: EdgeInsets.zero,
+              title: const Text('Start paused'),
+              value: _pause,
+              onChanged: (bool? value) =>
+                  setState(() => _pause = value ?? false),
             ),
             const SizedBox(height: Insets.md),
-            FilledButton.icon(
+            FilledButton(
               onPressed: _busy ? null : _submit,
-              icon: _busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
+              child: _busy
+                  ? const SizedBox.square(
+                      dimension: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.add),
-              label: const Text('Add'),
+                  : const Text('Add'),
             ),
           ],
         ),
