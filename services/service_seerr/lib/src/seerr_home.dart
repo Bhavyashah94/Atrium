@@ -48,9 +48,9 @@ class SeerrHome extends StatelessWidget {
   }
 }
 
-/// The Requests tab body: All / Pending / Approved / Declined filter chips
-/// over the polled request list. The chips cut down the list already read,
-/// so switching them sends nothing.
+/// The Requests tab body: All / Pending / Approved / Completed / Declined
+/// filter chips over the polled request list. The chips cut down the list
+/// already read, so switching them sends nothing.
 class _SeerrRequestsTab extends ConsumerStatefulWidget {
   const _SeerrRequestsTab({required this.instance});
 
@@ -77,22 +77,24 @@ class _SeerrRequestsTabState extends ConsumerState<_SeerrRequestsTab> {
       children: <Widget>[
         SizedBox(
           height: 52,
-          child: ListView(
+          // Five chips are wider than a phone: the row scrolls sideways.
+          child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: Insets.pageH,
-            children: <Widget>[
-              for (final SeerrRequestFilter filter in SeerrRequestFilter.values)
-                Padding(
-                  padding: const EdgeInsets.only(right: Insets.sm),
-                  child: Center(
+            child: Row(
+              children: <Widget>[
+                for (final SeerrRequestFilter filter
+                    in SeerrRequestFilter.values)
+                  Padding(
+                    padding: const EdgeInsets.only(right: Insets.sm),
                     child: FilterChip(
                       label: Text(filter.label),
                       selected: _filter == filter,
                       onSelected: (_) => setState(() => _filter = filter),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
         Expanded(
@@ -340,6 +342,10 @@ class _RequestTileState extends ConsumerState<_RequestTile> {
         return 'Approved';
       case 3:
         return 'Declined';
+      case 4:
+        return 'Failed';
+      case 5:
+        return 'Completed';
       default:
         return 'Unknown ($status)';
     }

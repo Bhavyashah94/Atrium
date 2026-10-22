@@ -15,13 +15,15 @@ const Instance _instance = Instance(
   auth: InstanceAuth.apiKey(apiKey: 'k'),
 );
 
-/// Two pending (the default status), one approved, one declined and one failed, in that order.
+/// Two pending (the default status), then one each approved, declined,
+/// failed and completed, in that order.
 const List<SeerrRequest> _requests = <SeerrRequest>[
   SeerrRequest(id: 1),
   SeerrRequest(id: 2, status: 2),
   SeerrRequest(id: 3),
   SeerrRequest(id: 4, status: 3),
   SeerrRequest(id: 5, status: 4),
+  SeerrRequest(id: 6, status: 5),
 ];
 
 void main() {
@@ -31,13 +33,19 @@ void main() {
         ];
 
     test('all keeps every request, failed ones included', () {
-      expect(ids(SeerrRequestFilter.all), <int>[1, 2, 3, 4, 5]);
+      expect(ids(SeerrRequestFilter.all), <int>[1, 2, 3, 4, 5, 6]);
     });
 
     test('each status chip keeps its own status, in order', () {
       expect(ids(SeerrRequestFilter.pending), <int>[1, 3]);
       expect(ids(SeerrRequestFilter.approved), <int>[2]);
       expect(ids(SeerrRequestFilter.declined), <int>[4]);
+      expect(ids(SeerrRequestFilter.completed), <int>[6]);
+    });
+
+    test('failed and completed have their own labels', () {
+      expect(seerrRequestStatusStyle(4)?.label, 'Failed');
+      expect(seerrRequestStatusStyle(5)?.label, 'Completed');
     });
   });
 
@@ -47,6 +55,9 @@ void main() {
       List<SeerrRequest> requests, {
       void Function()? onRead,
     }) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -63,8 +74,17 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    /// The chip for [label], scrolled into view: the chip row is wider
+    /// than a phone and scrolls sideways.
+    Future<Finder> chip(WidgetTester tester, String label) async {
+      final Finder chip = find.widgetWithText(FilterChip, label);
+      await tester.ensureVisible(chip);
+      await tester.pumpAndSettle();
+      return chip;
+    }
+
     Future<void> pick(WidgetTester tester, String label) async {
-      await tester.tap(find.widgetWithText(FilterChip, label));
+      await tester.tap(await chip(tester, label));
       await tester.pumpAndSettle();
     }
 
@@ -76,14 +96,15 @@ void main() {
         'All',
         'Pending',
         'Approved',
+        'Completed',
         'Declined',
       ]) {
-        expect(find.widgetWithText(FilterChip, label), findsOneWidget);
+        expect(await chip(tester, label), findsOneWidget);
       }
-      final FilterChip all =
-          tester.widget(find.widgetWithText(FilterChip, 'All'));
+      final FilterChip all = tester.widget(await chip(tester, 'All'));
       expect(all.selected, isTrue);
-      expect(find.textContaining('Status: '), findsNWidgets(5));
+      expect(find.textContaining('Status: '), findsNWidgets(6));
+      expect(find.text('Status: Failed'), findsOneWidget);
     });
 
     testWidgets('a chip shows only its status, without reading again',
@@ -99,12 +120,16 @@ void main() {
       expect(find.text('Status: Approved'), findsOneWidget);
       expect(find.textContaining('Status: '), findsOneWidget);
 
+      await pick(tester, 'Completed');
+      expect(find.text('Status: Completed'), findsOneWidget);
+      expect(find.textContaining('Status: '), findsOneWidget);
+
       await pick(tester, 'Declined');
       expect(find.text('Status: Declined'), findsOneWidget);
       expect(find.textContaining('Status: '), findsOneWidget);
 
       await pick(tester, 'All');
-      expect(find.textContaining('Status: '), findsNWidgets(5));
+      expect(find.textContaining('Status: '), findsNWidgets(6));
       expect(reads, 1);
     });
 
@@ -116,7 +141,7 @@ void main() {
 
       expect(find.text('No pending requests'), findsOneWidget);
       expect(find.text('Nothing is waiting for approval.'), findsOneWidget);
-      expect(find.widgetWithText(FilterChip, 'All'), findsOneWidget);
+      expect(await chip(tester, 'All'), findsOneWidget);
     });
 
     testWidgets('no requests at all says so under All',
