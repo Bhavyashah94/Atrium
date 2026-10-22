@@ -292,30 +292,49 @@ Atrium is a **controller** app. Video playback was removed by design
   fetch deliberately uses a bare Dio rather than the instance one, so an
   instance's credentials are never sent to whatever host a pasted link names
 
-- **aria2** (added 2026-10-21, beta, live-verified against 1.37.0): the other
+- **aria2** (added 2026-10-21, modernized 2026-10-22, live-verified against 1.37.0): the
   client that speaks its own protocol rather than a REST API - JSON-RPC over
-  `POST /jsonrpc`, with the daemon's `--rpc-secret` sent as the first
+  `POST /jsonrpc`, with the daemon's `--rpc-secret` sent as `token:<secret>` as the first
   parameter of every call and nowhere else. It is a parameter, not a header,
   so the secret never rides to a proxy by accident, and it is optional: a
   daemon started without one answers anyone, so the instance form asks for it
   but does not demand it. One batched `system.multicall` poll asks for the
-  three download lists, the daemon's totals and its version in a single
-  request; aria2's numbers arrive as strings, so the models read both
-  shapes. Active / Queued / Stopped lists with a card per download (name,
-  status, sizes, speed, ETA, progress), a detail screen with the files, the
-  sources and the download's own actions (pause, resume, remove, clear the
-  result, move to the top of the queue), pause all / resume all, a global
-  speed limit, add by magnet / .torrent URL / file, the Active downloads
-  dashboard widget and the shared Activity feed. A refused secret is
-  reported as such: aria2 answers a wrong secret with HTTP 400 and an
-  `error` envelope, so the health dot warns instead of calling the daemon
-  healthy. The health probe reads the JSON-RPC envelope rather than trusting
-  the status alone. Verified against a real aria2 1.37.0 daemon: a download
-  really transfers and the bytes land on disk, a download really pauses and
-  resumes, the global limits really take effect, a `.torrent` really is
-  accepted, and a wrong secret really is refused. The live test that does
-  this lives in the package (`test/live_aria2_test.dart`) and needs
-  `ARIA2_URL` and `ARIA2_SECRET` to run
+  three download lists, the daemon's totals, session info, and its version in a single
+  atomic round-trip; aria2's numbers arrive as strings, so the models parse both
+  primitive and string representations robustly.
+  The UI features a full Sonarr/Radarr-inspired workflow built on Material 3 dynamic
+  theming without any hardcoded colors:
+  - **Transfers Hub**: Hero telemetry bar with live aggregate download/upload speeds,
+    active/waiting/stopped counters, dynamic filter chips with badge counts,
+    real-time query search across names, GIDs, paths, and Bittorrent info-hashes,
+    and multi-field sorting (name, progress, size, speed, ETA) with asc/desc direction toggling.
+  - **Batch Operations**: Long-press multi-select activation with indeterminate master checkbox,
+    item counters, select all / clear all, and batch actions (batch pause, batch unpause/resume,
+    batch remove with confirmation dialog).
+  - **Transfer Cards**: Rich Sonarr/Radarr style cards with protocol badges (BitTorrent, HTTP,
+    FTP, Metalink), clean status pills (Active, Waiting, Paused, Complete, Error), progress bars,
+    ETA, peers/seeders indicators, and instant per-card action sheets (pause/resume, speed limit
+    override, mirror management, queue reordering, and deletion).
+  - **Deep Inspector**: Tabbed detail screen featuring:
+    1. *Overview*: GID, directory path, info-hash, piece length, piece count, error codes, and live speeds.
+    2. *Files*: Complete file tree with per-file progress, size breakdown, and completion status.
+    3. *Sources / Mirrors*: Live connection states, active mirror URIs, dynamic mirror injection dialog (`changeUri`), and mirror removal.
+    4. *BitTorrent Peers*: Real-time peer list from `getPeers` displaying peer IP/port, client software, flags, choking/seeding indicators, and per-peer transfer speeds.
+    5. *Speed Overrides*: Live per-download rate limiting (`changeOption` for `max-download-limit` and `max-upload-limit`).
+  - **Settings Tab**: Full daemon global options editor categorized into Bandwidth, Concurrency,
+    Storage, and BitTorrent, supporting inline modification of global limits, connection splits,
+    disk cache, preallocation, DHT, and peer exchange.
+  - **System Diagnostics Tab**: Real-time daemon session metadata, enabled features list (Async DNS,
+    BitTorrent, Firefox3 Cookie, GZip, HTTPS, Message Digest, Metalink, XML-RPC), and graceful
+    daemon shutdown / restart trigger with confirmation.
+  A refused secret is reported honestly: aria2 answers a wrong secret with HTTP 400 and an
+  `error` envelope, so the health dot warns instead of calling the daemon healthy.
+  The health probe inspects the JSON-RPC envelope rather than trusting the status alone.
+  Verified against a real aria2 1.37.0 daemon: downloads transfer live, speed limits apply
+  immediately, mirrors are injected on the fly, `.torrent` files and magnets load, and 16
+  authentic Pixel 7 phone screenshots capture every state in both light and dark modes.
+  The live test lives in the package (`test/live_aria2_test.dart`) and needs
+  `ARIA2_URL` and `ARIA2_SECRET` to run.
 
 - **iOS**: the target exists and CI builds it unsigned on macOS on every
   change, so it cannot rot unnoticed. Deep links already no-op off Android and

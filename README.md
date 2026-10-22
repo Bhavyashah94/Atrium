@@ -73,7 +73,7 @@ each one covers:
 | Deluge                 | torrent list, add/manage, queue moves, speed limits, torrent detail (beta) |
 | Transmission           | the web UI's filters, actions and inspector, full settings, turtle mode |
 | rTorrent               | torrent list, add/manage, priorities, speed limits, torrent detail (beta) |
-| aria2                  | download lists, add/manage, global speed limits, download detail (beta) |
+| aria2                  | unified transfers hub with live telemetry, dynamic filter chips, batch multi-select, live search & multi-field sorting, per-download speed limits & live mirror injection, full daemon global settings editor (bandwidth, concurrency, storage, bittorrent), and system diagnostics with graceful shutdown |
 | SABnzbd                | queue, history with retry, speed limit, server stats                  |
 | NZBGet                 | queue with reorder/priority/category, add NZB, speed limit, history   |
 | Glances                | CPU/memory/network/disk monitoring                                    |
