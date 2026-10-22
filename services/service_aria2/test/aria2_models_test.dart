@@ -117,6 +117,22 @@ void main() {
     expect(aria2FormatEta(7500), '2h 5m');
   });
 
+  test('Aria2Peer clientName decodes Azureus prefix and handles binary IDs', () {
+    const Aria2Peer qb = Aria2Peer(peerId: '-qB4650-abcdef123456');
+    expect(qb.clientName, 'qBittorrent 4.6.5.0');
+
+    const Aria2Peer tr = Aria2Peer(peerId: '-TR3000-xyz987654321');
+    expect(tr.clientName, 'Transmission 3.0.0.0');
+
+    // Binary peer ID with unescaped percent sign that would throw in Uri.decodeComponent
+    const Aria2Peer binary = Aria2Peer(peerId: '%E4%B8%AD%stray%');
+    expect(binary.clientName, isNotEmpty);
+    expect(binary.clientName.contains('%stray%'), isTrue);
+
+    const Aria2Peer unknown = Aria2Peer(ip: '192.168.1.50');
+    expect(unknown.clientName, 'Unknown Peer');
+  });
+
   test('aria2StatusLabel names the statuses the daemon sends', () {
     expect(aria2StatusLabel('active'), 'Downloading');
     expect(aria2StatusLabel('waiting'), 'Queued');

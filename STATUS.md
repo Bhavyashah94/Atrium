@@ -299,40 +299,38 @@ Atrium is a **controller** app. Video playback was removed by design
   so the secret never rides to a proxy by accident, and it is optional: a
   daemon started without one answers anyone, so the instance form asks for it
   but does not demand it. One batched `system.multicall` poll asks for the
-  three download lists, the daemon's totals, session info, and its version in a single
+  three download lists, the daemon's totals, and its version in a single
   atomic round-trip; aria2's numbers arrive as strings, so the models parse both
   primitive and string representations robustly.
-  The UI features a full Sonarr/Radarr-inspired workflow built on Material 3 dynamic
+  The UI features a streamlined transfers workflow built on Material 3 dynamic
   theming without any hardcoded colors:
   - **Transfers Hub**: Hero telemetry bar with live aggregate download/upload speeds,
     active/waiting/stopped counters, dynamic filter chips with badge counts,
     real-time query search across names, GIDs, paths, and Bittorrent info-hashes,
     and multi-field sorting (name, progress, size, speed, ETA) with asc/desc direction toggling.
-  - **Batch Operations**: Long-press multi-select activation with indeterminate master checkbox,
-    item counters, select all / clear all, and batch actions (batch pause, batch unpause/resume,
-    batch remove with confirmation dialog).
-  - **Transfer Cards**: Rich Sonarr/Radarr style cards with protocol badges (BitTorrent, HTTP,
-    FTP, Metalink), clean status pills (Active, Waiting, Paused, Complete, Error), progress bars,
-    ETA, peers/seeders indicators, and instant per-card action sheets (pause/resume, speed limit
-    override, mirror management, queue reordering, and deletion).
-  - **Deep Inspector**: Tabbed detail screen featuring:
-    1. *Overview*: GID, directory path, info-hash, piece length, piece count, error codes, and live speeds.
-    2. *Files*: Complete file tree with per-file progress, size breakdown, and completion status.
-    3. *Sources / Mirrors*: Live connection states, active mirror URIs, dynamic mirror injection dialog (`changeUri`), and mirror removal.
-    4. *BitTorrent Peers*: Real-time peer list from `getPeers` displaying peer IP/port, client software, flags, choking/seeding indicators, and per-peer transfer speeds.
-    5. *Speed Overrides*: Live per-download rate limiting (`changeOption` for `max-download-limit` and `max-upload-limit`).
-  - **Settings Tab**: Full daemon global options editor categorized into Bandwidth, Concurrency,
+  - **Batch Operations**: Multi-select mode with master select all / clear all, and
+    batch actions (pause active, resume queued, remove with confirmation dialog).
+  - **Transfer Cards**: Clean transfer rows displaying progress bars, speed metrics,
+    ETA, completed/total size, pause/resume toggle, and quick access to top-of-queue
+    or detail inspection.
+  - **Deep Inspector**: Dedicated detail screen featuring:
+    - *Overview*: GID, directory path, info-hash, piece length, piece count, error codes, and live transfer rates.
+    - *Files*: Interactive file list with completion status and per-file selection checkboxes for multi-file torrents.
+    - *Sources & Mirrors*: Live connection states, active mirror URIs, dynamic mirror injection dialog (`changeUri`), and mirror removal.
+    - *BitTorrent Peers*: Real-time peer list from `getPeers` displaying peer IP/port, decoded client software name, choking/seeding flags, and transfer rates.
+    - *Speed Overrides*: Live per-download rate limiting (`changeOption` for `max-download-limit` and `max-upload-limit`).
+  - **Settings Tab**: Daemon global options editor categorized into Bandwidth, Concurrency,
     Storage, and BitTorrent, supporting inline modification of global limits, connection splits,
-    disk cache, preallocation, DHT, and peer exchange.
-  - **System Diagnostics Tab**: Real-time daemon session metadata, enabled features list (Async DNS,
-    BitTorrent, Firefox3 Cookie, GZip, HTTPS, Message Digest, Metalink, XML-RPC), and graceful
-    daemon shutdown / restart trigger with confirmation.
+    file allocation, and max peers, with clear read-only indicators for daemon startup options
+    configured in `aria2.conf` (disk cache, DHT, listen port).
+  - **System Diagnostics Tab**: Real-time daemon session ID, enabled features list (Async DNS,
+    BitTorrent, Firefox3 Cookie, GZip, HTTPS, Message Digest, Metalink, XML-RPC), session flush
+    to disk, and graceful daemon shutdown / restart trigger with confirmation dialog.
   A refused secret is reported honestly: aria2 answers a wrong secret with HTTP 400 and an
   `error` envelope, so the health dot warns instead of calling the daemon healthy.
   The health probe inspects the JSON-RPC envelope rather than trusting the status alone.
   Verified against a real aria2 1.37.0 daemon: downloads transfer live, speed limits apply
-  immediately, mirrors are injected on the fly, `.torrent` files and magnets load, and 16
-  authentic Pixel 7 phone screenshots capture every state in both light and dark modes.
+  immediately, mirrors are injected and removed on the fly, `.torrent` files and magnets load.
   The live test lives in the package (`test/live_aria2_test.dart`) and needs
   `ARIA2_URL` and `ARIA2_SECRET` to run.
 

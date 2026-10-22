@@ -10,9 +10,14 @@ import '../models/aria2_snapshot.dart';
 
 /// Tab 3: Daemon metadata, enabled features, telemetry, and daemon maintenance operations.
 class Aria2SystemTab extends ConsumerStatefulWidget {
-  const Aria2SystemTab({required this.instance, super.key});
+  const Aria2SystemTab({
+    required this.instance,
+    this.onOpenDrawer,
+    super.key,
+  });
 
   final Instance instance;
+  final VoidCallback? onOpenDrawer;
 
   @override
   ConsumerState<Aria2SystemTab> createState() => _Aria2SystemTabState();
@@ -123,7 +128,7 @@ class _Aria2SystemTabState extends ConsumerState<Aria2SystemTab> {
       aria2SnapshotProvider(widget.instance),
     );
 
-    ref.listen<int>(aria2ScrollToTopProvider((widget.instance, 3)), (
+    ref.listen<int>(aria2ScrollToTopProvider((widget.instance, 2)), (
       previous,
       next,
     ) {
@@ -138,11 +143,10 @@ class _Aria2SystemTabState extends ConsumerState<Aria2SystemTab> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: Builder(
-          builder: (BuildContext context) => IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: widget.onOpenDrawer ??
+              () => Scaffold.of(context).openDrawer(),
         ),
         title: const Text('System'),
         actions: <Widget>[

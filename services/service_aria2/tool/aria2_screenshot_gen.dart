@@ -1,3 +1,6 @@
+@Tags(<String>['screenshot'])
+library;
+
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -11,10 +14,10 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_aria2/service_aria2.dart';
 
-const String _outDir =
-    r'C:\Users\bhavy\.gemini\antigravity\brain\e17bb2e9-c1e2-4c39-adb3-fda7246421d6\aria2_shots';
-const String _fontDir =
-    r'C:\Users\bhavy\development\flutter\bin\cache\artifacts\material_fonts';
+final String _outDir = Platform.environment['SCREENSHOT_OUT_DIR'] ??
+    const String.fromEnvironment('SCREENSHOT_OUT_DIR');
+final String _fontDir = Platform.environment['FLUTTER_FONT_DIR'] ??
+    const String.fromEnvironment('FLUTTER_FONT_DIR');
 
 const Key _shotKey = ValueKey<String>('shot');
 
@@ -29,6 +32,9 @@ Instance _instance() => const Instance(
 );
 
 Future<void> _loadFonts() async {
+  if (_fontDir.isEmpty || !Directory(_fontDir).existsSync()) {
+    return;
+  }
   final Map<String, List<String>> families = <String, List<String>>{
     'Roboto': <String>[
       'roboto-regular.ttf',
@@ -40,7 +46,7 @@ Future<void> _loadFonts() async {
   for (final MapEntry<String, List<String>> entry in families.entries) {
     final FontLoader loader = FontLoader(entry.key);
     for (final String file in entry.value) {
-      final File source = File('$_fontDir\\$file');
+      final File source = File('$_fontDir${Platform.pathSeparator}$file');
       if (source.existsSync()) {
         loader.addFont(
           Future<ByteData>.value(source.readAsBytesSync().buffer.asByteData()),
@@ -61,8 +67,8 @@ Future<void> _capture(WidgetTester tester, String name) async {
     final ByteData? byteData = await image.toByteData(
       format: ui.ImageByteFormat.png,
     );
-    if (byteData == null) return;
-    final File file = File('$_outDir\\$name.png');
+    if (_outDir.isEmpty || byteData == null) return;
+    final File file = File('$_outDir${Platform.pathSeparator}$name.png');
     file.parent.createSync(recursive: true);
     file.writeAsBytesSync(byteData.buffer.asUint8List());
   });

@@ -8,8 +8,10 @@ import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 import 'aria2_api.dart';
 import 'aria2_format.dart';
 import 'aria2_providers.dart';
+import 'aria2_speed_dialog.dart';
 import 'models/aria2_download.dart';
 import 'models/aria2_file.dart';
+import 'models/aria2_json.dart';
 import 'models/aria2_peer.dart';
 
 /// One download, in full: its progress, its files, its sources, connected peers,
@@ -67,22 +69,19 @@ class Aria2DownloadDetailScreen extends ConsumerWidget {
 
     if (!context.mounted) return;
 
-    final ({int dlKb, int ulKb})? result =
-        await showDialog<({int dlKb, int ulKb})>(
-          context: context,
-          builder: (BuildContext ctx) => _TaskSpeedDialog(
-            initialDlKb: currentDl ~/ 1024,
-            initialUlKb: currentUl ~/ 1024,
-          ),
-        );
+    final ({int dlBytes, int ulBytes})? result = await showAria2TaskSpeedDialog(
+      context,
+      currentDlBytes: currentDl,
+      currentUlBytes: currentUl,
+    );
 
     if (result != null && context.mounted) {
       await _run(
         context,
         ref,
         (Aria2Api api) => api.changeOption(gid, <String, String>{
-          'max-download-limit': '${result.dlKb * 1024}',
-          'max-upload-limit': '${result.ulKb * 1024}',
+          'max-download-limit': '${result.dlBytes}',
+          'max-upload-limit': '${result.ulBytes}',
         }),
       );
     }
@@ -91,31 +90,63 @@ class Aria2DownloadDetailScreen extends ConsumerWidget {
   Future<void> _addMirrorUri(
     BuildContext context,
     WidgetRef ref,
-    int fileIndex,
+    List<Aria2File> files,
   ) async {
+    int selectedIndex = files.isNotEmpty ? files.first.index : 1;
     final TextEditingController urlController = TextEditingController();
     final String? newUrl = await showDialog<String>(
       context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        title: const Text('Add Mirror URI'),
-        content: TextField(
-          controller: urlController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'https://mirror.host/file.zip',
-            border: OutlineInputBorder(),
+      builder: (BuildContext ctx) => StatefulBuilder(
+        builder: (BuildContext ctx, StateSetter setState) => AlertDialog(
+          title: const Text('Add Mirror URI'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (files.length > 1) ...<Widget>[
+                DropdownButtonFormField<int>(
+                  isExpanded: true,
+                  initialValue: selectedIndex,
+                  decoration: const InputDecoration(
+                    labelText: 'Target File',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: <DropdownMenuItem<int>>[
+                    for (final Aria2File f in files)
+                      DropdownMenuItem<int>(
+                        value: f.index,
+                        child: Text(
+                          'File ${f.index}: ${aria2BaseName(f.path)}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: (int? val) {
+                    if (val != null) setState(() => selectedIndex = val);
+                  },
+                ),
+                const SizedBox(height: Insets.md),
+              ],
+              TextField(
+                controller: urlController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'https://mirror.host/file.zip',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
           ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(urlController.text.trim()),
+              child: const Text('Add'),
+            ),
+          ],
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(urlController.text.trim()),
-            child: const Text('Add'),
-          ),
-        ],
       ),
     );
 
@@ -124,7 +155,41 @@ class Aria2DownloadDetailScreen extends ConsumerWidget {
         context,
         ref,
         (Aria2Api api) =>
-            api.changeUri(gid, fileIndex, addUris: <String>[newUrl]),
+            api.changeUri(gid, selectedIndex, addUris: <String>[newUrl]),
+      );
+    }
+  }
+
+  Future<void> _removeMirrorUri(
+    BuildContext context,
+    WidgetRef ref,
+    int fileIndex,
+    String uri,
+  ) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: const Text('Remove Mirror'),
+        content: Text('Remove mirror URI?\n\n$uri'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await _run(
+        context,
+        ref,
+        (Aria2Api api) =>
+            api.changeUri(gid, fileIndex, delUris: <String>[uri]),
       );
     }
   }
@@ -162,8 +227,10 @@ class Aria2DownloadDetailScreen extends ConsumerWidget {
             onAction: (Future<void> Function(Aria2Api api) action) =>
                 _run(context, ref, action),
             onSpeedLimit: () => _editSpeedLimit(context, ref, data),
-            onAddMirror: (int fileIndex) =>
-                _addMirrorUri(context, ref, fileIndex),
+            onAddMirror: (List<Aria2File> files) =>
+                _addMirrorUri(context, ref, files),
+            onRemoveMirror: (int fileIndex, String uri) =>
+                _removeMirrorUri(context, ref, fileIndex, uri),
           );
         },
       ),
@@ -178,6 +245,7 @@ class _DetailBody extends ConsumerWidget {
     required this.onAction,
     required this.onSpeedLimit,
     required this.onAddMirror,
+    required this.onRemoveMirror,
   });
 
   final Instance instance;
@@ -185,7 +253,8 @@ class _DetailBody extends ConsumerWidget {
   final Future<void> Function(Future<void> Function(Aria2Api api) action)
   onAction;
   final VoidCallback onSpeedLimit;
-  final void Function(int fileIndex) onAddMirror;
+  final void Function(List<Aria2File> files) onAddMirror;
+  final void Function(int fileIndex, String uri) onRemoveMirror;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -381,12 +450,17 @@ class _DetailBody extends ConsumerWidget {
                 'Files (${download.files.length})',
                 style: theme.textTheme.titleSmall,
               ),
-              const Spacer(),
+              const SizedBox(width: Insets.sm),
               if (download.isLive && download.files.length > 1)
-                Text(
-                  'Tap checkbox to include/exclude',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurfaceVariant,
+                Expanded(
+                  child: Text(
+                    'Tap checkbox to include/exclude',
+                    textAlign: TextAlign.end,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
                   ),
                 ),
             ],
@@ -572,7 +646,7 @@ class _DetailBody extends ConsumerWidget {
                 TextButton.icon(
                   icon: const Icon(Icons.add, size: 16),
                   label: const Text('Add Mirror'),
-                  onPressed: () => onAddMirror(1),
+                  onPressed: () => onAddMirror(download.files),
                 ),
             ],
           ),
@@ -582,98 +656,35 @@ class _DetailBody extends ConsumerWidget {
             borderRadius: BorderRadius.circular(16),
             child: Column(
               children: <Widget>[
-                for (final Aria2Uri uri in download.files.expand(
-                  (Aria2File f) => f.uris,
-                ))
-                  ListTile(
-                    leading: const Icon(Icons.link, size: 20),
-                    title: Text(
-                      uri.uri,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                for (final Aria2File file in download.files)
+                  for (final Aria2Uri uri in file.uris)
+                    ListTile(
+                      leading: const Icon(Icons.link, size: 20),
+                      title: Text(
+                        uri.uri,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        uri.status.isEmpty
+                            ? (download.files.length > 1
+                                ? 'File ${file.index}'
+                                : '')
+                            : 'Status: ${uri.status}${download.files.length > 1 ? ' • File ${file.index}' : ''}',
+                      ),
+                      trailing: download.isLive
+                          ? IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 20),
+                              tooltip: 'Remove mirror',
+                              onPressed: () =>
+                                  onRemoveMirror(file.index, uri.uri),
+                            )
+                          : null,
                     ),
-                    subtitle: uri.status.isEmpty
-                        ? null
-                        : Text('Status: ${uri.status}'),
-                  ),
               ],
             ),
           ),
         ],
-      ],
-    );
-  }
-}
-
-class _TaskSpeedDialog extends StatefulWidget {
-  const _TaskSpeedDialog({
-    required this.initialDlKb,
-    required this.initialUlKb,
-  });
-
-  final int initialDlKb;
-  final int initialUlKb;
-
-  @override
-  State<_TaskSpeedDialog> createState() => _TaskSpeedDialogState();
-}
-
-class _TaskSpeedDialogState extends State<_TaskSpeedDialog> {
-  late final TextEditingController _dlController = TextEditingController(
-    text: widget.initialDlKb > 0 ? '${widget.initialDlKb}' : '',
-  );
-  late final TextEditingController _ulController = TextEditingController(
-    text: widget.initialUlKb > 0 ? '${widget.initialUlKb}' : '',
-  );
-
-  @override
-  void dispose() {
-    _dlController.dispose();
-    _ulController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Task speed limits'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          TextField(
-            controller: _dlController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Download limit (KB/s)',
-              helperText: '0 or empty for unlimited',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: Insets.md),
-          TextField(
-            controller: _ulController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Upload limit (KB/s)',
-              helperText: '0 or empty for unlimited',
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ],
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () {
-            final int dl = int.tryParse(_dlController.text.trim()) ?? 0;
-            final int ul = int.tryParse(_ulController.text.trim()) ?? 0;
-            Navigator.of(context).pop((dlKb: dl, ulKb: ul));
-          },
-          child: const Text('Save'),
-        ),
       ],
     );
   }

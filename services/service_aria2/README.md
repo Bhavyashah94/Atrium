@@ -29,7 +29,6 @@ To minimize network overhead and eliminate race conditions across multiple lists
 3. `aria2.tellStopped` (offset: 0, num: 1000)
 4. `aria2.getGlobalStat`
 5. `aria2.getVersion`
-6. `aria2.getSessionInfo`
 
 All download states and aggregate metrics update in one unified frame without flickering or mismatched totals.
 
@@ -38,7 +37,7 @@ aria2's JSON-RPC responses serialize large 64-bit integers (file sizes, complete
 
 ## Features & UX Design
 
-The user interface follows a modern Sonarr/Radarr-inspired workflow designed specifically for mobile ergonomics:
+The user interface follows a modern transfers workflow designed specifically for mobile ergonomics:
 
 - **Telemetry Hero Header**: Live aggregate download/upload speeds with animated direction glyphs, alongside active, waiting, and stopped transfer counts.
 - **Dynamic Filter Chips**: Instant filtering by `All`, `Active`, `Waiting`, `Paused`, `Complete`, and `Error` with dynamic item count badges.
@@ -47,25 +46,24 @@ The user interface follows a modern Sonarr/Radarr-inspired workflow designed spe
   - Multi-field sorting by Name, Progress, Size, Transfer Speed, or ETA with ascending/descending direction toggle.
 - **Batch Selection**:
   - Long-press or app bar toggle to activate multi-selection mode.
-  - Indeterminate selection status, Select All / Deselect All.
-  - Batch operations: Batch Pause (`aria2.pause`), Batch Resume (`aria2.unpause`), and Batch Remove (`aria2.remove` / `aria2.removeDownloadResult`).
+  - Select All / Clear All.
+  - Batch operations: Batch Pause active downloads, Batch Resume queued downloads, and Batch Remove with confirmation dialog.
 - **Transfer Cards**:
-  - Protocol badges (BitTorrent, HTTP, FTP, Metalink).
   - Status badges with contextual colors from `Theme.of(context).colorScheme`.
-  - Progress bar, remaining ETA, completed/total size, and peer/seeder counts.
-  - Quick action menu for pause, resume, speed limits, mirror inspection, queue reordering, and removal.
+  - Progress bar, remaining ETA, completed/total size, and active download/upload speeds.
+  - Quick action controls for pause, resume, retry, queue move to top, and removal.
 - **Deep Download Inspector (`Aria2DownloadDetailScreen`)**:
   - **Overview**: GID, save directory, piece size, piece count, info-hash, error codes, and live transfer rates.
-  - **Files**: Interactive file tree with individual file progress and sizes.
-  - **Sources & Mirrors**: Live connection states, active mirror URIs, dynamic mirror injection dialog (`aria2.changeUri`), and mirror removal.
-  - **BitTorrent Peers**: Real-time peer list (`aria2.getPeers`) detailing client software, IP/port, connection flags, choking/seeding status, and per-peer transfer speeds.
+  - **Files**: Interactive file list with completion status and per-file selection checkboxes for multi-file torrents.
+  - **Sources & Mirrors**: Live connection states, active mirror URIs, target file selector, dynamic mirror injection dialog (`aria2.changeUri`), and mirror removal.
+  - **BitTorrent Peers**: Real-time peer list (`aria2.getPeers`) detailing decoded client software name (Azureus prefix parsing), IP/port, connection flags, choking/seeding status, and per-peer transfer speeds.
   - **Per-Download Speed Limits**: Live rate limiting override (`aria2.changeOption` for `max-download-limit` and `max-upload-limit`).
 - **Global Settings Tab**:
   - Comprehensive daemon options editor structured into Bandwidth, Concurrency, Storage, and BitTorrent.
-  - Edit global download/upload limits, max concurrent downloads, split connections per server, min split size, disk cache, file preallocation, DHT, and peer exchange with live validation.
+  - Inline modification of global limits, connection splits, file allocation method, and max peers, with clear read-only notes for startup-only options set in `aria2.conf` (disk cache, DHT, listen port).
 - **System Diagnostics Tab**:
-  - Session ID, process uptime, active feature flags (Async DNS, BitTorrent, HTTPS, Metalink, etc.).
-  - Graceful daemon shutdown and force-shutdown triggers with confirmation dialogs.
+  - Session ID and active feature flags (Async DNS, BitTorrent, Firefox3 Cookie, GZip, HTTPS, Message Digest, Metalink, XML-RPC).
+  - Session flush to disk and graceful daemon shutdown trigger with confirmation dialog.
 - **Add Download Sheet**:
   - Supports HTTP/HTTPS URLs, FTP, BitTorrent magnet links, and local `.torrent` file selection.
   - Optional custom download directory override, request headers, and connection split configuration.

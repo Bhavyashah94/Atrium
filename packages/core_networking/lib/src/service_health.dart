@@ -331,10 +331,9 @@ Health interpretServiceHealthResponse(
           return Health.warning;
         }
         if (kind == ServiceKind.aria2 && !_aria2SaysOk(data)) {
-          // aria2 answers 200 even when it refuses the secret: the refusal
-          // is an `error` envelope inside a 200 body, not an HTTP status.
-          // Without reading the envelope a wrong secret would read as a
-          // healthy daemon.
+          // If a reverse proxy or RPC gateway returns 200 with an `error`
+          // envelope or missing `result` map rather than the version payload,
+          // ensure it flags a warning rather than falsely reporting healthy.
           return Health.warning;
         }
         return Health.ok;

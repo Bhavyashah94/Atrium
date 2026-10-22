@@ -495,7 +495,8 @@ void main() {
       pumps: 2,
     );
 
-    expect(find.text('1.0 MB/s'), findsOneWidget);
+    // Download rate is rendered both in the hero telemetry card and the active download row.
+    expect(find.text('1.0 MB/s'), findsNWidgets(2));
     expect(find.text('aria2'), findsOneWidget);
     expect(find.text('1.37.0'), findsOneWidget);
     // The active download is named after its file, since aria2 has no name of

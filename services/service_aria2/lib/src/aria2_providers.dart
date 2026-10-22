@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/legacy.dart';
 
 import 'aria2_api.dart';
 import 'models/aria2_download.dart';
-import 'models/aria2_file.dart';
 import 'models/aria2_peer.dart';
 import 'models/aria2_snapshot.dart';
 
@@ -88,22 +87,6 @@ final aria2PeersProvider = FutureProvider.autoDispose
       }
     });
 
-/// URIs for a download.
-final aria2UrisProvider = FutureProvider.autoDispose
-    .family<List<Aria2Uri>, (Instance, String)>((
-      Ref ref,
-      (Instance, String) key,
-    ) async {
-      ref.pollEvery(aria2DetailPollInterval);
-      final (Instance instance, String gid) = key;
-      final Aria2Api api = await ref.watch(aria2ApiProvider(instance).future);
-      try {
-        return await api.getUris(gid);
-      } catch (_) {
-        return const <Aria2Uri>[];
-      }
-    });
-
 /// Options of one specific download.
 final aria2DownloadOptionProvider = FutureProvider.autoDispose
     .family<Map<String, String>, (Instance, String)>((
@@ -136,17 +119,6 @@ enum Aria2TransfersFilter {
   final String label;
 }
 
-/// Filter settings for stopped transfers.
-enum Aria2ActivityFilter {
-  all('All'),
-  complete('Completed'),
-  error('Errored'),
-  removed('Removed');
-
-  const Aria2ActivityFilter(this.label);
-  final String label;
-}
-
 /// Sorting fields supported by transfers.
 enum Aria2SortField {
   name('Name'),
@@ -160,7 +132,7 @@ enum Aria2SortField {
   final String label;
 }
 
-/// Active tab index in Aria2Home (0: Transfers, 1: Activity, 2: Settings, 3: System).
+/// Active tab index in Aria2Home (0: Downloads, 1: Settings, 2: System).
 final aria2ActiveTabProvider = StateProvider.family<int, Instance>(
   (Ref ref, Instance instance) => 0,
 );
@@ -170,13 +142,13 @@ final aria2BottomNavVisibleProvider = StateProvider.family<bool, Instance>(
   (Ref ref, Instance instance) => true,
 );
 
-/// Search query for active & queued transfers.
-final aria2SearchQueryProvider = StateProvider.family<String, Instance>(
-  (Ref ref, Instance instance) => '',
+/// Whether the search bar is active in the downloads hub.
+final aria2SearchActiveProvider = StateProvider.family<bool, Instance>(
+  (Ref ref, Instance instance) => false,
 );
 
-/// Search query for completed & stopped activity.
-final aria2ActivitySearchQueryProvider = StateProvider.family<String, Instance>(
+/// Search query for active & queued transfers.
+final aria2SearchQueryProvider = StateProvider.family<String, Instance>(
   (Ref ref, Instance instance) => '',
 );
 
@@ -184,12 +156,6 @@ final aria2ActivitySearchQueryProvider = StateProvider.family<String, Instance>(
 final aria2TransfersFilterProvider =
     StateProvider.family<Aria2TransfersFilter, Instance>(
       (Ref ref, Instance instance) => Aria2TransfersFilter.all,
-    );
-
-/// Filter for stopped history items.
-final aria2ActivityFilterProvider =
-    StateProvider.family<Aria2ActivityFilter, Instance>(
-      (Ref ref, Instance instance) => Aria2ActivityFilter.all,
     );
 
 /// Sort field for transfers.

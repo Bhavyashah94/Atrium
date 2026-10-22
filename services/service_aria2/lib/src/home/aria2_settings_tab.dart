@@ -10,9 +10,14 @@ import '../aria2_providers.dart';
 
 /// Tab 2: Global aria2 configuration editor (bandwidth, concurrency, storage, and BitTorrent).
 class Aria2SettingsTab extends ConsumerStatefulWidget {
-  const Aria2SettingsTab({required this.instance, super.key});
+  const Aria2SettingsTab({
+    required this.instance,
+    this.onOpenDrawer,
+    super.key,
+  });
 
   final Instance instance;
+  final VoidCallback? onOpenDrawer;
 
   @override
   ConsumerState<Aria2SettingsTab> createState() => _Aria2SettingsTabState();
@@ -97,7 +102,7 @@ class _Aria2SettingsTabState extends ConsumerState<Aria2SettingsTab> {
       aria2GlobalOptionsProvider(widget.instance),
     );
 
-    ref.listen<int>(aria2ScrollToTopProvider((widget.instance, 2)), (
+    ref.listen<int>(aria2ScrollToTopProvider((widget.instance, 1)), (
       previous,
       next,
     ) {
@@ -112,11 +117,10 @@ class _Aria2SettingsTabState extends ConsumerState<Aria2SettingsTab> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: Builder(
-          builder: (BuildContext context) => IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: widget.onOpenDrawer ??
+              () => Scaffold.of(context).openDrawer(),
         ),
         title: const Text('Aria2 Settings'),
         actions: <Widget>[
@@ -318,13 +322,8 @@ class _Aria2SettingsTabState extends ConsumerState<Aria2SettingsTab> {
                   const Divider(height: 1),
                   ListTile(
                     title: const Text('Disk cache'),
-                    subtitle: Text(diskCache.isEmpty ? 'Disabled' : diskCache),
-                    trailing: const Icon(Icons.chevron_right, size: 20),
-                    onTap: () => _editText(
-                      title: 'Disk Cache Size',
-                      key: 'disk-cache',
-                      initial: diskCache,
-                      helper: 'e.g. 16M, 32M, 64M, or 0 to disable',
+                    subtitle: Text(
+                      '${diskCache.isEmpty ? 'Disabled' : diskCache} (startup only • set in aria2.conf)',
                     ),
                   ),
                   const Divider(height: 1),
@@ -415,12 +414,11 @@ class _Aria2SettingsTabState extends ConsumerState<Aria2SettingsTab> {
                     ),
                   ],
                   const Divider(height: 1),
-                  SwitchListTile(
+                  ListTile(
                     title: const Text('Enable DHT'),
-                    subtitle: const Text('IPv4 Distributed Hash Table network'),
-                    value: enableDht,
-                    onChanged: (bool val) =>
-                        _write('enable-dht', val ? 'true' : 'false'),
+                    subtitle: Text(
+                      '${enableDht ? 'Enabled' : 'Disabled'} (startup only • set in aria2.conf)',
+                    ),
                   ),
                   const Divider(height: 1),
                   ListTile(
@@ -436,13 +434,8 @@ class _Aria2SettingsTabState extends ConsumerState<Aria2SettingsTab> {
                   const Divider(height: 1),
                   ListTile(
                     title: const Text('Listen port'),
-                    subtitle: Text(listenPort),
-                    trailing: const Icon(Icons.chevron_right, size: 20),
-                    onTap: () => _editText(
-                      title: 'BitTorrent Listen Port',
-                      key: 'listen-port',
-                      initial: listenPort,
-                      helper: 'e.g. 6881-6999',
+                    subtitle: Text(
+                      '${listenPort.isEmpty ? 'Default' : listenPort} (startup only • set in aria2.conf)',
                     ),
                   ),
                 ],

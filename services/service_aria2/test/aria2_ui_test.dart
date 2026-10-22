@@ -220,4 +220,33 @@ void main() {
       expect(find.text('Task speed limits'), findsOneWidget);
     },
   );
+
+  testWidgets('Aria2Home hamburger opens drawer', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          aria2SnapshotProvider(testInstance).overrideWith((ref) => testSnapshot),
+          aria2GlobalOptionsProvider(
+            testInstance,
+          ).overrideWith((ref) => testGlobalOptions),
+        ],
+        child: const MaterialApp(
+          home: Aria2Home(
+            instance: testInstance,
+            drawer: Drawer(child: Text('Services Navigation Drawer')),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Services Navigation Drawer'), findsNothing);
+
+    // Tap the hamburger menu button
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+
+    // The drawer is now open and its content visible!
+    expect(find.text('Services Navigation Drawer'), findsOneWidget);
+  });
 }

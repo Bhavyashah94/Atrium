@@ -31,12 +31,6 @@ class Aria2Home extends ConsumerWidget {
       aria2BottomNavVisibleProvider(instance),
     );
 
-    final List<Widget> tabs = <Widget>[
-      Aria2DownloadsTab(instance: instance),
-      Aria2SettingsTab(instance: instance),
-      Aria2SystemTab(instance: instance),
-    ];
-
     return Scaffold(
       drawerEdgeDragWidth: drawer != null
           ? MediaQuery.sizeOf(context).width * 0.15
@@ -93,6 +87,13 @@ class Aria2Home extends ConsumerWidget {
         },
         child: Builder(
           builder: (BuildContext context) {
+            void openDrawer() => Scaffold.of(context).openDrawer();
+            final List<Widget> tabs = <Widget>[
+              Aria2DownloadsTab(instance: instance, onOpenDrawer: openDrawer),
+              Aria2SettingsTab(instance: instance, onOpenDrawer: openDrawer),
+              Aria2SystemTab(instance: instance, onOpenDrawer: openDrawer),
+            ];
+
             return PopScope<Object?>(
               canPop: false,
               onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -105,10 +106,14 @@ class Aria2Home extends ConsumerWidget {
                 }
 
                 // 2. Clear search if active
-                final String search = ref.read(
-                  aria2SearchQueryProvider(instance),
+                final bool isSearchActive = ref.read(
+                  aria2SearchActiveProvider(instance),
                 );
-                if (search.isNotEmpty) {
+                if (isSearchActive) {
+                  ref
+                          .read(aria2SearchActiveProvider(instance).notifier)
+                          .state =
+                      false;
                   ref.read(aria2SearchQueryProvider(instance).notifier).state =
                       '';
                   return;

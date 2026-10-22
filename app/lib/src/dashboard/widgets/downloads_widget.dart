@@ -93,9 +93,7 @@ final activeDownloadCountProvider = Provider.autoDispose<int>((Ref ref) {
           ref.watch(aria2SnapshotProvider(i)).value;
       if (snapshot != null) {
         count += snapshot.active.length;
-        count += snapshot.waiting
-            .where((Aria2Download d) => d.status == 'waiting')
-            .length;
+        count += snapshot.waiting.where((Aria2Download d) => d.isWaiting).length;
       }
     }
   }
