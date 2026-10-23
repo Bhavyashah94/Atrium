@@ -136,7 +136,7 @@ void main() {
       id: 'ev-1',
       timestamp: DateTime.now().subtract(const Duration(minutes: 8)),
       eventType: 'MalwareBlocked',
-      severity: 'Critical',
+      severity: 'Error',
       message: 'Blocked malicious payload: detected disguised .exe executable inside archive contents',
       downloadItemTitle: 'Adobe.Photoshop.2025.Cracked.Payload.exe',
       downloadClientName: 'qBittorrent',

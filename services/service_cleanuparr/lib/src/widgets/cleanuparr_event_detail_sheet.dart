@@ -152,12 +152,15 @@ class _SeverityChip extends StatelessWidget {
     Color bg = colorScheme.surfaceContainerHighest;
     Color fg = colorScheme.onSurfaceVariant;
 
-    if (lower == 'critical' || lower == 'error') {
+    if (lower == 'error' || lower == 'critical') {
       bg = colorScheme.errorContainer;
       fg = colorScheme.onErrorContainer;
     } else if (lower == 'warning' || lower == 'warn') {
       bg = colorScheme.tertiaryContainer;
       fg = colorScheme.onTertiaryContainer;
+    } else if (lower == 'important') {
+      bg = colorScheme.secondaryContainer;
+      fg = colorScheme.onSecondaryContainer;
     }
 
     return Container(

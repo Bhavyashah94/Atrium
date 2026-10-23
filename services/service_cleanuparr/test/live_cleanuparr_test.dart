@@ -57,8 +57,8 @@ void main() {
               'startTime': '2026-10-23T10:00:00Z',
             },
             'mediaManagers': <String, dynamic>{
-              'Sonarr Main': <String, dynamic>{'instanceCount': 1},
-              'Radarr 4K': <String, dynamic>{'instanceCount': 1},
+              'Sonarr': <String, dynamic>{'instanceCount': 1},
+              'Radarr': <String, dynamic>{'instanceCount': 1},
             },
           }),
         );
@@ -193,7 +193,7 @@ void main() {
                 'id': '8a09f1d2-0011-2233-4455-66778899aabb',
                 'timestamp': '2026-10-23T11:00:00Z',
                 'eventType': 'QueueItemDeleted',
-                'severity': 'Critical',
+                'severity': 'Error',
                 'message': 'Blocked executable disguised payload inside archive',
                 'itemTitle': 'Photoshop.2025.Crack.Payload.exe',
                 'itemHash': 'fedcba9876543210',
@@ -263,7 +263,7 @@ void main() {
     expect(status.appName, equals('Cleanuparr'));
     expect(status.memoryUsageMB, equals(128.0));
     expect(status.mediaManagers.length, equals(2));
-    expect(status.mediaManagers.first.name, equals('Sonarr Main'));
+    expect(status.mediaManagers.first.name, equals('Sonarr'));
     expect(status.downloadClients.length, equals(1));
     expect(status.downloadClients.first.name, equals('qBittorrent Seeder'));
   });
@@ -303,7 +303,7 @@ void main() {
     final List<CleanuparrEvent> events = await api.getEvents();
     expect(events.length, equals(2));
     expect(events.first.eventType, equals('QueueItemDeleted'));
-    expect(events.first.severity, equals('Critical'));
+    expect(events.first.severity, equals('Error'));
     expect(events.first.downloadItemTitle, contains('Photoshop'));
     expect(events.first.hash, equals('fedcba9876543210'));
     expect(events.first.deleteReason, equals('AllFilesBlocked'));

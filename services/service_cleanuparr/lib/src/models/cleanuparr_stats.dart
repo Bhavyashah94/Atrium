@@ -30,6 +30,38 @@ class CleanuparrStats {
   final int seekerGrabbed;
   final Map<String, int> strikesByType;
 
+  CleanuparrStats copyWith({
+    int? hours,
+    int? totalEvents,
+    int? eventsWarning,
+    int? eventsError,
+    int? strikesIssued,
+    int? strikesRecovered,
+    int? activeStrikes,
+    int? malwareBlocked,
+    int? totalRemovals,
+    int? totalCleaned,
+    int? seekerTriggers,
+    int? seekerGrabbed,
+    Map<String, int>? strikesByType,
+  }) {
+    return CleanuparrStats(
+      hours: hours ?? this.hours,
+      totalEvents: totalEvents ?? this.totalEvents,
+      eventsWarning: eventsWarning ?? this.eventsWarning,
+      eventsError: eventsError ?? this.eventsError,
+      strikesIssued: strikesIssued ?? this.strikesIssued,
+      strikesRecovered: strikesRecovered ?? this.strikesRecovered,
+      activeStrikes: activeStrikes ?? this.activeStrikes,
+      malwareBlocked: malwareBlocked ?? this.malwareBlocked,
+      totalRemovals: totalRemovals ?? this.totalRemovals,
+      totalCleaned: totalCleaned ?? this.totalCleaned,
+      seekerTriggers: seekerTriggers ?? this.seekerTriggers,
+      seekerGrabbed: seekerGrabbed ?? this.seekerGrabbed,
+      strikesByType: strikesByType ?? this.strikesByType,
+    );
+  }
+
   factory CleanuparrStats.fromJson(Map<String, dynamic> json, {int hours = 168}) {
     final Map<String, dynamic>? events =
         json['events'] is Map<String, dynamic>
@@ -59,7 +91,11 @@ class CleanuparrStats {
     final int strIssued = _asInt(strikes?['total'] ?? strikes?['totalIssued'] ?? strikes?['issued'] ?? json['strikesIssued']);
     final int strRec = _asInt(strikes?['recovered'] ?? strikes?['totalRecovered'] ?? json['strikesRecovered']);
     
-    // Active strikes: either explicitly passed or derived as (issued - recovered)
+    // Active strikes: either explicitly passed or derived as (issued - recovered).
+    // Note: strikes that ended in removal/deletion (rather than recovery) are not
+    // counted in 'recovered', so (total - recovered) is an upper-bound approximation
+    // from StatsV2Response alone. Exact live active items are tracked via the
+    // GET /api/strikes ledger totalCount.
     int strActive = _asInt(strikes?['active'] ?? strikes?['current'] ?? json['activeStrikes']);
     if (strActive == 0 && strIssued > strRec) {
       strActive = strIssued - strRec;

@@ -25,12 +25,9 @@ class CleanuparrEvent {
   bool get isMalware {
     final String reason = (deleteReason ?? '').toLowerCase();
     final String ev = eventType.toLowerCase();
-    final String sev = severity.toLowerCase();
     return reason.contains('blocked') ||
         reason.contains('malware') ||
-        ev.contains('malware') ||
-        sev == 'critical' ||
-        sev == 'error';
+        ev.contains('malware');
   }
 
   bool get isStrike =>

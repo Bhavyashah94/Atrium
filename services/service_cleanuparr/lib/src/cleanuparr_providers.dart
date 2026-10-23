@@ -108,8 +108,20 @@ final cleanuparrEventsProvider =
   final String search = ref.watch(cleanuparrEventsSearchProvider(instance));
   final String? filter = ref.watch(cleanuparrEventsFilterProvider(instance));
 
+  // For single-enum category 'DownloadCleaned', forward directly to backend
+  // so the query runs server-side across all database records.
+  final String? serverEventType =
+      (filter?.toLowerCase() == 'cleaned' || filter?.toLowerCase() == 'clean')
+          ? 'DownloadCleaned'
+          : null;
+
+  // Note: 'search' runs server-side across all records via backend LIKE query.
+  // For multi-enum categories ('strikes', 'malware', 'deletions'), the backend
+  // only accepts a single scalar EventType, so category classification is
+  // evaluated over the fetched page.
   final List<CleanuparrEvent> events = await api.getEvents(
     search: search.isNotEmpty ? search : null,
+    eventType: serverEventType,
   );
 
   if (filter == null || filter.isEmpty) {

@@ -77,7 +77,7 @@ void main() {
       id: 'ev-1',
       timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
       eventType: 'MalwareBlocked',
-      severity: 'Critical',
+      severity: 'Error',
       message: 'Blocked download matching malicious pattern: crack.exe',
       downloadItemTitle: 'Sample.Release.Malware.exe',
       downloadClientName: 'qBittorrent',
