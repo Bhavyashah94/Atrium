@@ -79,6 +79,8 @@ class CleanuparrStrikeCard extends ConsumerWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     final bool isRemoval = strikeItem.isMarkedForRemoval || strikeItem.isRemoved;
+    final String strikes =
+        '${strikeItem.strikeCount} ${strikeItem.strikeCount == 1 ? 'strike' : 'strikes'}';
     final Color badgeBg = isRemoval
         ? colorScheme.errorContainer
         : colorScheme.tertiaryContainer;
@@ -120,9 +122,13 @@ class CleanuparrStrikeCard extends ConsumerWidget {
                     borderRadius: Radii.chip,
                   ),
                   child: Text(
-                    isRemoval
-                        ? '${strikeItem.strikeCount} ${strikeItem.strikeCount == 1 ? 'strike' : 'strikes'} • Removal Pending'
-                        : '${strikeItem.strikeCount} ${strikeItem.strikeCount == 1 ? 'strike' : 'strikes'}',
+                    // The ledger keeps an item after Cleanuparr removes it,
+                    // until its strikes age out.
+                    strikeItem.isRemoved
+                        ? '$strikes • Removed'
+                        : strikeItem.isMarkedForRemoval
+                            ? '$strikes • Removal Pending'
+                            : strikes,
                     style: textTheme.labelSmall?.copyWith(
                       color: badgeFg,
                       fontWeight: FontWeight.bold,

@@ -164,4 +164,50 @@ void main() {
       expect(find.text('abc12345'), findsOneWidget); // Hash
     },
   );
+
+  testWidgets('the Strikes tab tells a pending removal from a done one', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cleanuparrStatusProvider(testInstance).overrideWith((ref) => testStatus),
+          cleanuparrStatsProvider(testInstance).overrideWith((ref) => testStats),
+          cleanuparrJobsProvider(testInstance).overrideWith((ref) => testJobs),
+          cleanuparrStrikesProvider(testInstance).overrideWith(
+            (ref) => const <CleanuparrStrikeItem>[
+              CleanuparrStrikeItem(id: 'a', title: 'Still.Stalled'),
+              CleanuparrStrikeItem(
+                id: 'b',
+                title: 'About.To.Go',
+                strikeCount: 3,
+                isMarkedForRemoval: true,
+              ),
+              CleanuparrStrikeItem(
+                id: 'c',
+                title: 'Already.Gone',
+                strikeCount: 3,
+                isRemoved: true,
+              ),
+            ],
+          ),
+          cleanuparrStrikesCountProvider(testInstance).overrideWith((ref) => 2),
+          cleanuparrEventsProvider(testInstance).overrideWith((ref) => testEvents),
+        ],
+        child: const MaterialApp(home: CleanuparrHome(instance: testInstance)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Strikes').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 strike'), findsOneWidget);
+    expect(find.text('3 strikes • Removal Pending'), findsOneWidget);
+    expect(find.text('3 strikes • Removed'), findsOneWidget);
+  });
 }
