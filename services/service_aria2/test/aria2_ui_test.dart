@@ -225,6 +225,94 @@ void main() {
     },
   );
 
+  group('pull to refresh', () {
+    // One download, so no tab's content fills the screen and only
+    // always-scrollable physics lets the pull through.
+    const Aria2Snapshot shortSnapshot = Aria2Snapshot(
+      stat: Aria2GlobalStat(numActive: 1),
+      version: Aria2Version(version: '1.37.0'),
+      active: <Aria2Download>[activeDownload],
+      waiting: <Aria2Download>[],
+      stopped: <Aria2Download>[],
+    );
+
+    late int snapshotBuilds;
+    late int optionBuilds;
+
+    Future<void> pumpShortHome(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      snapshotBuilds = 0;
+      optionBuilds = 0;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            aria2SnapshotProvider(testInstance).overrideWith((ref) {
+              snapshotBuilds++;
+              return shortSnapshot;
+            }),
+            aria2GlobalOptionsProvider(testInstance).overrideWith((ref) {
+              optionBuilds++;
+              return <String, String>{'max-concurrent-downloads': '5'};
+            }),
+          ],
+          child: const MaterialApp(home: Aria2Home(instance: testInstance)),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    // A refresh needs a pull of about a quarter of the list's height, so
+    // start near the top of this tall surface and go far.
+    Future<void> pull(WidgetTester tester, Finder list) async {
+      await tester.dragFrom(
+        tester.getTopLeft(list) + const Offset(540, 40),
+        const Offset(0, 1500),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a pull on a short Downloads list reloads it', (
+      WidgetTester tester,
+    ) async {
+      await pumpShortHome(tester);
+      final int before = snapshotBuilds;
+
+      await pull(tester, find.byType(CustomScrollView));
+
+      expect(snapshotBuilds, before + 1);
+    });
+
+    testWidgets('a pull on Settings reloads the options', (
+      WidgetTester tester,
+    ) async {
+      await pumpShortHome(tester);
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      final int before = optionBuilds;
+
+      await pull(tester, find.byType(ListView));
+
+      expect(optionBuilds, before + 1);
+    });
+
+    testWidgets('a pull on System reloads the stats', (
+      WidgetTester tester,
+    ) async {
+      await pumpShortHome(tester);
+      await tester.tap(find.text('System'));
+      await tester.pumpAndSettle();
+      final int before = snapshotBuilds;
+
+      await pull(tester, find.byType(ListView));
+
+      expect(snapshotBuilds, before + 1);
+    });
+  });
+
   testWidgets('Aria2Home hamburger opens drawer', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
