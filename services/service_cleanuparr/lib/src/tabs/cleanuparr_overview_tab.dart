@@ -164,7 +164,7 @@ class CleanuparrOverviewTab extends ConsumerWidget {
               loading: () => const Center(
                 child: Padding(
                   padding: EdgeInsets.all(Insets.xl),
-                  child: CircularProgressIndicator(),
+                  child: ExpressiveProgressIndicator(),
                 ),
               ),
               error: (err, _) => Center(

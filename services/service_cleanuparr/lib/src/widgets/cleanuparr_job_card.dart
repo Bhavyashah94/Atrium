@@ -112,7 +112,7 @@ class _CleanuparrJobCardState extends ConsumerState<CleanuparrJobCard> {
                   ? SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(
+                      child: ExpressiveProgressIndicator(
                         strokeWidth: 2,
                         color: colorScheme.primary,
                       ),
