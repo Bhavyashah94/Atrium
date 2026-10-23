@@ -33,6 +33,7 @@ import 'package:service_ombi/service_ombi.dart';
 import 'package:service_myspeed/service_myspeed.dart';
 import 'package:service_adguard_home/service_adguard_home.dart';
 import 'package:service_aria2/service_aria2.dart';
+import 'package:service_cleanuparr/service_cleanuparr.dart';
 
 import 'dashboard_screen.dart';
 
@@ -164,6 +165,15 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     }
     if (instance.kind == ServiceKind.aria2) {
       return Aria2Home(
+        instance: instance,
+        drawer: ServicesDrawer(
+          instances: ref.watch(activeInstancesProvider),
+          profile: ref.watch(activeProfileProvider),
+        ),
+      );
+    }
+    if (instance.kind == ServiceKind.cleanuparr) {
+      return CleanuparrHome(
         instance: instance,
         drawer: ServicesDrawer(
           instances: ref.watch(activeInstancesProvider),
