@@ -3,22 +3,37 @@ class CleanuparrStrikeItem {
   const CleanuparrStrikeItem({
     required this.id,
     required this.title,
-    this.downloadClientName = 'Client',
-    this.strikeCount = 1,
-    this.maxStrikes = 3,
-    this.strikes = const <CleanuparrStrikeDetail>[],
     this.hash,
+    this.strikeCount = 1,
+    this.isMarkedForRemoval = false,
+    this.isRemoved = false,
+    this.hasDryRunStrikes = false,
+    this.strikes = const <CleanuparrStrikeDetail>[],
   });
 
+  /// The Guid identifier for the download item in Cleanuparr.
   final String id;
+
+  /// Human-readable title of the release or torrent.
   final String title;
-  final String downloadClientName;
-  final int strikeCount;
-  final int maxStrikes;
-  final List<CleanuparrStrikeDetail> strikes;
+
+  /// The torrent info-hash or download client identifier (wire key: downloadId).
   final String? hash;
 
-  bool get isMaxed => strikeCount >= maxStrikes;
+  /// Total strikes accumulated (wire key: totalStrikes).
+  final int strikeCount;
+
+  /// Whether the item has met the strike threshold and is marked for deletion.
+  final bool isMarkedForRemoval;
+
+  /// Whether the item has already been removed by Cleanuparr.
+  final bool isRemoved;
+
+  /// Whether this item has dry-run strikes.
+  final bool hasDryRunStrikes;
+
+  /// Details of individual strikes recorded against this item.
+  final List<CleanuparrStrikeDetail> strikes;
 
   factory CleanuparrStrikeItem.fromJson(Map<String, dynamic> json) {
     final String id = json['downloadItemId']?.toString() ??
@@ -28,12 +43,18 @@ class CleanuparrStrikeItem {
     final String title = json['title']?.toString() ??
         json['name']?.toString() ??
         'Unknown Item';
-    final String client = json['downloadClientName']?.toString() ??
-        json['client']?.toString() ??
-        'Client';
-    final int count = _asInt(json['strikeCount'] ?? json['strikesCount'] ?? 1);
-    final int max = _asInt(json['maxStrikes'] ?? 3);
-    final String? h = json['hash']?.toString() ?? json['infoHash']?.toString();
+    final String? h = json['downloadId']?.toString() ??
+        json['hash']?.toString() ??
+        json['infoHash']?.toString();
+    final int count = _asInt(
+      json['totalStrikes'] ??
+          json['strikeCount'] ??
+          json['strikesCount'] ??
+          1,
+    );
+    final bool marked = json['isMarkedForRemoval'] as bool? ?? false;
+    final bool removed = json['isRemoved'] as bool? ?? false;
+    final bool dryRun = json['hasDryRunStrikes'] as bool? ?? false;
 
     final List<CleanuparrStrikeDetail> details = <CleanuparrStrikeDetail>[];
     final dynamic rawDetails = json['strikes'] ?? json['strikeDetails'];
@@ -48,11 +69,12 @@ class CleanuparrStrikeItem {
     return CleanuparrStrikeItem(
       id: id,
       title: title,
-      downloadClientName: client,
-      strikeCount: count > 0 ? count : (details.isNotEmpty ? details.length : 1),
-      maxStrikes: max > 0 ? max : 3,
-      strikes: List<CleanuparrStrikeDetail>.unmodifiable(details),
       hash: h,
+      strikeCount: count > 0 ? count : (details.isNotEmpty ? details.length : 1),
+      isMarkedForRemoval: marked,
+      isRemoved: removed,
+      hasDryRunStrikes: dryRun,
+      strikes: List<CleanuparrStrikeDetail>.unmodifiable(details),
     );
   }
 

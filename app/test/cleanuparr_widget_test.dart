@@ -1,4 +1,3 @@
-import 'package:atrium/src/dashboard/dashboard_widget_kind.dart';
 import 'package:atrium/src/dashboard/widgets/cleanuparr_widget.dart';
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
@@ -31,9 +30,9 @@ void main() {
     CleanuparrStrikeItem(
       id: 'hash1',
       title: 'Stalled.Torrent.Release.2026',
-      downloadClientName: 'qBittorrent',
+      hash: '3f2e1d0c9b8a',
       strikeCount: 2,
-      maxStrikes: 3,
+      isMarkedForRemoval: true,
     ),
   ];
 
@@ -72,7 +71,7 @@ void main() {
 
     // Verify top strike preview
     expect(find.text('Stalled.Torrent.Release.2026'), findsOneWidget);
-    expect(find.text('2/3'), findsOneWidget);
+    expect(find.text('2 strikes • removal'), findsOneWidget);
   });
 
   testWidgets('renders clean state when active strikes list is empty',

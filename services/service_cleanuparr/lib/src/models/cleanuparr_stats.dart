@@ -56,21 +56,38 @@ class CleanuparrStats {
     final int evWarn = _asInt(events?['warning'] ?? events?['warn'] ?? json['eventsWarning']);
     final int evErr = _asInt(events?['error'] ?? events?['critical'] ?? json['eventsError']);
 
-    final int strIssued = _asInt(strikes?['totalIssued'] ?? strikes?['issued'] ?? json['strikesIssued']);
-    final int strRec = _asInt(strikes?['totalRecovered'] ?? strikes?['recovered'] ?? json['strikesRecovered']);
-    final int strActive = _asInt(strikes?['active'] ?? strikes?['current'] ?? json['activeStrikes']);
+    final int strIssued = _asInt(strikes?['total'] ?? strikes?['totalIssued'] ?? strikes?['issued'] ?? json['strikesIssued']);
+    final int strRec = _asInt(strikes?['recovered'] ?? strikes?['totalRecovered'] ?? json['strikesRecovered']);
+    
+    // Active strikes: either explicitly passed or derived as (issued - recovered)
+    int strActive = _asInt(strikes?['active'] ?? strikes?['current'] ?? json['activeStrikes']);
+    if (strActive == 0 && strIssued > strRec) {
+      strActive = strIssued - strRec;
+    }
 
-    // Malware blocked: combination of allFilesBlocked + atLeastOneFileBlocked
-    final int allBlocked = _asInt(removals?['allFilesBlocked']);
-    final int partBlocked = _asInt(removals?['atLeastOneFileBlocked']);
-    final int malware = allBlocked + partBlocked > 0
-        ? allBlocked + partBlocked
-        : _asInt(removals?['malware'] ?? json['malwareBlocked']);
+    // Malware blocked: sum of AllFilesBlocked + AtLeastOneFileBlocked inside removals.byReason
+    int malware = 0;
+    final dynamic byReason = removals?['byReason'];
+    if (byReason is Map) {
+      for (final MapEntry<dynamic, dynamic> entry in byReason.entries) {
+        final String key = entry.key.toString().toLowerCase();
+        if (key == 'allfilesblocked' || key == 'atleastonefileblocked') {
+          malware += _asInt(entry.value);
+        }
+      }
+    }
+    if (malware == 0) {
+      final int allBlocked = _asInt(removals?['allFilesBlocked']);
+      final int partBlocked = _asInt(removals?['atLeastOneFileBlocked']);
+      malware = (allBlocked + partBlocked > 0)
+          ? (allBlocked + partBlocked)
+          : _asInt(removals?['malware'] ?? json['malwareBlocked']);
+    }
 
     final int remTotal = _asInt(removals?['total'] ?? json['totalRemovals']);
     final int cleanTotal = _asInt(cleaned?['total'] ?? json['totalCleaned']);
-    final int seekTrig = _asInt(searches?['triggers'] ?? searches?['totalSearches']);
-    final int seekGrab = _asInt(searches?['grabbed'] ?? searches?['itemsGrabbed']);
+    final int seekTrig = _asInt(searches?['total'] ?? searches?['triggers'] ?? searches?['totalSearches'] ?? json['seekerTriggers']);
+    final int seekGrab = _asInt(searches?['grabbed'] ?? searches?['itemsGrabbed'] ?? json['seekerGrabbed']);
 
     final Map<String, int> byType = <String, int>{};
     final dynamic rawByType = strikes?['byType'] ?? strikes?['types'];

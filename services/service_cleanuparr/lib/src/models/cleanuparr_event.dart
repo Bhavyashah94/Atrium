@@ -22,10 +22,16 @@ class CleanuparrEvent {
   final String? hash;
   final String? deleteReason;
 
-  bool get isMalware =>
-      eventType.toLowerCase().contains('malware') ||
-      severity.toLowerCase() == 'critical' ||
-      (deleteReason?.toLowerCase().contains('malware') ?? false);
+  bool get isMalware {
+    final String reason = (deleteReason ?? '').toLowerCase();
+    final String ev = eventType.toLowerCase();
+    final String sev = severity.toLowerCase();
+    return reason.contains('blocked') ||
+        reason.contains('malware') ||
+        ev.contains('malware') ||
+        sev == 'critical' ||
+        sev == 'error';
+  }
 
   bool get isStrike =>
       eventType.toLowerCase().contains('strike');
@@ -52,13 +58,17 @@ class CleanuparrEvent {
           (json['level']?.toString() ?? 'Info'),
       message: json['message']?.toString() ??
           (json['description']?.toString() ?? 'Operation completed'),
-      downloadItemTitle: json['downloadItemTitle']?.toString() ??
+      downloadItemTitle: json['itemTitle']?.toString() ??
+          json['downloadItemTitle']?.toString() ??
           json['title']?.toString() ??
           json['itemName']?.toString(),
       downloadClientName: json['downloadClientName']?.toString() ??
           json['client']?.toString(),
-      hash: json['hash']?.toString() ?? json['infoHash']?.toString(),
+      hash: json['itemHash']?.toString() ??
+          json['hash']?.toString() ??
+          json['infoHash']?.toString(),
       deleteReason: json['deleteReason']?.toString() ??
+          json['cleanReason']?.toString() ??
           json['reason']?.toString(),
     );
   }

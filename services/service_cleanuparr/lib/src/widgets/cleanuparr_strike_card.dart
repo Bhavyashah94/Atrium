@@ -77,10 +77,11 @@ class CleanuparrStrikeCard extends ConsumerWidget {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    final Color badgeBg = strikeItem.isMaxed
+    final bool isRemoval = strikeItem.isMarkedForRemoval || strikeItem.isRemoved;
+    final Color badgeBg = isRemoval
         ? colorScheme.errorContainer
         : colorScheme.tertiaryContainer;
-    final Color badgeFg = strikeItem.isMaxed
+    final Color badgeFg = isRemoval
         ? colorScheme.onErrorContainer
         : colorScheme.onTertiaryContainer;
 
@@ -118,7 +119,9 @@ class CleanuparrStrikeCard extends ConsumerWidget {
                     borderRadius: Radii.chip,
                   ),
                   child: Text(
-                    '${strikeItem.strikeCount} / ${strikeItem.maxStrikes}',
+                    isRemoval
+                        ? '${strikeItem.strikeCount} ${strikeItem.strikeCount == 1 ? 'strike' : 'strikes'} • Removal Pending'
+                        : '${strikeItem.strikeCount} ${strikeItem.strikeCount == 1 ? 'strike' : 'strikes'}',
                     style: textTheme.labelSmall?.copyWith(
                       color: badgeFg,
                       fontWeight: FontWeight.bold,
@@ -130,24 +133,32 @@ class CleanuparrStrikeCard extends ConsumerWidget {
             const SizedBox(height: Insets.sm),
             Row(
               children: <Widget>[
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Insets.xs + 2,
-                    vertical: Insets.xxs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: Radii.chip,
-                  ),
-                  child: Text(
-                    strikeItem.downloadClientName,
-                    style: textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 11,
+                if (strikeItem.hash != null && strikeItem.hash!.isNotEmpty) ...<Widget>[
+                  Tooltip(
+                    message: 'Torrent Info-Hash: ${strikeItem.hash}',
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Insets.xs + 2,
+                        vertical: Insets.xxs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest,
+                        borderRadius: Radii.chip,
+                      ),
+                      child: Text(
+                        strikeItem.hash!.length > 8
+                            ? strikeItem.hash!.substring(0, 8).toUpperCase()
+                            : strikeItem.hash!.toUpperCase(),
+                        style: textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontFamily: 'monospace',
+                          fontSize: 10,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: Insets.xs),
+                  const SizedBox(width: Insets.xs),
+                ],
                 if (strikeItem.strikes.isNotEmpty) ...<Widget>[
                   Flexible(
                     child: Text(

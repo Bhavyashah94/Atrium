@@ -16,8 +16,28 @@ class CleanuparrApi {
   Future<CleanuparrStatus> getStatus() async {
     final Response<dynamic> response = await _dio.get<dynamic>('api/status');
     final dynamic data = response.data;
+
+    List<dynamic>? rawClients;
+    try {
+      final Response<dynamic> clientResp =
+          await _dio.get<dynamic>('api/status/download-client');
+      final dynamic clientData = clientResp.data;
+      if (clientData is Map<String, dynamic>) {
+        final dynamic list = clientData['clients'] ?? clientData['Clients'];
+        if (list is List) rawClients = list;
+      } else if (clientData is List) {
+        rawClients = clientData;
+      }
+    } catch (_) {
+      // Optional endpoint; ignore if not reachable
+    }
+
     if (data is Map<String, dynamic>) {
-      return CleanuparrStatus.fromJson(data);
+      final Map<String, dynamic> merged = Map<String, dynamic>.from(data);
+      if (rawClients != null && !merged.containsKey('downloadClients')) {
+        merged['downloadClients'] = rawClients;
+      }
+      return CleanuparrStatus.fromJson(merged);
     }
     return const CleanuparrStatus(version: 'Unknown', appName: 'Cleanuparr');
   }

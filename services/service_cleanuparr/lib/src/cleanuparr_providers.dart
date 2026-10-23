@@ -108,8 +108,37 @@ final cleanuparrEventsProvider =
   final String search = ref.watch(cleanuparrEventsSearchProvider(instance));
   final String? filter = ref.watch(cleanuparrEventsFilterProvider(instance));
 
-  return api.getEvents(
+  final List<CleanuparrEvent> events = await api.getEvents(
     search: search.isNotEmpty ? search : null,
-    eventType: filter,
   );
+
+  if (filter == null || filter.isEmpty) {
+    return events;
+  }
+
+  final String f = filter.toLowerCase();
+  switch (f) {
+    case 'strikes':
+    case 'strike':
+      return events.where((CleanuparrEvent e) => e.isStrike).toList();
+    case 'malware':
+      return events.where((CleanuparrEvent e) => e.isMalware).toList();
+    case 'deletions':
+    case 'deletion':
+    case 'delet':
+      return events.where((CleanuparrEvent e) => e.isRemoval).toList();
+    case 'cleaned':
+    case 'clean':
+      return events
+          .where(
+            (CleanuparrEvent e) =>
+                e.eventType.toLowerCase().contains('clean') ||
+                e.eventType == 'DownloadCleaned',
+          )
+          .toList();
+    default:
+      return events
+          .where((CleanuparrEvent e) => e.eventType.toLowerCase() == f)
+          .toList();
+  }
 });

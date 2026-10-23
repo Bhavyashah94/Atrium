@@ -201,17 +201,19 @@ class _CleanuparrInstanceBlock extends ConsumerWidget {
                             vertical: Insets.xxs,
                           ),
                           decoration: BoxDecoration(
-                            color: topStrike.isMaxed
+                            color: topStrike.isMarkedForRemoval
                                 ? colorScheme.errorContainer
                                 : colorScheme.tertiaryContainer,
                             borderRadius: Radii.chip,
                           ),
                           child: Text(
-                            '${topStrike.strikeCount}/${topStrike.maxStrikes}',
+                            topStrike.isMarkedForRemoval
+                                ? '${topStrike.strikeCount} strikes • removal'
+                                : '${topStrike.strikeCount} ${topStrike.strikeCount == 1 ? 'strike' : 'strikes'}',
                             style: textTheme.labelSmall?.copyWith(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: topStrike.isMaxed
+                              color: topStrike.isMarkedForRemoval
                                   ? colorScheme.onErrorContainer
                                   : colorScheme.onTertiaryContainer,
                             ),

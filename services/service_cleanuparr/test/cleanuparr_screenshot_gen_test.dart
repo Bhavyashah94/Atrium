@@ -107,7 +107,7 @@ void main() {
     CleanuparrStrikeItem(
       id: 'hash1',
       title: 'Gladiator.II.2024.1080p.AMZN.WEB-DL.DDP5.1.Atmos',
-      downloadClientName: 'qBittorrent',
+      hash: '3f2e1d0c9b8a7f6e5d',
       strikeCount: 2,
       strikes: <CleanuparrStrikeDetail>[
         CleanuparrStrikeDetail(
@@ -119,8 +119,9 @@ void main() {
     CleanuparrStrikeItem(
       id: 'hash2',
       title: 'Severance.S02E01.1080p.WEB-DL.DDP5.1',
-      downloadClientName: 'qBittorrent',
+      hash: 'a1b2c3d4e5f67a8b9c',
       strikeCount: 3,
+      isMarkedForRemoval: true,
       strikes: <CleanuparrStrikeDetail>[
         CleanuparrStrikeDetail(
           type: 'FailedImportStrike',

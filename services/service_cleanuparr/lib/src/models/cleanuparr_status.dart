@@ -66,7 +66,24 @@ class CleanuparrStatus {
 
     final List<CleanuparrManagerStatus> managers = <CleanuparrManagerStatus>[];
     final dynamic rawManagers = json['mediaManagers'] ?? json['arrs'];
-    if (rawManagers is List) {
+    if (rawManagers is Map) {
+      for (final MapEntry<dynamic, dynamic> entry in rawManagers.entries) {
+        final String name = entry.key.toString();
+        final dynamic val = entry.value;
+        int count = 1;
+        if (val is Map) {
+          count = val['instanceCount'] as int? ?? val['count'] as int? ?? 1;
+        }
+        if (count > 0) {
+          managers.add(
+            CleanuparrManagerStatus(
+              name: name,
+              type: name,
+            ),
+          );
+        }
+      }
+    } else if (rawManagers is List) {
       for (final dynamic item in rawManagers) {
         if (item is Map<String, dynamic>) {
           managers.add(CleanuparrManagerStatus.fromJson(item));
@@ -75,7 +92,7 @@ class CleanuparrStatus {
     }
 
     final List<CleanuparrClientStatus> clients = <CleanuparrClientStatus>[];
-    final dynamic rawClients = json['downloadClients'] ?? json['clients'];
+    final dynamic rawClients = json['downloadClients'] ?? json['clients'] ?? json['Clients'];
     if (rawClients is List) {
       for (final dynamic item in rawClients) {
         if (item is Map<String, dynamic>) {

@@ -61,7 +61,7 @@ void main() {
     CleanuparrStrikeItem(
       id: 'item-1',
       title: 'Severance.S02E01.1080p.WEB-DL',
-      downloadClientName: 'qBittorrent',
+      hash: '4a5b6c7d8e9f',
       strikeCount: 2,
       strikes: <CleanuparrStrikeDetail>[
         CleanuparrStrikeDetail(
@@ -142,7 +142,8 @@ void main() {
       expect(find.byType(EasyRefresh), findsOneWidget);
       expect(find.text('Strikes Ledger'), findsOneWidget);
       expect(find.text('Severance.S02E01.1080p.WEB-DL'), findsOneWidget);
-      expect(find.text('2 / 3'), findsOneWidget);
+      expect(find.text('2 strikes'), findsOneWidget);
+      expect(find.text('4A5B6C7D'), findsOneWidget);
       expect(find.text('StalledStrike'), findsOneWidget);
 
       // Switch to Tab 2: Events

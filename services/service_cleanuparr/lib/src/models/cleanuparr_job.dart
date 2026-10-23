@@ -24,12 +24,14 @@ class CleanuparrJob {
         json['name']?.toString() ??
         'Job';
 
-    final String name = json['displayName']?.toString() ??
+    final String rawName = json['displayName']?.toString() ??
         json['name']?.toString() ??
-        _formatJobName(type);
+        type;
+    final String name = _formatJobName(rawName);
 
     DateTime? last;
-    final dynamic rawLast = json['lastRunTime'] ?? json['lastRun'];
+    final dynamic rawLast =
+        json['previousRunTime'] ?? json['lastRunTime'] ?? json['lastRun'];
     if (rawLast != null) {
       last = DateTime.tryParse(rawLast.toString());
     }
