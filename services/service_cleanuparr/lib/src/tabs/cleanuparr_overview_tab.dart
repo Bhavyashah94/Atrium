@@ -163,6 +163,13 @@ class CleanuparrOverviewTab extends ConsumerWidget {
                 ),
               ),
               data: (CleanuparrStats stats) {
+                final strikesAsync =
+                    ref.watch(cleanuparrStrikesProvider(instance));
+                final int activeCount = strikesAsync.maybeWhen(
+                  data: (items) => items.length,
+                  orElse: () => stats.activeStrikes,
+                );
+
                 return Column(
                   children: <Widget>[
                     Row(
@@ -180,7 +187,7 @@ class CleanuparrOverviewTab extends ConsumerWidget {
                         Expanded(
                           child: CleanuparrMetricCard(
                             title: 'Active Strikes',
-                            value: '${stats.activeStrikes}',
+                            value: '$activeCount',
                             icon: Icons.gavel_outlined,
                             containerColor: colorScheme.tertiaryContainer,
                             contentColor: colorScheme.onTertiaryContainer,
