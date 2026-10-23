@@ -3,6 +3,7 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../cleanuparr_errors.dart';
 import '../cleanuparr_providers.dart';
 import '../models/cleanuparr_event.dart';
 import '../widgets/cleanuparr_event_card.dart';
@@ -173,7 +174,7 @@ class _CleanuparrEventsTabState extends ConsumerState<CleanuparrEventsTab> {
               error: (err, _) => Center(
                 child: Padding(
                   padding: const EdgeInsets.all(Insets.xl),
-                  child: Text('Could not load events: $err'),
+                  child: Text('Could not load events: ${describeCleanuparrError(err)}'),
                 ),
               ),
               data: (List<CleanuparrEvent> events) {

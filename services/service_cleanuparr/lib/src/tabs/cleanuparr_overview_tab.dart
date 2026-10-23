@@ -3,6 +3,7 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../cleanuparr_errors.dart';
 import '../cleanuparr_providers.dart';
 import '../models/cleanuparr_job.dart';
 import '../models/cleanuparr_stats.dart';
@@ -170,7 +171,7 @@ class CleanuparrOverviewTab extends ConsumerWidget {
               error: (err, _) => Center(
                 child: Padding(
                   padding: const EdgeInsets.all(Insets.md),
-                  child: Text('Unable to load metrics: $err'),
+                  child: Text('Unable to load metrics: ${describeCleanuparrError(err)}'),
                 ),
               ),
               data: (CleanuparrStats stats) {
@@ -249,7 +250,7 @@ class CleanuparrOverviewTab extends ConsumerWidget {
             jobsAsync.when(
               loading: () => const SizedBox.shrink(),
               error: (err, _) => Text(
-                'Could not load tasks: $err',
+                'Could not load tasks: ${describeCleanuparrError(err)}',
                 style: textTheme.bodySmall?.copyWith(color: colorScheme.error),
               ),
               data: (List<CleanuparrJob> jobs) {

@@ -1,3 +1,4 @@
+import 'package:core_networking/core_networking.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_cleanuparr/service_cleanuparr.dart';
@@ -355,6 +356,32 @@ void main() {
 
       final api = CleanuparrApi(dio);
       await expectLater(api.triggerJob('QueueCleaner'), completes);
+    });
+
+    test('a failed request surfaces as a NetworkException, not a DioException', () async {
+      final dio = Dio();
+      dio.httpClientAdapter = _FakeAdapter(
+        handler: (options) => ResponseBody.fromString(
+          '{"error": "Service Unavailable"}',
+          503,
+          headers: <String, List<String>>{
+            Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+          },
+        ),
+      );
+
+      final api = CleanuparrApi(dio);
+      await expectLater(
+        api.getStats(),
+        throwsA(
+          isA<NetworkServerException>().having(
+            (NetworkServerException e) => e.message,
+            'message',
+            'Server error (HTTP 503): Service Unavailable',
+          ),
+        ),
+      );
+      await expectLater(api.triggerJob('QueueCleaner'), throwsA(isA<NetworkServerException>()));
     });
   });
 }

@@ -3,6 +3,7 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../cleanuparr_errors.dart';
 import '../cleanuparr_providers.dart';
 import '../models/cleanuparr_strike.dart';
 
@@ -66,7 +67,7 @@ class CleanuparrStrikeCard extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to reset strikes: $e'),
+          content: Text('Failed to reset strikes: ${describeCleanuparrError(e)}'),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );

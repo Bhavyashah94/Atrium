@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:core_networking/core_networking.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -209,5 +210,41 @@ void main() {
     expect(find.text('1 strike'), findsOneWidget);
     expect(find.text('3 strikes • Removal Pending'), findsOneWidget);
     expect(find.text('3 strikes • Removed'), findsOneWidget);
+  });
+
+  testWidgets('a server that is down reads as a message, not a stack of Dio text', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const NetworkException down =
+        NetworkUnreachableException('Could not reach the server.');
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cleanuparrStatusProvider(testInstance).overrideWith((ref) => throw down),
+          cleanuparrStatsProvider(testInstance).overrideWith((ref) => throw down),
+          cleanuparrJobsProvider(testInstance).overrideWith((ref) => throw down),
+          cleanuparrStrikesProvider(testInstance).overrideWith((ref) => throw down),
+          cleanuparrStrikesCountProvider(testInstance).overrideWith((ref) => throw down),
+          cleanuparrEventsProvider(testInstance).overrideWith((ref) => throw down),
+        ],
+        child: const MaterialApp(home: CleanuparrHome(instance: testInstance)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to load metrics: Could not reach the server.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Could not load tasks: Could not reach the server.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Exception'), findsNothing);
   });
 }

@@ -1,3 +1,4 @@
+import 'package:core_networking/core_networking.dart';
 import 'package:dio/dio.dart';
 
 import 'models/cleanuparr_event.dart';
@@ -11,6 +12,16 @@ class CleanuparrApi {
   const CleanuparrApi(this._dio);
 
   final Dio _dio;
+
+  /// Runs one request, turning a Dio failure into the [NetworkException] the
+  /// screens word for people, rather than letting the raw Dio text through.
+  Future<T> _send<T>(Future<T> Function() request) async {
+    try {
+      return await request();
+    } on DioException catch (e) {
+      throw NetworkException.fromDio(e);
+    }
+  }
 
   /// Extracts the items list from either a bare JSON array or a paginated
   /// envelope (`items` / `results` / `data` keys).
@@ -34,7 +45,8 @@ class CleanuparrApi {
 
   /// Fetches system information, uptime, memory, and Arr/client connections.
   Future<CleanuparrStatus> getStatus() async {
-    final Response<dynamic> response = await _dio.get<dynamic>('api/status');
+    final Response<dynamic> response =
+        await _send(() => _dio.get<dynamic>('api/status'));
     final dynamic data = response.data;
 
     List<dynamic>? rawClients;
@@ -64,12 +76,14 @@ class CleanuparrApi {
 
   /// Fetches operational statistics rolled up over the requested [hours] (e.g. 24, 168, 720).
   Future<CleanuparrStats> getStats({int hours = 168}) async {
-    final Response<dynamic> response = await _dio.get<dynamic>(
-      'api/v2/stats',
-      queryParameters: <String, dynamic>{
-        'hours': hours,
-        'includeDryRun': false,
-      },
+    final Response<dynamic> response = await _send(
+      () => _dio.get<dynamic>(
+        'api/v2/stats',
+        queryParameters: <String, dynamic>{
+          'hours': hours,
+          'includeDryRun': false,
+        },
+      ),
     );
     final dynamic data = response.data;
     if (data is Map<String, dynamic>) {
@@ -90,9 +104,11 @@ class CleanuparrApi {
       if (search != null && search.isNotEmpty) 'search': search,
     };
 
-    final Response<dynamic> response = await _dio.get<dynamic>(
-      'api/strikes',
-      queryParameters: params,
+    final Response<dynamic> response = await _send(
+      () => _dio.get<dynamic>(
+        'api/strikes',
+        queryParameters: params,
+      ),
     );
     final dynamic data = response.data;
 
@@ -122,7 +138,7 @@ class CleanuparrApi {
 
   /// Resets and clears all strikes for a download item by [downloadItemId].
   Future<void> deleteStrike(String downloadItemId) async {
-    await _dio.delete<void>('api/strikes/$downloadItemId');
+    await _send(() => _dio.delete<void>('api/strikes/$downloadItemId'));
   }
 
   /// Returns how many download items hold strikes and have not been removed,
@@ -135,9 +151,11 @@ class CleanuparrApi {
   /// page are counted as active, since their state is not known.
   Future<int> getActiveStrikesCount() async {
     const int pageSize = 500;
-    final Response<dynamic> response = await _dio.get<dynamic>(
-      'api/strikes',
-      queryParameters: <String, dynamic>{'page': 1, 'pageSize': pageSize},
+    final Response<dynamic> response = await _send(
+      () => _dio.get<dynamic>(
+        'api/strikes',
+        queryParameters: <String, dynamic>{'page': 1, 'pageSize': pageSize},
+      ),
     );
     final dynamic data = response.data;
     final List<dynamic> rawList = _extractList(data) ?? const <dynamic>[];
@@ -188,9 +206,11 @@ class CleanuparrApi {
       if (search != null && search.isNotEmpty) 'search': search,
     };
 
-    final Response<dynamic> response = await _dio.get<dynamic>(
-      'api/events',
-      queryParameters: params,
+    final Response<dynamic> response = await _send(
+      () => _dio.get<dynamic>(
+        'api/events',
+        queryParameters: params,
+      ),
     );
     final dynamic data = response.data;
 
@@ -237,7 +257,8 @@ class CleanuparrApi {
 
   /// Lists registered background jobs and their execution schedules.
   Future<List<CleanuparrJob>> getJobs() async {
-    final Response<dynamic> response = await _dio.get<dynamic>('api/jobs');
+    final Response<dynamic> response =
+        await _send(() => _dio.get<dynamic>('api/jobs'));
     final dynamic data = response.data;
 
     final List<CleanuparrJob> jobs = <CleanuparrJob>[];
@@ -265,7 +286,7 @@ class CleanuparrApi {
 
   /// Triggers immediate on-demand execution of a background job by [jobType].
   Future<void> triggerJob(String jobType) async {
-    await _dio.post<void>('api/jobs/$jobType/trigger');
+    await _send(() => _dio.post<void>('api/jobs/$jobType/trigger'));
   }
 }
 

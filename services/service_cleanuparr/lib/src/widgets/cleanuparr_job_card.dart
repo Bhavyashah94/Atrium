@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../cleanuparr_errors.dart';
 import '../cleanuparr_providers.dart';
 import '../models/cleanuparr_job.dart';
 
@@ -44,7 +45,7 @@ class _CleanuparrJobCardState extends ConsumerState<CleanuparrJobCard> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to trigger job: $e'),
+          content: Text('Failed to trigger job: ${describeCleanuparrError(e)}'),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
