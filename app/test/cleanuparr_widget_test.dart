@@ -114,4 +114,66 @@ void main() {
     expect(find.text('Cleanuparr'), findsOneWidget);
     expect(find.text('All queues clean'), findsOneWidget);
   });
+
+  Future<void> pumpWith(
+    WidgetTester tester, {
+    required List<CleanuparrStrikeItem> strikes,
+    required int count,
+  }) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cleanuparrStatsProvider(testInstance).overrideWith(
+            (ref) async => sampleStats,
+          ),
+          cleanuparrStrikesProvider(testInstance).overrideWith(
+            (ref) async => strikes,
+          ),
+          cleanuparrStrikesCountProvider(testInstance).overrideWith(
+            (ref) async => count,
+          ),
+        ],
+        child: MaterialApp(
+          theme: AtriumTheme.light(null),
+          home: const Scaffold(
+            body: DashboardCleanuparrWidget(
+              instances: <Instance>[testInstance],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+  }
+
+  // The count and the list are separate requests, so a strike landing
+  // between them leaves the count ahead of the list for a moment.
+  testWidgets('a count ahead of an empty list shows no alert and no error',
+      (WidgetTester tester) async {
+    await pumpWith(tester, strikes: const <CleanuparrStrikeItem>[], count: 1);
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('1 strikes'), findsOneWidget);
+    expect(find.text('All queues clean'), findsNothing);
+  });
+
+  testWidgets('an item Cleanuparr already removed is not an active strike',
+      (WidgetTester tester) async {
+    await pumpWith(
+      tester,
+      strikes: const <CleanuparrStrikeItem>[
+        CleanuparrStrikeItem(
+          id: 'gone',
+          title: 'Removed.Release.2026',
+          strikeCount: 3,
+          isRemoved: true,
+        ),
+      ],
+      count: 0,
+    );
+
+    expect(find.text('Removed.Release.2026'), findsNothing);
+    expect(find.text('All queues clean'), findsOneWidget);
+  });
 }

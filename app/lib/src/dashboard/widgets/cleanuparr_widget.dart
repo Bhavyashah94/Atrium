@@ -100,7 +100,7 @@ class _CleanuparrInstanceBlock extends ConsumerWidget {
             child: SizedBox(
               height: 20,
               width: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: ExpressiveProgressIndicator(strokeWidth: 2),
             ),
           ),
           error: (err, _) => Padding(
@@ -166,7 +166,15 @@ class _CleanuparrInstanceBlock extends ConsumerWidget {
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                   data: (List<CleanuparrStrikeItem> strikes) {
-                    if (strikes.isEmpty && activeStrikes == 0) {
+                    // Removed items stay in the ledger until their strikes
+                    // age out, and are not counted as active.
+                    final List<CleanuparrStrikeItem> active = strikes
+                        .where((CleanuparrStrikeItem s) => !s.isRemoved)
+                        .toList();
+                    // The count and the list are separate requests, so they
+                    // can disagree for a moment; an empty list shows no alert.
+                    if (active.isEmpty) {
+                      if (activeStrikes > 0) return const SizedBox.shrink();
                       return Row(
                         children: <Widget>[
                           Icon(
@@ -185,7 +193,7 @@ class _CleanuparrInstanceBlock extends ConsumerWidget {
                       );
                     }
 
-                    final CleanuparrStrikeItem topStrike = strikes.first;
+                    final CleanuparrStrikeItem topStrike = active.first;
                     return Row(
                       children: <Widget>[
                         Icon(
