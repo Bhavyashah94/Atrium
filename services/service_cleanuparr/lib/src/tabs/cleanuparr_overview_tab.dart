@@ -25,10 +25,12 @@ class CleanuparrOverviewTab extends ConsumerWidget {
     ref.invalidate(cleanuparrStatusProvider(instance));
     ref.invalidate(cleanuparrStatsProvider(instance));
     ref.invalidate(cleanuparrJobsProvider(instance));
+    ref.invalidate(cleanuparrStrikesCountProvider(instance));
     await Future.wait(<Future<dynamic>>[
       ref.read(cleanuparrStatusProvider(instance).future),
       ref.read(cleanuparrStatsProvider(instance).future),
       ref.read(cleanuparrJobsProvider(instance).future),
+      ref.read(cleanuparrStrikesCountProvider(instance).future),
     ]);
   }
 
@@ -75,10 +77,14 @@ class CleanuparrOverviewTab extends ConsumerWidget {
                       children: <Widget>[
                         Row(
                           children: <Widget>[
-                            Text(
-                              status.appName,
-                              style: textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
+                            Flexible(
+                              child: Text(
+                                status.appName,
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(width: Insets.sm),
@@ -101,10 +107,15 @@ class CleanuparrOverviewTab extends ConsumerWidget {
                             ),
                             const Spacer(),
                             if (status.memoryUsageMB != null)
-                              Text(
-                                '${status.memoryUsageMB!.toStringAsFixed(1)} MB',
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.outline,
+                              Flexible(
+                                child: Text(
+                                  '${status.memoryUsageMB!.toStringAsFixed(1)} MB',
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.outline,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.right,
                                 ),
                               ),
                           ],
@@ -163,12 +174,11 @@ class CleanuparrOverviewTab extends ConsumerWidget {
                 ),
               ),
               data: (CleanuparrStats stats) {
-                final strikesAsync =
-                    ref.watch(cleanuparrStrikesProvider(instance));
-                final int activeCount = strikesAsync.maybeWhen(
-                  data: (items) => items.length,
-                  orElse: () => stats.activeStrikes,
-                );
+                // Exact server-side ledger count. Deliberately NOT derived
+                // from the rendered strikes list, which is search-filtered
+                // and capped at its page size.
+                final int activeCount =
+                    ref.watch(cleanuparrActiveStrikesCountProvider(instance));
 
                 return Column(
                   children: <Widget>[

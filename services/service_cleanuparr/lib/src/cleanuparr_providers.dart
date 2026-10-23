@@ -79,14 +79,22 @@ final cleanuparrStrikesProvider =
   return api.getStrikes(search: search.isNotEmpty ? search : null);
 });
 
-/// Returns the number of items with active strikes (used for the tab badge).
+/// Returns the number of download items with active strikes, sourced from the
+/// server-side ledger `totalCount` so it is unaffected by Strikes-tab search
+/// text or the page cap of the rendered ledger list.
 final cleanuparrActiveStrikesCountProvider =
     Provider.autoDispose.family<int, Instance>((Ref ref, Instance instance) {
-  final strikesAsync = ref.watch(cleanuparrStrikesProvider(instance));
-  return strikesAsync.maybeWhen(
-    data: (List<CleanuparrStrikeItem> items) => items.length,
-    orElse: () => 0,
-  );
+  final countAsync = ref.watch(cleanuparrStrikesCountProvider(instance));
+  return countAsync.maybeWhen(data: (int total) => total, orElse: () => 0);
+});
+
+/// Fetches the exact server-side count of download items holding strikes
+/// (single 1-entry request reading the paginated `totalCount`).
+final cleanuparrStrikesCountProvider =
+    FutureProvider.autoDispose.family<int, Instance>((Ref ref, Instance instance) async {
+  final CleanuparrApi api =
+      await ref.watch(cleanuparrApiProvider(instance).future);
+  return api.getStrikesTotal();
 });
 
 /// Search query string for filtering audit events.
@@ -98,6 +106,12 @@ final cleanuparrEventsFilterProvider =
     StateProvider.autoDispose.family<String?, Instance>((ref, instance) => null);
 
 /// Fetches audit log events filtered by active search query and category filter.
+///
+/// Text search is answered server-side by the backend LIKE query. Category
+/// filtering is client-side because the backend accepts only a single scalar
+/// EventType while categories span several. When a category is active, pages
+/// beyond the first are fetched (cap: 3 x 500 entries) so matches deeper in the
+/// history are not missed just because they fell off the first page.
 final cleanuparrEventsProvider =
     FutureProvider.autoDispose.family<List<CleanuparrEvent>, Instance>((
   Ref ref,
@@ -108,48 +122,61 @@ final cleanuparrEventsProvider =
   final String search = ref.watch(cleanuparrEventsSearchProvider(instance));
   final String? filter = ref.watch(cleanuparrEventsFilterProvider(instance));
 
-  // For single-enum category 'DownloadCleaned', forward directly to backend
-  // so the query runs server-side across all database records.
-  final String? serverEventType =
-      (filter?.toLowerCase() == 'cleaned' || filter?.toLowerCase() == 'clean')
+  // 'Cleaned' maps to a single exact enum member, so forward it server-side
+  // and let the database do the work across all records.
+  final String serverEventType =
+      (filter != null && const <String>['cleaned', 'clean'].contains(filter.toLowerCase()))
           ? 'DownloadCleaned'
-          : null;
+          : '';
 
-  // Note: 'search' runs server-side across all records via backend LIKE query.
-  // For multi-enum categories ('strikes', 'malware', 'deletions'), the backend
-  // only accepts a single scalar EventType, so category classification is
-  // evaluated over the fetched page.
-  final List<CleanuparrEvent> events = await api.getEvents(
+  // Backend Pagination.MaxPageSize is 500.
+  const int filteredPageSize = 500;
+  // Hard cap on pages walked for a client-side category filter (3 requests).
+  const int maxFilteredPages = 3;
+
+  final int pageSize =
+      (filter == null || filter.isEmpty) ? 50 : filteredPageSize;
+
+  final CleanuparrEventPage firstPage = await api.getEventsPage(
     search: search.isNotEmpty ? search : null,
-    eventType: serverEventType,
+    eventType: serverEventType.isNotEmpty ? serverEventType : null,
+    pageSize: pageSize,
   );
 
-  if (filter == null || filter.isEmpty) {
-    return events;
+  if (filter == null || filter.isEmpty || !firstPage.hasNext) {
+    return firstPage.items;
+  }
+
+  final List<CleanuparrEvent> all = List<CleanuparrEvent>.of(firstPage.items);
+  final int pageCap = firstPage.totalPages < maxFilteredPages
+      ? firstPage.totalPages
+      : maxFilteredPages;
+  for (int pageNum = 2; pageNum <= pageCap; pageNum++) {
+    final CleanuparrEventPage nextPage = await api.getEventsPage(
+      search: search.isNotEmpty ? search : null,
+      eventType: serverEventType.isNotEmpty ? serverEventType : null,
+      page: pageNum,
+      pageSize: pageSize,
+    );
+    all.addAll(nextPage.items);
   }
 
   final String f = filter.toLowerCase();
   switch (f) {
     case 'strikes':
     case 'strike':
-      return events.where((CleanuparrEvent e) => e.isStrike).toList();
+      return all.where((CleanuparrEvent e) => e.isStrike).toList();
     case 'malware':
-      return events.where((CleanuparrEvent e) => e.isMalware).toList();
+      return all.where((CleanuparrEvent e) => e.isMalware).toList();
     case 'deletions':
     case 'deletion':
     case 'delet':
-      return events.where((CleanuparrEvent e) => e.isRemoval).toList();
+      return all.where((CleanuparrEvent e) => e.isDeletion).toList();
     case 'cleaned':
     case 'clean':
-      return events
-          .where(
-            (CleanuparrEvent e) =>
-                e.eventType.toLowerCase().contains('clean') ||
-                e.eventType == 'DownloadCleaned',
-          )
-          .toList();
+      return all;
     default:
-      return events
+      return all
           .where((CleanuparrEvent e) => e.eventType.toLowerCase() == f)
           .toList();
   }

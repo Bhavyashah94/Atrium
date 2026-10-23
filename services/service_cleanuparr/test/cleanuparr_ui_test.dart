@@ -92,6 +92,7 @@ void main() {
         cleanuparrStatsProvider(testInstance).overrideWith((ref) => testStats),
         cleanuparrJobsProvider(testInstance).overrideWith((ref) => testJobs),
         cleanuparrStrikesProvider(testInstance).overrideWith((ref) => testStrikes),
+        cleanuparrStrikesCountProvider(testInstance).overrideWith((ref) => 1),
         cleanuparrEventsProvider(testInstance).overrideWith((ref) => testEvents),
       ],
       child: const MaterialApp(

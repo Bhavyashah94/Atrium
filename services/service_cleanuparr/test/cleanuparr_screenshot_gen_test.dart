@@ -10,14 +10,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_cleanuparr/service_cleanuparr.dart';
 
-const String _fontDir =
-    r'C:\Users\bhavy\development\flutter\bin\cache\artifacts\material_fonts';
-const String _siteOutDir =
-    r'C:\Users\bhavy\Documents\Projects\Atrium\site\public\assets\service_previews\cleanuparr';
-const String _buildOutDir =
-    r'C:\Users\bhavy\Documents\Projects\Atrium\services\service_cleanuparr\build\screenshots';
-const String _artifactOutDir =
-    r'C:\Users\bhavy\.gemini\antigravity\brain\e17bb2e9-c1e2-4c39-adb3-fda7246421d6\cleanuparr_shots';
+/// This test regenerates the Cleanuparr showcase screenshots used by the
+/// project website. It is deliberately skipped in normal `flutter test` runs
+/// because it writes binary artifacts to disk; set
+/// `CLEANUPARR_GENERATE_SCREENSHOTS=1` to run it:
+///
+///   CLEANUPARR_GENERATE_SCREENSHOTS=1 flutter test services/service_cleanuparr
+///
+/// All output paths are relative or env-driven. `CLEANUPARR_SHOTS_DIR`
+/// overrides the output directory (e.g. point it at the website's
+/// `site/public/assets/service_previews/cleanuparr` folder when regenerating
+/// showcase images); otherwise shots land in the git-ignored build folder.
+///
+/// Fonts load from the local Flutter SDK cache (`FLUTTER_ROOT`, which the
+/// `flutter test` runner always sets). When missing, the system falls back to
+/// test-only fonts - acceptable because these runs are not assertions of
+/// layout metrics.
+final bool _generateShots =
+    Platform.environment['CLEANUPARR_GENERATE_SCREENSHOTS'] == '1';
+
+final String _shotsOutDir = Platform.environment['CLEANUPARR_SHOTS_DIR'] ??
+    'build/screenshots/service_cleanuparr';
+
+final String? _fontDir = () {
+  final String? flutterRoot = Platform.environment['FLUTTER_ROOT'];
+  if (flutterRoot == null || flutterRoot.isEmpty) {
+    return null;
+  }
+  return '$flutterRoot/bin/cache/artifacts/material_fonts';
+}();
 
 const Instance testInstance = Instance(
   id: 'cleanuparr-1',
@@ -30,9 +51,12 @@ const Instance testInstance = Instance(
 );
 
 Future<void> _loadFonts() async {
+  if (_fontDir == null) {
+    return;
+  }
   final FontLoader roboto = FontLoader('Roboto');
   for (final String font in ['roboto-regular.ttf', 'roboto-medium.ttf', 'roboto-bold.ttf']) {
-    final File f = File('$_fontDir\\$font');
+    final File f = File('$_fontDir/$font');
     if (f.existsSync()) {
       roboto.addFont(f.readAsBytes().then((b) => ByteData.view(b.buffer)));
     }
@@ -40,7 +64,7 @@ Future<void> _loadFonts() async {
   await roboto.load();
 
   final FontLoader icons = FontLoader('MaterialIcons');
-  final File iconFile = File('$_fontDir\\materialicons-regular.otf');
+  final File iconFile = File('$_fontDir/materialicons-regular.otf');
   if (iconFile.existsSync()) {
     icons.addFont(iconFile.readAsBytes().then((b) => ByteData.view(b.buffer)));
     await icons.load();
@@ -51,9 +75,7 @@ void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     await _loadFonts();
-    Directory(_siteOutDir).createSync(recursive: true);
-    Directory(_buildOutDir).createSync(recursive: true);
-    Directory(_artifactOutDir).createSync(recursive: true);
+    Directory(_shotsOutDir).createSync(recursive: true);
   });
 
   const CleanuparrStatus sampleStatus = CleanuparrStatus(
@@ -179,9 +201,7 @@ void main() {
           await image.toByteData(format: ui.ImageByteFormat.png);
       final Uint8List bytes = byteData!.buffer.asUint8List();
 
-      File('$_siteOutDir\\$baseName.png').writeAsBytesSync(bytes);
-      File('$_buildOutDir\\$baseName.png').writeAsBytesSync(bytes);
-      File('$_artifactOutDir\\$baseName.png').writeAsBytesSync(bytes);
+      File('$_shotsOutDir/$baseName.png').writeAsBytesSync(bytes);
     });
   }
 
@@ -201,6 +221,7 @@ void main() {
         cleanuparrStatsProvider(testInstance).overrideWith((ref) => sampleStats),
         cleanuparrJobsProvider(testInstance).overrideWith((ref) => sampleJobs),
         cleanuparrStrikesProvider(testInstance).overrideWith((ref) => sampleStrikes),
+        cleanuparrStrikesCountProvider(testInstance).overrideWith((ref) => 2),
         cleanuparrEventsProvider(testInstance).overrideWith((ref) => sampleEvents),
         cleanuparrTabProvider(testInstance).overrideWith((ref) => initialTab),
       ],
@@ -221,7 +242,10 @@ void main() {
     );
   }
 
-  testWidgets('Shot 1: Overview Tab', (WidgetTester tester) async {
+  testWidgets(
+    'Shot 1: Overview Tab',
+    skip: !_generateShots,
+    (WidgetTester tester) async {
     setupMobileView(tester);
 
     final GlobalKey shotKey = GlobalKey();
@@ -230,7 +254,10 @@ void main() {
     await saveScreenshot(tester, shotKey, 'cleanuparr_1');
   });
 
-  testWidgets('Shot 2: Strikes Tab', (WidgetTester tester) async {
+  testWidgets(
+    'Shot 2: Strikes Tab',
+    skip: !_generateShots,
+    (WidgetTester tester) async {
     setupMobileView(tester);
 
     final GlobalKey shotKey = GlobalKey();
@@ -239,7 +266,10 @@ void main() {
     await saveScreenshot(tester, shotKey, 'cleanuparr_2');
   });
 
-  testWidgets('Shot 3: Events Tab', (WidgetTester tester) async {
+  testWidgets(
+    'Shot 3: Events Tab',
+    skip: !_generateShots,
+    (WidgetTester tester) async {
     setupMobileView(tester);
 
     final GlobalKey shotKey = GlobalKey();
@@ -248,7 +278,10 @@ void main() {
     await saveScreenshot(tester, shotKey, 'cleanuparr_3');
   });
 
-  testWidgets('Shot 4: Event Detail Sheet', (WidgetTester tester) async {
+  testWidgets(
+    'Shot 4: Event Detail Sheet',
+    skip: !_generateShots,
+    (WidgetTester tester) async {
     setupMobileView(tester);
 
     final GlobalKey shotKey = GlobalKey();

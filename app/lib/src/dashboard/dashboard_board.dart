@@ -291,6 +291,7 @@ class DashboardBoard extends ConsumerWidget {
           ref.invalidate(cleanuparrStatusProvider(i));
           ref.invalidate(cleanuparrStatsProvider(i));
           ref.invalidate(cleanuparrStrikesProvider(i));
+          ref.invalidate(cleanuparrStrikesCountProvider(i));
           ref.invalidate(cleanuparrJobsProvider(i));
         default:
           break;

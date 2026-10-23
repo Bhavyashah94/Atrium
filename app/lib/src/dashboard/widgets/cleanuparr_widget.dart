@@ -113,11 +113,20 @@ class _CleanuparrInstanceBlock extends ConsumerWidget {
             ),
           ),
           data: (CleanuparrStats stats) {
+            // Exact server-side ledger count, not the rendered (searched and
+            // page-capped) list length, so the pill cannot report
+            // search-filtered or truncated values.
+            final int activeStrikes =
+                ref.watch(cleanuparrActiveStrikesCountProvider(instance));
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                // Metrics row: Malware Blocked, Active Strikes, Cleaned
-                Row(
+                // Metrics row: Malware Blocked, Active Strikes, Cleaned.
+                // Wrap keeps the pills intact on narrow tiles and
+                // multi-column dashboard layouts instead of overflowing.
+                Wrap(
+                  spacing: Insets.xs,
+                  runSpacing: Insets.xs,
                   children: <Widget>[
                     _MiniStatPill(
                       icon: Icons.shield_outlined,
@@ -132,11 +141,11 @@ class _CleanuparrInstanceBlock extends ConsumerWidget {
                     const SizedBox(width: Insets.xs),
                     _MiniStatPill(
                       icon: Icons.gavel_outlined,
-                      label: '${stats.activeStrikes} strikes',
-                      color: stats.activeStrikes > 0
+                      label: '$activeStrikes strikes',
+                      color: activeStrikes > 0
                           ? colorScheme.tertiaryContainer
                           : colorScheme.surfaceContainerHighest,
-                      textColor: stats.activeStrikes > 0
+                      textColor: activeStrikes > 0
                           ? colorScheme.onTertiaryContainer
                           : colorScheme.onSurfaceVariant,
                     ),
@@ -151,12 +160,13 @@ class _CleanuparrInstanceBlock extends ConsumerWidget {
                 ),
                 const SizedBox(height: Insets.sm),
 
-                // Top active strike or all clean indicator
+                // Top active strike or all clean indicator. Gated on the same
+                // ledger count the pill uses so the two can never contradict.
                 strikesAsync.when(
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                   data: (List<CleanuparrStrikeItem> strikes) {
-                    if (strikes.isEmpty) {
+                    if (strikes.isEmpty && activeStrikes == 0) {
                       return Row(
                         children: <Widget>[
                           Icon(

@@ -22,11 +22,13 @@ graph TD
 - **Aggregated Statistics**: `GET /api/v2/stats?hours={hours}&includeDryRun=false`
   - Total events, strike activities, malware removals (`allFilesBlocked`, `atLeastOneFileBlocked`), cleaned torrents, and Seeker searches across selectable timeframes (24h, 7d, 30d).
 - **Strikes Ledger**: `GET /api/strikes?page=1&pageSize=50&search=`
-  - Active items accumulating strikes, strike count ratio (`2/3`), failure reasons, and timestamps.
+  - Active items accumulating strikes, per-item strike totals and type breakdowns, removal state, info-hashes, and timestamps.
+  - The exact active count is taken from the paginated envelope's `totalCount` (a single 1-entry request), so it is immune to client-side search and page caps.
 - **Strike Reset Action**: `DELETE /api/strikes/{downloadItemId}`
   - Clears accumulated strikes for an item with confirmation dialog.
 - **Audit Feed**: `GET /api/events?page=1&pageSize=50&eventType=&severity=&search=`
   - Chronological audit events with severity levels, release title, torrent hash, and deletion reasons.
+  - Text search is answered server-side. Category chips are evaluated client-side over up to 3 x 500 events (backend `Pagination.MaxPageSize`) because the backend accepts only a single scalar `eventType`; `Cleaned` maps to the exact `DownloadCleaned` enum member and runs fully server-side.
 - **Background Cleaner Jobs**: `GET /api/jobs` & `POST /api/jobs/{jobType}/trigger`
   - Background task inspection (`MalwareBlocker`, `QueueCleaner`, `DownloadCleaner`, `Seeker`, etc.) and instant on-demand job runs.
 
@@ -44,7 +46,25 @@ graph TD
 ## Testing
 
 ```bash
+# Default: all standard tests (screenshot generation is skipped)
 flutter test services/service_cleanuparr/test
 flutter test app/test/cleanuparr_widget_test.dart
 flutter test app/test/cleanuparr_brand_icon_test.dart
 ```
+
+### Regenerating the website showcase screenshots
+
+The screenshot tests write binary artifacts and are therefore **skipped in normal test runs**. To regenerate them:
+
+```bash
+# From the workspace root; shots land in build/screenshots/service_cleanuparr
+# by default, or in $CLEANUPARR_SHOTS_DIR when set.
+CLEANUPARR_GENERATE_SCREENSHOTS=1 flutter test services/service_cleanuparr/test
+
+# To write straight into the website's assets:
+#   CLEANUPARR_SHOTS_DIR=site/public/assets/service_previews/cleanuparr \
+#   CLEANUPARR_GENERATE_SCREENSHOTS=1 flutter test services/service_cleanuparr
+```
+
+Paths are relative or env-driven (no machine-specific locations), and fonts are
+loaded from the local Flutter SDK cache via `FLUTTER_ROOT`.

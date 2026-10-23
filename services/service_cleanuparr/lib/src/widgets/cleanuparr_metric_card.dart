@@ -58,11 +58,16 @@ class CleanuparrMetricCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: Insets.sm),
-            Text(
-              value,
-              style: textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
+            // FittedBox guards against headline-scale counts overflowing the
+            // card at large accessibility text scales.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
               ),
             ),
             if (subtitle != null) ...<Widget>[

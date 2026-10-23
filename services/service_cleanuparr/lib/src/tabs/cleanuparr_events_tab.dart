@@ -54,6 +54,17 @@ class _CleanuparrEventsTabState extends ConsumerState<CleanuparrEventsTab> {
 
   @override
   Widget build(BuildContext context) {
+    // Keep the text field in sync when the shell's back-press handler resets
+    // the provider; initState alone would leave stale text in the controller.
+    ref.listen<String>(cleanuparrEventsSearchProvider(widget.instance), (
+      String? previous,
+      String next,
+    ) {
+      if (next.isEmpty && _searchController.text.isNotEmpty) {
+        _searchController.clear();
+      }
+    });
+
     final eventsAsync = ref.watch(cleanuparrEventsProvider(widget.instance));
     final String? activeFilter =
         ref.watch(cleanuparrEventsFilterProvider(widget.instance));

@@ -41,11 +41,24 @@ class _CleanuparrStrikesTabState extends ConsumerState<CleanuparrStrikesTab> {
 
   Future<void> _refresh() async {
     ref.invalidate(cleanuparrStrikesProvider(widget.instance));
+    ref.invalidate(cleanuparrStrikesCountProvider(widget.instance));
+    await ref.read(cleanuparrStrikesCountProvider(widget.instance).future);
     await ref.read(cleanuparrStrikesProvider(widget.instance).future);
   }
 
   @override
   Widget build(BuildContext context) {
+    // Keep the text field in sync when the shell's back-press handler resets
+    // the provider; initState alone would leave stale text in the controller.
+    ref.listen<String>(cleanuparrStrikesSearchProvider(widget.instance), (
+      String? previous,
+      String next,
+    ) {
+      if (next.isEmpty && _searchController.text.isNotEmpty) {
+        _searchController.clear();
+      }
+    });
+
     final strikesAsync = ref.watch(cleanuparrStrikesProvider(widget.instance));
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;

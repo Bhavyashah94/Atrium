@@ -47,6 +47,10 @@ void main() {
           cleanuparrStrikesProvider(testInstance).overrideWith(
             (ref) async => sampleStrikes,
           ),
+          // Exact ledger count: drives the "strikes" pill and the clean gate.
+          cleanuparrStrikesCountProvider(testInstance).overrideWith(
+            (ref) async => 2,
+          ),
         ],
         child: MaterialApp(
           theme: AtriumTheme.light(null),
@@ -89,6 +93,9 @@ void main() {
           ),
           cleanuparrStrikesProvider(testInstance).overrideWith(
             (ref) async => const <CleanuparrStrikeItem>[],
+          ),
+          cleanuparrStrikesCountProvider(testInstance).overrideWith(
+            (ref) async => 0,
           ),
         ],
         child: MaterialApp(

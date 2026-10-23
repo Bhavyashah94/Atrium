@@ -60,6 +60,7 @@ class CleanuparrStrikeCard extends ConsumerWidget {
         ),
       );
       ref.invalidate(cleanuparrStrikesProvider(instance));
+      ref.invalidate(cleanuparrStrikesCountProvider(instance));
       ref.invalidate(cleanuparrStatsProvider(instance));
     } catch (e) {
       if (!context.mounted) return;

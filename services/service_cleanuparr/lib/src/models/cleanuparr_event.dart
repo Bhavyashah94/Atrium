@@ -30,13 +30,24 @@ class CleanuparrEvent {
         ev.contains('malware');
   }
 
-  bool get isStrike =>
-      eventType.toLowerCase().contains('strike');
+  /// Strike event types are exact enum members from the backend
+  /// (e.g. StalledStrike, FailedImportStrike, DeadTorrentStrike).
+  bool get isStrike => eventType.toLowerCase().endsWith('strike');
 
-  bool get isRemoval =>
-      eventType.toLowerCase().contains('delet') ||
-      eventType.toLowerCase().contains('remov') ||
-      eventType.toLowerCase().contains('clean');
+  /// Exact backend enum members that record a cleaned download
+  /// (DownloadCleaned). Never overlaps with [isDeletion].
+  bool get isCleaned => eventType.toLowerCase() == 'downloadcleaned';
+
+  /// Deletion event types from the backend EventType enum. Deliberately
+  /// excludes cleaning events so the "Deletions" chip stays pure.
+  bool get isDeletion =>
+      !isCleaned &&
+      const <String>['queueitemdeleted', 'downloadmarkedfordeletion']
+          .contains(eventType.toLowerCase());
+
+  /// Whether this event represents any removal at all (deletion or cleanup).
+  /// Kept for card iconography and generic coloring.
+  bool get isRemoval => isDeletion || isCleaned;
 
   factory CleanuparrEvent.fromJson(Map<String, dynamic> json) {
     DateTime ts = DateTime.now();

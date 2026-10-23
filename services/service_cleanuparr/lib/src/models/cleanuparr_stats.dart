@@ -90,16 +90,15 @@ class CleanuparrStats {
 
     final int strIssued = _asInt(strikes?['total'] ?? strikes?['totalIssued'] ?? strikes?['issued'] ?? json['strikesIssued']);
     final int strRec = _asInt(strikes?['recovered'] ?? strikes?['totalRecovered'] ?? json['strikesRecovered']);
-    
-    // Active strikes: either explicitly passed or derived as (issued - recovered).
-    // Note: strikes that ended in removal/deletion (rather than recovery) are not
-    // counted in 'recovered', so (total - recovered) is an upper-bound approximation
-    // from StatsV2Response alone. Exact live active items are tracked via the
-    // GET /api/strikes ledger totalCount.
-    int strActive = _asInt(strikes?['active'] ?? strikes?['current'] ?? json['activeStrikes']);
-    if (strActive == 0 && strIssued > strRec) {
-      strActive = strIssued - strRec;
-    }
+
+    // Only parse an explicitly provided active-strike value. The real backend
+    // StatsV2Response never sends one, so this stays 0 there; the exact live
+    // count is sourced from GET /api/strikes ( CleanuparrApi.getStrikesTotal),
+    // which reports the ledger totalCount server-side. Deriving active as
+    // (issued - recovered) was removed: strikes that ended in deletion rather
+    // than recovery are not "recovered", so the derivation overcounted and
+    // contradicted the empty-ledger "All queues clean" state.
+    final int strActive = _asInt(strikes?['active'] ?? strikes?['current'] ?? json['activeStrikes']);
 
     // Malware blocked: sum of AllFilesBlocked + AtLeastOneFileBlocked inside removals.byReason
     int malware = 0;

@@ -87,7 +87,10 @@ void main() {
       expect(stats.eventsError, 4);
       expect(stats.strikesIssued, 15);
       expect(stats.strikesRecovered, 6);
-      expect(stats.activeStrikes, 9); // derived: 15 - 6 = 9
+      // No derivation from (issued - recovered): the real StatsV2Response has
+      // no active field, so it stays 0 here. Exact counts come from
+      // CleanuparrApi.getStrikesTotal instead.
+      expect(stats.activeStrikes, 0);
       expect(stats.malwareBlocked, 3); // 2 + 1
       expect(stats.totalCleaned, 12);
       expect(stats.seekerTriggers, 9);
@@ -145,6 +148,38 @@ void main() {
       expect(event.deleteReason, 'AllFilesBlocked');
       expect(event.isMalware, isTrue);
       expect(event.isStrike, isFalse);
+      expect(event.isDeletion, isTrue);
+      expect(event.isCleaned, isFalse);
+      expect(event.isRemoval, isTrue);
+    });
+
+    test('classifies cleaning events without mixing into deletions', () {
+      final cleaned = CleanuparrEvent.fromJson(<String, dynamic>{
+        'id': 'ev-2',
+        'timestamp': '2026-10-23T10:30:00Z',
+        'eventType': 'DownloadCleaned',
+        'severity': 'Information',
+        'message': 'Seeding completed',
+        'cleanReason': 'SeedingCompleted',
+      });
+      expect(cleaned.isCleaned, isTrue);
+      expect(cleaned.isDeletion, isFalse);
+      expect(cleaned.isRemoval, isTrue);
+      expect(cleaned.isStrike, isFalse);
+      expect(cleaned.isMalware, isFalse);
+    });
+
+    test('strike event types are matched exactly, not by substring', () {
+      final strike = CleanuparrEvent.fromJson(<String, dynamic>{
+        'id': 'ev-3',
+        'timestamp': '2026-10-23T10:40:00Z',
+        'eventType': 'StalledStrike',
+        'severity': 'Warning',
+        'message': 'Stalled download',
+      });
+      expect(strike.isStrike, isTrue);
+      expect(strike.isDeletion, isFalse);
+      expect(strike.isCleaned, isFalse);
     });
   });
 
@@ -221,7 +256,56 @@ void main() {
       final api = CleanuparrApi(dio);
       final stats = await api.getStats(hours: 72);
       expect(stats.totalEvents, 10);
-      expect(stats.activeStrikes, 3);
+      expect(stats.activeStrikes, 0);
+    });
+
+    test('getStrikesTotal reads paginated totalCount with 1-entry page', () async {
+      final dio = Dio();
+      dio.httpClientAdapter = _FakeAdapter(
+        handler: (RequestOptions options) {
+          expect(options.path, 'api/strikes');
+          expect(options.queryParameters['page'], 1);
+          expect(options.queryParameters['pageSize'], 1);
+          return ResponseBody.fromString(
+            '{"items": [], "page": 1, "pageSize": 1, "totalCount": 75, "totalPages": 75}',
+            200,
+            headers: <String, List<String>>{
+              Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+            },
+          );
+        },
+      );
+
+      final api = CleanuparrApi(dio);
+      expect(await api.getStrikesTotal(), 75);
+    });
+
+    test('getEventsPage carries pagination metadata from the envelope', () async {
+      final dio = Dio();
+      dio.httpClientAdapter = _FakeAdapter(
+        handler: (RequestOptions options) {
+          expect(options.path, 'api/events');
+          expect(options.queryParameters['page'], 2);
+          return ResponseBody.fromString(
+            '{"items": [{"id": "e1", "timestamp": "2026-10-23T10:00:00Z", '
+            '"eventType": "QueueItemDeleted", "severity": "Error", '
+            '"message": "Deleted", "itemTitle": "Item", "itemHash": "abc"}], '
+            '"page": 2, "pageSize": 50, "totalCount": 120, "totalPages": 3}',
+            200,
+            headers: <String, List<String>>{
+              Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+            },
+          );
+        },
+      );
+
+      final api = CleanuparrApi(dio);
+      final page = await api.getEventsPage(page: 2);
+      expect(page.items.length, 1);
+      expect(page.items.first.isDeletion, isTrue);
+      expect(page.totalCount, 120);
+      expect(page.totalPages, 3);
+      expect(page.hasNext, isTrue);
     });
 
     test('deleteStrike calls DELETE api/strikes/{id}', () async {

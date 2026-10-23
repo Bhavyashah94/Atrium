@@ -273,11 +273,18 @@ void main() {
     expect(stats.hours, equals(168));
     expect(stats.strikesIssued, equals(19));
     expect(stats.strikesRecovered, equals(7));
-    expect(stats.activeStrikes, equals(12)); // 19 - 7
+    // StatsV2Response carries no active field; the exact live count comes
+    // from the strikes ledger totalCount instead (see getStrikesTotal test).
+    expect(stats.activeStrikes, equals(0));
     expect(stats.malwareBlocked, equals(8)); // 5 + 3
     expect(stats.totalCleaned, equals(24));
     expect(stats.seekerTriggers, equals(15));
     expect(stats.seekerGrabbed, equals(6));
+  });
+
+  test('Live HTTP GET /api/strikes with pageSize=1 returns ledger totalCount', () async {
+    // The daemon fixture reports totalCount = 2 grouped download items.
+    expect(await api.getStrikesTotal(), equals(2));
   });
 
   test('Live HTTP GET /api/strikes returns parsed strikes ledger and handles search filter', () async {

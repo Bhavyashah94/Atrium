@@ -30,12 +30,16 @@ class CleanuparrEventDetailSheet extends StatelessWidget {
         DateFormat('MMM d, yyyy HH:mm:ss').format(event.timestamp.toLocal());
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(Insets.lg, Insets.md, Insets.lg, Insets.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(Insets.lg, Insets.md, Insets.lg, Insets.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
             Center(
               child: Container(
                 width: 36,
@@ -101,6 +105,7 @@ class CleanuparrEventDetailSheet extends StatelessWidget {
               value: event.message,
             ),
           ],
+          ),
         ),
       ),
     );

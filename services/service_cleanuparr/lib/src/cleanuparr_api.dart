@@ -12,6 +12,26 @@ class CleanuparrApi {
 
   final Dio _dio;
 
+  /// Extracts the items list from either a bare JSON array or a paginated
+  /// envelope (`items` / `results` / `data` keys).
+  static List<dynamic>? _extractList(
+    dynamic data, {
+    List<String> envelopeKeys = const <String>['items', 'results', 'data'],
+  }) {
+    if (data is List) {
+      return data;
+    }
+    if (data is Map<String, dynamic>) {
+      for (final String key in envelopeKeys) {
+        final dynamic list = data[key];
+        if (list is List) {
+          return list;
+        }
+      }
+    }
+    return null;
+  }
+
   /// Fetches system information, uptime, memory, and Arr/client connections.
   Future<CleanuparrStatus> getStatus() async {
     final Response<dynamic> response = await _dio.get<dynamic>('api/status');
@@ -105,8 +125,53 @@ class CleanuparrApi {
     await _dio.delete<void>('api/strikes/$downloadItemId');
   }
 
-  /// Fetches historical audit and operational events.
+  /// Returns the server-side total number of download items currently holding
+  /// strikes (the paginated envelope's `totalCount`), independent of any
+  /// client-side search or paging. The real backend caps pages at 500 entries
+  /// (Pagination.MaxPageSize), so a single 1-entry request always answers.
+  Future<int> getStrikesTotal() async {
+    final Response<dynamic> response = await _dio.get<dynamic>(
+      'api/strikes',
+      queryParameters: <String, dynamic>{'page': 1, 'pageSize': 1},
+    );
+    final dynamic data = response.data;
+    if (data is Map<String, dynamic>) {
+      final dynamic total = data['totalCount'] ?? data['total'] ?? data['totalItems'];
+      if (total is num) {
+        return total.toInt();
+      }
+      final int? parsed = int.tryParse(total?.toString() ?? '');
+      if (parsed != null) {
+        return parsed;
+      }
+      // Defensive: fall back to one 500-entry page worth of items.
+      final List<CleanuparrStrikeItem> all = await getStrikes(pageSize: 500);
+      return all.length;
+    }
+    return 0;
+  }
+
+  /// Fetches historical audit and operational events as a single page.
   Future<List<CleanuparrEvent>> getEvents({
+    int page = 1,
+    int pageSize = 50,
+    String? eventType,
+    String? severity,
+    String? search,
+  }) =>
+      getEventsPage(
+        page: page,
+        pageSize: pageSize,
+        eventType: eventType,
+        severity: severity,
+        search: search,
+      ).then((CleanuparrEventPage result) => result.items);
+
+  /// Fetches one page of historical audit and operational events, carrying
+  /// pagination metadata (`totalCount`, `totalPages`) so callers can walk
+  /// subsequent pages. The real backend serves this as
+  /// `PaginatedResult<EventListItem>`.
+  Future<CleanuparrEventPage> getEventsPage({
     int page = 1,
     int pageSize = 50,
     String? eventType,
@@ -128,26 +193,44 @@ class CleanuparrApi {
     final dynamic data = response.data;
 
     final List<CleanuparrEvent> events = <CleanuparrEvent>[];
-    List<dynamic>? rawList;
+    int totalCount = 0;
+    int totalPages = 1;
 
-    if (data is List) {
-      rawList = data;
-    } else if (data is Map<String, dynamic>) {
-      final dynamic list = data['items'] ?? data['results'] ?? data['data'];
-      if (list is List) {
-        rawList = list;
-      }
-    }
-
-    if (rawList != null) {
-      for (final dynamic item in rawList) {
-        if (item is Map<String, dynamic>) {
-          events.add(CleanuparrEvent.fromJson(item));
+    if (data is Map<String, dynamic>) {
+      final List<dynamic>? list = _extractList(data);
+      if (list != null) {
+        for (final dynamic item in list) {
+          if (item is Map<String, dynamic>) {
+            events.add(CleanuparrEvent.fromJson(item));
+          }
         }
       }
+      final dynamic rawTotal = data['totalCount'];
+      final dynamic rawPages = data['totalPages'];
+      if (rawTotal is num) totalCount = rawTotal.toInt();
+      if (rawPages is num) totalPages = rawPages.toInt();
+      if (totalCount == 0 && events.isNotEmpty) {
+        totalCount = events.length;
+      }
+    } else {
+      final List<dynamic>? rawList = _extractList(data);
+      if (rawList != null) {
+        for (final dynamic item in rawList) {
+          if (item is Map<String, dynamic>) {
+            events.add(CleanuparrEvent.fromJson(item));
+          }
+        }
+      }
+      totalCount = events.length;
     }
 
-    return events;
+    return CleanuparrEventPage(
+      items: List<CleanuparrEvent>.unmodifiable(events),
+      page: page,
+      pageSize: pageSize,
+      totalCount: totalCount,
+      totalPages: totalPages,
+    );
   }
 
   /// Lists registered background jobs and their execution schedules.
@@ -182,4 +265,24 @@ class CleanuparrApi {
   Future<void> triggerJob(String jobType) async {
     await _dio.post<void>('api/jobs/$jobType/trigger');
   }
+}
+
+/// One page of audit events plus the real backend's pagination metadata, so
+/// callers can fetch subsequent pages until `totalPages` is exhausted.
+class CleanuparrEventPage {
+  const CleanuparrEventPage({
+    required this.items,
+    required this.page,
+    required this.pageSize,
+    required this.totalCount,
+    required this.totalPages,
+  });
+
+  final List<CleanuparrEvent> items;
+  final int page;
+  final int pageSize;
+  final int totalCount;
+  final int totalPages;
+
+  bool get hasNext => page < totalPages;
 }
