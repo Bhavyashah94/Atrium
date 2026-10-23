@@ -1,4 +1,5 @@
 import 'package:core_models/core_models.dart';
+import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -119,6 +120,7 @@ void main() {
       expect(find.text('Downloads'), findsWidgets);
       expect(find.text('Settings'), findsOneWidget);
       expect(find.text('System'), findsOneWidget);
+      expect(find.byType(EasyRefresh), findsOneWidget);
 
       // Filter chips present
       expect(find.text('All (4)'), findsOneWidget);
@@ -144,6 +146,7 @@ void main() {
       await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
 
+      expect(find.byType(EasyRefresh), findsOneWidget);
       expect(find.text('Aria2 Settings'), findsOneWidget);
       expect(find.text('Bandwidth & Limits'), findsOneWidget);
       expect(find.text('Tasks & Concurrency'), findsOneWidget);
@@ -154,6 +157,7 @@ void main() {
       await tester.tap(find.text('System'));
       await tester.pumpAndSettle();
 
+      expect(find.byType(EasyRefresh), findsOneWidget);
       expect(find.text('Daemon Information'), findsOneWidget);
       expect(find.text('1.37.0'), findsOneWidget);
       expect(find.text('Global Telemetry'), findsOneWidget);

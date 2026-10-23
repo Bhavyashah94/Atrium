@@ -206,9 +206,15 @@ class _Aria2SystemTabState extends ConsumerState<Aria2SystemTab> {
           _fetchSessionId();
         },
         data: (Aria2Snapshot data) {
-          return ListView(
-            controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(
+          return EasyRefresh(
+            onRefresh: () async {
+              ref.invalidate(aria2SnapshotProvider(widget.instance));
+              await _fetchSessionId();
+            },
+            child: ListView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
               Insets.md,
               Insets.xs,
               Insets.md,
@@ -430,6 +436,7 @@ class _Aria2SystemTabState extends ConsumerState<Aria2SystemTab> {
                 ),
               ),
             ],
+            ),
           );
         },
       ),

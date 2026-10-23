@@ -123,14 +123,6 @@ class _Aria2SettingsTabState extends ConsumerState<Aria2SettingsTab> {
               () => Scaffold.of(context).openDrawer(),
         ),
         title: const Text('Aria2 Settings'),
-        actions: <Widget>[
-          IconButton(
-            tooltip: 'Refresh',
-            icon: const Icon(Icons.refresh),
-            onPressed: () =>
-                ref.invalidate(aria2GlobalOptionsProvider(widget.instance)),
-          ),
-        ],
       ),
       body: AsyncValueView<Map<String, String>>(
         value: options,
@@ -169,9 +161,17 @@ class _Aria2SettingsTabState extends ConsumerState<Aria2SettingsTab> {
             return aria2FmtRate(b);
           }
 
-          return ListView(
-            controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(
+          return EasyRefresh(
+            onRefresh: () async {
+              ref.invalidate(aria2GlobalOptionsProvider(widget.instance));
+              await ref.read(
+                aria2GlobalOptionsProvider(widget.instance).future,
+              );
+            },
+            child: ListView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
               Insets.md,
               Insets.xs,
               Insets.md,
@@ -441,6 +441,7 @@ class _Aria2SettingsTabState extends ConsumerState<Aria2SettingsTab> {
                 ],
               ),
             ],
+            ),
           );
         },
       ),

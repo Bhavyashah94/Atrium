@@ -610,6 +610,7 @@ class _Aria2DownloadsTabState extends ConsumerState<Aria2DownloadsTab> {
             onRefresh: () async => _refresh(),
             child: CustomScrollView(
               controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
               slivers: <Widget>[
                 // Global Telemetry Hero Card
                 SliverToBoxAdapter(
