@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:atrium/src/preferences.dart';
 import 'package:atrium/src/screens/calendar_screen.dart';
 import 'package:core_models/core_models.dart';
@@ -8,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:service_radarr/service_radarr.dart';
 
 class _TestPreferencesController extends PreferencesController {
@@ -95,6 +98,50 @@ void main() {
 
       final Preferences toggledBack = updated.copyWith(calendarListView: false);
       expect(toggledBack.calendarListView, isFalse);
+    });
+  });
+
+  group('calendarListView in the settings box', () {
+    late Directory tempDir;
+    late Box<String> box;
+
+    setUp(() async {
+      tempDir = Directory.systemTemp.createTempSync('atrium_calendar');
+      Hive.init(tempDir.path);
+      box = await Hive.openBox<String>('settings');
+    });
+
+    tearDown(() async {
+      await box.close();
+      await Hive.deleteBoxFromDisk('settings');
+      tempDir.deleteSync(recursive: true);
+    });
+
+    // A fresh container reads the box from scratch, the way a relaunch does.
+    Preferences relaunch() {
+      final ProviderContainer container = ProviderContainer(
+        overrides: <Override>[settingsBoxProvider.overrideWithValue(box)],
+      );
+      addTearDown(container.dispose);
+      return container.read(preferencesProvider);
+    }
+
+    test('the chosen view survives a relaunch', () async {
+      final ProviderContainer first = ProviderContainer(
+        overrides: <Override>[settingsBoxProvider.overrideWithValue(box)],
+      );
+      addTearDown(first.dispose);
+      expect(first.read(preferencesProvider).calendarListView, isFalse);
+
+      await first
+          .read(preferencesProvider.notifier)
+          .setCalendarListView(true);
+      expect(relaunch().calendarListView, isTrue);
+
+      await first
+          .read(preferencesProvider.notifier)
+          .setCalendarListView(false);
+      expect(relaunch().calendarListView, isFalse);
     });
   });
 
