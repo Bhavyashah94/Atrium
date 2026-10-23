@@ -388,6 +388,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       ServiceKind.adguardHome => const SizedBox.shrink(),
       // Owns its own scaffold, handled above.
       ServiceKind.aria2 => const SizedBox.shrink(),
+      ServiceKind.cleanuparr => const SizedBox.shrink(),
     };
   }
 }

@@ -32,6 +32,7 @@ enum ServiceKind {
   myspeed,
   adguardHome,
   aria2,
+  cleanuparr,
 }
 
 /// Static metadata about a [ServiceKind] - display name, default port, the
@@ -69,6 +70,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.myspeed => 'MySpeed',
         ServiceKind.adguardHome => 'AdGuard Home',
         ServiceKind.aria2 => 'aria2',
+        ServiceKind.cleanuparr => 'Cleanuparr',
       };
 
   /// One-line role description.
@@ -101,13 +103,18 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.myspeed => 'Internet speed',
         ServiceKind.adguardHome => 'Network-wide blocking',
         ServiceKind.aria2 => 'Download client',
+        ServiceKind.cleanuparr => 'Malware blocker & cleaner',
       };
 
   /// Whether this service's integration is still in beta. Surfaced as a
   /// "BETA" badge in the service picker, on the instance tile, and on the
   /// service's own screen so users know it is not yet fully stable.
   bool get isBeta => switch (this) {
-        ServiceKind.deluge || ServiceKind.rtorrent || ServiceKind.aria2 => true,
+        ServiceKind.deluge ||
+        ServiceKind.rtorrent ||
+        ServiceKind.aria2 ||
+        ServiceKind.cleanuparr =>
+          true,
         _ => false,
       };
 
@@ -151,6 +158,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.adguardHome => 80,
         // aria2's own RPC port, and the one the docs use.
         ServiceKind.aria2 => 6800,
+        ServiceKind.cleanuparr => 11011,
       };
 
   /// What auth flow the service uses by default. Some services (Jellyfin) can
@@ -168,6 +176,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.unraid ||
         ServiceKind.gluetun ||
         ServiceKind.myspeed ||
+        ServiceKind.cleanuparr ||
         ServiceKind.ombi =>
           AuthStyle.apiKey,
         // aria2's credential is its `--rpc-secret`, which is sent as the
@@ -206,6 +215,7 @@ extension ServiceKindX on ServiceKind {
         ServiceKind.radarr ||
         ServiceKind.prowlarr ||
         ServiceKind.bazarr ||
+        ServiceKind.cleanuparr ||
         ServiceKind.lidarr =>
           ServiceRole.automation,
         ServiceKind.seerr || ServiceKind.ombi => ServiceRole.requests,
