@@ -93,8 +93,8 @@ class CleanuparrStats {
 
     // Only parse an explicitly provided active-strike value. The real backend
     // StatsV2Response never sends one, so this stays 0 there; the exact live
-    // count is sourced from GET /api/strikes ( CleanuparrApi.getStrikesTotal),
-    // which reports the ledger totalCount server-side. Deriving active as
+    // count is sourced from GET /api/strikes (CleanuparrApi.getActiveStrikesCount),
+    // which counts the ledger items not yet removed. Deriving active as
     // (issued - recovered) was removed: strikes that ended in deletion rather
     // than recovery are not "recovered", so the derivation overcounted and
     // contradicted the empty-ledger "All queues clean" state.

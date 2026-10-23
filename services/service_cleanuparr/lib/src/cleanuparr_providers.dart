@@ -88,13 +88,13 @@ final cleanuparrActiveStrikesCountProvider =
   return countAsync.maybeWhen(data: (int total) => total, orElse: () => 0);
 });
 
-/// Fetches the exact server-side count of download items holding strikes
-/// (single 1-entry request reading the paginated `totalCount`).
+/// Fetches the number of download items holding strikes that Cleanuparr has
+/// not removed yet, unaffected by the Strikes tab's search.
 final cleanuparrStrikesCountProvider =
     FutureProvider.autoDispose.family<int, Instance>((Ref ref, Instance instance) async {
   final CleanuparrApi api =
       await ref.watch(cleanuparrApiProvider(instance).future);
-  return api.getStrikesTotal();
+  return api.getActiveStrikesCount();
 });
 
 /// Search query string for filtering audit events.

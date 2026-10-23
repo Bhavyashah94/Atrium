@@ -125,30 +125,32 @@ class CleanuparrApi {
     await _dio.delete<void>('api/strikes/$downloadItemId');
   }
 
-  /// Returns the server-side total number of download items currently holding
-  /// strikes (the paginated envelope's `totalCount`), independent of any
-  /// client-side search or paging. The real backend caps pages at 500 entries
-  /// (Pagination.MaxPageSize), so a single 1-entry request always answers.
-  Future<int> getStrikesTotal() async {
+  /// Returns how many download items hold strikes and have not been removed,
+  /// independent of any client-side search.
+  ///
+  /// The ledger keeps an item Cleanuparr already removed (`isRemoved`) until
+  /// its strikes age out, so the envelope's `totalCount` alone overstates what
+  /// is still active. This reads one page at the backend's largest size (500,
+  /// Pagination.MaxPageSize) and counts the items not removed; items past that
+  /// page are counted as active, since their state is not known.
+  Future<int> getActiveStrikesCount() async {
+    const int pageSize = 500;
     final Response<dynamic> response = await _dio.get<dynamic>(
       'api/strikes',
-      queryParameters: <String, dynamic>{'page': 1, 'pageSize': 1},
+      queryParameters: <String, dynamic>{'page': 1, 'pageSize': pageSize},
     );
     final dynamic data = response.data;
-    if (data is Map<String, dynamic>) {
-      final dynamic total = data['totalCount'] ?? data['total'] ?? data['totalItems'];
-      if (total is num) {
-        return total.toInt();
-      }
-      final int? parsed = int.tryParse(total?.toString() ?? '');
-      if (parsed != null) {
-        return parsed;
-      }
-      // Defensive: fall back to one 500-entry page worth of items.
-      final List<CleanuparrStrikeItem> all = await getStrikes(pageSize: 500);
-      return all.length;
-    }
-    return 0;
+    final List<dynamic> rawList = _extractList(data) ?? const <dynamic>[];
+    final List<CleanuparrStrikeItem> items = <CleanuparrStrikeItem>[
+      for (final dynamic item in rawList)
+        if (item is Map<String, dynamic>) CleanuparrStrikeItem.fromJson(item),
+    ];
+    final int notRemoved =
+        items.where((CleanuparrStrikeItem i) => !i.isRemoved).length;
+    final dynamic total = data is Map<String, dynamic> ? data['totalCount'] : null;
+    final int beyondPage =
+        total is num && total.toInt() > items.length ? total.toInt() - items.length : 0;
+    return notRemoved + beyondPage;
   }
 
   /// Fetches historical audit and operational events as a single page.

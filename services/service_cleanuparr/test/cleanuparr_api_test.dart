@@ -89,7 +89,7 @@ void main() {
       expect(stats.strikesRecovered, 6);
       // No derivation from (issued - recovered): the real StatsV2Response has
       // no active field, so it stays 0 here. Exact counts come from
-      // CleanuparrApi.getStrikesTotal instead.
+      // CleanuparrApi.getActiveStrikesCount instead.
       expect(stats.activeStrikes, 0);
       expect(stats.malwareBlocked, 3); // 2 + 1
       expect(stats.totalCleaned, 12);
@@ -259,15 +259,19 @@ void main() {
       expect(stats.activeStrikes, 0);
     });
 
-    test('getStrikesTotal reads paginated totalCount with 1-entry page', () async {
+    test('getActiveStrikesCount leaves out items Cleanuparr already removed', () async {
       final dio = Dio();
       dio.httpClientAdapter = _FakeAdapter(
         handler: (RequestOptions options) {
           expect(options.path, 'api/strikes');
           expect(options.queryParameters['page'], 1);
-          expect(options.queryParameters['pageSize'], 1);
+          expect(options.queryParameters['pageSize'], 500);
           return ResponseBody.fromString(
-            '{"items": [], "page": 1, "pageSize": 1, "totalCount": 75, "totalPages": 75}',
+            '{"items": ['
+            '{"downloadItemId": "a", "title": "Stalled", "totalStrikes": 2, "isRemoved": false},'
+            '{"downloadItemId": "b", "title": "Pending", "totalStrikes": 3, "isMarkedForRemoval": true, "isRemoved": false},'
+            '{"downloadItemId": "c", "title": "Gone", "totalStrikes": 3, "isRemoved": true}'
+            '], "page": 1, "pageSize": 500, "totalCount": 3, "totalPages": 1}',
             200,
             headers: <String, List<String>>{
               Headers.contentTypeHeader: <String>[Headers.jsonContentType],
@@ -277,7 +281,24 @@ void main() {
       );
 
       final api = CleanuparrApi(dio);
-      expect(await api.getStrikesTotal(), 75);
+      expect(await api.getActiveStrikesCount(), 2);
+    });
+
+    test('getActiveStrikesCount counts items past the first page as active', () async {
+      final dio = Dio();
+      dio.httpClientAdapter = _FakeAdapter(
+        handler: (RequestOptions options) => ResponseBody.fromString(
+          '{"items": [{"downloadItemId": "a", "title": "Gone", "isRemoved": true}],'
+          ' "page": 1, "pageSize": 500, "totalCount": 4, "totalPages": 1}',
+          200,
+          headers: <String, List<String>>{
+            Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+          },
+        ),
+      );
+
+      final api = CleanuparrApi(dio);
+      expect(await api.getActiveStrikesCount(), 3);
     });
 
     test('getEventsPage carries pagination metadata from the envelope', () async {
