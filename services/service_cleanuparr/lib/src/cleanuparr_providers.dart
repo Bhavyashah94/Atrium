@@ -23,7 +23,9 @@ final cleanuparrApiProvider =
 ) async {
   final Dio dio = await ref.watch(instanceDioProvider(instance).future);
   return CleanuparrApi(dio);
-});
+},
+  retry: (int _, Object __) => null,
+);
 
 /// Fetches system information, uptime, memory, and Arr/client connections.
 final cleanuparrStatusProvider =
@@ -34,7 +36,9 @@ final cleanuparrStatusProvider =
   final CleanuparrApi api =
       await ref.watch(cleanuparrApiProvider(instance).future);
   return api.getStatus();
-});
+},
+  retry: (int _, Object __) => null,
+);
 
 /// Selected timeframe in hours for the Overview metrics (e.g. 24, 168, 720).
 final cleanuparrTimeframeHoursProvider =
@@ -50,7 +54,9 @@ final cleanuparrStatsProvider =
       await ref.watch(cleanuparrApiProvider(instance).future);
   final int hours = ref.watch(cleanuparrTimeframeHoursProvider(instance));
   return api.getStats(hours: hours);
-});
+},
+  retry: (int _, Object __) => null,
+);
 
 /// Fetches registered background jobs and their execution states.
 final cleanuparrJobsProvider =
@@ -61,7 +67,9 @@ final cleanuparrJobsProvider =
   final CleanuparrApi api =
       await ref.watch(cleanuparrApiProvider(instance).future);
   return api.getJobs();
-});
+},
+  retry: (int _, Object __) => null,
+);
 
 /// Search query string for filtering the active strikes list.
 final cleanuparrStrikesSearchProvider =
@@ -77,7 +85,9 @@ final cleanuparrStrikesProvider =
       await ref.watch(cleanuparrApiProvider(instance).future);
   final String search = ref.watch(cleanuparrStrikesSearchProvider(instance));
   return api.getStrikes(search: search.isNotEmpty ? search : null);
-});
+},
+  retry: (int _, Object __) => null,
+);
 
 /// Returns the number of download items with active strikes, sourced from the
 /// server-side ledger `totalCount` so it is unaffected by Strikes-tab search
@@ -95,7 +105,9 @@ final cleanuparrStrikesCountProvider =
   final CleanuparrApi api =
       await ref.watch(cleanuparrApiProvider(instance).future);
   return api.getActiveStrikesCount();
-});
+},
+  retry: (int _, Object __) => null,
+);
 
 /// Search query string for filtering audit events.
 final cleanuparrEventsSearchProvider =
@@ -180,4 +192,6 @@ final cleanuparrEventsProvider =
           .where((CleanuparrEvent e) => e.eventType.toLowerCase() == f)
           .toList();
   }
-});
+},
+  retry: (int _, Object __) => null,
+);
