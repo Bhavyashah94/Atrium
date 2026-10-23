@@ -143,7 +143,7 @@ final cleanuparrEventsProvider =
     pageSize: pageSize,
   );
 
-  if (filter == null || filter.isEmpty || !firstPage.hasNext) {
+  if (filter == null || filter.isEmpty) {
     return firstPage.items;
   }
 
