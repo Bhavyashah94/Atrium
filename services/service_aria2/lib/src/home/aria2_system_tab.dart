@@ -209,7 +209,11 @@ class _Aria2SystemTabState extends ConsumerState<Aria2SystemTab> {
           return EasyRefresh(
             onRefresh: () async {
               ref.invalidate(aria2SnapshotProvider(widget.instance));
-              await _fetchSessionId();
+              final Future<void> session = _fetchSessionId();
+              // Hold the indicator until the new stats are in, not just the
+              // session ID.
+              await ref.read(aria2SnapshotProvider(widget.instance).future);
+              await session;
             },
             child: ListView(
               controller: _scrollController,
