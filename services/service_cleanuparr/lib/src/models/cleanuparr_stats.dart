@@ -53,12 +53,12 @@ class CleanuparrStats {
             : null;
 
     final int totalEv = _asInt(events?['total'] ?? json['totalEvents']);
-    final int evWarn = _asInt(events?['warning'] ?? events?['warn']);
-    final int evErr = _asInt(events?['error'] ?? events?['critical']);
+    final int evWarn = _asInt(events?['warning'] ?? events?['warn'] ?? json['eventsWarning']);
+    final int evErr = _asInt(events?['error'] ?? events?['critical'] ?? json['eventsError']);
 
-    final int strIssued = _asInt(strikes?['totalIssued'] ?? strikes?['issued']);
-    final int strRec = _asInt(strikes?['totalRecovered'] ?? strikes?['recovered']);
-    final int strActive = _asInt(strikes?['active'] ?? strikes?['current']);
+    final int strIssued = _asInt(strikes?['totalIssued'] ?? strikes?['issued'] ?? json['strikesIssued']);
+    final int strRec = _asInt(strikes?['totalRecovered'] ?? strikes?['recovered'] ?? json['strikesRecovered']);
+    final int strActive = _asInt(strikes?['active'] ?? strikes?['current'] ?? json['activeStrikes']);
 
     // Malware blocked: combination of allFilesBlocked + atLeastOneFileBlocked
     final int allBlocked = _asInt(removals?['allFilesBlocked']);

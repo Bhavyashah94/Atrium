@@ -49,11 +49,19 @@ class CleanuparrStatus {
     final dynamic rawMem =
         app?['memoryUsageMB'] ??
         app?['memoryMb'] ??
-        json['memoryUsageMB'];
+        json['memoryUsageMB'] ??
+        json['memoryUsage'];
     if (rawMem is num) {
       mem = rawMem.toDouble();
+      // If provided in raw bytes (e.g. > 1 MB in bytes), convert to megabytes
+      if (mem > 1000000) {
+        mem = (mem / (1024 * 1024)).roundToDouble();
+      }
     } else if (rawMem != null) {
       mem = double.tryParse(rawMem.toString());
+      if (mem != null && mem > 1000000) {
+        mem = (mem / (1024 * 1024)).roundToDouble();
+      }
     }
 
     final List<CleanuparrManagerStatus> managers = <CleanuparrManagerStatus>[];

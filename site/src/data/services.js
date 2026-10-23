@@ -346,7 +346,12 @@ export const servicesData = {
     name: 'Cleanuparr',
     category: 'The *arr Stack',
     icon: asset('assets/service_icons/cleanuparr.png'),
-    screenshots: [],
+    screenshots: [
+      asset('assets/service_previews/cleanuparr/cleanuparr_1.png'),
+      asset('assets/service_previews/cleanuparr/cleanuparr_2.png'),
+      asset('assets/service_previews/cleanuparr/cleanuparr_3.png'),
+      asset('assets/service_previews/cleanuparr/cleanuparr_4.png')
+    ],
     description: 'Automated download cleaner and malware blocker for the Servarr ecosystem and download clients. Quarantines suspicious payloads, enforces item strikes, and purges orphaned items.',
     features: [
       'Automated Malware & Unwanted File Blocking',
