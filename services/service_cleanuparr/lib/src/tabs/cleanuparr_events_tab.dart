@@ -66,6 +66,9 @@ class _CleanuparrEventsTabState extends ConsumerState<CleanuparrEventsTab> {
       String next,
     ) {
       if (next.isEmpty && _searchController.text.isNotEmpty) {
+        // A keystroke still waiting on the debounce would put the old
+        // search back after this reset.
+        _debounceTimer?.cancel();
         _searchController.clear();
       }
     });

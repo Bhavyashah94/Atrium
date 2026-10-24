@@ -60,11 +60,18 @@ class _CleanuparrStrikesTabState extends ConsumerState<CleanuparrStrikesTab> {
       String next,
     ) {
       if (next.isEmpty && _searchController.text.isNotEmpty) {
+        // A keystroke still waiting on the debounce would put the old
+        // search back after this reset.
+        _debounceTimer?.cancel();
         _searchController.clear();
       }
     });
 
     final strikesAsync = ref.watch(cleanuparrStrikesProvider(widget.instance));
+    // The search the list was fetched with. The field runs ahead of it while
+    // a keystroke waits on the debounce, so the empty state reads this one.
+    final String appliedSearch =
+        ref.watch(cleanuparrStrikesSearchProvider(widget.instance)).trim();
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
@@ -152,9 +159,7 @@ class _CleanuparrStrikesTabState extends ConsumerState<CleanuparrStrikesTab> {
               ),
               data: (List<CleanuparrStrikeItem> strikes) {
                 if (strikes.isEmpty) {
-                  final bool isSearching =
-                      _searchController.text.trim().isNotEmpty;
-                  if (isSearching) {
+                  if (appliedSearch.isNotEmpty) {
                     return Padding(
                       padding: const EdgeInsets.only(top: Insets.xxl * 2),
                       child: Center(
@@ -175,7 +180,7 @@ class _CleanuparrStrikesTabState extends ConsumerState<CleanuparrStrikesTab> {
                             ),
                             const SizedBox(height: Insets.xs),
                             Text(
-                              "No strikes matching '${_searchController.text.trim()}'",
+                              "No strikes matching '$appliedSearch'",
                               style: textTheme.bodySmall?.copyWith(
                                 color: colorScheme.outline,
                               ),
