@@ -48,7 +48,6 @@ class CleanuparrStrikeCard extends ConsumerWidget {
     );
 
     if (confirmed != true) return;
-    if (strikeItem.id.isEmpty) return;
 
     try {
       final api = await ref.read(cleanuparrApiProvider(instance).future);
@@ -189,7 +188,11 @@ class CleanuparrStrikeCard extends ConsumerWidget {
                     color: colorScheme.onSurfaceVariant,
                     size: 20,
                   ),
-                  onPressed: () => _confirmClear(context, ref),
+                  // Without an id there is nothing to send, so the button
+                  // is off rather than asking and then doing nothing.
+                  onPressed: strikeItem.id.isEmpty
+                      ? null
+                      : () => _confirmClear(context, ref),
                 ),
               ],
             ),
