@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +27,7 @@ class CleanuparrStrikesTab extends ConsumerStatefulWidget {
 
 class _CleanuparrStrikesTabState extends ConsumerState<CleanuparrStrikesTab> {
   late final TextEditingController _searchController;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -36,6 +39,7 @@ class _CleanuparrStrikesTabState extends ConsumerState<CleanuparrStrikesTab> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -90,6 +94,7 @@ class _CleanuparrStrikesTabState extends ConsumerState<CleanuparrStrikesTab> {
                     ? IconButton(
                         icon: const Icon(Icons.clear, size: 18),
                         onPressed: () {
+                          _debounceTimer?.cancel();
                           _searchController.clear();
                           ref
                               .read(
@@ -116,11 +121,16 @@ class _CleanuparrStrikesTabState extends ConsumerState<CleanuparrStrikesTab> {
                 ),
               ),
               onChanged: (String val) {
-                ref
-                    .read(
-                      cleanuparrStrikesSearchProvider(widget.instance).notifier,
-                    )
-                    .state = val;
+                _debounceTimer?.cancel();
+                _debounceTimer = Timer(const Duration(milliseconds: 350), () {
+                  if (mounted) {
+                    ref
+                        .read(
+                          cleanuparrStrikesSearchProvider(widget.instance).notifier,
+                        )
+                        .state = val;
+                  }
+                });
                 setState(() {});
               },
             ),
@@ -142,6 +152,40 @@ class _CleanuparrStrikesTabState extends ConsumerState<CleanuparrStrikesTab> {
               ),
               data: (List<CleanuparrStrikeItem> strikes) {
                 if (strikes.isEmpty) {
+                  final bool isSearching =
+                      _searchController.text.trim().isNotEmpty;
+                  if (isSearching) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: Insets.xxl * 2),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Icon(
+                              Icons.search_off_rounded,
+                              size: 48,
+                              color: colorScheme.outline,
+                            ),
+                            const SizedBox(height: Insets.md),
+                            Text(
+                              'No Strikes Found',
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: Insets.xs),
+                            Text(
+                              "No strikes matching '${_searchController.text.trim()}'",
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colorScheme.outline,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
                   return Padding(
                     padding: const EdgeInsets.only(top: Insets.xxl * 2),
                     child: Center(

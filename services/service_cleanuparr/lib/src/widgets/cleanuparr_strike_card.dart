@@ -48,6 +48,7 @@ class CleanuparrStrikeCard extends ConsumerWidget {
     );
 
     if (confirmed != true) return;
+    if (strikeItem.id.isEmpty) return;
 
     try {
       final api = await ref.read(cleanuparrApiProvider(instance).future);

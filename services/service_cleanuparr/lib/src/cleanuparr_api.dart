@@ -138,7 +138,8 @@ class CleanuparrApi {
 
   /// Resets and clears all strikes for a download item by [downloadItemId].
   Future<void> deleteStrike(String downloadItemId) async {
-    await _send(() => _dio.delete<void>('api/strikes/$downloadItemId'));
+    final String encodedId = Uri.encodeComponent(downloadItemId);
+    await _send(() => _dio.delete<void>('api/strikes/$encodedId'));
   }
 
   /// Returns how many download items hold strikes and have not been removed,
@@ -286,7 +287,8 @@ class CleanuparrApi {
 
   /// Triggers immediate on-demand execution of a background job by [jobType].
   Future<void> triggerJob(String jobType) async {
-    await _send(() => _dio.post<void>('api/jobs/$jobType/trigger'));
+    final String encodedJob = Uri.encodeComponent(jobType);
+    await _send(() => _dio.post<void>('api/jobs/$encodedJob/trigger'));
   }
 }
 

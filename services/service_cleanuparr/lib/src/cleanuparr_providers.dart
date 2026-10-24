@@ -89,9 +89,9 @@ final cleanuparrStrikesProvider =
   retry: (int _, Object __) => null,
 );
 
-/// Returns the number of download items with active strikes, sourced from the
-/// server-side ledger `totalCount` so it is unaffected by Strikes-tab search
-/// text or the page cap of the rendered ledger list.
+/// Returns the number of download items with active strikes, computed via
+/// `getActiveStrikesCount()` to exclude already-removed items (`isRemoved == false`)
+/// so it is unaffected by Strikes-tab search text or ledger page caps.
 final cleanuparrActiveStrikesCountProvider =
     Provider.autoDispose.family<int, Instance>((Ref ref, Instance instance) {
   final countAsync = ref.watch(cleanuparrStrikesCountProvider(instance));

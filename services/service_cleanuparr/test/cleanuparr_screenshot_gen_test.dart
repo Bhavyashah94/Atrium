@@ -74,8 +74,10 @@ Future<void> _loadFonts() async {
 void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    await _loadFonts();
-    Directory(_shotsOutDir).createSync(recursive: true);
+    if (_generateShots) {
+      await _loadFonts();
+      Directory(_shotsOutDir).createSync(recursive: true);
+    }
   });
 
   const CleanuparrStatus sampleStatus = CleanuparrStatus(

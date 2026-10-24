@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +27,7 @@ class CleanuparrEventsTab extends ConsumerStatefulWidget {
 
 class _CleanuparrEventsTabState extends ConsumerState<CleanuparrEventsTab> {
   late final TextEditingController _searchController;
+  Timer? _debounceTimer;
 
   static const List<(String label, String? filterKey)> _filters = [
     ('All', null),
@@ -44,6 +47,7 @@ class _CleanuparrEventsTabState extends ConsumerState<CleanuparrEventsTab> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -99,6 +103,7 @@ class _CleanuparrEventsTabState extends ConsumerState<CleanuparrEventsTab> {
                     ? IconButton(
                         icon: const Icon(Icons.clear, size: 18),
                         onPressed: () {
+                          _debounceTimer?.cancel();
                           _searchController.clear();
                           ref
                               .read(
@@ -125,11 +130,16 @@ class _CleanuparrEventsTabState extends ConsumerState<CleanuparrEventsTab> {
                 ),
               ),
               onChanged: (String val) {
-                ref
-                    .read(
-                      cleanuparrEventsSearchProvider(widget.instance).notifier,
-                    )
-                    .state = val;
+                _debounceTimer?.cancel();
+                _debounceTimer = Timer(const Duration(milliseconds: 350), () {
+                  if (mounted) {
+                    ref
+                        .read(
+                          cleanuparrEventsSearchProvider(widget.instance).notifier,
+                        )
+                        .state = val;
+                  }
+                });
                 setState(() {});
               },
             ),

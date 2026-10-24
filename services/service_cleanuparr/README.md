@@ -23,7 +23,7 @@ graph TD
   - Total events, strike activities, malware removals (`allFilesBlocked`, `atLeastOneFileBlocked`), cleaned torrents, and Seeker searches across selectable timeframes (24h, 7d, 30d).
 - **Strikes Ledger**: `GET /api/strikes?page=1&pageSize=50&search=`
   - Active items accumulating strikes, per-item strike totals and type breakdowns, removal state, info-hashes, and timestamps.
-  - The exact active count is taken from the paginated envelope's `totalCount` (a single 1-entry request), so it is immune to client-side search and page caps.
+  - The active count is calculated via `getActiveStrikesCount()` by querying up to 500 entries to exclude already-removed items (`isRemoved == false`), immune to client-side search or ledger page caps.
 - **Strike Reset Action**: `DELETE /api/strikes/{downloadItemId}`
   - Clears accumulated strikes for an item with confirmation dialog.
 - **Audit Feed**: `GET /api/events?page=1&pageSize=50&eventType=&severity=&search=`

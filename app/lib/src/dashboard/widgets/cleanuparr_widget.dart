@@ -138,7 +138,6 @@ class _CleanuparrInstanceBlock extends ConsumerWidget {
                           ? colorScheme.onErrorContainer
                           : colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(width: Insets.xs),
                     _MiniStatPill(
                       icon: Icons.gavel_outlined,
                       label: '$activeStrikes strikes',
@@ -149,7 +148,6 @@ class _CleanuparrInstanceBlock extends ConsumerWidget {
                           ? colorScheme.onTertiaryContainer
                           : colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(width: Insets.xs),
                     _MiniStatPill(
                       icon: Icons.cleaning_services_outlined,
                       label: '${stats.totalCleaned} cleaned',
