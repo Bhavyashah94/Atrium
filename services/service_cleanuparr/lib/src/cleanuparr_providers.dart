@@ -89,9 +89,9 @@ final cleanuparrStrikesProvider =
   retry: (int _, Object __) => null,
 );
 
-/// Returns the number of download items with active strikes, computed via
-/// `getActiveStrikesCount()` to exclude already-removed items (`isRemoved == false`)
-/// so it is unaffected by Strikes-tab search text or ledger page caps.
+/// Returns the number of download items with active strikes, from
+/// `getActiveStrikesCount()`, which leaves out items Cleanuparr already
+/// removed (`isRemoved == true`). It ignores the Strikes-tab search text.
 final cleanuparrActiveStrikesCountProvider =
     Provider.autoDispose.family<int, Instance>((Ref ref, Instance instance) {
   final countAsync = ref.watch(cleanuparrStrikesCountProvider(instance));
