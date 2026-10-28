@@ -17,6 +17,7 @@ Future<void> showSlskdRoomMembersSheet(
 }) {
   return showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     showDragHandle: true,
     isScrollControlled: true,
     useSafeArea: true,
@@ -62,6 +63,7 @@ class _SlskdRoomMembersSheetState extends ConsumerState<SlskdRoomMembersSheet> {
     final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
+      useRootNavigator: true,
       builder: (ctx) => AlertDialog(
         title: Text('Invite to #${widget.roomName}'),
         content: TextField(

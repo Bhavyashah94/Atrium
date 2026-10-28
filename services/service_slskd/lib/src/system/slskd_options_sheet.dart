@@ -22,6 +22,7 @@ class SlskdOptionsSheet extends ConsumerStatefulWidget {
   }) {
     return showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => SlskdOptionsSheet(instance: instance),

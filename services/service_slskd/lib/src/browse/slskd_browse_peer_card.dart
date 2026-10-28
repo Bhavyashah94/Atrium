@@ -26,6 +26,7 @@ class SlskdBrowsePeerCard extends StatelessWidget {
     if (userInfo == null && userStatus == null) return;
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       showDragHandle: true,
       isScrollControlled: true,
       builder: (BuildContext _) => SlskdUserBioSheet(

@@ -441,6 +441,7 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
 
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(

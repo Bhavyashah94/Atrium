@@ -26,6 +26,7 @@ class SlskdDiskFilesSheet extends ConsumerStatefulWidget {
   }) {
     return showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => SlskdDiskFilesSheet(
@@ -90,6 +91,7 @@ class _SlskdDiskFilesSheetState extends ConsumerState<SlskdDiskFilesSheet>
     final messenger = ScaffoldMessenger.of(context);
     final bool confirmed = await showDialog<bool>(
           context: context,
+          useRootNavigator: true,
           builder: (ctx) => AlertDialog(
             title: const Text('Delete File?'),
             content: Text(
@@ -149,6 +151,7 @@ class _SlskdDiskFilesSheetState extends ConsumerState<SlskdDiskFilesSheet>
     final messenger = ScaffoldMessenger.of(context);
     final bool confirmed = await showDialog<bool>(
           context: context,
+          useRootNavigator: true,
           builder: (ctx) => AlertDialog(
             title: const Text('Delete Folder?'),
             content: Text(

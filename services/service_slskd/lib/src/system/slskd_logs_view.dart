@@ -41,6 +41,7 @@ class _SlskdLogsViewState extends ConsumerState<SlskdLogsView> {
   void _showLogDetails(SlskdLogRecord log) {
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(

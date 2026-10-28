@@ -269,6 +269,7 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
   void _openFilterSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       showDragHandle: true,
       isScrollControlled: true,
       builder: (BuildContext _) => SlskdSearchFilterSheet(

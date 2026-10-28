@@ -286,6 +286,7 @@ void showSlskdDiscoverRoomsSheet(
 }) {
   showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     showDragHandle: true,
     useSafeArea: true,

@@ -170,6 +170,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
+      useRootNavigator: true,
       builder: (ctx) => AlertDialog(
         title: Text('Set Ticker for #$roomName'),
         content: TextField(
@@ -271,6 +272,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     final TextEditingController userCtrl = TextEditingController();
     showDialog<void>(
       context: context,
+      useRootNavigator: true,
       builder: (BuildContext ctx) {
         return AlertDialog(
           title: const Text('New Direct Message'),

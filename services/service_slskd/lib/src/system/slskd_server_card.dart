@@ -55,6 +55,7 @@ class _SlskdServerCardState extends ConsumerState<SlskdServerCard> {
   Future<void> _handleDisconnect() async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
+      useRootNavigator: true,
       builder: (BuildContext ctx) => AlertDialog(
         title: const Text('Disconnect from Soulseek?'),
         content: const Text(
@@ -68,6 +69,7 @@ class _SlskdServerCardState extends ConsumerState<SlskdServerCard> {
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Disconnect'),
