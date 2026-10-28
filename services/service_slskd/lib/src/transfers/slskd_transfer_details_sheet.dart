@@ -507,23 +507,38 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
                     onPressed: () async {
                       try {
                         final api = await ref.read(slskdApiProvider(instance).future);
-                        await api.enqueueBatch(
+                        final resp = await api.enqueueBatch(
                           EnqueueDownloadBatchRequest(
                             username: transfer.username,
                             files: <EnqueueDownloadBatchItem>[
-                              EnqueueDownloadBatchItem(filename: transfer.filename, size: transfer.size),
+                              EnqueueDownloadBatchItem(
+                                filename: transfer.filename,
+                                size: transfer.size,
+                              ),
                             ],
                           ),
                         );
                         ref.invalidate(slskdDownloadsProvider(instance));
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Retrying download...'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                          Navigator.of(context).pop();
+                          if (resp.failures.isNotEmpty &&
+                              (resp.batch?.transfers.isEmpty ?? true)) {
+                            final failReason = resp.failures.first.message ??
+                                'File already downloading or queued';
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Could not retry: $failReason'),
+                                backgroundColor: colorScheme.error,
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Retrying download...'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                            Navigator.of(context).pop();
+                          }
                         }
                       } catch (e) {
                         if (context.mounted) {

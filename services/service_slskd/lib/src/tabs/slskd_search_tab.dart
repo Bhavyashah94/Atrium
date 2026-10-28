@@ -57,6 +57,13 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
     super.initState();
     _searchPollingTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (!mounted) return;
+      if (WidgetsBinding.instance.lifecycleState != null &&
+          WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+        return;
+      }
+      final activeTab = ref.read(slskdActiveTabProvider(widget.instance));
+      if (activeTab != 1) return;
+
       final searches =
           ref.read(slskdSearchesProvider(widget.instance)).value ??
               const <SlskdSearch>[];

@@ -49,6 +49,14 @@ class _SlskdSharesViewState extends ConsumerState<SlskdSharesView> {
       _scanProgressTimer =
           Timer.periodic(const Duration(milliseconds: 1500), (_) {
         if (!mounted) return;
+        if (WidgetsBinding.instance.lifecycleState != null &&
+            WidgetsBinding.instance.lifecycleState !=
+                AppLifecycleState.resumed) {
+          return;
+        }
+        final activeTab = ref.read(slskdActiveTabProvider(widget.instance));
+        if (activeTab != 4) return;
+
         ref.invalidate(slskdApplicationStateProvider(widget.instance));
       });
     } else if (!isScanning && _scanProgressTimer != null) {

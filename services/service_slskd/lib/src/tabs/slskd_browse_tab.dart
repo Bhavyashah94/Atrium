@@ -109,11 +109,12 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
 
     try {
       final api = await ref.read(slskdApiProvider(widget.instance).future);
-      await api.enqueueBatch(
+      final resp = await api.enqueueBatch(
         EnqueueDownloadBatchRequest(
           username: username,
           options: EnqueueDownloadBatchOptions(
-            externalId: '${username}_${DateTime.now().millisecondsSinceEpoch}_${node.segment.hashCode.abs()}',
+            externalId:
+                '${username}_${DateTime.now().millisecondsSinceEpoch}_${node.segment.hashCode.abs()}',
           ),
           files: files
               .map(
@@ -128,17 +129,36 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
       if (!mounted) return;
       ref.invalidate(slskdDownloadsProvider(widget.instance));
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Downloading "${node.segment}" (${files.length} tracks)'),
-          action: SnackBarAction(
-            label: 'View Transfers',
-            onPressed: () {
-              ref.read(slskdActiveTabProvider(widget.instance).notifier).state = 0;
-            },
+      final enqueuedCount = resp.batch?.transfers.length ?? 0;
+      final failureCount = resp.failures.length;
+
+      if (enqueuedCount == 0 && failureCount > 0) {
+        final firstFailure =
+            resp.failures.first.message ?? 'already downloading or queued';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not queue "${node.segment}": $firstFailure'),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
-        ),
-      );
+        );
+      } else {
+        final summaryMsg = failureCount > 0
+            ? 'Downloading "${node.segment}" ($enqueuedCount tracks queued, $failureCount failed/already queued)'
+            : 'Downloading "${node.segment}" ($enqueuedCount tracks)';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(summaryMsg),
+            action: SnackBarAction(
+              label: 'View Transfers',
+              onPressed: () {
+                ref
+                    .read(slskdActiveTabProvider(widget.instance).notifier)
+                    .state = 0;
+              },
+            ),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -154,7 +174,7 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
   Future<void> _downloadTrack(String username, SlskdSearchFile file) async {
     try {
       final api = await ref.read(slskdApiProvider(widget.instance).future);
-      await api.enqueueBatch(
+      final resp = await api.enqueueBatch(
         EnqueueDownloadBatchRequest(
           username: username,
           files: <EnqueueDownloadBatchItem>[
@@ -165,17 +185,31 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
       if (!mounted) return;
       ref.invalidate(slskdDownloadsProvider(widget.instance));
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Downloading "${file.trackTitle}"'),
-          action: SnackBarAction(
-            label: 'View Transfers',
-            onPressed: () {
-              ref.read(slskdActiveTabProvider(widget.instance).notifier).state = 0;
-            },
+      if (resp.failures.isNotEmpty &&
+          (resp.batch?.transfers.isEmpty ?? true)) {
+        final failMsg =
+            resp.failures.first.message ?? 'already downloading or queued';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not queue "${file.trackTitle}": $failMsg'),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
-        ),
-      );
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloading "${file.trackTitle}"'),
+            action: SnackBarAction(
+              label: 'View Transfers',
+              onPressed: () {
+                ref
+                    .read(slskdActiveTabProvider(widget.instance).notifier)
+                    .state = 0;
+              },
+            ),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

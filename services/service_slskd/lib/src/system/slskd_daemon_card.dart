@@ -1,5 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -64,8 +65,11 @@ class _SlskdDaemonCardState extends ConsumerState<SlskdDaemonCard> {
         ),
       );
     } catch (e) {
+      final msg = (e is DioException && e.response?.statusCode == 403)
+          ? 'Restarting the daemon requires an API key with Administrator role or active JWT session'
+          : 'Failed to restart daemon: $e';
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to restart daemon: $e')),
+        SnackBar(content: Text(msg)),
       );
     } finally {
       if (mounted) {
@@ -114,8 +118,11 @@ class _SlskdDaemonCardState extends ConsumerState<SlskdDaemonCard> {
         ),
       );
     } catch (e) {
+      final msg = (e is DioException && e.response?.statusCode == 403)
+          ? 'Shutting down the daemon requires an API key with Administrator role or active JWT session'
+          : 'Failed to shutdown daemon: $e';
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to shutdown daemon: $e')),
+        SnackBar(content: Text(msg)),
       );
     } finally {
       if (mounted) {
@@ -143,9 +150,12 @@ class _SlskdDaemonCardState extends ConsumerState<SlskdDaemonCard> {
       );
     } catch (e) {
       if (mounted) {
+        final msg = (e is DioException && e.response?.statusCode == 403)
+            ? 'Forcing an update check requires an API key with Administrator or ReadWrite role in slskd.yml'
+            : 'Failed to check for updates: $e';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to check for updates: $e'),
+            content: Text(msg),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

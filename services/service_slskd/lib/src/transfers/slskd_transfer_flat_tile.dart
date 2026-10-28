@@ -297,17 +297,35 @@ class SlskdTransferFlatTile extends ConsumerWidget {
           final api = await ref.read(slskdApiProvider(instance).future);
 
           if (action == 'retry') {
-            await api.enqueueDownloads(item.transfer.username, <QueueDownloadRequest>[
-              QueueDownloadRequest(filename: item.transfer.filename, size: item.transfer.size),
-            ]);
+            final resp = await api.enqueueDownloads(
+              item.transfer.username,
+              <QueueDownloadRequest>[
+                QueueDownloadRequest(
+                  filename: item.transfer.filename,
+                  size: item.transfer.size,
+                ),
+              ],
+            );
             ref.invalidate(slskdDownloadsProvider(instance));
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Retrying download...'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
+              if (resp.failures.isNotEmpty &&
+                  (resp.batch?.transfers.isEmpty ?? true)) {
+                final failReason = resp.failures.first.message ??
+                    'File already downloading or queued';
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Could not retry: $failReason'),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Retrying download...'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
             }
           } else if (action == 'cancel') {
             if (isDownload) {

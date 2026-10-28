@@ -65,10 +65,16 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
   void initState() {
     super.initState();
     _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (mounted) {
-        ref.invalidate(slskdDownloadsProvider(widget.instance));
-        ref.invalidate(slskdUploadsProvider(widget.instance));
+      if (!mounted) return;
+      if (WidgetsBinding.instance.lifecycleState != null &&
+          WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+        return;
       }
+      final activeTab = ref.read(slskdActiveTabProvider(widget.instance));
+      if (activeTab != 0) return;
+
+      ref.invalidate(slskdDownloadsProvider(widget.instance));
+      ref.invalidate(slskdUploadsProvider(widget.instance));
     });
   }
 

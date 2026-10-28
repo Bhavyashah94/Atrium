@@ -54,6 +54,13 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     _tabController.addListener(_onTabChanged);
     _chatPollingTimer = Timer.periodic(const Duration(milliseconds: 2500), (_) {
       if (!mounted) return;
+      if (WidgetsBinding.instance.lifecycleState != null &&
+          WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+        return;
+      }
+      final activeTab = ref.read(slskdActiveTabProvider(widget.instance));
+      if (activeTab != 3) return;
+
       final activeRoom =
           ref.read(slskdActiveRoomNameProvider(widget.instance));
       final activeConvo =
