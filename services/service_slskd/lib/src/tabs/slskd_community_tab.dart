@@ -105,13 +105,14 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
   // Action Helpers
   // ---------------------------------------------------------------------------
 
-  Future<void> _joinRoom(String roomName) async {
+  Future<bool> _joinRoom(String roomName) async {
     try {
       final api = await ref.read(slskdApiProvider(widget.instance).future);
       await api.joinRoom(roomName);
-      if (!mounted) return;
+      if (!mounted) return false;
       ref.invalidate(slskdJoinedRoomNamesProvider(widget.instance));
       ref.read(slskdActiveRoomNameProvider(widget.instance).notifier).state = roomName;
+      return true;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -121,6 +122,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
           ),
         );
       }
+      return false;
     }
   }
 
@@ -981,9 +983,12 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
             tooltip: 'User profile bio',
             icon: const Icon(Icons.info_outline_rounded),
             onPressed: () {
+              final userInfo = ref.read(slskdUserInfoProvider((widget.instance, username))).value;
               showSlskdUserBioSheet(
                 context,
                 username: username,
+                userInfo: userInfo,
+                userStatus: userStatus,
               );
             },
           ),

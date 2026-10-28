@@ -4,6 +4,7 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../models/slskd_models.dart';
+import '../slskd_format.dart';
 
 /// Shows the modal bottom sheet displaying a Soulseek peer's profile, bio, and upload slots.
 Future<void> showSlskdUserBioSheet(
@@ -133,11 +134,11 @@ class SlskdUserBioSheet extends StatelessWidget {
                           height: 8,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: userStatus.isOnline
-                                ? Colors.green
-                                : userStatus.isAway
-                                    ? Colors.orange
-                                    : colorScheme.outline,
+                            color: slskdPresenceColor(
+                              colorScheme,
+                              isOnline: userStatus.isOnline,
+                              isAway: userStatus.isAway,
+                            ),
                           ),
                         ),
                         const SizedBox(width: Insets.xs),

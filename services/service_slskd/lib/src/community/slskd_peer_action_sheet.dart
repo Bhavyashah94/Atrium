@@ -49,9 +49,17 @@ class SlskdPeerActionSheet extends ConsumerWidget {
     final userInfoAsync = ref.watch(slskdUserInfoProvider((instance, username)));
     final endpointAsync = ref.watch(slskdUserEndpointProvider((instance, username)));
 
-    final bool isOnline = userStatusAsync.value?.isOnline ?? true;
+    final bool isOnline = userStatusAsync.value?.isOnline ?? false;
+    final bool isAway = userStatusAsync.value?.isAway ?? false;
     final bool isSupporter = userStatusAsync.value?.isPrivileged ?? false;
     final String? endpointStr = endpointAsync.value?.formatted;
+    final String statusText = userStatusAsync.isLoading
+        ? 'Checking status...'
+        : (isOnline
+            ? (endpointStr != null && endpointStr.isNotEmpty
+                ? 'Online • $endpointStr'
+                : 'Online on Soulseek')
+            : (isAway ? 'Away' : 'Offline'));
 
     return Padding(
       padding: const EdgeInsets.only(left: Insets.lg, right: Insets.lg, bottom: Insets.xl),
@@ -83,7 +91,11 @@ class SlskdPeerActionSheet extends ConsumerWidget {
                       width: 12,
                       height: 12,
                       decoration: BoxDecoration(
-                        color: slskdPresenceColor(colorScheme, isOnline: isOnline),
+                        color: slskdPresenceColor(
+                          colorScheme,
+                          isOnline: isOnline,
+                          isAway: isAway,
+                        ),
                         shape: BoxShape.circle,
                         border: Border.all(color: colorScheme.surface, width: 2),
                       ),
@@ -128,11 +140,7 @@ class SlskdPeerActionSheet extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      isOnline
-                          ? (endpointStr != null && endpointStr.isNotEmpty
-                              ? 'Online • $endpointStr'
-                              : 'Online on Soulseek')
-                          : 'Offline / Away',
+                      statusText,
                       style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ],

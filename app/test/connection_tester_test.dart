@@ -339,24 +339,13 @@ void main() {
     test('no key with auth enabled prompts the user for API key', () async {
       final ConnectionTestResult result = await testSlskd(
         slskdNoKey,
-        (RequestOptions options) {
-          if (options.path.contains('session/enabled')) {
-            return ResponseBody.fromString(
-              'true',
-              200,
-              headers: <String, List<String>>{
-                Headers.contentTypeHeader: <String>[Headers.jsonContentType],
-              },
-            );
-          }
-          return ResponseBody.fromString(
-            '{"error":"Unauthorized"}',
-            401,
-            headers: <String, List<String>>{
-              Headers.contentTypeHeader: <String>[Headers.jsonContentType],
-            },
-          );
-        },
+        (RequestOptions options) => ResponseBody.fromString(
+          '{"error":"Unauthorized"}',
+          401,
+          headers: <String, List<String>>{
+            Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+          },
+        ),
       );
 
       expect(result.outcome, ConnectionOutcome.authFailed);
@@ -369,24 +358,13 @@ void main() {
     test('no key with auth disabled (SLSKD_NO_AUTH) connects successfully', () async {
       final ConnectionTestResult result = await testSlskd(
         slskdNoKey,
-        (RequestOptions options) {
-          if (options.path.contains('session/enabled')) {
-            return ResponseBody.fromString(
-              'false',
-              200,
-              headers: <String, List<String>>{
-                Headers.contentTypeHeader: <String>[Headers.jsonContentType],
-              },
-            );
-          }
-          return ResponseBody.fromString(
-            '{"version":"0.20.0"}',
-            200,
-            headers: <String, List<String>>{
-              Headers.contentTypeHeader: <String>[Headers.jsonContentType],
-            },
-          );
-        },
+        (RequestOptions options) => ResponseBody.fromString(
+          '{"version":"0.26.2"}',
+          200,
+          headers: <String, List<String>>{
+            Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+          },
+        ),
       );
 
       expect(result.outcome, ConnectionOutcome.connected);

@@ -16,7 +16,7 @@ class SlskdDiscoverRoomsSheet extends ConsumerStatefulWidget {
   });
 
   final Instance instance;
-  final Future<void> Function(String roomName) onJoinRoom;
+  final Future<bool> Function(String roomName) onJoinRoom;
 
   @override
   ConsumerState<SlskdDiscoverRoomsSheet> createState() => _SlskdDiscoverRoomsSheetState();
@@ -41,8 +41,8 @@ class _SlskdDiscoverRoomsSheetState extends ConsumerState<SlskdDiscoverRoomsShee
 
     setState(() => _isJoining = true);
     try {
-      await widget.onJoinRoom(trimmed);
-      if (mounted) {
+      final bool joined = await widget.onJoinRoom(trimmed);
+      if (joined && mounted) {
         Navigator.of(context).pop();
       }
     } finally {
@@ -282,7 +282,7 @@ class _SlskdDiscoverRoomsSheetState extends ConsumerState<SlskdDiscoverRoomsShee
 void showSlskdDiscoverRoomsSheet(
   BuildContext context, {
   required Instance instance,
-  required Future<void> Function(String roomName) onJoinRoom,
+  required Future<bool> Function(String roomName) onJoinRoom,
 }) {
   showModalBottomSheet<void>(
     context: context,

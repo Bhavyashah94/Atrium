@@ -84,11 +84,11 @@ class SlskdBrowsePeerCard extends StatelessWidget {
                     height: 11,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isOnline
-                          ? Colors.green
-                          : isAway
-                              ? Colors.orange
-                              : colorScheme.outline,
+                      color: slskdPresenceColor(
+                        colorScheme,
+                        isOnline: isOnline,
+                        isAway: isAway,
+                      ),
                       border: Border.all(
                         color: colorScheme.surfaceContainerHigh,
                         width: 2,

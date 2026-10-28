@@ -57,6 +57,12 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
     _statusPollTimer?.cancel();
     _statusPollTimer = Timer.periodic(const Duration(milliseconds: 750), (_) {
       if (!mounted) return;
+      if (WidgetsBinding.instance.lifecycleState != null &&
+          WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+        return;
+      }
+      final int activeTab = ref.read(slskdActiveTabProvider(widget.instance));
+      if (activeTab != 2) return;
       ref.invalidate(slskdBrowseStatusProvider((widget.instance, username)));
     });
   }
