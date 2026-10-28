@@ -51,43 +51,8 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
       _freeSlotOnly ||
       !_hideLocked;
 
-  Timer? _searchPollingTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _searchPollingTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      if (!mounted) return;
-      if (WidgetsBinding.instance.lifecycleState != null &&
-          WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
-        return;
-      }
-      final activeTab = ref.read(slskdActiveTabProvider(widget.instance));
-      if (activeTab != 1) return;
-
-      final searches =
-          ref.read(slskdSearchesProvider(widget.instance)).value ??
-              const <SlskdSearch>[];
-      final selectedId =
-          ref.read(slskdSelectedSearchIdProvider(widget.instance));
-      final active = searches
-          .where((s) => s.id == (selectedId ?? searches.firstOrNull?.id))
-          .firstOrNull;
-
-      if (searches.any((s) => !s.isComplete)) {
-        ref.invalidate(slskdSearchesProvider(widget.instance));
-      }
-      if (active != null && !active.isComplete) {
-        ref.invalidate(
-          slskdSearchResponsesProvider((widget.instance, active.id)),
-        );
-      }
-    });
-  }
-
   @override
   void dispose() {
-    _searchPollingTimer?.cancel();
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();

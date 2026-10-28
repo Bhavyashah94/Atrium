@@ -53,7 +53,6 @@ class SlskdTransfersTab extends ConsumerStatefulWidget {
 class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  Timer? _pollingTimer;
   bool _isGrouped = true;
   TransferDirection? _directionFilter;
   TransferCategory? _selectedCategory;
@@ -61,25 +60,7 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
   String _searchQuery = '';
 
   @override
-  void initState() {
-    super.initState();
-    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (!mounted) return;
-      if (WidgetsBinding.instance.lifecycleState != null &&
-          WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
-        return;
-      }
-      final activeTab = ref.read(slskdActiveTabProvider(widget.instance));
-      if (activeTab != 0) return;
-
-      ref.invalidate(slskdDownloadsProvider(widget.instance));
-      ref.invalidate(slskdUploadsProvider(widget.instance));
-    });
-  }
-
-  @override
   void dispose() {
-    _pollingTimer?.cancel();
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();

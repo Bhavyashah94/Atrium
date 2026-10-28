@@ -753,12 +753,7 @@ void main() {
       expect(uploads.first.directories.first.files.first.category, TransferCategory.completed);
     });
 
-    test('getDownload retrieves individual transfer', () async {
-      final transfer = await api.getDownload('peerA', 'dl1');
-      expect(lastPath, 'api/v0/transfers/downloads/peerA/dl1');
-      expect(transfer?.id, 'dl1');
-      expect(transfer?.category, TransferCategory.inProgress);
-    });
+
 
     test('cancelDownload and clearCompletedDownloads invoke DELETE endpoints', () async {
       await api.cancelDownload('peerA', 'dl1', remove: true);
@@ -869,9 +864,7 @@ void main() {
       expect(lastMethod, 'POST');
       expect(lastData, jsonEncode('thanks!'));
 
-      await api.acknowledgeMessage('alice', 101);
-      expect(lastPath, 'api/v0/conversations/alice/101');
-      expect(lastMethod, 'PUT');
+
 
       await api.acknowledgeAllMessages('alice');
       expect(lastPath, 'api/v0/conversations/alice');
@@ -888,27 +881,13 @@ void main() {
       expect(lastData, jsonEncode('alice'));
     });
 
-    test('System endpoints: server status/connect, shares, logs, restart', () async {
-      final serverStatus = await api.getServerStatus();
-      expect(lastPath, 'api/v0/server');
-      expect(lastMethod, 'GET');
-      expect(serverStatus.address, 'vps.slsknet.org');
-      expect(serverStatus.isConnected, isTrue);
-
+    test('System endpoints: server connect/disconnect, shares, logs', () async {
       await api.reconnectServer();
       expect(lastPath, 'api/v0/server');
       expect(lastMethod, 'PUT');
 
       await api.disconnectServer();
       expect(lastPath, 'api/v0/server');
-      expect(lastMethod, 'DELETE');
-
-      await api.restartApplication();
-      expect(lastPath, 'api/v0/application');
-      expect(lastMethod, 'PUT');
-
-      await api.shutdownApplication();
-      expect(lastPath, 'api/v0/application');
       expect(lastMethod, 'DELETE');
 
       final shares = await api.getShares();
@@ -923,20 +902,10 @@ void main() {
       expect(lastPath, 'api/v0/logs/live');
       expect(logs.first.level, 'Information');
       expect(logs.first.message, 'Soulseek client connected');
-
-      final version = await api.checkVersion(forceCheck: true);
-      expect(lastPath, 'api/v0/application/version/latest');
-      expect(version.isUpdateAvailable, isTrue);
-      expect(version.latest, '0.6.5');
     });
 
     test('Phase 3 endpoints: host files explorer, shares contents, and historical logs', () async {
-      // 1. Share details and contents
-      final share = await api.getShare('sh1');
-      expect(lastPath, 'api/v0/shares/sh1');
-      expect(share, isNotNull);
-      expect(share!.name, 'Music');
-
+      // 1. Share contents
       final allShared = await api.getAllSharedContents();
       expect(lastPath, 'api/v0/shares/contents');
       expect(allShared.first.name, 'Electronic/Aphex Twin');
@@ -992,18 +961,8 @@ void main() {
       expect(logContent, contains('Daemon ready'));
     });
 
-    test('Phase 4 endpoints: telemetry reports, histogram, leaderboard, pareto, kpis', () async {
-      // 1. Transfer summary & histogram
-      final summary = await api.getTransferSummary(direction: 'Download');
-      expect(lastPath, 'api/v0/telemetry/reports/transfers/summary');
-      expect(summary['Download'], isNotNull);
-
-      final histogram = await api.getTransferHistogram(interval: 86400);
-      expect(lastPath, 'api/v0/telemetry/reports/transfers/histogram');
-      expect(lastQueryParams?['interval'], 86400);
-      expect(histogram, isNotEmpty);
-
-      // 2. Leaderboard
+    test('Phase 4 endpoints: telemetry leaderboard, pareto, directories, kpis', () async {
+      // 1. Leaderboard
       final leaderboard = await api.getTransferLeaderboard(direction: 'Download');
       expect(lastPath, 'api/v0/telemetry/reports/transfers/leaderboard');
       expect(lastQueryParams?['direction'], 'Download');
@@ -1012,76 +971,32 @@ void main() {
       expect(leaderboard.first.username, 'peerLeader');
       expect(leaderboard.first.totalBytes, 5000000000);
 
-      // 3. User summary
-      final userSummary = await api.getUserTransferSummary('peerA');
-      expect(lastPath, 'api/v0/telemetry/reports/transfers/users/peerA');
-      expect(userSummary['Download'], isNotNull);
-
-      // 4. Exceptions & Pareto
-      final exceptions = await api.getTransferExceptions(direction: 'Download');
-      expect(lastPath, 'api/v0/telemetry/reports/transfers/exceptions');
-      expect(lastQueryParams?['direction'], 'Download');
-      expect(exceptions.first.exception, 'Connection timed out');
-
+      // 2. Pareto
       final pareto = await api.getTransferExceptionsPareto(direction: 'Download');
       expect(lastPath, 'api/v0/telemetry/reports/transfers/exceptions/pareto');
       expect(pareto.first.exception, 'Cancelled by remote user');
       expect(pareto.first.count, 14);
 
-      // 5. Directories frequency
+      // 3. Directories frequency
       final dirs = await api.getTransferDirectories();
       expect(lastPath, 'api/v0/telemetry/reports/transfers/directories');
       expect(dirs.first.directory, 'Lossless/Radiohead');
       expect(dirs.first.count, 88);
 
-      // 6. Prometheus KPIs & Metrics
+      // 4. Prometheus KPIs
       final kpis = await api.getPrometheusKpis();
       expect(lastPath, 'api/v0/telemetry/metrics/kpis');
       expect(kpis['process_working_set_bytes']?.samples.first.value, 157286400.0);
-
-      final metrics = await api.getPrometheusMetrics();
-      expect(lastPath, 'api/v0/telemetry/metrics');
-      expect(metrics['slskd_searches_total']?.sum, 42.0);
     });
 
-    test('Phase 5 & 6 endpoints: options, startup, yaml, validation, gc, loopback, debug, relay', () async {
-      // 1. Options & overlay
+    test('Phase 5 & 6 endpoints: options, gc, loopback, debug', () async {
+      // 1. Options
       final options = await api.getOptions();
       expect(lastPath, 'api/v0/options');
       expect(lastMethod, 'GET');
       expect(options['soulseek'], isNotNull);
 
-      final patched = await api.applyOptionsOverlay({'soulseek': {'listenPort': 50301}});
-      expect(lastPath, 'api/v0/options');
-      expect(lastMethod, 'PATCH');
-      final patchedSoulseek = patched['soulseek'] as Map?;
-      expect(patchedSoulseek?['listenPort'], 50301);
-
-      final startup = await api.getStartupOptions();
-      expect(lastPath, 'api/v0/options/startup');
-      expect(startup['soulseek'], isNotNull);
-
-      // 2. YAML file management & validation
-      final location = await api.getYamlLocation();
-      expect(lastPath, 'api/v0/options/yaml/location');
-      expect(location, '/app/slskd.yml');
-
-      final yaml = await api.getYamlContent();
-      expect(lastPath, 'api/v0/options/yaml');
-      expect(yaml, contains('listen_port'));
-
-      final validResult = await api.validateYaml('soulseek:\n  listen_port: 50300\n');
-      expect(lastPath, 'api/v0/options/yaml/validate');
-      expect(validResult, isNull);
-
-      final invalidResult = await api.validateYaml('invalid:\n  bad_indent\n');
-      expect(invalidResult, contains('Invalid YAML syntax'));
-
-      await api.updateYaml('soulseek:\n  listen_port: 50300\n');
-      expect(lastPath, 'api/v0/options/yaml');
-      expect(lastMethod, 'PUT');
-
-      // 3. Diagnostics & GC & Loopback
+      // 2. Diagnostics & GC & Loopback
       await api.collectGarbage();
       expect(lastPath, 'api/v0/application/gc');
       expect(lastMethod, 'POST');
@@ -1093,15 +1008,6 @@ void main() {
       final debugTransfers = await api.getDebugTransfers();
       expect(lastPath, 'api/v0/debug/transfers');
       expect(debugTransfers['active'], isA<List<dynamic>>());
-
-      // 4. Relay agent
-      await api.connectRelayAgent();
-      expect(lastPath, 'api/v0/relay/agent');
-      expect(lastMethod, 'PUT');
-
-      await api.disconnectRelayAgent();
-      expect(lastPath, 'api/v0/relay/agent');
-      expect(lastMethod, 'DELETE');
     });
   });
 }

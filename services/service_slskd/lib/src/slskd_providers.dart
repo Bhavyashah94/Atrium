@@ -6,6 +6,10 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'models/slskd_models.dart';
 import 'slskd_api.dart';
 
+/// Configured polling interval for a given [Instance], respecting [Instance.pollingIntervalSeconds].
+Duration slskdPollInterval(Instance instance) =>
+    Duration(seconds: instance.pollingIntervalSeconds.clamp(1, 60));
+
 // -----------------------------------------------------------------------------
 // UI Navigation & Tab State Providers
 // -----------------------------------------------------------------------------
@@ -24,18 +28,6 @@ final slskdScrollToTopProvider =
     StateProvider.autoDispose.family<int, (Instance, int)>(
   (ref, arg) => 0,
 );
-
-/// Active transfer direction filter (0 = Downloads, 1 = Uploads).
-final slskdTransferDirectionFilterProvider =
-    StateProvider.autoDispose.family<int, Instance>((ref, instance) => 0);
-
-/// Search query string for filtering active transfers.
-final slskdTransferFilterQueryProvider =
-    StateProvider.autoDispose.family<String, Instance>((ref, instance) => '');
-
-/// Query input string in the Search tab.
-final slskdSearchQueryProvider =
-    StateProvider.autoDispose.family<String, Instance>((ref, instance) => '');
 
 /// Selected search identifier for viewing search results.
 final slskdSelectedSearchIdProvider =
@@ -75,6 +67,14 @@ final slskdLogSeverityFilterProvider =
 final slskdLogSearchQueryProvider =
     StateProvider.autoDispose.family<String, Instance>((ref, instance) => '');
 
+/// Timeframe in days for transfer reports (e.g. 1, 7, 30 days).
+final slskdAnalyticsTimeframeDaysProvider =
+    StateProvider.autoDispose.family<int, Instance>((ref, instance) => 7);
+
+/// Selected historical log file name (null = live stream).
+final slskdSelectedHistoricalLogProvider =
+    StateProvider.autoDispose.family<String?, Instance>((ref, instance) => null);
+
 // -----------------------------------------------------------------------------
 // API Client Provider
 // -----------------------------------------------------------------------------
@@ -84,21 +84,21 @@ final slskdApiProvider =
     FutureProvider.autoDispose.family<SlskdApi, Instance>((ref, instance) async {
   final dio = await ref.watch(instanceDioProvider(instance).future);
   return SlskdApi(dio);
-});
+}, retry: (_, _) => null);
 
 // -----------------------------------------------------------------------------
 // System & State Providers
 // -----------------------------------------------------------------------------
 
-/// Overall application state from GET /api/v0/application.
+/// Overall application state from GET /api/v0/application, polled while active.
 final slskdApplicationStateProvider =
     FutureProvider.autoDispose.family<SlskdApplicationState, Instance>((
   ref,
   instance,
-) async {
+) => ref.polled(slskdPollInterval(instance), () async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getApplicationState();
-});
+}), retry: (_, _) => null);
 
 /// Local file shares mapped by host from GET /api/v0/shares.
 final slskdSharesProvider =
@@ -108,17 +108,7 @@ final slskdSharesProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getShares();
-});
-
-/// Specific local share by ID from GET /api/v0/shares/{id}.
-final slskdShareDetailProvider =
-    FutureProvider.autoDispose.family<SlskdLocalShare?, (Instance, String)>((
-  ref,
-  arg,
-) async {
-  final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
-  return api.getShare(arg.$2);
-});
+}, retry: (_, _) => null);
 
 /// All shared contents across shares from GET /api/v0/shares/contents.
 final slskdAllSharedContentsProvider =
@@ -128,7 +118,7 @@ final slskdAllSharedContentsProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getAllSharedContents();
-});
+}, retry: (_, _) => null);
 
 /// Shared contents of a specific share from GET /api/v0/shares/{id}/contents.
 final slskdShareContentsProvider =
@@ -138,7 +128,7 @@ final slskdShareContentsProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getShareContents(arg.$2);
-});
+}, retry: (_, _) => null);
 
 /// Downloads directory contents from GET /api/v0/files/downloads/directories[/{subdirectory}].
 final slskdDownloadsDirectoryProvider =
@@ -148,7 +138,7 @@ final slskdDownloadsDirectoryProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getDownloadsDirectory(subdirectory: arg.$2);
-});
+}, retry: (_, _) => null);
 
 /// Incomplete directory contents from GET /api/v0/files/incomplete/directories[/{subdirectory}].
 final slskdIncompleteDirectoryProvider =
@@ -158,11 +148,7 @@ final slskdIncompleteDirectoryProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getIncompleteDirectory(subdirectory: arg.$2);
-});
-
-/// Selected historical log file name (null = live stream).
-final slskdSelectedHistoricalLogProvider =
-    StateProvider.autoDispose.family<String?, Instance>((ref, instance) => null);
+}, retry: (_, _) => null);
 
 /// Historical log files on disk from GET /api/v0/logs/files.
 final slskdLogFilesProvider =
@@ -172,7 +158,7 @@ final slskdLogFilesProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getLogFiles();
-});
+}, retry: (_, _) => null);
 
 /// Historical log file content from GET /api/v0/logs/files/{filename}.
 final slskdLogFileContentProvider =
@@ -182,7 +168,7 @@ final slskdLogFileContentProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getLogFileContent(arg.$2);
-});
+}, retry: (_, _) => null);
 
 /// Application options from GET /api/v0/options.
 final slskdOptionsProvider =
@@ -192,17 +178,7 @@ final slskdOptionsProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getOptions();
-});
-
-/// Raw YAML configuration content from GET /api/v0/options/yaml.
-final slskdYamlContentProvider =
-    FutureProvider.autoDispose.family<String, Instance>((
-  ref,
-  instance,
-) async {
-  final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
-  return api.getYamlContent();
-});
+}, retry: (_, _) => null);
 
 /// Debug transfer state from GET /api/v0/debug/transfers.
 final slskdDebugTransfersProvider =
@@ -212,17 +188,17 @@ final slskdDebugTransfersProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getDebugTransfers();
-});
+}, retry: (_, _) => null);
 
-/// Application logs from GET /api/v0/logs.
+/// Application logs from GET /api/v0/logs, polled while active.
 final slskdLogsProvider =
     FutureProvider.autoDispose.family<List<SlskdLogRecord>, Instance>((
   ref,
   instance,
-) async {
+) => ref.polled(slskdPollInterval(instance), () async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getLogs();
-});
+}), retry: (_, _) => null);
 
 /// Filtered application logs matching severity and search query.
 final slskdFilteredLogsProvider =
@@ -248,51 +224,35 @@ final slskdFilteredLogsProvider =
     }
     return true;
   }).toList();
-});
+}, retry: (_, _) => null);
 
 // -----------------------------------------------------------------------------
 // Transfers Providers
 // -----------------------------------------------------------------------------
 
-/// Active downloads grouped by user and directory from GET /api/v0/transfers/downloads.
+/// Active downloads grouped by user and directory from GET /api/v0/transfers/downloads, polled while watched.
 final slskdDownloadsProvider =
     FutureProvider.autoDispose.family<List<SlskdUserTransfers>, Instance>((
   ref,
   instance,
-) async {
+) => ref.polled(slskdPollInterval(instance), () async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getDownloads();
-});
+}), retry: (_, _) => null);
 
-/// Active uploads grouped by user and directory from GET /api/v0/transfers/uploads.
+/// Active uploads grouped by user and directory from GET /api/v0/transfers/uploads, polled while watched.
 final slskdUploadsProvider =
     FutureProvider.autoDispose.family<List<SlskdUserTransfers>, Instance>((
   ref,
   instance,
-) async {
+) => ref.polled(slskdPollInterval(instance), () async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getUploads();
-});
+}), retry: (_, _) => null);
 
 // -----------------------------------------------------------------------------
 // Telemetry & Historical Analytics Providers
 // -----------------------------------------------------------------------------
-
-/// Timeframe in days for transfer reports (e.g. 1, 7, 30 days).
-final slskdAnalyticsTimeframeDaysProvider =
-    StateProvider.autoDispose.family<int, Instance>((ref, instance) => 7);
-
-/// Overall transfer summary from GET /api/v0/telemetry/reports/transfers/summary.
-final slskdTransferSummaryProvider =
-    FutureProvider.autoDispose.family<Map<String, dynamic>, Instance>((
-  ref,
-  instance,
-) async {
-  final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
-  final days = ref.watch(slskdAnalyticsTimeframeDaysProvider(instance));
-  final start = DateTime.now().subtract(Duration(days: days));
-  return api.getTransferSummary(start: start);
-});
 
 /// Transfer leaderboard from GET /api/v0/telemetry/reports/transfers/leaderboard.
 final slskdTransferLeaderboardProvider =
@@ -304,7 +264,7 @@ final slskdTransferLeaderboardProvider =
   final days = ref.watch(slskdAnalyticsTimeframeDaysProvider(arg.$1));
   final start = DateTime.now().subtract(Duration(days: days));
   return api.getTransferLeaderboard(direction: arg.$2, start: start, limit: 15);
-});
+}, retry: (_, _) => null);
 
 /// Pareto failure reasons for direction ('Download' or 'Upload').
 final slskdTransferExceptionsParetoProvider =
@@ -316,7 +276,7 @@ final slskdTransferExceptionsParetoProvider =
   final days = ref.watch(slskdAnalyticsTimeframeDaysProvider(arg.$1));
   final start = DateTime.now().subtract(Duration(days: days));
   return api.getTransferExceptionsPareto(direction: arg.$2, start: start, limit: 10);
-});
+}, retry: (_, _) => null);
 
 /// Frequently downloaded directories from GET /api/v0/telemetry/reports/transfers/directories.
 final slskdTransferDirectoriesProvider =
@@ -326,7 +286,7 @@ final slskdTransferDirectoriesProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getTransferDirectories(limit: 10);
-});
+}, retry: (_, _) => null);
 
 /// Prometheus KPIs from GET /api/v0/telemetry/metrics/kpis.
 final slskdPrometheusKpisProvider =
@@ -336,31 +296,31 @@ final slskdPrometheusKpisProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getPrometheusKpis();
-});
+}, retry: (_, _) => null);
 
 // -----------------------------------------------------------------------------
 // Search Providers
 // -----------------------------------------------------------------------------
 
-/// Active and past searches from GET /api/v0/searches.
+/// Active and past searches from GET /api/v0/searches, polled while watched.
 final slskdSearchesProvider =
     FutureProvider.autoDispose.family<List<SlskdSearch>, Instance>((
   ref,
   instance,
-) async {
+) => ref.polled(slskdPollInterval(instance), () async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getSearches();
-});
+}), retry: (_, _) => null);
 
 /// File responses for a given search id from GET /api/v0/searches/{id}/responses.
 final slskdSearchResponsesProvider =
     FutureProvider.autoDispose.family<List<SlskdSearchResponse>, (Instance, String)>((
   ref,
   arg,
-) async {
+) => ref.polled(slskdPollInterval(arg.$1), () async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getSearchResponses(arg.$2);
-});
+}), retry: (_, _) => null);
 
 // -----------------------------------------------------------------------------
 // Browse & User Providers
@@ -374,7 +334,7 @@ final slskdUserDirectoriesProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.browseUser(arg.$2);
-});
+}, retry: (_, _) => null);
 
 /// User bio and avatar profile info from GET /api/v0/users/{username}/info.
 final slskdUserInfoProvider =
@@ -384,7 +344,7 @@ final slskdUserInfoProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getUserInfo(arg.$2);
-});
+}, retry: (_, _) => null);
 
 /// User presence status from GET /api/v0/users/{username}/status.
 final slskdUserStatusProvider =
@@ -394,27 +354,27 @@ final slskdUserStatusProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getUserStatus(arg.$2);
-});
+}, retry: (_, _) => null);
 
 /// Active browse progress status (percent complete) from GET /api/v0/users/{username}/browse/status.
 final slskdBrowseStatusProvider =
     FutureProvider.autoDispose.family<double?, (Instance, String)>((
   ref,
   arg,
-) async {
+) => ref.polled(slskdPollInterval(arg.$1), () async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getBrowseStatus(arg.$2);
-});
+}), retry: (_, _) => null);
 
 /// Live queue position for a queued download from GET /api/v0/transfers/downloads/{username}/{id}/position.
 final slskdQueuePositionProvider =
     FutureProvider.autoDispose.family<int?, (Instance, String, String)>((
   ref,
   arg,
-) async {
+) => ref.polled(slskdPollInterval(arg.$1), () async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getPlaceInQueue(arg.$2, arg.$3);
-});
+}), retry: (_, _) => null);
 
 /// Remote peer endpoint (IP & port) from GET /api/v0/users/{username}/endpoint.
 final slskdUserEndpointProvider =
@@ -424,19 +384,7 @@ final slskdUserEndpointProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getUserEndpoint(arg.$2);
-});
-
-/// Checked version from GET /api/v0/application/version/latest.
-/// Defaults to cached version check (`forceCheck: false`) to avoid requiring
-/// elevated Administrator API key permissions upstream.
-final slskdLatestVersionProvider =
-    FutureProvider.autoDispose.family<SlskdVersionState, Instance>((
-  ref,
-  instance,
-) async {
-  final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
-  return api.checkVersion();
-});
+}, retry: (_, _) => null);
 
 // -----------------------------------------------------------------------------
 // Community (Chat Rooms & DMs) Providers
@@ -450,17 +398,17 @@ final slskdAvailableRoomsProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getAvailableRooms();
-});
+}, retry: (_, _) => null);
 
-/// Joined room names from GET /api/v0/rooms/joined.
+/// Joined room names from GET /api/v0/rooms/joined, polled while active.
 final slskdJoinedRoomNamesProvider =
     FutureProvider.autoDispose.family<List<String>, Instance>((
   ref,
   instance,
-) async {
+) => ref.polled(slskdPollInterval(instance), () async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getJoinedRoomNames();
-});
+}), retry: (_, _) => null);
 
 /// Details and recent messages for a joined room from GET /api/v0/rooms/joined/{roomName}.
 final slskdRoomDetailProvider =
@@ -470,17 +418,17 @@ final slskdRoomDetailProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getRoom(arg.$2);
-});
+}, retry: (_, _) => null);
 
-/// Room messages for a joined room from GET /api/v0/rooms/joined/{roomName}/messages.
+/// Room messages for a joined room from GET /api/v0/rooms/joined/{roomName}/messages, polled while active.
 final slskdRoomMessagesProvider =
     FutureProvider.autoDispose.family<List<SlskdRoomMessage>, (Instance, String)>((
   ref,
   arg,
-) async {
+) => ref.polled(slskdPollInterval(arg.$1), () async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getRoomMessages(arg.$2);
-});
+}), retry: (_, _) => null);
 
 /// Users present in a joined room from GET /api/v0/rooms/joined/{roomName}/users.
 final slskdRoomUsersProvider =
@@ -490,24 +438,24 @@ final slskdRoomUsersProvider =
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getRoomUsers(arg.$2);
-});
+}, retry: (_, _) => null);
 
-/// Direct message conversations from GET /api/v0/conversations.
+/// Direct message conversations from GET /api/v0/conversations, polled while active.
 final slskdConversationsProvider =
     FutureProvider.autoDispose.family<List<SlskdConversation>, Instance>((
   ref,
   instance,
-) async {
+) => ref.polled(slskdPollInterval(instance), () async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
   return api.getConversations();
-});
+}), retry: (_, _) => null);
 
-/// Private messages for a conversation from GET /api/v0/conversations/{username}/messages.
+/// Private messages for a conversation from GET /api/v0/conversations/{username}/messages, polled while active.
 final slskdConversationMessagesProvider =
     FutureProvider.autoDispose.family<List<SlskdPrivateMessage>, (Instance, String)>((
   ref,
   arg,
-) async {
+) => ref.polled(slskdPollInterval(arg.$1), () async {
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
   return api.getConversationMessages(arg.$2);
-});
+}), retry: (_, _) => null);

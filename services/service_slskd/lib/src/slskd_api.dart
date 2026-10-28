@@ -6,6 +6,22 @@ import 'models/slskd_models.dart';
 
 /// Full-parity typed HTTP Client for the slskd REST API (v0).
 class SlskdApi {
+  // ---------------------------------------------------------------------------
+  // JSON Parsing Helpers
+  // ---------------------------------------------------------------------------
+
+  Map<String, dynamic> _asMap(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return data.cast<String, dynamic>();
+    return const <String, dynamic>{};
+  }
+
+  List<dynamic> _asList(dynamic data) {
+    if (data is List) return data;
+    if (data is Iterable) return data.toList();
+    return const <dynamic>[];
+  }
+
   SlskdApi(this._dio);
 
   final Dio _dio;
@@ -16,45 +32,17 @@ class SlskdApi {
 
   /// Fetches complete application state (version, server, user, shares, vpn).
   Future<SlskdApplicationState> getApplicationState() async {
-    final response = await _dio.get<dynamic>('api/v0/application');
-    if (response.data is Map<String, dynamic>) {
-      return SlskdApplicationState.fromJson(response.data as Map<String, dynamic>);
-    }
-    if (response.data is Map) {
-      return SlskdApplicationState.fromJson(
-        (response.data as Map).cast<String, dynamic>(),
-      );
-    }
-    return SlskdApplicationState.fromJson(const <String, dynamic>{});
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/application');
+    return SlskdApplicationState.fromJson(_asMap(response.data));
   }
 
   /// Checks for updates against GitHub releases.
   Future<SlskdVersionState> checkVersion({bool forceCheck = false}) async {
-    final response = await _dio.get<dynamic>(
+    final Response<dynamic> response = await _dio.get<dynamic>(
       'api/v0/application/version/latest',
       queryParameters: <String, dynamic>{'forceCheck': forceCheck},
     );
-    if (response.data is Map<String, dynamic>) {
-      return SlskdVersionState.fromJson(response.data as Map<String, dynamic>);
-    }
-    if (response.data is Map) {
-      return SlskdVersionState.fromJson(
-        (response.data as Map).cast<String, dynamic>(),
-      );
-    }
-    return const SlskdVersionState(current: '0.0.0');
-  }
-
-  /// Retrieves current Soulseek server status.
-  Future<SlskdServerStatus> getServerStatus() async {
-    final response = await _dio.get<dynamic>('api/v0/server');
-    if (response.data is Map<String, dynamic>) {
-      return SlskdServerStatus.fromJson(response.data as Map<String, dynamic>);
-    }
-    if (response.data is Map) {
-      return SlskdServerStatus.fromJson((response.data as Map).cast<String, dynamic>());
-    }
-    return const SlskdServerStatus(address: '', state: 'Disconnected');
+    return SlskdVersionState.fromJson(_asMap(response.data));
   }
 
   /// Initiates connection or reconnect to the Soulseek server.
@@ -73,19 +61,9 @@ class SlskdApi {
     );
   }
 
-  /// Triggers an application restart.
-  Future<void> restartApplication() async {
-    await _dio.put<void>('api/v0/application');
-  }
-
-  /// Triggers an application shutdown.
-  Future<void> shutdownApplication() async {
-    await _dio.delete<void>('api/v0/application');
-  }
-
   /// Lists all local file shares grouped by host name.
   Future<Map<String, List<SlskdLocalShare>>> getShares() async {
-    final response = await _dio.get<dynamic>('api/v0/shares');
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/shares');
     final Map<String, List<SlskdLocalShare>> result = {};
     if (response.data is Map) {
       final map = response.data as Map;
@@ -117,27 +95,9 @@ class SlskdApi {
     await _dio.delete<void>('api/v0/shares');
   }
 
-  /// Retrieves a specific share by [id].
-  Future<SlskdLocalShare?> getShare(String id) async {
-    try {
-      final encodedId = Uri.encodeComponent(id);
-      final response = await _dio.get<dynamic>('api/v0/shares/$encodedId');
-      if (response.data is Map<String, dynamic>) {
-        return SlskdLocalShare.fromJson(response.data as Map<String, dynamic>);
-      }
-      if (response.data is Map) {
-        return SlskdLocalShare.fromJson((response.data as Map).cast<String, dynamic>());
-      }
-      return null;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return null;
-      rethrow;
-    }
-  }
-
   /// Returns a list of all shared directories and files across all configured shares.
   Future<List<SlskdDirectory>> getAllSharedContents() async {
-    final response = await _dio.get<dynamic>('api/v0/shares/contents');
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/shares/contents');
     return _parseDirectoryList(response.data);
   }
 
@@ -145,7 +105,7 @@ class SlskdApi {
   Future<List<SlskdDirectory>> getShareContents(String id) async {
     try {
       final encodedId = Uri.encodeComponent(id);
-      final response = await _dio.get<dynamic>('api/v0/shares/$encodedId/contents');
+      final Response<dynamic> response = await _dio.get<dynamic>('api/v0/shares/$encodedId/contents');
       return _parseDirectoryList(response.data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return const <SlskdDirectory>[];
@@ -170,7 +130,7 @@ class SlskdApi {
       } else {
         path = 'api/v0/files/downloads/directories';
       }
-      final response = await _dio.get<dynamic>(
+      final Response<dynamic> response = await _dio.get<dynamic>(
         path,
         queryParameters: <String, dynamic>{'recursive': recursive},
       );
@@ -212,7 +172,7 @@ class SlskdApi {
       } else {
         path = 'api/v0/files/incomplete/directories';
       }
-      final response = await _dio.get<dynamic>(
+      final Response<dynamic> response = await _dio.get<dynamic>(
         path,
         queryParameters: <String, dynamic>{'recursive': recursive},
       );
@@ -248,7 +208,7 @@ class SlskdApi {
   /// Lists the log files currently on disk on the daemon host.
   Future<List<SlskdDiskFile>> getLogFiles() async {
     try {
-      final response = await _dio.get<dynamic>('api/v0/logs/files');
+      final Response<dynamic> response = await _dio.get<dynamic>('api/v0/logs/files');
       final List<SlskdDiskFile> files = [];
       if (response.data is Iterable) {
         for (final item in response.data as Iterable) {
@@ -269,7 +229,7 @@ class SlskdApi {
   /// Retrieves the specified log file from disk as plain text.
   Future<String> getLogFileContent(String filename) async {
     final encoded = Uri.encodeComponent(filename);
-    final response = await _dio.get<dynamic>(
+    final Response<dynamic> response = await _dio.get<dynamic>(
       'api/v0/logs/files/$encoded',
       options: Options(responseType: ResponseType.plain),
     );
@@ -308,7 +268,7 @@ class SlskdApi {
 
   /// Lists all downloads grouped by user and directory.
   Future<List<SlskdUserTransfers>> getDownloads({bool includeRemoved = false}) async {
-    final response = await _dio.get<dynamic>(
+    final Response<dynamic> response = await _dio.get<dynamic>(
       'api/v0/transfers/downloads',
       queryParameters: <String, dynamic>{'includeRemoved': includeRemoved},
     );
@@ -317,89 +277,11 @@ class SlskdApi {
 
   /// Lists all uploads grouped by user and directory.
   Future<List<SlskdUserTransfers>> getUploads({bool includeRemoved = false}) async {
-    final response = await _dio.get<dynamic>(
+    final Response<dynamic> response = await _dio.get<dynamic>(
       'api/v0/transfers/uploads',
       queryParameters: <String, dynamic>{'includeRemoved': includeRemoved},
     );
     return _parseUserTransfersList(response.data);
-  }
-
-  /// Gets all downloads for the specified [username].
-  Future<SlskdUserTransfers?> getDownloadsForUser(String username) async {
-    try {
-      final encodedUser = Uri.encodeComponent(username);
-      final response = await _dio.get<dynamic>('api/v0/transfers/downloads/$encodedUser');
-      if (response.data is Map<String, dynamic>) {
-        return SlskdUserTransfers.fromJson(response.data as Map<String, dynamic>);
-      }
-      if (response.data is Map) {
-        return SlskdUserTransfers.fromJson((response.data as Map).cast<String, dynamic>());
-      }
-      return null;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return null;
-      rethrow;
-    }
-  }
-
-  /// Gets all uploads for the specified [username].
-  Future<SlskdUserTransfers?> getUploadsForUser(String username) async {
-    try {
-      final encodedUser = Uri.encodeComponent(username);
-      final response = await _dio.get<dynamic>('api/v0/transfers/uploads/$encodedUser');
-      if (response.data is Map<String, dynamic>) {
-        return SlskdUserTransfers.fromJson(response.data as Map<String, dynamic>);
-      }
-      if (response.data is Map) {
-        return SlskdUserTransfers.fromJson((response.data as Map).cast<String, dynamic>());
-      }
-      return null;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return null;
-      rethrow;
-    }
-  }
-
-  /// Gets a specific download by [username] and [id].
-  Future<SlskdTransfer?> getDownload(String username, String id) async {
-    try {
-      final encodedUser = Uri.encodeComponent(username);
-      final encodedId = Uri.encodeComponent(id);
-      final response = await _dio.get<dynamic>(
-        'api/v0/transfers/downloads/$encodedUser/$encodedId',
-      );
-      if (response.data is Map<String, dynamic>) {
-        return SlskdTransfer.fromJson(response.data as Map<String, dynamic>);
-      }
-      if (response.data is Map) {
-        return SlskdTransfer.fromJson((response.data as Map).cast<String, dynamic>());
-      }
-      return null;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return null;
-      rethrow;
-    }
-  }
-
-  /// Gets a specific upload by [username] and [id].
-  Future<SlskdTransfer?> getUpload(String username, String id) async {
-    try {
-      final encodedUser = Uri.encodeComponent(username);
-      final encodedId = Uri.encodeComponent(id);
-      final response = await _dio.get<dynamic>(
-        'api/v0/transfers/uploads/$encodedUser/$encodedId',
-      );
-      if (response.data is Map<String, dynamic>) {
-        return SlskdTransfer.fromJson(response.data as Map<String, dynamic>);
-      }
-      if (response.data is Map) {
-        return SlskdTransfer.fromJson((response.data as Map).cast<String, dynamic>());
-      }
-      return null;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return null;
-      rethrow;
-    }
   }
 
   /// Cancels the specified download. If [remove] is true, the transfer is discarded.
@@ -437,7 +319,7 @@ class SlskdApi {
     try {
       final encodedUser = Uri.encodeComponent(username);
       final encodedId = Uri.encodeComponent(id);
-      final response = await _dio.get<dynamic>(
+      final Response<dynamic> response = await _dio.get<dynamic>(
         'api/v0/transfers/downloads/$encodedUser/$encodedId/position',
       );
       if (response.data is num) {
@@ -472,7 +354,7 @@ class SlskdApi {
   Future<EnqueueDownloadBatchResponse> enqueueBatch(
     EnqueueDownloadBatchRequest request,
   ) async {
-    final response = await _dio.post<dynamic>(
+    final Response<dynamic> response = await _dio.post<dynamic>(
       'api/v0/transfers/downloads/batches',
       data: request.toJson(),
     );
@@ -485,84 +367,6 @@ class SlskdApi {
       );
     }
     return const EnqueueDownloadBatchResponse();
-  }
-
-  /// Gets the details and transfers associated with a batch [id].
-  Future<SlskdBatch?> getBatch(String id) async {
-    try {
-      final encodedId = Uri.encodeComponent(id);
-      final response = await _dio.get<dynamic>(
-        'api/v0/transfers/downloads/batches/$encodedId',
-      );
-      if (response.data is Map<String, dynamic>) {
-        return SlskdBatch.fromJson(response.data as Map<String, dynamic>);
-      }
-      if (response.data is Map) {
-        return SlskdBatch.fromJson((response.data as Map).cast<String, dynamic>());
-      }
-      return null;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return null;
-      rethrow;
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Telemetry & Historical Analytics (Reports & Metrics)
-  // ---------------------------------------------------------------------------
-
-  /// Gets a summary of all transfer activity over the specified timeframe.
-  Future<Map<String, dynamic>> getTransferSummary({
-    DateTime? start,
-    DateTime? end,
-    String? direction,
-    String? username,
-  }) async {
-    final queryParams = <String, dynamic>{};
-    if (start != null) queryParams['start'] = start.toUtc().toIso8601String();
-    if (end != null) queryParams['end'] = end.toUtc().toIso8601String();
-    if (direction != null) queryParams['direction'] = direction;
-    if (username != null) queryParams['username'] = username;
-
-    final response = await _dio.get<dynamic>(
-      'api/v0/telemetry/reports/transfers/summary',
-      queryParameters: queryParams,
-    );
-    if (response.data is Map<String, dynamic>) {
-      return response.data as Map<String, dynamic>;
-    }
-    if (response.data is Map) {
-      return (response.data as Map).cast<String, dynamic>();
-    }
-    return const <String, dynamic>{};
-  }
-
-  /// Gets time-bucketed histogram data of transfer activity.
-  Future<Map<String, dynamic>> getTransferHistogram({
-    DateTime? start,
-    DateTime? end,
-    String? direction,
-    String? username,
-    int? interval,
-  }) async {
-    final queryParams = <String, dynamic>{};
-    if (start != null) queryParams['start'] = start.toUtc().toIso8601String();
-    if (end != null) queryParams['end'] = end.toUtc().toIso8601String();
-    if (direction != null) queryParams['direction'] = direction;
-    if (username != null) queryParams['username'] = username;
-    if (interval != null) queryParams['interval'] = interval;
-
-    final response = await _dio.get<dynamic>(
-      'api/v0/telemetry/reports/transfers/histogram',
-      queryParameters: queryParams,
-    );
-    if (response.data is Map<String, dynamic>) {
-      return response.data as Map<String, dynamic>;
-    }
-    if (response.data is Map) {
-      return (response.data as Map).cast<String, dynamic>();
-    }
-    return const <String, dynamic>{};
   }
 
   /// Gets the transfer leaderboard of top peers for [direction] ('Download' or 'Upload').
@@ -585,7 +389,7 @@ class SlskdApi {
     if (start != null) queryParams['start'] = start.toUtc().toIso8601String();
     if (end != null) queryParams['end'] = end.toUtc().toIso8601String();
 
-    final response = await _dio.get<dynamic>(
+    final Response<dynamic> response = await _dio.get<dynamic>(
       'api/v0/telemetry/reports/transfers/leaderboard',
       queryParameters: queryParams,
     );
@@ -596,69 +400,6 @@ class SlskdApi {
           list.add(SlskdTransferSummary.fromJson(item));
         } else if (item is Map) {
           list.add(SlskdTransferSummary.fromJson(item.cast<String, dynamic>()));
-        }
-      }
-    }
-    return list;
-  }
-
-  /// Gets transfer statistics and summary for a specific [username].
-  Future<Map<String, dynamic>> getUserTransferSummary(
-    String username, {
-    DateTime? start,
-    DateTime? end,
-    String? direction,
-  }) async {
-    final encodedUser = Uri.encodeComponent(username);
-    final queryParams = <String, dynamic>{};
-    if (start != null) queryParams['start'] = start.toUtc().toIso8601String();
-    if (end != null) queryParams['end'] = end.toUtc().toIso8601String();
-    if (direction != null) queryParams['direction'] = direction;
-
-    final response = await _dio.get<dynamic>(
-      'api/v0/telemetry/reports/transfers/users/$encodedUser',
-      queryParameters: queryParams,
-    );
-    if (response.data is Map<String, dynamic>) {
-      return response.data as Map<String, dynamic>;
-    }
-    if (response.data is Map) {
-      return (response.data as Map).cast<String, dynamic>();
-    }
-    return const <String, dynamic>{};
-  }
-
-  /// Gets transfer failure exception details for [direction] ('Download' or 'Upload').
-  Future<List<SlskdTransferExceptionDetail>> getTransferExceptions({
-    required String direction,
-    DateTime? start,
-    DateTime? end,
-    String? username,
-    int limit = 25,
-    int offset = 0,
-    String sortOrder = 'DESC',
-  }) async {
-    final queryParams = <String, dynamic>{
-      'direction': direction,
-      'limit': limit,
-      'offset': offset,
-      'sortOrder': sortOrder,
-    };
-    if (start != null) queryParams['start'] = start.toUtc().toIso8601String();
-    if (end != null) queryParams['end'] = end.toUtc().toIso8601String();
-    if (username != null) queryParams['username'] = username;
-
-    final response = await _dio.get<dynamic>(
-      'api/v0/telemetry/reports/transfers/exceptions',
-      queryParameters: queryParams,
-    );
-    final List<SlskdTransferExceptionDetail> list = [];
-    if (response.data is Iterable) {
-      for (final item in response.data as Iterable) {
-        if (item is Map<String, dynamic>) {
-          list.add(SlskdTransferExceptionDetail.fromJson(item));
-        } else if (item is Map) {
-          list.add(SlskdTransferExceptionDetail.fromJson(item.cast<String, dynamic>()));
         }
       }
     }
@@ -683,7 +424,7 @@ class SlskdApi {
     if (end != null) queryParams['end'] = end.toUtc().toIso8601String();
     if (username != null) queryParams['username'] = username;
 
-    final response = await _dio.get<dynamic>(
+    final Response<dynamic> response = await _dio.get<dynamic>(
       'api/v0/telemetry/reports/transfers/exceptions/pareto',
       queryParameters: queryParams,
     );
@@ -716,7 +457,7 @@ class SlskdApi {
     if (end != null) queryParams['end'] = end.toUtc().toIso8601String();
     if (username != null) queryParams['username'] = username;
 
-    final response = await _dio.get<dynamic>(
+    final Response<dynamic> response = await _dio.get<dynamic>(
       'api/v0/telemetry/reports/transfers/directories',
       queryParameters: queryParams,
     );
@@ -736,34 +477,8 @@ class SlskdApi {
   /// Gets Prometheus KPIs formatted as JSON dictionary.
   Future<Map<String, SlskdPrometheusMetric>> getPrometheusKpis() async {
     try {
-      final response = await _dio.get<dynamic>(
+      final Response<dynamic> response = await _dio.get<dynamic>(
         'api/v0/telemetry/metrics/kpis',
-        options: Options(headers: {'Accept': 'application/json'}),
-      );
-      final Map<String, SlskdPrometheusMetric> map = {};
-      if (response.data is Map) {
-        for (final entry in (response.data as Map).entries) {
-          if (entry.value is Map<String, dynamic>) {
-            map[entry.key.toString()] =
-                SlskdPrometheusMetric.fromJson(entry.value as Map<String, dynamic>);
-          } else if (entry.value is Map) {
-            map[entry.key.toString()] = SlskdPrometheusMetric.fromJson(
-                (entry.value as Map).cast<String, dynamic>());
-          }
-        }
-      }
-      return map;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return const {};
-      rethrow;
-    }
-  }
-
-  /// Gets all Prometheus metrics formatted as JSON dictionary.
-  Future<Map<String, SlskdPrometheusMetric>> getPrometheusMetrics() async {
-    try {
-      final response = await _dio.get<dynamic>(
-        'api/v0/telemetry/metrics',
         options: Options(headers: {'Accept': 'application/json'}),
       );
       final Map<String, SlskdPrometheusMetric> map = {};
@@ -791,7 +506,7 @@ class SlskdApi {
 
   /// Initiates a new search across the Soulseek network.
   Future<SlskdSearch> initiateSearch(SlskdSearchRequest request) async {
-    final response = await _dio.post<dynamic>(
+    final Response<dynamic> response = await _dio.post<dynamic>(
       'api/v0/searches',
       data: request.toJson(),
     );
@@ -808,7 +523,7 @@ class SlskdApi {
 
   /// Retrieves all active and recent searches.
   Future<List<SlskdSearch>> getSearches() async {
-    final response = await _dio.get<dynamic>('api/v0/searches');
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/searches');
     final List<SlskdSearch> searches = [];
     if (response.data is Iterable) {
       for (final item in response.data as Iterable) {
@@ -822,31 +537,10 @@ class SlskdApi {
     return searches;
   }
 
-  /// Gets the search matching [id]. If [includeResponses] is true, results are included.
-  Future<SlskdSearch?> getSearch(String id, {bool includeResponses = true}) async {
-    try {
-      final encodedId = Uri.encodeComponent(id);
-      final response = await _dio.get<dynamic>(
-        'api/v0/searches/$encodedId',
-        queryParameters: <String, dynamic>{'includeResponses': includeResponses},
-      );
-      if (response.data is Map<String, dynamic>) {
-        return SlskdSearch.fromJson(response.data as Map<String, dynamic>);
-      }
-      if (response.data is Map) {
-        return SlskdSearch.fromJson((response.data as Map).cast<String, dynamic>());
-      }
-      return null;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return null;
-      rethrow;
-    }
-  }
-
   /// Retrieves file responses for the search matching [id].
   Future<List<SlskdSearchResponse>> getSearchResponses(String id) async {
     final encodedId = Uri.encodeComponent(id);
-    final response = await _dio.get<dynamic>('api/v0/searches/$encodedId/responses');
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/searches/$encodedId/responses');
     final List<SlskdSearchResponse> responses = [];
     if (response.data is Iterable) {
       for (final item in response.data as Iterable) {
@@ -879,7 +573,7 @@ class SlskdApi {
   /// Retrieves the entire file share tree of the specified remote [username].
   Future<List<SlskdDirectory>> browseUser(String username) async {
     final encodedUser = Uri.encodeComponent(username);
-    final response = await _dio.get<dynamic>('api/v0/users/$encodedUser/browse');
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/users/$encodedUser/browse');
     return _parseDirectoryList(response.data);
   }
 
@@ -887,7 +581,7 @@ class SlskdApi {
   Future<double?> getBrowseStatus(String username) async {
     try {
       final encodedUser = Uri.encodeComponent(username);
-      final response = await _dio.get<dynamic>('api/v0/users/$encodedUser/browse/status');
+      final Response<dynamic> response = await _dio.get<dynamic>('api/v0/users/$encodedUser/browse/status');
       if (response.data is num) {
         return (response.data as num).toDouble();
       }
@@ -906,24 +600,11 @@ class SlskdApi {
     }
   }
 
-  /// Retrieves files in a specific directory from [username].
-  Future<List<SlskdDirectory>> getDirectoryContents(
-    String username,
-    String directory,
-  ) async {
-    final encodedUser = Uri.encodeComponent(username);
-    final response = await _dio.post<dynamic>(
-      'api/v0/users/$encodedUser/directory',
-      data: <String, dynamic>{'directory': directory},
-    );
-    return _parseDirectoryList(response.data);
-  }
-
   /// Retrieves bio, profile picture, and upload slot information for [username].
   Future<SlskdUserInfo> getUserInfo(String username) async {
     try {
       final encodedUser = Uri.encodeComponent(username);
-      final response = await _dio.get<dynamic>('api/v0/users/$encodedUser/info');
+      final Response<dynamic> response = await _dio.get<dynamic>('api/v0/users/$encodedUser/info');
       if (response.data is Map<String, dynamic>) {
         return SlskdUserInfo.fromJson(response.data as Map<String, dynamic>);
       }
@@ -943,7 +624,7 @@ class SlskdApi {
   Future<SlskdUserStatus> getUserStatus(String username) async {
     try {
       final encodedUser = Uri.encodeComponent(username);
-      final response = await _dio.get<dynamic>('api/v0/users/$encodedUser/status');
+      final Response<dynamic> response = await _dio.get<dynamic>('api/v0/users/$encodedUser/status');
       if (response.data is Map<String, dynamic>) {
         return SlskdUserStatus.fromJson(response.data as Map<String, dynamic>);
       }
@@ -963,7 +644,7 @@ class SlskdApi {
   Future<SlskdUserEndpoint?> getUserEndpoint(String username) async {
     try {
       final encodedUser = Uri.encodeComponent(username);
-      final response = await _dio.get<dynamic>('api/v0/users/$encodedUser/endpoint');
+      final Response<dynamic> response = await _dio.get<dynamic>('api/v0/users/$encodedUser/endpoint');
       return SlskdUserEndpoint.fromJson(response.data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
@@ -977,7 +658,7 @@ class SlskdApi {
 
   /// Retrieves all available public and private chat rooms on the Soulseek network.
   Future<List<SlskdRoomInfo>> getAvailableRooms() async {
-    final response = await _dio.get<dynamic>('api/v0/rooms/available');
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/rooms/available');
     final List<SlskdRoomInfo> rooms = [];
     if (response.data is Iterable) {
       for (final item in response.data as Iterable) {
@@ -993,7 +674,7 @@ class SlskdApi {
 
   /// Gets the names of all currently joined chat rooms.
   Future<List<String>> getJoinedRoomNames() async {
-    final response = await _dio.get<dynamic>('api/v0/rooms/joined');
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/rooms/joined');
     final List<String> names = [];
     if (response.data is Iterable) {
       for (final item in response.data as Iterable) {
@@ -1007,7 +688,7 @@ class SlskdApi {
   Future<SlskdRoom?> getRoom(String roomName) async {
     try {
       final encodedRoom = Uri.encodeComponent(roomName);
-      final response = await _dio.get<dynamic>('api/v0/rooms/joined/$encodedRoom');
+      final Response<dynamic> response = await _dio.get<dynamic>('api/v0/rooms/joined/$encodedRoom');
       if (response.data is Map<String, dynamic>) {
         return SlskdRoom.fromJson(response.data as Map<String, dynamic>);
       }
@@ -1024,7 +705,7 @@ class SlskdApi {
   /// Gets recent messages for [roomName].
   Future<List<SlskdRoomMessage>> getRoomMessages(String roomName) async {
     final encodedRoom = Uri.encodeComponent(roomName);
-    final response = await _dio.get<dynamic>('api/v0/rooms/joined/$encodedRoom/messages');
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/rooms/joined/$encodedRoom/messages');
     final List<SlskdRoomMessage> messages = [];
     if (response.data is Iterable) {
       for (final item in response.data as Iterable) {
@@ -1041,7 +722,7 @@ class SlskdApi {
   /// Gets the list of users present in [roomName].
   Future<List<SlskdUserPresence>> getRoomUsers(String roomName) async {
     final encodedRoom = Uri.encodeComponent(roomName);
-    final response = await _dio.get<dynamic>('api/v0/rooms/joined/$encodedRoom/users');
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/rooms/joined/$encodedRoom/users');
     final List<SlskdUserPresence> users = [];
     if (response.data is Iterable) {
       for (final item in response.data as Iterable) {
@@ -1057,7 +738,7 @@ class SlskdApi {
 
   /// Joins a chat room by [roomName].
   Future<SlskdRoom?> joinRoom(String roomName) async {
-    final response = await _dio.post<dynamic>(
+    final Response<dynamic> response = await _dio.post<dynamic>(
       'api/v0/rooms/joined',
       data: jsonEncode(roomName),
       options: Options(contentType: 'application/json'),
@@ -1112,7 +793,7 @@ class SlskdApi {
     bool includeInactive = false,
     bool unAcknowledgedOnly = false,
   }) async {
-    final response = await _dio.get<dynamic>(
+    final Response<dynamic> response = await _dio.get<dynamic>(
       'api/v0/conversations',
       queryParameters: <String, dynamic>{
         'includeInactive': includeInactive,
@@ -1142,29 +823,11 @@ class SlskdApi {
     return conversations;
   }
 
-  /// Gets a specific conversation by [username].
-  Future<SlskdConversation?> getConversation(String username) async {
-    try {
-      final encodedUser = Uri.encodeComponent(username);
-      final response = await _dio.get<dynamic>('api/v0/conversations/$encodedUser');
-      if (response.data is Map<String, dynamic>) {
-        return SlskdConversation.fromJson(response.data as Map<String, dynamic>);
-      }
-      if (response.data is Map) {
-        return SlskdConversation.fromJson((response.data as Map).cast<String, dynamic>());
-      }
-      return null;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return null;
-      rethrow;
-    }
-  }
-
   /// Retrieves private messages exchanged with [username].
   Future<List<SlskdPrivateMessage>> getConversationMessages(String username) async {
     try {
       final encodedUser = Uri.encodeComponent(username);
-      final response = await _dio.get<dynamic>(
+      final Response<dynamic> response = await _dio.get<dynamic>(
         'api/v0/conversations/$encodedUser/messages',
       );
       final List<SlskdPrivateMessage> messages = [];
@@ -1196,12 +859,6 @@ class SlskdApi {
     );
   }
 
-  /// Acknowledges a specific message by [username] and [id].
-  Future<void> acknowledgeMessage(String username, int id) async {
-    final encodedUser = Uri.encodeComponent(username);
-    await _dio.put<void>('api/v0/conversations/$encodedUser/$id');
-  }
-
   /// Acknowledges all messages from [username].
   Future<void> acknowledgeAllMessages(String username) async {
     final encodedUser = Uri.encodeComponent(username);
@@ -1220,7 +877,7 @@ class SlskdApi {
 
   /// Gets current application options (redacted).
   Future<Map<String, dynamic>> getOptions() async {
-    final response = await _dio.get<dynamic>('api/v0/options');
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/options');
     if (response.data is Map<String, dynamic>) {
       return response.data as Map<String, dynamic>;
     }
@@ -1228,72 +885,6 @@ class SlskdApi {
       return (response.data as Map).cast<String, dynamic>();
     }
     return const {};
-  }
-
-  /// Applies a configuration overlay to current options.
-  Future<Map<String, dynamic>> applyOptionsOverlay(Map<String, dynamic> overlay) async {
-    final response = await _dio.patch<dynamic>('api/v0/options', data: overlay);
-    if (response.data is Map<String, dynamic>) {
-      return response.data as Map<String, dynamic>;
-    }
-    if (response.data is Map) {
-      return (response.data as Map).cast<String, dynamic>();
-    }
-    return const {};
-  }
-
-  /// Gets the application options provided at startup.
-  Future<Map<String, dynamic>> getStartupOptions() async {
-    final response = await _dio.get<dynamic>('api/v0/options/startup');
-    if (response.data is Map<String, dynamic>) {
-      return response.data as Map<String, dynamic>;
-    }
-    if (response.data is Map) {
-      return (response.data as Map).cast<String, dynamic>();
-    }
-    return const {};
-  }
-
-  /// Gets the configuration file location path on the daemon host.
-  Future<String> getYamlLocation() async {
-    final response = await _dio.get<dynamic>('api/v0/options/yaml/location');
-    return response.data?.toString() ?? '';
-  }
-
-  /// Gets the raw YAML configuration file content from the daemon host.
-  Future<String> getYamlContent() async {
-    final response = await _dio.get<dynamic>(
-      'api/v0/options/yaml',
-      options: Options(responseType: ResponseType.plain),
-    );
-    return response.data?.toString() ?? '';
-  }
-
-  /// Validates a YAML configuration string without saving.
-  /// Returns null if valid, or the validation error string if invalid.
-  Future<String?> validateYaml(String yaml) async {
-    try {
-      final response = await _dio.post<dynamic>(
-        'api/v0/options/yaml/validate',
-        data: jsonEncode(yaml),
-        options: Options(contentType: 'application/json'),
-      );
-      if (response.data != null && response.data.toString().trim().isNotEmpty) {
-        return response.data.toString();
-      }
-      return null;
-    } on DioException catch (e) {
-      return e.response?.data?.toString() ?? e.message;
-    }
-  }
-
-  /// Saves updated YAML configuration to the daemon host.
-  Future<void> updateYaml(String yaml) async {
-    await _dio.put<void>(
-      'api/v0/options/yaml',
-      data: jsonEncode(yaml),
-      options: Options(contentType: 'application/json'),
-    );
   }
 
   // ---------------------------------------------------------------------------
@@ -1312,7 +903,7 @@ class SlskdApi {
 
   /// Gets low-level internal Soulseek transfers from the debug endpoint.
   Future<Map<String, dynamic>> getDebugTransfers() async {
-    final response = await _dio.get<dynamic>('api/v0/debug/transfers');
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/debug/transfers');
     if (response.data is Map<String, dynamic>) {
       return response.data as Map<String, dynamic>;
     }
@@ -1322,32 +913,14 @@ class SlskdApi {
     return const {};
   }
 
-  /// Connects the relay agent to its configured controller.
-  Future<void> connectRelayAgent() async {
-    await _dio.put<void>('api/v0/relay/agent');
-  }
-
-  /// Disconnects the relay agent from its configured controller.
-  Future<void> disconnectRelayAgent() async {
-    await _dio.delete<void>('api/v0/relay/agent');
-  }
-
   // ---------------------------------------------------------------------------
   // Internal Helpers
   // ---------------------------------------------------------------------------
 
   List<SlskdUserTransfers> _parseUserTransfersList(dynamic data) {
-    final List<SlskdUserTransfers> list = [];
-    if (data is Iterable) {
-      for (final item in data) {
-        if (item is Map<String, dynamic>) {
-          list.add(SlskdUserTransfers.fromJson(item));
-        } else if (item is Map) {
-          list.add(SlskdUserTransfers.fromJson(item.cast<String, dynamic>()));
-        }
-      }
-    }
-    return list;
+    return _asList(data)
+        .map((dynamic item) => SlskdUserTransfers.fromJson(_asMap(item)))
+        .toList();
   }
 
   List<SlskdDirectory> _parseDirectoryList(dynamic data) {

@@ -45,7 +45,6 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
   final ScrollController _roomScrollController = ScrollController();
   final TextEditingController _dmSearchController = TextEditingController();
   final TextEditingController _roomSearchController = TextEditingController();
-  Timer? _chatPollingTimer;
   String _dmSearchQuery = '';
   String _roomSearchQuery = '';
 
@@ -54,33 +53,6 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_onTabChanged);
-    _chatPollingTimer = Timer.periodic(const Duration(milliseconds: 2500), (_) {
-      if (!mounted) return;
-      if (WidgetsBinding.instance.lifecycleState != null &&
-          WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
-        return;
-      }
-      final activeTab = ref.read(slskdActiveTabProvider(widget.instance));
-      if (activeTab != 3) return;
-
-      final activeRoom =
-          ref.read(slskdActiveRoomNameProvider(widget.instance));
-      final activeConvo =
-          ref.read(slskdActiveConversationUsernameProvider(widget.instance));
-
-      if (activeRoom != null && activeRoom.isNotEmpty) {
-        ref.invalidate(slskdRoomMessagesProvider((widget.instance, activeRoom)));
-      } else if (activeConvo != null && activeConvo.isNotEmpty) {
-        ref.invalidate(
-          slskdConversationMessagesProvider((widget.instance, activeConvo)),
-        );
-        ref.invalidate(
-          slskdUserStatusProvider((widget.instance, activeConvo)),
-        );
-      } else {
-        ref.invalidate(slskdConversationsProvider(widget.instance));
-      }
-    });
   }
 
   void _onTabChanged() {
@@ -91,7 +63,6 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
 
   @override
   void dispose() {
-    _chatPollingTimer?.cancel();
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     _dmScrollController.dispose();
@@ -170,7 +141,6 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
-      useRootNavigator: true,
       builder: (ctx) => AlertDialog(
         title: Text('Set Ticker for #$roomName'),
         content: TextField(
@@ -272,7 +242,6 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     final TextEditingController userCtrl = TextEditingController();
     showDialog<void>(
       context: context,
-      useRootNavigator: true,
       builder: (BuildContext ctx) {
         return AlertDialog(
           title: const Text('New Direct Message'),
