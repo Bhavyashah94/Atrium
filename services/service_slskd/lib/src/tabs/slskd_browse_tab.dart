@@ -38,6 +38,7 @@ class SlskdBrowseTab extends ConsumerStatefulWidget {
 class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
   final TextEditingController _userSearchController = TextEditingController();
   final TextEditingController _filterController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   Timer? _statusPollTimer;
   String _filterQuery = '';
@@ -46,6 +47,7 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
   @override
   void dispose() {
     _stopStatusPolling();
+    _scrollController.dispose();
     _userSearchController.dispose();
     _filterController.dispose();
     super.dispose();
@@ -372,6 +374,19 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
     final userStatusAsync = ref.watch(slskdUserStatusProvider((widget.instance, username)));
     final currentPathSegments = ref.watch(slskdBrowsePathSegmentsProvider(widget.instance));
 
+    ref.listen<int>(
+      slskdScrollToTopProvider((widget.instance, 2)),
+      (previous, next) {
+        if (next > 0 && _scrollController.hasClients) {
+          _scrollController.animateTo(
+            0.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      },
+    );
+
     if (directoriesAsync.isLoading && _statusPollTimer == null) {
       _startStatusPolling(username);
     } else if (!directoriesAsync.isLoading && _statusPollTimer != null) {
@@ -382,6 +397,7 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
       body: SafeArea(
         bottom: false,
         child: CustomScrollView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: <Widget>[
             // 1. Pinned App Bar with User name & Navigation

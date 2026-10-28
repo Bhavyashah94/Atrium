@@ -186,6 +186,9 @@ class SlskdHome extends ConsumerWidget {
               onDestinationSelected: (int index) {
                 if (index == currentIndex) {
                   ref
+                      .read(slskdBottomNavVisibleProvider(instance).notifier)
+                      .state = true;
+                  ref
                       .read(slskdScrollToTopProvider((instance, index)).notifier)
                       .update((int state) => state + 1);
                 } else {

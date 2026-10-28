@@ -41,6 +41,8 @@ class SlskdCommunityTab extends ConsumerStatefulWidget {
 class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  final ScrollController _dmScrollController = ScrollController();
+  final ScrollController _roomScrollController = ScrollController();
   final TextEditingController _dmSearchController = TextEditingController();
   final TextEditingController _roomSearchController = TextEditingController();
   Timer? _chatPollingTimer;
@@ -92,6 +94,8 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     _chatPollingTimer?.cancel();
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
+    _dmScrollController.dispose();
+    _roomScrollController.dispose();
     _dmSearchController.dispose();
     _roomSearchController.dispose();
     super.dispose();
@@ -303,6 +307,41 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<int>(
+      slskdScrollToTopProvider((widget.instance, 3)),
+      (previous, next) {
+        if (next > 0) {
+          final activeRoom =
+              ref.read(slskdActiveRoomNameProvider(widget.instance));
+          final activeConvo = ref
+              .read(slskdActiveConversationUsernameProvider(widget.instance));
+          if (activeRoom != null || activeConvo != null) {
+            ref
+                .read(slskdActiveRoomNameProvider(widget.instance).notifier)
+                .state = null;
+            ref
+                .read(
+                  slskdActiveConversationUsernameProvider(
+                    widget.instance,
+                  ).notifier,
+                )
+                .state = null;
+            return;
+          }
+          final controller = _tabController.index == 0
+              ? _dmScrollController
+              : _roomScrollController;
+          if (controller.hasClients) {
+            controller.animateTo(
+              0.0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+            );
+          }
+        }
+      },
+    );
+
     final String? activeRoom = ref.watch(slskdActiveRoomNameProvider(widget.instance));
     final String? activeConvo =
         ref.watch(slskdActiveConversationUsernameProvider(widget.instance));
@@ -471,6 +510,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
           ? const Center(child: CircularProgressIndicator())
           : filteredConvos.isEmpty
               ? ListView(
+                  controller: _dmScrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: <Widget>[
                     Padding(
@@ -522,6 +562,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
                   ],
                 )
               : ListView.builder(
+                  controller: _dmScrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.symmetric(vertical: Insets.xs),
                   itemCount: filteredConvos.length,
@@ -571,6 +612,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
           ? const Center(child: CircularProgressIndicator())
           : filteredJoined.isEmpty
               ? ListView(
+                  controller: _roomScrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: <Widget>[
                     Padding(
@@ -622,6 +664,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
                   ],
                 )
               : ListView.builder(
+                  controller: _roomScrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.symmetric(vertical: Insets.xs),
                   itemCount: filteredJoined.length,

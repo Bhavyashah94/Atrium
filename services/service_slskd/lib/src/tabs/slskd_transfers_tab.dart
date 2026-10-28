@@ -54,6 +54,7 @@ class SlskdTransfersTab extends ConsumerStatefulWidget {
 
 class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   Timer? _pollingTimer;
   bool _isGrouped = true;
   TransferDirection? _directionFilter;
@@ -81,6 +82,7 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
   @override
   void dispose() {
     _pollingTimer?.cancel();
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -93,6 +95,19 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    ref.listen<int>(
+      slskdScrollToTopProvider((widget.instance, 0)),
+      (previous, next) {
+        if (next > 0 && _scrollController.hasClients) {
+          _scrollController.animateTo(
+            0.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      },
+    );
 
     final downloadsAsync = ref.watch(slskdDownloadsProvider(widget.instance));
     final uploadsAsync = ref.watch(slskdUploadsProvider(widget.instance));
@@ -117,6 +132,7 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
           ]);
         },
         child: CustomScrollView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: <Widget>[
             // 1. Pinned AppBar (Hamburger + SearchBar + View Toggle)

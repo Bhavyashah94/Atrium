@@ -36,6 +36,7 @@ class SlskdSearchTab extends ConsumerStatefulWidget {
 
 class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   bool _isGrouped = true;
 
   // Filter & sort state
@@ -87,6 +88,7 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
   @override
   void dispose() {
     _searchPollingTimer?.cancel();
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -296,6 +298,19 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
+    ref.listen<int>(
+      slskdScrollToTopProvider((widget.instance, 1)),
+      (previous, next) {
+        if (next > 0 && _scrollController.hasClients) {
+          _scrollController.animateTo(
+            0.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      },
+    );
+
     final searchesAsync = ref.watch(slskdSearchesProvider(widget.instance));
     final List<SlskdSearch> searches = searchesAsync.value ?? const <SlskdSearch>[];
     final selectedSearchId = ref.watch(slskdSelectedSearchIdProvider(widget.instance));
@@ -325,6 +340,7 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
             }
           },
           child: CustomScrollView(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: <Widget>[
             // 1. Pinned Search & App Bar

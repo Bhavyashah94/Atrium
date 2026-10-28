@@ -13,10 +13,16 @@ import 'package:service_slskd/src/system/slskd_options_sheet.dart';
 import 'package:service_slskd/src/system/slskd_share_contents_sheet.dart';
 import 'package:service_slskd/src/tabs/slskd_system_tab.dart';
 
-const String _fontDir =
-    r'C:\Users\bhavy\development\flutter\bin\cache\artifacts\material_fonts';
-const String screenshotDir =
-    r'C:\Users\bhavy\.gemini\antigravity\brain\e17bb2e9-c1e2-4c39-adb3-fda7246421d6';
+final String? _fontDir = () {
+  final String? flutterRoot = Platform.environment['FLUTTER_ROOT'];
+  if (flutterRoot == null || flutterRoot.isEmpty) {
+    return null;
+  }
+  return '$flutterRoot/bin/cache/artifacts/material_fonts';
+}();
+
+final String screenshotDir = Platform.environment['SLSKD_SHOTS_DIR'] ??
+    'build/screenshots/service_slskd';
 
 const Instance testInstance = Instance(
   id: 'test-slskd-system',
@@ -29,16 +35,19 @@ const Instance testInstance = Instance(
 );
 
 Future<void> _loadFonts() async {
+  if (_fontDir == null) {
+    return;
+  }
   final FontLoader roboto = FontLoader('Roboto');
   for (final String font in ['roboto-regular.ttf', 'roboto-medium.ttf', 'roboto-bold.ttf']) {
-    final File f = File('$_fontDir\\$font');
+    final File f = File('$_fontDir/$font');
     if (f.existsSync()) {
       roboto.addFont(Future.value(ByteData.view(f.readAsBytesSync().buffer)));
     }
   }
   await roboto.load();
 
-  final File icons = File('$_fontDir\\materialicons-regular.otf');
+  final File icons = File('$_fontDir/materialicons-regular.otf');
   if (icons.existsSync()) {
     final FontLoader materialIcons = FontLoader('MaterialIcons');
     materialIcons.addFont(Future.value(ByteData.view(icons.readAsBytesSync().buffer)));
@@ -59,7 +68,11 @@ Future<void> capture(
     image.dispose();
     return byteData?.buffer.asUint8List();
   });
-  final File outFile = File('$screenshotDir\\$fileName');
+  final Directory dir = Directory(screenshotDir);
+  if (!dir.existsSync()) {
+    dir.createSync(recursive: true);
+  }
+  final File outFile = File('$screenshotDir/$fileName');
   outFile.writeAsBytesSync(pngBytes!);
 }
 
