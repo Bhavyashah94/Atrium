@@ -256,7 +256,10 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
     return FloatingActionButton.small(
       heroTag: 'slskd_transfers_sort_filter_fab',
       tooltip: 'Sort & Filter',
-      elevation: 3,
+      elevation: 0,
+      highlightElevation: 0,
+      focusElevation: 0,
+      hoverElevation: 0,
       backgroundColor:
           _hasActiveFilters ? colorScheme.primaryContainer : colorScheme.surfaceContainerHigh,
       foregroundColor:

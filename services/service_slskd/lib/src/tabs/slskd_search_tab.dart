@@ -526,7 +526,10 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
     return FloatingActionButton.small(
       heroTag: 'slskd_search_sort_filter_fab',
       tooltip: 'Sort & Filter Results',
-      elevation: 3,
+      elevation: 0,
+      highlightElevation: 0,
+      focusElevation: 0,
+      hoverElevation: 0,
       backgroundColor:
           _hasActiveFilters ? colorScheme.primaryContainer : colorScheme.surfaceContainerHigh,
       foregroundColor:
