@@ -777,7 +777,7 @@ void main() {
       await api.enqueueDownloads('peerA', [
         const QueueDownloadRequest(filename: 'a.mp3', size: 100),
       ]);
-      expect(lastPath, 'api/v0/transfers/downloads/peerA');
+      expect(lastPath, 'api/v0/transfers/downloads/batches');
       expect(lastMethod, 'POST');
     });
 
@@ -1003,8 +1003,11 @@ void main() {
       expect(histogram, isNotEmpty);
 
       // 2. Leaderboard
-      final leaderboard = await api.getTransferLeaderboard();
+      final leaderboard = await api.getTransferLeaderboard(direction: 'Download');
       expect(lastPath, 'api/v0/telemetry/reports/transfers/leaderboard');
+      expect(lastQueryParams?['direction'], 'Download');
+      expect(lastQueryParams?['sortBy'], 'Count');
+      expect(lastQueryParams?['sortOrder'], 'DESC');
       expect(leaderboard.first.username, 'peerLeader');
       expect(leaderboard.first.totalBytes, 5000000000);
 
@@ -1014,8 +1017,9 @@ void main() {
       expect(userSummary['Download'], isNotNull);
 
       // 4. Exceptions & Pareto
-      final exceptions = await api.getTransferExceptions();
+      final exceptions = await api.getTransferExceptions(direction: 'Download');
       expect(lastPath, 'api/v0/telemetry/reports/transfers/exceptions');
+      expect(lastQueryParams?['direction'], 'Download');
       expect(exceptions.first.exception, 'Connection timed out');
 
       final pareto = await api.getTransferExceptionsPareto(direction: 'Download');

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -47,8 +50,36 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
       _freeSlotOnly ||
       !_hideLocked;
 
+  Timer? _searchPollingTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchPollingTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (!mounted) return;
+      final searches =
+          ref.read(slskdSearchesProvider(widget.instance)).value ??
+              const <SlskdSearch>[];
+      final selectedId =
+          ref.read(slskdSelectedSearchIdProvider(widget.instance));
+      final active = searches
+          .where((s) => s.id == (selectedId ?? searches.firstOrNull?.id))
+          .firstOrNull;
+
+      if (searches.any((s) => !s.isComplete)) {
+        ref.invalidate(slskdSearchesProvider(widget.instance));
+      }
+      if (active != null && !active.isComplete) {
+        ref.invalidate(
+          slskdSearchResponsesProvider((widget.instance, active.id)),
+        );
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _searchPollingTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -76,9 +107,17 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
       ref.invalidate(slskdSearchesProvider(widget.instance));
     } catch (e) {
       if (mounted) {
+        String msg = 'Failed to initiate search: $e';
+        if (e is DioException) {
+          if (e.response?.statusCode == 429 || e.response?.statusCode == 409) {
+            msg = 'A search is already in progress. slskd permits only 1 concurrent search.';
+          } else if (e.response?.data != null) {
+            msg = 'Search rejected: ${e.response?.data}';
+          }
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to initiate search: $e'),
+            content: Text(msg),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -110,7 +149,7 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
   Future<void> _downloadAlbum(SlskdAlbumGroup group, [String? searchId]) async {
     try {
       final api = await ref.read(slskdApiProvider(widget.instance).future);
-      await api.enqueueBatch(
+      final response = await api.enqueueBatch(
         EnqueueDownloadBatchRequest(
           username: group.username,
           searchId: searchId,
@@ -130,17 +169,33 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
       ref.invalidate(slskdDownloadsProvider(widget.instance));
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Downloading "${group.albumTitle}" (${group.files.length} tracks)'),
-            action: SnackBarAction(
-              label: 'View Transfers',
-              onPressed: () {
-                ref.read(slskdActiveTabProvider(widget.instance).notifier).state = 0;
-              },
+        final enqueuedCount = response.batch?.transfers.length ?? 0;
+        final failureCount = response.failures.length;
+
+        if (enqueuedCount == 0 && failureCount > 0) {
+          final firstFailure = response.failures.first.message ?? 'already downloading or queued';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not queue "${group.albumTitle}": $firstFailure'),
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
-          ),
-        );
+          );
+        } else {
+          final summaryMsg = failureCount > 0
+              ? 'Downloading "${group.albumTitle}" ($enqueuedCount tracks queued, $failureCount failed/already queued)'
+              : 'Downloading "${group.albumTitle}" ($enqueuedCount tracks)';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(summaryMsg),
+              action: SnackBarAction(
+                label: 'View Transfers',
+                onPressed: () {
+                  ref.read(slskdActiveTabProvider(widget.instance).notifier).state = 0;
+                },
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -157,7 +212,7 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
   Future<void> _downloadTrack(SlskdAlbumGroup group, SlskdSearchFile file) async {
     try {
       final api = await ref.read(slskdApiProvider(widget.instance).future);
-      await api.enqueueBatch(
+      final response = await api.enqueueBatch(
         EnqueueDownloadBatchRequest(
           username: group.username,
           files: <EnqueueDownloadBatchItem>[
@@ -168,17 +223,27 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
       ref.invalidate(slskdDownloadsProvider(widget.instance));
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Downloading "${file.trackTitle}"'),
-            action: SnackBarAction(
-              label: 'View Transfers',
-              onPressed: () {
-                ref.read(slskdActiveTabProvider(widget.instance).notifier).state = 0;
-              },
+        if (response.failures.isNotEmpty) {
+          final failMsg = response.failures.first.message ?? 'already queued or downloading';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not queue "${file.trackTitle}": $failMsg'),
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
-          ),
-        );
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Downloading "${file.trackTitle}"'),
+              action: SnackBarAction(
+                label: 'View Transfers',
+                onPressed: () {
+                  ref.read(slskdActiveTabProvider(widget.instance).notifier).state = 0;
+                },
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -241,9 +306,20 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
       floatingActionButton: searches.isNotEmpty ? _buildMiniFab(context) : null,
       body: SafeArea(
         bottom: false,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: <Widget>[
+        child: EasyRefresh(
+          onRefresh: () async {
+            ref.invalidate(slskdSearchesProvider(widget.instance));
+            final selectedId =
+                ref.read(slskdSelectedSearchIdProvider(widget.instance));
+            if (selectedId != null) {
+              ref.invalidate(
+                slskdSearchResponsesProvider((widget.instance, selectedId)),
+              );
+            }
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: <Widget>[
             // 1. Pinned Search & App Bar
             SliverAppBar(
               floating: true,
@@ -417,8 +493,9 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildMiniFab(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;

@@ -34,6 +34,7 @@ class SlskdAnalyticsSheet extends ConsumerStatefulWidget {
 }
 
 class _SlskdAnalyticsSheetState extends ConsumerState<SlskdAnalyticsSheet> {
+  String _leaderboardDirection = 'Download';
   String _paretoDirection = 'Download';
 
   @override
@@ -43,8 +44,11 @@ class _SlskdAnalyticsSheetState extends ConsumerState<SlskdAnalyticsSheet> {
 
     final selectedDays =
         ref.watch(slskdAnalyticsTimeframeDaysProvider(widget.instance));
-    final leaderboardAsync =
-        ref.watch(slskdTransferLeaderboardProvider(widget.instance));
+    final leaderboardAsync = ref.watch(
+      slskdTransferLeaderboardProvider(
+        (widget.instance, _leaderboardDirection),
+      ),
+    );
     final paretoAsync = ref.watch(
       slskdTransferExceptionsParetoProvider(
         (widget.instance, _paretoDirection),
@@ -122,7 +126,10 @@ class _SlskdAnalyticsSheetState extends ConsumerState<SlskdAnalyticsSheet> {
                       tooltip: 'Refresh analytics',
                       onPressed: () {
                         ref.invalidate(
-                          slskdTransferLeaderboardProvider(widget.instance),
+                          slskdTransferLeaderboardProvider((
+                            widget.instance,
+                            _leaderboardDirection,
+                          )),
                         );
                         ref.invalidate(
                           slskdTransferExceptionsParetoProvider((
@@ -344,11 +351,29 @@ class _SlskdAnalyticsSheetState extends ConsumerState<SlskdAnalyticsSheet> {
                           color: colorScheme.primary,
                         ),
                         const SizedBox(width: Insets.xs),
-                        Text(
-                          'Top Peers Leaderboard',
-                          style: textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: Text(
+                            'Top Peers Leaderboard',
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
+                        ),
+                        SegmentedButton<String>(
+                          segments: const <ButtonSegment<String>>[
+                            ButtonSegment<String>(
+                              value: 'Download',
+                              label: Text('DL'),
+                            ),
+                            ButtonSegment<String>(
+                              value: 'Upload',
+                              label: Text('UL'),
+                            ),
+                          ],
+                          selected: <String>{_leaderboardDirection},
+                          onSelectionChanged: (val) {
+                            setState(() => _leaderboardDirection = val.first);
+                          },
                         ),
                       ],
                     ),

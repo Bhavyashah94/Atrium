@@ -1,6 +1,8 @@
 /// Formatting helpers for slskd models and UI.
 library;
 
+import 'package:flutter/material.dart';
+
 /// Formats a byte count into a human-readable string (e.g., '12.4 MB', '1.2 GB').
 String slskdFormatBytes(num bytes) {
   if (bytes < 1024) {
@@ -47,4 +49,27 @@ String slskdFormatTimeWithSeconds(DateTime dt) {
   final m = dt.minute.toString().padLeft(2, '0');
   final s = dt.second.toString().padLeft(2, '0');
   return '$h:$m:$s';
+}
+
+/// Theme-aware status color for peer presence (Online, Away, Offline).
+/// Adheres to Material 3 dynamic color scheme with zero hardcoded hex constants.
+Color slskdPresenceColor(ColorScheme colorScheme, {required bool isOnline, bool isAway = false}) {
+  if (isOnline) {
+    return colorScheme.primary;
+  }
+  if (isAway) {
+    return colorScheme.tertiary;
+  }
+  return colorScheme.outline;
+}
+
+/// Accessible icon hint for peer presence.
+IconData slskdPresenceIcon({required bool isOnline, bool isAway = false}) {
+  if (isOnline) {
+    return Icons.check_circle_rounded;
+  }
+  if (isAway) {
+    return Icons.access_time_rounded;
+  }
+  return Icons.remove_circle_outline_rounded;
 }

@@ -276,8 +276,8 @@ class SlskdApi {
     return response.data?.toString() ?? '';
   }
 
-  /// Retrieves recent application logs. Calls `api/v0/logs/live` (official endpoint)
-  /// with a fallback to `api/v0/logs`.
+  /// Retrieves recent application logs. Calls primary `api/v0/logs/live` (supported in modern slskd)
+  /// with legacy fallback to `api/v0/logs` for pre-0.20 daemons.
   Future<List<SlskdLogRecord>> getLogs() async {
     Response<dynamic> response;
     try {
@@ -450,15 +450,21 @@ class SlskdApi {
     }
   }
 
-  /// Enqueues downloads for a user using the direct queue request list.
-  Future<void> enqueueDownloads(
+  /// Enqueues downloads for a user.
+  ///
+  /// Routes through `/api/v0/transfers/downloads/batches` (the recommended modern
+  /// endpoint upstream, replacing the obsolete direct user route).
+  Future<EnqueueDownloadBatchResponse> enqueueDownloads(
     String username,
     List<QueueDownloadRequest> requests,
   ) async {
-    final encodedUser = Uri.encodeComponent(username);
-    await _dio.post<void>(
-      'api/v0/transfers/downloads/$encodedUser',
-      data: requests.map((r) => r.toJson()).toList(),
+    return enqueueBatch(
+      EnqueueDownloadBatchRequest(
+        username: username,
+        files: requests
+            .map((r) => EnqueueDownloadBatchItem(filename: r.filename, size: r.size))
+            .toList(),
+      ),
     );
   }
 
@@ -559,25 +565,25 @@ class SlskdApi {
     return const <String, dynamic>{};
   }
 
-  /// Gets the transfer leaderboard of top peers.
+  /// Gets the transfer leaderboard of top peers for [direction] ('Download' or 'Upload').
   Future<List<SlskdTransferSummary>> getTransferLeaderboard({
+    required String direction,
     DateTime? start,
     DateTime? end,
-    String? direction,
     int limit = 25,
     int offset = 0,
-    String? sort,
-    String? order,
+    String sortBy = 'Count',
+    String sortOrder = 'DESC',
   }) async {
     final queryParams = <String, dynamic>{
+      'direction': direction,
       'limit': limit,
       'offset': offset,
+      'sortBy': sortBy,
+      'sortOrder': sortOrder,
     };
     if (start != null) queryParams['start'] = start.toUtc().toIso8601String();
     if (end != null) queryParams['end'] = end.toUtc().toIso8601String();
-    if (direction != null) queryParams['direction'] = direction;
-    if (sort != null) queryParams['sort'] = sort;
-    if (order != null) queryParams['order'] = order;
 
     final response = await _dio.get<dynamic>(
       'api/v0/telemetry/reports/transfers/leaderboard',
@@ -622,22 +628,24 @@ class SlskdApi {
     return const <String, dynamic>{};
   }
 
-  /// Gets transfer failure exception details.
+  /// Gets transfer failure exception details for [direction] ('Download' or 'Upload').
   Future<List<SlskdTransferExceptionDetail>> getTransferExceptions({
+    required String direction,
     DateTime? start,
     DateTime? end,
-    String? direction,
     String? username,
     int limit = 25,
     int offset = 0,
+    String sortOrder = 'DESC',
   }) async {
     final queryParams = <String, dynamic>{
+      'direction': direction,
       'limit': limit,
       'offset': offset,
+      'sortOrder': sortOrder,
     };
     if (start != null) queryParams['start'] = start.toUtc().toIso8601String();
     if (end != null) queryParams['end'] = end.toUtc().toIso8601String();
-    if (direction != null) queryParams['direction'] = direction;
     if (username != null) queryParams['username'] = username;
 
     final response = await _dio.get<dynamic>(
@@ -793,11 +801,8 @@ class SlskdApi {
     if (response.data is Map) {
       return SlskdSearch.fromJson((response.data as Map).cast<String, dynamic>());
     }
-    return SlskdSearch(
-      id: '',
-      searchText: request.searchText,
-      state: 'Requested',
-      startedAt: DateTime.now(),
+    throw const FormatException(
+      'Failed to initiate search: unexpected response payload from slskd daemon.',
     );
   }
 
@@ -1119,11 +1124,15 @@ class SlskdApi {
       for (final item in response.data as Iterable) {
         if (item is Map<String, dynamic>) {
           final convo = SlskdConversation.fromJson(item);
+          // Filter out '..' which appears due to a Soulseek protocol quirk
+          // during transient room/peer navigation state transitions.
           if (convo.username != '..') {
             conversations.add(convo);
           }
         } else if (item is Map) {
           final convo = SlskdConversation.fromJson(item.cast<String, dynamic>());
+          // Filter out '..' which appears due to a Soulseek protocol quirk
+          // during transient room/peer navigation state transitions.
           if (convo.username != '..') {
             conversations.add(convo);
           }

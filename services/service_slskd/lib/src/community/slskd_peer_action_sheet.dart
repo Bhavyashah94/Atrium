@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../browse/slskd_user_bio_sheet.dart';
+import '../slskd_format.dart';
 import '../slskd_providers.dart';
 
 /// Shows the unified peer action bottom sheet when tapping a user in chat.
@@ -82,7 +83,7 @@ class SlskdPeerActionSheet extends ConsumerWidget {
                       width: 12,
                       height: 12,
                       decoration: BoxDecoration(
-                        color: isOnline ? const Color(0xFF4CAF50) : colorScheme.outline,
+                        color: slskdPresenceColor(colorScheme, isOnline: isOnline),
                         shape: BoxShape.circle,
                         border: Border.all(color: colorScheme.surface, width: 2),
                       ),

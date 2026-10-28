@@ -296,14 +296,14 @@ final slskdTransferSummaryProvider =
 
 /// Transfer leaderboard from GET /api/v0/telemetry/reports/transfers/leaderboard.
 final slskdTransferLeaderboardProvider =
-    FutureProvider.autoDispose.family<List<SlskdTransferSummary>, Instance>((
+    FutureProvider.autoDispose.family<List<SlskdTransferSummary>, (Instance, String)>((
   ref,
-  instance,
+  arg,
 ) async {
-  final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
-  final days = ref.watch(slskdAnalyticsTimeframeDaysProvider(instance));
+  final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
+  final days = ref.watch(slskdAnalyticsTimeframeDaysProvider(arg.$1));
   final start = DateTime.now().subtract(Duration(days: days));
-  return api.getTransferLeaderboard(start: start, limit: 15);
+  return api.getTransferLeaderboard(direction: arg.$2, start: start, limit: 15);
 });
 
 /// Pareto failure reasons for direction ('Download' or 'Upload').
@@ -427,13 +427,15 @@ final slskdUserEndpointProvider =
 });
 
 /// Checked version from GET /api/v0/application/version/latest.
+/// Defaults to cached version check (`forceCheck: false`) to avoid requiring
+/// elevated Administrator API key permissions upstream.
 final slskdLatestVersionProvider =
     FutureProvider.autoDispose.family<SlskdVersionState, Instance>((
   ref,
   instance,
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
-  return api.checkVersion(forceCheck: true);
+  return api.checkVersion();
 });
 
 // -----------------------------------------------------------------------------

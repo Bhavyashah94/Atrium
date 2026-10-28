@@ -1,5 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -115,8 +116,11 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
       ref.invalidate(slskdYamlContentProvider(widget.instance));
       ref.invalidate(slskdOptionsProvider(widget.instance));
     } catch (e) {
+      final msg = (e is DioException && e.response?.statusCode == 403)
+          ? 'Saving configuration requires an API key with Administrator role in slskd.yml'
+          : 'Failed to save configuration: $e';
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to save configuration: $e')),
+        SnackBar(content: Text(msg)),
       );
     } finally {
       if (mounted) setState(() => _isActionInProgress = false);
@@ -138,8 +142,11 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
       );
       ref.invalidate(slskdPrometheusKpisProvider(widget.instance));
     } catch (e) {
+      final msg = (e is DioException && e.response?.statusCode == 403)
+          ? 'Garbage collection requires an API key with Administrator/ReadWrite role'
+          : 'Failed to trigger GC: $e';
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to trigger GC: $e')),
+        SnackBar(content: Text(msg)),
       );
     } finally {
       if (mounted) setState(() => _isActionInProgress = false);
@@ -165,8 +172,11 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
         ),
       );
     } catch (e) {
+      final msg = (e is DioException && e.response?.statusCode == 403)
+          ? 'Loopback test requires an elevated API key'
+          : 'Loopback test failed: $e';
       messenger.showSnackBar(
-        SnackBar(content: Text('Loopback test failed: $e')),
+        SnackBar(content: Text(msg)),
       );
     } finally {
       if (mounted) setState(() => _isActionInProgress = false);
@@ -479,18 +489,66 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
   ) {
     return yamlAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(Insets.xl),
-          child: Text(
-            'Failed to read slskd.yml: $err',
-            style: TextStyle(color: colorScheme.error),
+      error: (err, _) {
+        final isForbidden =
+            err is DioException && err.response?.statusCode == 403;
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(Insets.xl),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  Icons.lock_outline_rounded,
+                  size: 40,
+                  color: colorScheme.error,
+                ),
+                const SizedBox(height: Insets.sm),
+                Text(
+                  isForbidden
+                      ? 'Access restricted: Reading and writing slskd.yml requires an API key with Administrator role or active JWT session.'
+                      : 'Failed to read slskd.yml: $err',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: colorScheme.error),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
       data: (_) {
         return Column(
           children: <Widget>[
+            // Info banner
+            Container(
+              margin: const EdgeInsets.symmetric(
+                horizontal: Insets.md,
+                vertical: Insets.xs,
+              ),
+              padding: const EdgeInsets.all(Insets.xs),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: Insets.xs),
+                  Expanded(
+                    child: Text(
+                      'Modifying slskd.yml requires an Administrator API key in slskd.yml.',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             // Action toolbar
             Padding(
               padding: const EdgeInsets.symmetric(

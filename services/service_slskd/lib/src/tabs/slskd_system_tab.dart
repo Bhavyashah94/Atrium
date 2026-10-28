@@ -1,5 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -80,8 +81,12 @@ class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab> {
         ),
       );
     } catch (e) {
+      String msg = 'Failed to restart daemon: $e';
+      if (e is DioException && e.response?.statusCode == 403) {
+        msg = 'Restart requires an API key with Administrator role or active JWT session.';
+      }
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to restart daemon: $e')),
+        SnackBar(content: Text(msg)),
       );
     } finally {
       if (mounted) {
@@ -128,8 +133,12 @@ class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab> {
         ),
       );
     } catch (e) {
+      String msg = 'Failed to shutdown daemon: $e';
+      if (e is DioException && e.response?.statusCode == 403) {
+        msg = 'Shutdown requires an API key with Administrator role or active JWT session.';
+      }
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to shutdown daemon: $e')),
+        SnackBar(content: Text(msg)),
       );
     } finally {
       if (mounted) {

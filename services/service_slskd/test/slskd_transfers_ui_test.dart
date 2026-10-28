@@ -430,7 +430,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            slskdTransferLeaderboardProvider(testInstance).overrideWith((ref) => mockLeaderboard),
+            slskdTransferLeaderboardProvider((testInstance, 'Download')).overrideWith((ref) => mockLeaderboard),
             slskdTransferExceptionsParetoProvider((testInstance, 'Download')).overrideWith((ref) => mockPareto),
             slskdTransferDirectoriesProvider(testInstance).overrideWith((ref) => mockDirs),
             slskdPrometheusKpisProvider(testInstance).overrideWith((ref) => mockKpis),

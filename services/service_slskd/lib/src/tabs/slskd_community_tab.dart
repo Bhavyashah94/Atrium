@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +13,7 @@ import '../community/slskd_discover_rooms_sheet.dart';
 import '../community/slskd_room_card.dart';
 import '../community/slskd_room_members_sheet.dart';
 import '../models/slskd_community_models.dart';
+import '../slskd_format.dart';
 import '../slskd_providers.dart';
 
 /// Community Tab in [SlskdHome] providing:
@@ -40,6 +43,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
   late final TabController _tabController;
   final TextEditingController _dmSearchController = TextEditingController();
   final TextEditingController _roomSearchController = TextEditingController();
+  Timer? _chatPollingTimer;
   String _dmSearchQuery = '';
   String _roomSearchQuery = '';
 
@@ -48,6 +52,26 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_onTabChanged);
+    _chatPollingTimer = Timer.periodic(const Duration(milliseconds: 2500), (_) {
+      if (!mounted) return;
+      final activeRoom =
+          ref.read(slskdActiveRoomNameProvider(widget.instance));
+      final activeConvo =
+          ref.read(slskdActiveConversationUsernameProvider(widget.instance));
+
+      if (activeRoom != null && activeRoom.isNotEmpty) {
+        ref.invalidate(slskdRoomMessagesProvider((widget.instance, activeRoom)));
+      } else if (activeConvo != null && activeConvo.isNotEmpty) {
+        ref.invalidate(
+          slskdConversationMessagesProvider((widget.instance, activeConvo)),
+        );
+        ref.invalidate(
+          slskdUserStatusProvider((widget.instance, activeConvo)),
+        );
+      } else {
+        ref.invalidate(slskdConversationsProvider(widget.instance));
+      }
+    });
   }
 
   void _onTabChanged() {
@@ -58,6 +82,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
 
   @override
   void dispose() {
+    _chatPollingTimer?.cancel();
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     _dmSearchController.dispose();
@@ -818,9 +843,11 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     final String statusText = userStatusAsync.isLoading
         ? 'Connecting...'
         : (isOnline ? 'Online' : (isAway ? 'Away' : 'Offline'));
-    final Color statusColor = isOnline
-        ? const Color(0xFF4CAF50)
-        : (isAway ? const Color(0xFFFF9800) : colorScheme.onSurfaceVariant.withValues(alpha: 0.7));
+    final Color statusColor = slskdPresenceColor(
+      colorScheme,
+      isOnline: isOnline,
+      isAway: isAway,
+    );
 
     ref.listen(slskdConversationMessagesProvider((widget.instance, username)), (prev, next) {
       final hasUnacked = next.value

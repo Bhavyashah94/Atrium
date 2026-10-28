@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
@@ -52,6 +54,7 @@ class SlskdTransfersTab extends ConsumerStatefulWidget {
 
 class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
   final TextEditingController _searchController = TextEditingController();
+  Timer? _pollingTimer;
   bool _isGrouped = true;
   TransferDirection? _directionFilter;
   TransferCategory? _selectedCategory;
@@ -59,7 +62,19 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
   String _searchQuery = '';
 
   @override
+  void initState() {
+    super.initState();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (mounted) {
+        ref.invalidate(slskdDownloadsProvider(widget.instance));
+        ref.invalidate(slskdUploadsProvider(widget.instance));
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    _pollingTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }

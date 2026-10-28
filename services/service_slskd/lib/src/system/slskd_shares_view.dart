@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,6 +28,40 @@ class SlskdSharesView extends ConsumerStatefulWidget {
 
 class _SlskdSharesViewState extends ConsumerState<SlskdSharesView> {
   bool _isActionInProgress = false;
+  Timer? _scanProgressTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkScanPolling();
+  }
+
+  @override
+  void didUpdateWidget(SlskdSharesView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _checkScanPolling();
+  }
+
+  void _checkScanPolling() {
+    final isScanning =
+        widget.sharesState.scanning || widget.sharesState.scanPending;
+    if (isScanning && _scanProgressTimer == null) {
+      _scanProgressTimer =
+          Timer.periodic(const Duration(milliseconds: 1500), (_) {
+        if (!mounted) return;
+        ref.invalidate(slskdApplicationStateProvider(widget.instance));
+      });
+    } else if (!isScanning && _scanProgressTimer != null) {
+      _scanProgressTimer?.cancel();
+      _scanProgressTimer = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _scanProgressTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _handleScanShares() async {
     setState(() => _isActionInProgress = true);
@@ -40,8 +77,11 @@ class _SlskdSharesViewState extends ConsumerState<SlskdSharesView> {
         ),
       );
     } catch (e) {
+      final msg = (e is DioException && e.response?.statusCode == 403)
+          ? 'Scanning shares requires an API key with Administrator or ReadWrite role'
+          : 'Failed to start share scan: $e';
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to start share scan: $e')),
+        SnackBar(content: Text(msg)),
       );
     } finally {
       if (mounted) {
@@ -66,8 +106,11 @@ class _SlskdSharesViewState extends ConsumerState<SlskdSharesView> {
         ),
       );
     } catch (e) {
+      final msg = (e is DioException && e.response?.statusCode == 403)
+          ? 'Cancelling scan requires an API key with Administrator or ReadWrite role'
+          : 'Failed to cancel scan: $e';
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to cancel scan: $e')),
+        SnackBar(content: Text(msg)),
       );
     } finally {
       if (mounted) {

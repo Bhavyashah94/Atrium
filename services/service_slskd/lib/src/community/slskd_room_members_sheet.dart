@@ -200,9 +200,11 @@ class _SlskdRoomMembersSheetState extends ConsumerState<SlskdRoomMembersSheet> {
                       final bool isOnline = member.status == 2;
                       final bool isAway = member.status == 1;
 
-                      final Color presenceColor = isOnline
-                          ? const Color(0xFF4CAF50)
-                          : (isAway ? const Color(0xFFFF9800) : colorScheme.outline);
+                      final Color presenceColor = slskdPresenceColor(
+                        colorScheme,
+                        isOnline: isOnline,
+                        isAway: isAway,
+                      );
 
                       final String subtitle = member.fileCount > 0
                           ? '${member.fileCount} shares • ${member.averageSpeed > 0 ? slskdFormatRate(member.averageSpeed) : 'Direct'}'

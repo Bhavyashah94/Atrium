@@ -152,12 +152,12 @@ class SlskdSearchResponse {
 
     return SlskdSearchResponse(
       username: (json['username'] ?? json['Username'] ?? '').toString(),
-      fileCount: (json['fileCount'] ?? json['FileCount'] ?? 0) as int? ?? 0,
-      lockedFileCount: (json['lockedFileCount'] ?? json['LockedFileCount'] ?? 0) as int? ?? 0,
+      fileCount: ((json['fileCount'] ?? json['FileCount'] ?? 0) as num).toInt(),
+      lockedFileCount: ((json['lockedFileCount'] ?? json['LockedFileCount'] ?? 0) as num).toInt(),
       hasFreeUploadSlot: (json['hasFreeUploadSlot'] ?? json['HasFreeUploadSlot'] ?? false) as bool? ?? false,
       queueLength: ((json['queueLength'] ?? json['QueueLength'] ?? 0) as num).toInt(),
       uploadSpeed: ((json['uploadSpeed'] ?? json['UploadSpeed'] ?? 0) as num).toInt(),
-      token: (json['token'] ?? json['Token'] ?? 0) as int? ?? 0,
+      token: ((json['token'] ?? json['Token'] ?? 0) as num).toInt(),
       files: parseFiles(json['files'] ?? json['Files']),
       lockedFiles: parseFiles(json['lockedFiles'] ?? json['LockedFiles']),
     );

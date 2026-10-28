@@ -239,9 +239,14 @@ class SlskdUserEndpoint {
     if (json is Map) {
       final addr = json['address'] ?? json['Address'];
       final String addressStr = addr is Map
-          ? (addr['ip'] ?? addr['address'] ?? '').toString()
+          ? (addr['ip'] ?? addr['address'] ?? addr['ipAddress'] ?? addr['value'] ?? '').toString()
           : (addr ?? '').toString();
-      final int port = ((json['port'] ?? json['Port'] ?? 0) as num).toInt();
+      final int port = json['port'] is num
+          ? (json['port'] as num).toInt()
+          : int.tryParse(json['port']?.toString() ?? '') ??
+              (json['Port'] is num
+                  ? (json['Port'] as num).toInt()
+                  : int.tryParse(json['Port']?.toString() ?? '') ?? 0);
       return SlskdUserEndpoint(address: addressStr, port: port);
     }
     return const SlskdUserEndpoint(address: '', port: 0);
