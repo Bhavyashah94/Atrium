@@ -75,12 +75,16 @@ void main() {
     // shorter base first would hand over the wrong instance's headers.
     ArtworkHeaders.update(
       instances: <Instance>[
-        instance('root',
-            local: 'https://home.example.test',
-            headers: const <String, String>{'X-Who': 'root'}),
-        instance('sub',
-            local: 'https://home.example.test/sonarr',
-            headers: const <String, String>{'X-Who': 'sub'}),
+        instance(
+          'root',
+          local: 'https://home.example.test',
+          headers: const <String, String>{'X-Who': 'root'},
+        ),
+        instance(
+          'sub',
+          local: 'https://home.example.test/sonarr',
+          headers: const <String, String>{'X-Who': 'sub'},
+        ),
       ],
       global: const <String, String>{},
     );
@@ -98,9 +102,11 @@ void main() {
   test('a trailing slash or different casing still matches', () {
     ArtworkHeaders.update(
       instances: <Instance>[
-        instance('a',
-            local: 'http://Sonarr.Example.Test:8989/',
-            headers: const <String, String>{'Authorization': 'Basic x'}),
+        instance(
+          'a',
+          local: 'http://Sonarr.Example.Test:8989/',
+          headers: const <String, String>{'Authorization': 'Basic x'},
+        ),
       ],
       global: const <String, String>{},
     );
@@ -116,10 +122,12 @@ void main() {
     // device is, so both have to resolve.
     ArtworkHeaders.update(
       instances: <Instance>[
-        instance('a',
-            local: 'http://192.168.0.10:8989',
-            external: 'https://sonarr.example.test',
-            headers: const <String, String>{'Authorization': 'Basic x'}),
+        instance(
+          'a',
+          local: 'http://192.168.0.10:8989',
+          external: 'https://sonarr.example.test',
+          headers: const <String, String>{'Authorization': 'Basic x'},
+        ),
       ],
       global: const <String, String>{},
     );

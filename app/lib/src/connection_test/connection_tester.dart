@@ -105,6 +105,8 @@ class ConnectionTester {
         });
       case ServiceKind.adguardHome:
         return _testAdguardHome(candidate, forced);
+      case ServiceKind.slskd:
+        return _testSlskd(forced);
       default:
         final HealthProbe probe =
             HealthProbe(dioFactory: _ref.read(dioFactoryProvider));
@@ -169,6 +171,99 @@ class ConnectionTester {
           'Reachable, but AdGuard Home did not answer at this address',
         );
       }
+      return connectionResultFromError(error);
+    } finally {
+      dio?.close(force: true);
+    }
+  }
+
+  /// Verifies a slskd candidate.
+  ///
+  /// slskd allows anonymous access when SLSKD_NO_AUTH=true, in which case
+  /// GET /api/v0/session/enabled answers false. If authentication is enabled,
+  /// an API key (SLSKD_API_KEY) is required.
+  Future<ConnectionTestResult> _testSlskd(Instance forced) async {
+    Dio? dio;
+    try {
+      dio = await _ref.read(dioFactoryProvider).create(forced);
+      final String key = switch (forced.auth) {
+        InstanceAuthApiKey(:final String apiKey) => apiKey.trim(),
+        _ => '',
+      };
+
+      if (key.isNotEmpty) {
+        final Response<dynamic> response =
+            await dio.get<dynamic>('api/v0/application');
+        if (response.statusCode == 200) {
+          return const ConnectionTestResult(
+            ConnectionOutcome.connected,
+            'Connected',
+          );
+        }
+      }
+
+      // Check whether authentication is enabled on this server.
+      try {
+        final Response<dynamic> enabledResponse =
+            await dio.get<dynamic>('api/v0/session/enabled');
+        final dynamic data = enabledResponse.data;
+        final bool authEnabled = data == true || data == 'true';
+        if (authEnabled) {
+          if (key.isEmpty) {
+            return const ConnectionTestResult(
+              ConnectionOutcome.authFailed,
+              'Authentication required: this slskd server has authentication '
+              'enabled. Configure SLSKD_API_KEY (or in slskd.yml) and enter it here.',
+            );
+          }
+        } else {
+          final Response<dynamic> response =
+              await dio.get<dynamic>('api/v0/application');
+          if (response.statusCode == 200) {
+            return const ConnectionTestResult(
+              ConnectionOutcome.connected,
+              'Connected (no auth required)',
+            );
+          }
+        }
+      } on DioException {
+        // Fall back to direct application probe if session/enabled fails.
+      }
+
+      final Response<dynamic> response =
+          await dio.get<dynamic>('api/v0/application');
+      if (response.statusCode == 200) {
+        return const ConnectionTestResult(
+          ConnectionOutcome.connected,
+          'Connected',
+        );
+      }
+      return const ConnectionTestResult(
+        ConnectionOutcome.unreachable,
+        'slskd did not answer successfully',
+      );
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 401 ||
+          error.response?.statusCode == 403) {
+        final String key = switch (forced.auth) {
+          InstanceAuthApiKey(:final String apiKey) => apiKey.trim(),
+          _ => '',
+        };
+        if (key.isEmpty) {
+          return const ConnectionTestResult(
+            ConnectionOutcome.authFailed,
+            'Authentication required: this slskd server has authentication '
+            'enabled. Configure SLSKD_API_KEY (or in slskd.yml) and enter it here.',
+          );
+        }
+        return const ConnectionTestResult(
+          ConnectionOutcome.authFailed,
+          'Authentication failed. Verify the API key matches SLSKD_API_KEY or '
+          'slskd.yml, and ensure your client IP is allowed by its CIDR rules.',
+        );
+      }
+      return connectionResultFromError(error);
+    } on Object catch (error) {
       return connectionResultFromError(error);
     } finally {
       dio?.close(force: true);

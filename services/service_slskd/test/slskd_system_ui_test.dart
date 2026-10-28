@@ -1,0 +1,498 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:core_models/core_models.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:service_slskd/service_slskd.dart';
+import 'package:service_slskd/src/system/slskd_disk_files_sheet.dart';
+import 'package:service_slskd/src/system/slskd_options_sheet.dart';
+import 'package:service_slskd/src/system/slskd_share_contents_sheet.dart';
+import 'package:service_slskd/src/tabs/slskd_system_tab.dart';
+
+const String _fontDir =
+    r'C:\Users\bhavy\development\flutter\bin\cache\artifacts\material_fonts';
+const String screenshotDir =
+    r'C:\Users\bhavy\.gemini\antigravity\brain\e17bb2e9-c1e2-4c39-adb3-fda7246421d6';
+
+const Instance testInstance = Instance(
+  id: 'test-slskd-system',
+  name: 'Soulseek Daemon',
+  kind: ServiceKind.slskd,
+  localUrl: 'http://127.0.0.1:5030/',
+  externalUrl: '',
+  urlMode: UrlMode.auto,
+  auth: InstanceAuthApiKey(apiKey: 'secret-key'),
+);
+
+Future<void> _loadFonts() async {
+  final FontLoader roboto = FontLoader('Roboto');
+  for (final String font in ['roboto-regular.ttf', 'roboto-medium.ttf', 'roboto-bold.ttf']) {
+    final File f = File('$_fontDir\\$font');
+    if (f.existsSync()) {
+      roboto.addFont(Future.value(ByteData.view(f.readAsBytesSync().buffer)));
+    }
+  }
+  await roboto.load();
+
+  final File icons = File('$_fontDir\\materialicons-regular.otf');
+  if (icons.existsSync()) {
+    final FontLoader materialIcons = FontLoader('MaterialIcons');
+    materialIcons.addFont(Future.value(ByteData.view(icons.readAsBytesSync().buffer)));
+    await materialIcons.load();
+  }
+}
+
+Future<void> capture(
+  WidgetTester tester,
+  GlobalKey key,
+  String fileName,
+) async {
+  final RenderRepaintBoundary boundary =
+      key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+  final Uint8List? pngBytes = await tester.runAsync<Uint8List?>(() async {
+    final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+    final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    return byteData?.buffer.asUint8List();
+  });
+  final File outFile = File('$screenshotDir\\$fileName');
+  outFile.writeAsBytesSync(pngBytes!);
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    await _loadFonts();
+  });
+
+  const mockAppState = SlskdApplicationState(
+    version: SlskdVersionState(
+      current: '0.22.1',
+      full: '0.22.1+4b8f102',
+      latest: '0.22.1',
+      isUpdateAvailable: false,
+    ),
+    server: SlskdServerStatus(
+      address: 'server.slsknet.org:2242',
+      state: 'Connected',
+      isConnected: true,
+      isLoggedIn: true,
+    ),
+    user: SlskdUserState(
+      username: 'AudioPhileX',
+      isPrivileged: true,
+      privilegesRemaining: 42,
+      averageSpeed: 1468000,
+      directoryCount: 128,
+      fileCount: 3420,
+      uploadCount: 580,
+    ),
+    shares: SlskdSharesState(
+      directories: 128,
+      files: 3420,
+    ),
+    vpn: SlskdVpnState(
+      isReady: true,
+      isConnected: true,
+      publicIpAddress: '198.51.100.42',
+      location: 'Zurich, Switzerland',
+      forwardedPort: 50300,
+    ),
+    connectionWatchdog: SlskdConnectionWatchdogState(
+      isEnabled: true,
+    ),
+  );
+
+  final mockSharesMap = <String, List<SlskdLocalShare>>{
+    'LocalHost': <SlskdLocalShare>[
+      const SlskdLocalShare(
+        id: '1',
+        name: 'FLAC Hi-Res Albums',
+        path: '/storage/music/flac',
+        directories: 84,
+        files: 2150,
+      ),
+      const SlskdLocalShare(
+        id: '2',
+        name: 'MP3 320k Discography',
+        path: '/storage/music/mp3',
+        directories: 44,
+        files: 1270,
+      ),
+      const SlskdLocalShare(
+        id: '3',
+        name: 'Private Incomplete Stash',
+        path: '/storage/music/private',
+        isExcluded: true,
+      ),
+    ],
+  };
+
+  final mockLogs = <SlskdLogRecord>[
+    SlskdLogRecord(
+      timestamp: DateTime(2026, 10, 24, 20, 15, 32),
+      level: 'Information',
+      context: 'slskd.Core.Server',
+      message: 'Successfully established connection with Soulseek server.',
+    ),
+    SlskdLogRecord(
+      timestamp: DateTime(2026, 10, 24, 20, 18, 04),
+      level: 'Information',
+      context: 'slskd.Shares',
+      message: 'Share index updated: 3,420 files across 128 directories.',
+    ),
+    SlskdLogRecord(
+      timestamp: DateTime(2026, 10, 24, 20, 22, 11),
+      level: 'Warning',
+      context: 'slskd.Transfers',
+      message: 'Peer VinylLover timed out during transfer handshake; retrying (attempt 1/3).',
+    ),
+    SlskdLogRecord(
+      timestamp: DateTime(2026, 10, 24, 20, 25, 48),
+      level: 'Error',
+      context: 'slskd.Network.UPnP',
+      message: 'UPnP port mapping failed for port 50300: Gateway returned HTTP 500.',
+    ),
+    SlskdLogRecord(
+      timestamp: DateTime(2026, 10, 24, 20, 30),
+      level: 'Debug',
+      context: 'slskd.Search.Distributed',
+      message: 'Routing search query "Daft Punk Discovery" to 14 distributed child nodes.',
+    ),
+  ];
+
+  group('SlskdSystemTab Widget & Screenshot Tests', () {
+    testWidgets('renders System Health, Shares, Logs, details sheet, and restart dialog',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1179, 2556);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final GlobalKey repaintKey = GlobalKey();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdApplicationStateProvider(testInstance).overrideWith((ref) => mockAppState),
+            slskdSharesProvider(testInstance).overrideWith((ref) => mockSharesMap),
+            slskdLogsProvider(testInstance).overrideWith((ref) => mockLogs),
+            slskdLogFilesProvider(testInstance).overrideWith((ref) => <SlskdDiskFile>[]),
+          ],
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF0D9488),
+                brightness: Brightness.dark,
+              ),
+              fontFamily: 'Roboto',
+            ),
+            builder: (BuildContext context, Widget? child) {
+              return RepaintBoundary(
+                key: repaintKey,
+                child: child!,
+              );
+            },
+            home: const SlskdSystemTab(
+              instance: testInstance,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // 1. Verify and capture Health view
+      expect(find.text('System & Health'), findsOneWidget);
+      expect(find.text('Soulseek Network'), findsOneWidget);
+      expect(find.text('server.slsknet.org:2242'), findsOneWidget);
+      expect(find.text('AudioPhileX'), findsOneWidget);
+      expect(find.text('slskd Daemon'), findsOneWidget);
+      expect(find.text('VPN Protection'), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_system_health.png');
+
+      // 2. Switch to Shares segment
+      await tester.tap(find.text('Shares'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Shared Library'), findsOneWidget);
+      expect(find.text('3420 files across 128 folders'), findsOneWidget);
+      expect(find.text('Rescan Shares'), findsOneWidget);
+      expect(find.text('FLAC Hi-Res Albums'), findsOneWidget);
+      expect(find.text('MP3 320k Discography'), findsOneWidget);
+      expect(find.text('Private Incomplete Stash'), findsOneWidget);
+      expect(find.text('Excluded'), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_system_shares.png');
+
+      // 3. Switch to Logs segment
+      await tester.tap(find.text('Logs'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('All'), findsOneWidget);
+      expect(find.text('Error'), findsOneWidget);
+      expect(find.text('Warning'), findsOneWidget);
+      expect(find.text('Information'), findsOneWidget);
+      expect(find.text('Debug'), findsOneWidget);
+      expect(find.textContaining('Successfully established connection'), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_system_logs.png');
+
+      // 4. Tap on an error log entry to open details sheet
+      await tester.tap(find.textContaining('UPnP port mapping failed'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Log Message'), findsOneWidget);
+      expect(find.text('Context: slskd.Network.UPnP'), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_system_log_details.png');
+
+      // Close bottom sheet
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pumpAndSettle();
+
+      // 5. Open more actions menu and trigger Restart dialog
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Restart daemon'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Restart slskd daemon?'), findsOneWidget);
+      expect(find.text('The background daemon will restart. Network transfers and connections will briefly reconnect.'), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_system_restart_dialog.png');
+    });
+
+    testWidgets('renders SlskdShareContentsSheet with folder tree and files',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1179, 2556);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final GlobalKey repaintKey = GlobalKey();
+
+      final mockShareDirs = <SlskdDirectory>[
+        const SlskdDirectory(
+          name: 'Radiohead - In Rainbows [FLAC]',
+          files: [
+            SlskdSearchFile(
+              filename: '01 15 Step.flac',
+              size: 28400000,
+              extension: 'flac',
+              bitRate: 980,
+            ),
+            SlskdSearchFile(
+              filename: '02 Bodysnatchers.flac',
+              size: 31200000,
+              extension: 'flac',
+              bitRate: 1012,
+            ),
+          ],
+        ),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdShareContentsProvider((testInstance, '1')).overrideWith((ref) => mockShareDirs),
+          ],
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF0D9488),
+                brightness: Brightness.dark,
+              ),
+              fontFamily: 'Roboto',
+            ),
+            home: Scaffold(
+              body: RepaintBoundary(
+                key: repaintKey,
+                child: const SlskdShareContentsSheet(
+                  instance: testInstance,
+                  shareId: '1',
+                  title: 'FLAC Hi-Res Albums',
+                  sharePath: '/storage/music/flac',
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('FLAC Hi-Res Albums'), findsOneWidget);
+      expect(find.text('/storage/music/flac'), findsOneWidget);
+      expect(find.text('Radiohead - In Rainbows [FLAC]'), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_share_contents_sheet.png');
+    });
+
+    testWidgets('renders SlskdDiskFilesSheet with downloads and incomplete segments',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1179, 2556);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final GlobalKey repaintKey = GlobalKey();
+
+      const mockDiskDir = SlskdDiskDirectory(
+        name: 'downloads',
+        fullName: '/storage/downloads',
+        directories: [
+          SlskdDiskDirectory(
+            name: 'Daft Punk - Discovery (2001)',
+            fullName: '/storage/downloads/Daft Punk - Discovery (2001)',
+          ),
+        ],
+        files: [
+          SlskdDiskFile(
+            name: 'ambient_session_live.flac',
+            fullName: '/storage/downloads/ambient_session_live.flac',
+            length: 52400000,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdDownloadsDirectoryProvider((testInstance, null)).overrideWith((ref) => mockDiskDir),
+          ],
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF0D9488),
+                brightness: Brightness.dark,
+              ),
+              fontFamily: 'Roboto',
+            ),
+            home: Scaffold(
+              body: RepaintBoundary(
+                key: repaintKey,
+                child: const SlskdDiskFilesSheet(
+                  instance: testInstance,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Host Storage Explorer'), findsOneWidget);
+      expect(find.text('Downloads'), findsNWidgets(2));
+      expect(find.text('Incomplete'), findsOneWidget);
+      expect(find.text('Daft Punk - Discovery (2001)'), findsOneWidget);
+      expect(find.text('ambient_session_live.flac'), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_disk_files_sheet.png');
+    });
+
+    testWidgets('renders SlskdOptionsSheet with overview, yaml editor and diagnostics',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1179, 2556);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final GlobalKey repaintKey = GlobalKey();
+
+      const mockOptions = <String, dynamic>{
+        'soulseek': {
+          'username': 'AudioPhileX',
+          'listenPort': 50300,
+        },
+        'network': {
+          'upnp': true,
+        },
+        'remoteConfiguration': true,
+        'directories': {
+          'downloads': '/storage/downloads',
+          'incomplete': '/storage/incomplete',
+        },
+        'flags': {
+          'noVersionCheck': false,
+        },
+      };
+      const mockYaml = '''soulseek:
+  username: AudioPhileX
+  listen_port: 50300
+directories:
+  downloads: /storage/downloads
+  incomplete: /storage/incomplete
+''';
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdOptionsProvider(testInstance).overrideWith((ref) => mockOptions),
+            slskdYamlContentProvider(testInstance).overrideWith((ref) => mockYaml),
+            slskdDebugTransfersProvider(testInstance).overrideWith((ref) => <String, dynamic>{'active': <dynamic>[], 'queued': <dynamic>[]}),
+          ],
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF0D9488),
+                brightness: Brightness.dark,
+              ),
+              fontFamily: 'Roboto',
+            ),
+            home: Scaffold(
+              body: RepaintBoundary(
+                key: repaintKey,
+                child: const SlskdOptionsSheet(
+                  instance: testInstance,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Configuration & Diagnostics'), findsOneWidget);
+      expect(find.text('Soulseek Account & Listening'), findsOneWidget);
+      expect(find.text('AudioPhileX'), findsOneWidget);
+      expect(find.text('50300'), findsOneWidget);
+      expect(find.text('/storage/downloads'), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_system_options_sheet.png');
+
+      // Test YAML editor segment
+      await tester.tap(find.text('slskd.yml'));
+      await tester.pumpAndSettle();
+      expect(find.text('Validate'), findsOneWidget);
+      expect(find.text('Save'), findsOneWidget);
+      await capture(tester, repaintKey, 'slskd_system_options_yaml.png');
+
+      // Test Diagnostics segment
+      await tester.tap(find.text('Diagnostics'));
+      await tester.pumpAndSettle();
+      expect(find.text('Force Garbage Collection'), findsOneWidget);
+      expect(find.text('Loopback Echo Test'), findsOneWidget);
+      expect(find.text('Run GC'), findsOneWidget);
+      expect(find.text('Ping'), findsOneWidget);
+      await capture(tester, repaintKey, 'slskd_system_options_diagnostics.png');
+    });
+  });
+}

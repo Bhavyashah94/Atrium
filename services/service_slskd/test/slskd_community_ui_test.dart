@@ -1,0 +1,373 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:core_models/core_models.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:service_slskd/service_slskd.dart';
+import 'package:service_slskd/src/community/slskd_room_members_sheet.dart';
+
+const String _fontDir =
+    r'C:\Users\bhavy\development\flutter\bin\cache\artifacts\material_fonts';
+const String screenshotDir =
+    r'C:\Users\bhavy\.gemini\antigravity\brain\e17bb2e9-c1e2-4c39-adb3-fda7246421d6';
+
+const Instance testInstance = Instance(
+  id: 'test-slskd-community',
+  name: 'Soulseek Daemon',
+  kind: ServiceKind.slskd,
+  localUrl: 'http://127.0.0.1:5030/',
+  externalUrl: '',
+  urlMode: UrlMode.auto,
+  auth: InstanceAuthApiKey(apiKey: 'secret-key'),
+);
+
+Future<void> _loadFonts() async {
+  final FontLoader roboto = FontLoader('Roboto');
+  for (final String font in ['roboto-regular.ttf', 'roboto-medium.ttf', 'roboto-bold.ttf']) {
+    final File f = File('$_fontDir\\$font');
+    if (f.existsSync()) {
+      roboto.addFont(Future.value(ByteData.view(f.readAsBytesSync().buffer)));
+    }
+  }
+  await roboto.load();
+
+  final File icons = File('$_fontDir\\materialicons-regular.otf');
+  if (icons.existsSync()) {
+    final FontLoader materialIcons = FontLoader('MaterialIcons');
+    materialIcons.addFont(Future.value(ByteData.view(icons.readAsBytesSync().buffer)));
+    await materialIcons.load();
+  }
+}
+
+Future<void> capture(
+  WidgetTester tester,
+  GlobalKey key,
+  String fileName,
+) async {
+  final RenderRepaintBoundary boundary =
+      key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+  final Uint8List? pngBytes = await tester.runAsync<Uint8List?>(() async {
+    final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+    final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    return byteData?.buffer.asUint8List();
+  });
+  final File outFile = File('$screenshotDir\\$fileName');
+  outFile.writeAsBytesSync(pngBytes!);
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    await _loadFonts();
+  });
+
+  final mockJoinedRooms = <String>['electronic', 'audiophile'];
+
+  final mockAvailableRooms = <SlskdRoomInfo>[
+    const SlskdRoomInfo(name: 'electronic', userCount: 142),
+    const SlskdRoomInfo(name: 'audiophile', userCount: 88),
+    const SlskdRoomInfo(name: 'ambient', userCount: 64),
+    const SlskdRoomInfo(name: 'jazz', userCount: 39),
+    const SlskdRoomInfo(name: 'rock', userCount: 95),
+  ];
+
+  final mockRoomUsers = <SlskdUserPresence>[
+    const SlskdUserPresence(username: 'SynthWave99', status: 2, fileCount: 4200, averageSpeed: 1048576),
+    const SlskdUserPresence(username: 'TechnoHead', status: 2, fileCount: 1850, averageSpeed: 524288),
+    const SlskdUserPresence(username: 'GrooveMaster', status: 1, fileCount: 920, averageSpeed: 262144),
+    const SlskdUserPresence(username: 'AudioPhile99', status: 2, fileCount: 8500, averageSpeed: 2097152),
+  ];
+
+  final mockRoomMessages = <SlskdRoomMessage>[
+    SlskdRoomMessage(
+      timestamp: DateTime(2026, 10, 24, 18, 45),
+      username: 'SynthWave99',
+      message: 'Anyone got the 24-bit Discovery master?',
+      roomName: 'electronic',
+    ),
+    SlskdRoomMessage(
+      timestamp: DateTime(2026, 10, 24, 18, 46),
+      username: 'TechnoHead',
+      message: 'Check my shares, folder 02!',
+      roomName: 'electronic',
+    ),
+    SlskdRoomMessage(
+      timestamp: DateTime(2026, 10, 24, 18, 47),
+      username: 'System',
+      message: 'AmbientLover joined the room.',
+      roomName: 'electronic',
+    ),
+    SlskdRoomMessage(
+      timestamp: DateTime(2026, 10, 24, 18, 48),
+      username: 'You',
+      message: 'Thanks! Enqueuing track 03 now.',
+      roomName: 'electronic',
+      self: true,
+    ),
+  ];
+
+  final mockConversations = <SlskdConversation>[
+    SlskdConversation(
+      username: 'AudioPhile99',
+      unAcknowledgedMessageCount: 1,
+      messages: <SlskdPrivateMessage>[
+        SlskdPrivateMessage(
+          id: 1,
+          username: 'AudioPhile99',
+          timestamp: DateTime(2026, 10, 24, 19, 10),
+          direction: MessageDirection.inbound,
+          message: 'Hey, let me know if you need more FLAC vinyl rips!',
+        ),
+      ],
+    ),
+    SlskdConversation(
+      username: 'SynthWave99',
+      messages: <SlskdPrivateMessage>[
+        SlskdPrivateMessage(
+          id: 2,
+          username: 'SynthWave99',
+          timestamp: DateTime(2026, 10, 24, 17, 30),
+          direction: MessageDirection.inbound,
+          message: 'Thanks for sharing the Daft Punk albums!',
+        ),
+      ],
+    ),
+  ];
+
+  final mockDmMessages = <SlskdPrivateMessage>[
+    SlskdPrivateMessage(
+      id: 1,
+      username: 'AudioPhile99',
+      timestamp: DateTime(2026, 10, 24, 19, 10),
+      direction: MessageDirection.inbound,
+      message: 'Hey, let me know if you need more FLAC vinyl rips!',
+    ),
+    SlskdPrivateMessage(
+      id: 2,
+      username: 'AudioPhile99',
+      timestamp: DateTime(2026, 10, 24, 19, 12),
+      direction: MessageDirection.outbound,
+      message: 'Yes please! Looking for Random Access Memories 24-bit.',
+    ),
+  ];
+
+  group('SlskdCommunityTab Widget & Screenshot Tests', () {
+    testWidgets('renders Two Tabs, Contextual FABs, SearchBars, Discover Sheet, and Active Chat subviews',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1179, 2556);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final GlobalKey repaintKey = GlobalKey();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdActiveTabProvider(testInstance).overrideWith((ref) => 3),
+            slskdJoinedRoomNamesProvider(testInstance).overrideWith((ref) => mockJoinedRooms),
+            slskdAvailableRoomsProvider(testInstance).overrideWith((ref) => mockAvailableRooms),
+            slskdRoomMessagesProvider((testInstance, 'electronic')).overrideWith(
+              (ref) => mockRoomMessages,
+            ),
+            slskdRoomUsersProvider((testInstance, 'electronic')).overrideWith(
+              (ref) => mockRoomUsers,
+            ),
+            slskdConversationsProvider(testInstance).overrideWith(
+              (ref) => mockConversations,
+            ),
+            slskdConversationMessagesProvider((testInstance, 'AudioPhile99')).overrideWith(
+              (ref) => mockDmMessages,
+            ),
+            slskdUserInfoProvider((testInstance, 'AudioPhile99')).overrideWith(
+              (ref) => const SlskdUserInfo(description: 'Sharing 24-bit FLAC vinyl rips.'),
+            ),
+          ],
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorSchemeSeed: const Color(0xFF0D9488),
+              brightness: Brightness.dark,
+              fontFamily: 'Roboto',
+            ),
+            builder: (BuildContext context, Widget? child) {
+              return RepaintBoundary(
+                key: repaintKey,
+                child: child!,
+              );
+            },
+            home: const SlskdHome(instance: testInstance),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // -----------------------------------------------------------------------
+      // 1. Direct Messages Tab (Tab 0)
+      // -----------------------------------------------------------------------
+      expect(
+        find.descendant(of: find.byType(AppBar), matching: find.byType(SearchBar)),
+        findsOneWidget,
+      );
+      expect(find.text('Direct Messages (2)'), findsOneWidget);
+      expect(find.text('Chat Rooms (2)'), findsOneWidget);
+      expect(find.text('AudioPhile99'), findsOneWidget);
+      expect(find.text('SynthWave99'), findsOneWidget);
+      expect(find.text('Hey, let me know if you need more FLAC vinyl rips!'), findsOneWidget);
+      expect(find.byKey(const ValueKey('new_dm_fab')), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_community_dms.png');
+      await capture(tester, repaintKey, 'slskd_community_inbox.png');
+
+      // -----------------------------------------------------------------------
+      // 2. Direct Messages Search Filtering
+      // -----------------------------------------------------------------------
+      final dmSearchFinder = find.widgetWithText(SearchBar, 'Search direct messages...');
+      expect(dmSearchFinder, findsOneWidget);
+
+      await tester.enterText(
+        find.descendant(of: dmSearchFinder, matching: find.byType(TextField)),
+        'AudioPhile',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('AudioPhile99'), findsOneWidget);
+      expect(find.text('SynthWave99'), findsNothing);
+
+      await capture(tester, repaintKey, 'slskd_community_search.png');
+
+      // Clear search
+      await tester.tap(find.byIcon(Icons.clear));
+      await tester.pumpAndSettle();
+      expect(find.text('SynthWave99'), findsOneWidget);
+
+      // -----------------------------------------------------------------------
+      // 3. Switch to Chat Rooms Tab (Tab 1)
+      // -----------------------------------------------------------------------
+      await tester.tap(find.text('Chat Rooms (2)'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('electronic'), findsOneWidget);
+      expect(find.text('audiophile'), findsOneWidget);
+      expect(find.byKey(const ValueKey('discover_rooms_fab')), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_community_rooms.png');
+
+      // -----------------------------------------------------------------------
+      // 4. Open "Discover Chat Rooms" Sheet via Contextual FAB
+      // -----------------------------------------------------------------------
+      await tester.tap(find.byKey(const ValueKey('discover_rooms_fab')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Discover Chat Rooms'), findsOneWidget);
+      expect(find.text('ambient'), findsOneWidget);
+      expect(find.text('jazz'), findsOneWidget);
+      expect(find.text('rock'), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_community_discover_sheet.png');
+
+      // Close the discover sheet
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpAndSettle();
+
+      // -----------------------------------------------------------------------
+      // 5. Enter Active Room View ("electronic")
+      // -----------------------------------------------------------------------
+      await tester.tap(find.text('electronic'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Anyone got the 24-bit Discovery master?'), findsOneWidget);
+      expect(find.text('Check my shares, folder 02!'), findsOneWidget);
+      expect(find.text('AmbientLover joined the room.'), findsOneWidget);
+      expect(find.text('Thanks! Enqueuing track 03 now.'), findsOneWidget);
+      expect(find.text('Message electronic...'), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_community_active_room.png');
+
+      // -----------------------------------------------------------------------
+      // 6. Open Room Members Sheet
+      // -----------------------------------------------------------------------
+      await tester.tap(find.byIcon(Icons.people_outline_rounded));
+      await tester.pumpAndSettle();
+
+      expect(find.text('electronic Members (4)'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(SlskdRoomMembersSheet),
+          matching: find.text('SynthWave99'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(SlskdRoomMembersSheet),
+          matching: find.text('TechnoHead'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(SlskdRoomMembersSheet),
+          matching: find.text('GrooveMaster'),
+        ),
+        findsOneWidget,
+      );
+
+      await capture(tester, repaintKey, 'slskd_community_members_sheet.png');
+
+      // Close Members Sheet via Navigator pop
+      Navigator.of(tester.element(find.byType(SlskdRoomMembersSheet))).pop();
+      await tester.pumpAndSettle();
+
+      // Open room options popup menu and test Set Room Ticker dialog
+      await tester.tap(find.byIcon(Icons.more_vert_rounded));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Set Room Ticker'), findsOneWidget);
+      await tester.tap(find.text('Set Room Ticker'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Set Ticker for #electronic'), findsOneWidget);
+      await tester.enterText(find.byType(TextField).last, 'Welcome to electronic room! No spam please.');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      // Navigate back to Community root tab view
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+
+      // -----------------------------------------------------------------------
+      // 7. Active 1-on-1 Direct Message View
+      // -----------------------------------------------------------------------
+      // Switch back to Direct Messages Tab
+      await tester.tap(find.text('Direct Messages (2)'));
+      await tester.pumpAndSettle();
+
+      // Tap conversation with "AudioPhile99"
+      await tester.tap(find.text('AudioPhile99'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Hey, let me know if you need more FLAC vinyl rips!'), findsOneWidget);
+      expect(find.text('Yes please! Looking for Random Access Memories 24-bit.'), findsOneWidget);
+      expect(find.text('Message AudioPhile99...'), findsOneWidget);
+
+      await capture(tester, repaintKey, 'slskd_community_active_dm.png');
+
+      // -----------------------------------------------------------------------
+      // 8. Inter-Tab Peer Handoff ("Browse Shares" shortcut)
+      // -----------------------------------------------------------------------
+      await tester.tap(find.byIcon(Icons.folder_shared_outlined));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Peer Library Explorer'), findsNothing);
+      expect(find.text('AudioPhile99'), findsWidgets);
+    });
+  });
+}
