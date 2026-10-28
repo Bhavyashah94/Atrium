@@ -481,7 +481,7 @@ class _SlskdDiskFilesSheetState extends ConsumerState<SlskdDiskFilesSheet>
                               overflow: TextOverflow.ellipsis,
                             ),
                             subtitle: Text(
-                              '${subdir.files.length} files • ${subdir.directories.length} folders',
+                              '${slskdPluralize(subdir.files.length, 'file')} • ${slskdPluralize(subdir.directories.length, 'folder')}',
                               style: textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onSurfaceVariant,
                               ),

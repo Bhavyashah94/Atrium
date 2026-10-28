@@ -222,12 +222,11 @@ class SlskdTransfersStatsBar extends ConsumerWidget {
                   count: completedCount,
                   color: completedCount > 0 ? colorScheme.tertiary : colorScheme.onSurfaceVariant,
                 ),
-                if (failedCount > 0)
-                  _StatBadge(
-                    label: 'Failed',
-                    count: failedCount,
-                    color: colorScheme.error,
-                  ),
+                _StatBadge(
+                  label: 'Failed',
+                  count: failedCount,
+                  color: failedCount > 0 ? colorScheme.error : colorScheme.onSurfaceVariant,
+                ),
               ],
             ),
           ],

@@ -283,7 +283,7 @@ class _SlskdDaemonCardState extends ConsumerState<SlskdDaemonCard> {
                     ),
                     onPressed: _isActionInProgress ? null : _handleRestart,
                     icon: const Icon(Icons.restart_alt_rounded, size: 18),
-                    label: const Text('Restart Daemon'),
+                    label: const Text('Restart'),
                   ),
                 ),
                 const SizedBox(width: Insets.sm),

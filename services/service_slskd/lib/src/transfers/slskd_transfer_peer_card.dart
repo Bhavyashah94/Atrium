@@ -129,7 +129,7 @@ class _SlskdTransferPeerCardState extends ConsumerState<SlskdTransferPeerCard> {
                         ],
                       ),
                       Text(
-                        '${user.directories.length} folders • $totalFiles files',
+                        slskdFormatFolderAndFileCounts(user.directories.length, totalFiles),
                         style: textTheme.bodySmall?.copyWith(color: colorScheme.outline),
                       ),
                     ],

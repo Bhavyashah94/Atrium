@@ -51,6 +51,33 @@ String slskdFormatTimeWithSeconds(DateTime dt) {
   return '$h:$m:$s';
 }
 
+/// Formats a DateTime into a readable date and time string ('2026-10-24 14:32:05').
+String slskdFormatDateTime(DateTime dt) {
+  final y = dt.year.toString().padLeft(4, '0');
+  final m = dt.month.toString().padLeft(2, '0');
+  final d = dt.day.toString().padLeft(2, '0');
+  return '$y-$m-$d ${slskdFormatTimeWithSeconds(dt)}';
+}
+
+/// Formats a count with appropriate singular or plural noun.
+/// Example: `slskdPluralize(1, 'folder')` -> '1 folder'
+///          `slskdPluralize(2, 'folder')` -> '2 folders'
+String slskdPluralize(int count, String singular, [String? plural]) {
+  final noun = count == 1 ? singular : (plural ?? '${singular}s');
+  return '$count $noun';
+}
+
+/// Formats combined folder and file counts with proper pluralization.
+/// Example: `slskdFormatFolderAndFileCounts(1, 1)` -> '1 folder • 1 file'
+///          `slskdFormatFolderAndFileCounts(2, 3)` -> '2 folders • 3 files'
+String slskdFormatFolderAndFileCounts(
+  int folderCount,
+  int fileCount, {
+  String fileNoun = 'file',
+}) {
+  return '${slskdPluralize(folderCount, 'folder')} • ${slskdPluralize(fileCount, fileNoun)}';
+}
+
 /// Theme-aware status color for peer presence (Online, Away, Offline).
 /// Adheres to Material 3 dynamic color scheme with zero hardcoded hex constants.
 Color slskdPresenceColor(ColorScheme colorScheme, {required bool isOnline, bool isAway = false}) {

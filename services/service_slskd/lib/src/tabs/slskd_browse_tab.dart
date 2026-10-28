@@ -752,47 +752,56 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
     return Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: Insets.md, vertical: 4),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: <Widget>[
-          // Root chip
-          ActionChip(
-            avatar: const Icon(Icons.home_rounded, size: 16),
-            label: const Text('Root'),
-            visualDensity: VisualDensity.compact,
-            onPressed: () {
-              if (currentPathSegments.isNotEmpty) {
-                ref.read(slskdBrowsePathSegmentsProvider(widget.instance).notifier).state =
-                    const <String>[];
-                setState(() {
-                  _filterQuery = '';
-                  _filterController.clear();
-                });
-              }
-            },
-          ),
-          for (int i = 0; i < currentPathSegments.length; i++) ...<Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Icon(Icons.chevron_right_rounded, size: 16, color: colorScheme.outline),
-            ),
+      child: ShaderMask(
+        shaderCallback: (Rect bounds) {
+          return const LinearGradient(
+            colors: <Color>[Colors.white, Colors.white, Colors.transparent],
+            stops: <double>[0.0, 0.92, 1.0],
+          ).createShader(bounds);
+        },
+        blendMode: BlendMode.dstIn,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: <Widget>[
+            // Root chip
             ActionChip(
-              label: Text(currentPathSegments[i]),
+              avatar: const Icon(Icons.home_rounded, size: 16),
+              label: const Text('Root'),
               visualDensity: VisualDensity.compact,
-              backgroundColor: i == currentPathSegments.length - 1
-                  ? colorScheme.secondaryContainer
-                  : null,
               onPressed: () {
-                ref.read(slskdBrowsePathSegmentsProvider(widget.instance).notifier).state =
-                    currentPathSegments.sublist(0, i + 1);
-                setState(() {
-                  _filterQuery = '';
-                  _filterController.clear();
-                });
+                if (currentPathSegments.isNotEmpty) {
+                  ref.read(slskdBrowsePathSegmentsProvider(widget.instance).notifier).state =
+                      const <String>[];
+                  setState(() {
+                    _filterQuery = '';
+                    _filterController.clear();
+                  });
+                }
               },
             ),
+            for (int i = 0; i < currentPathSegments.length; i++) ...<Widget>[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(Icons.chevron_right_rounded, size: 16, color: colorScheme.outline),
+              ),
+              ActionChip(
+                label: Text(currentPathSegments[i]),
+                visualDensity: VisualDensity.compact,
+                backgroundColor: i == currentPathSegments.length - 1
+                    ? colorScheme.secondaryContainer
+                    : null,
+                onPressed: () {
+                  ref.read(slskdBrowsePathSegmentsProvider(widget.instance).notifier).state =
+                      currentPathSegments.sublist(0, i + 1);
+                  setState(() {
+                    _filterQuery = '';
+                    _filterController.clear();
+                  });
+                },
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

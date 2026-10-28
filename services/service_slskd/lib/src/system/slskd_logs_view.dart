@@ -94,7 +94,7 @@ class _SlskdLogsViewState extends ConsumerState<SlskdLogsView> {
                       const SizedBox(width: Insets.sm),
                       Expanded(
                         child: Text(
-                          log.timestamp.toIso8601String(),
+                          slskdFormatDateTime(log.timestamp),
                           style: tt.bodySmall?.copyWith(
                             color: cs.onSurfaceVariant,
                           ),
@@ -315,28 +315,37 @@ class _SlskdLogsViewState extends ConsumerState<SlskdLogsView> {
             },
           ),
           const SizedBox(height: Insets.sm),
-          // Severity Chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: severities.map((String severity) {
-                final bool isSelected = selectedSeverity.toLowerCase() ==
-                    severity.toLowerCase();
-                return Padding(
-                  padding: const EdgeInsets.only(right: Insets.xs),
-                  child: FilterChip(
-                    label: Text(severity),
-                    selected: isSelected,
-                    onSelected: (bool selected) {
-                      ref
-                          .read(
-                            slskdLogSeverityFilterProvider(widget.instance).notifier,
-                          )
-                          .state = selected ? severity : 'All';
-                    },
-                  ),
-                );
-              }).toList(),
+          // Severity Chips with horizontal scroll affordance
+          ShaderMask(
+            shaderCallback: (Rect bounds) {
+              return const LinearGradient(
+                colors: <Color>[Colors.white, Colors.white, Colors.transparent],
+                stops: <double>[0.0, 0.92, 1.0],
+              ).createShader(bounds);
+            },
+            blendMode: BlendMode.dstIn,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: severities.map((String severity) {
+                  final bool isSelected = selectedSeverity.toLowerCase() ==
+                      severity.toLowerCase();
+                  return Padding(
+                    padding: const EdgeInsets.only(right: Insets.xs),
+                    child: FilterChip(
+                      label: Text(severity),
+                      selected: isSelected,
+                      onSelected: (bool selected) {
+                        ref
+                            .read(
+                              slskdLogSeverityFilterProvider(widget.instance).notifier,
+                            )
+                            .state = selected ? severity : 'All';
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ),
           const SizedBox(height: Insets.sm),

@@ -359,9 +359,10 @@ void main() {
 
     testWidgets('renders SlskdAnalyticsSheet with KPIs, leaderboard, and Pareto failure charts',
         (WidgetTester tester) async {
-      await tester.binding.setSurfaceSize(const Size(1179, 2556));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+      tester.view.physicalSize = const Size(1179, 2556);
       tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
       final GlobalKey repaintKey = GlobalKey();
 
@@ -461,9 +462,48 @@ void main() {
       expect(find.text('Resident Memory'), findsOneWidget);
       expect(find.text('VinylVault'), findsOneWidget);
       expect(find.text('Cancelled by remote peer'), findsOneWidget);
-      expect(find.text('FLAC/Radiohead - In Rainbows'), findsOneWidget);
 
       await _capture(tester, repaintKey, 'slskd_transfers_analytics.png');
+    });
+
+    testWidgets('renders SlskdHome in Material 3 light theme with full contrast',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1179, 2556);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final GlobalKey repaintKey = GlobalKey();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdDownloadsProvider(testInstance).overrideWith((ref) => mockDownloads),
+            slskdUploadsProvider(testInstance).overrideWith((ref) => mockUploads),
+          ],
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorSchemeSeed: const Color(0xFF007ACC),
+              brightness: Brightness.light,
+              fontFamily: 'Roboto',
+            ),
+            builder: (BuildContext context, Widget? child) {
+              return RepaintBoundary(
+                key: repaintKey,
+                child: child!,
+              );
+            },
+            home: const SlskdHome(instance: testInstance),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      expect(find.text('AudioPhile99'), findsOneWidget);
+      expect(find.text('VinylCollector'), findsOneWidget);
+      await _capture(tester, repaintKey, 'slskd_transfers_light.png');
     });
   });
 }

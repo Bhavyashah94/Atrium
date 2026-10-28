@@ -2,6 +2,7 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../models/slskd_models.dart';
+import '../slskd_format.dart';
 import 'slskd_user_bio_sheet.dart';
 
 /// Card summarizing a peer's identity, presence, slot availability, and bio launcher.
@@ -160,7 +161,7 @@ class SlskdBrowsePeerCard extends StatelessWidget {
                       if (totalFolders > 0 || totalFiles > 0)
                         Flexible(
                           child: Text(
-                            '$totalFolders folders • $totalFiles files',
+                            slskdFormatFolderAndFileCounts(totalFolders, totalFiles),
                             style: textTheme.labelSmall?.copyWith(
                               fontSize: 10,
                               color: colorScheme.outline,

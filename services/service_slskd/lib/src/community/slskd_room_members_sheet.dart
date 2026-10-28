@@ -246,9 +246,27 @@ class _SlskdRoomMembersSheetState extends ConsumerState<SlskdRoomMembersSheet> {
                           member.username,
                           style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                         ),
-                        subtitle: Text(
-                          subtitle,
-                          style: textTheme.labelSmall?.copyWith(color: colorScheme.outline),
+                        subtitle: Row(
+                          children: <Widget>[
+                            Icon(
+                              slskdPresenceIcon(
+                                isOnline: isOnline,
+                                isAway: isAway,
+                              ),
+                              size: 11,
+                              color: presenceColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                subtitle,
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.outline,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                         trailing: const Icon(Icons.more_vert_rounded, size: 18),
                         onTap: () {

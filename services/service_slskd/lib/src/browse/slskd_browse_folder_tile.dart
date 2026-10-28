@@ -1,6 +1,7 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 
+import '../slskd_format.dart';
 import 'slskd_browse_models_ui.dart';
 
 /// List tile representing a subdirectory within the browsed peer share.
@@ -26,8 +27,8 @@ class SlskdBrowseFolderTile extends StatelessWidget {
     final String size = node.formattedTotalSize;
 
     final String subtitleText = subfolderCount > 0
-        ? '$subfolderCount folders • $fileCount tracks • $size'
-        : '$fileCount tracks • $size';
+        ? '${slskdFormatFolderAndFileCounts(subfolderCount, fileCount, fileNoun: 'track')} • $size'
+        : '${slskdPluralize(fileCount, 'track')} • $size';
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: Insets.md, vertical: 3),

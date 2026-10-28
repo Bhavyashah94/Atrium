@@ -540,7 +540,7 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
                   const SizedBox(width: Insets.xs),
                   Expanded(
                     child: Text(
-                      'Modifying slskd.yml requires an Administrator API key in slskd.yml.',
+                      'Viewing and modifying slskd.yml requires an Administrator role or active JWT session.',
                       style: textTheme.labelSmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -615,6 +615,7 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
                   controller: _yamlController,
                   maxLines: null,
                   expands: true,
+                  textAlignVertical: TextAlignVertical.top,
                   style: textTheme.bodySmall?.copyWith(fontSize: 12),
                   decoration: InputDecoration(
                     hintText: '# slskd configuration YAML...',
