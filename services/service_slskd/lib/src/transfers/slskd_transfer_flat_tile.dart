@@ -2,6 +2,7 @@ import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 import '../models/slskd_models.dart';
 import '../slskd_format.dart';
@@ -219,17 +220,16 @@ class SlskdTransferFlatTile extends ConsumerWidget {
             // Row 3: Progress Bar
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
+              child: LinearProgressIndicatorM3E(
                 value: transfer.category == TransferCategory.completed ? 1.0 : progress,
-                minHeight: 5,
-                backgroundColor: colorScheme.surfaceContainerHighest,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  transfer.category == TransferCategory.completed
-                      ? colorScheme.tertiary
-                      : transfer.category == TransferCategory.failed
-                          ? colorScheme.error
-                          : (isDownload ? colorScheme.primary : colorScheme.tertiary),
-                ),
+                size: LinearProgressM3ESize.s,
+                shape: ProgressM3EShape.flat,
+                trackColor: colorScheme.surfaceContainerHighest,
+                activeColor: transfer.category == TransferCategory.completed
+                    ? colorScheme.tertiary
+                    : transfer.category == TransferCategory.failed
+                        ? colorScheme.error
+                        : (isDownload ? colorScheme.primary : colorScheme.tertiary),
               ),
             ),
             const SizedBox(height: Insets.xs),

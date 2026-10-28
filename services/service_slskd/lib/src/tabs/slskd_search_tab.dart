@@ -415,7 +415,7 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
                             ? SizedBox(
                                 width: 14,
                                 height: 14,
-                                child: CircularProgressIndicator(
+                                child: ExpressiveProgressIndicator(
                                   strokeWidth: 2,
                                   color: isSelected ? colorScheme.onPrimary : colorScheme.primary,
                                 ),
@@ -568,7 +568,7 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  const CircularProgressIndicator(),
+                  const ExpressiveProgressIndicator(),
                   const SizedBox(height: Insets.md),
                   Text(
                     'Searching Soulseek network...',

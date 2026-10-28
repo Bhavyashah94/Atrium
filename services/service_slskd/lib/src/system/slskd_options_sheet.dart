@@ -229,7 +229,7 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
     ScrollController scrollController,
   ) {
     return optionsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: ExpressiveProgressIndicator()),
       error: (err, _) => Center(
         child: Padding(
           padding: const EdgeInsets.all(Insets.xl),
@@ -465,7 +465,7 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
         const SizedBox(height: Insets.xs),
 
         debugTransfersAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: ExpressiveProgressIndicator()),
           error: (err, _) => Card(
             elevation: 0,
             color: colorScheme.surfaceContainerLow,

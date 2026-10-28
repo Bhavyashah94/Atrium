@@ -242,7 +242,7 @@ class _SlskdAnalyticsSheetState extends ConsumerState<SlskdAnalyticsSheet> {
                       loading: () => const Center(
                         child: Padding(
                           padding: EdgeInsets.all(Insets.md),
-                          child: CircularProgressIndicator(),
+                          child: ExpressiveProgressIndicator(),
                         ),
                       ),
                       error: (err, _) => Card(
@@ -383,7 +383,7 @@ class _SlskdAnalyticsSheetState extends ConsumerState<SlskdAnalyticsSheet> {
                       loading: () => const Center(
                         child: Padding(
                           padding: EdgeInsets.all(Insets.md),
-                          child: CircularProgressIndicator(),
+                          child: ExpressiveProgressIndicator(),
                         ),
                       ),
                       error: (err, _) => Card(
@@ -522,7 +522,7 @@ class _SlskdAnalyticsSheetState extends ConsumerState<SlskdAnalyticsSheet> {
                       loading: () => const Center(
                         child: Padding(
                           padding: EdgeInsets.all(Insets.md),
-                          child: CircularProgressIndicator(),
+                          child: ExpressiveProgressIndicator(),
                         ),
                       ),
                       error: (err, _) => Card(
@@ -644,7 +644,7 @@ class _SlskdAnalyticsSheetState extends ConsumerState<SlskdAnalyticsSheet> {
                       loading: () => const Center(
                         child: Padding(
                           padding: EdgeInsets.all(Insets.md),
-                          child: CircularProgressIndicator(),
+                          child: ExpressiveProgressIndicator(),
                         ),
                       ),
                       error: (err, _) => Card(

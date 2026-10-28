@@ -379,7 +379,7 @@ class _SlskdDiskFilesSheetState extends ConsumerState<SlskdDiskFilesSheet>
               // Directory Content
               Expanded(
                 child: directoryAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () => const Center(child: ExpressiveProgressIndicator()),
                   error: (err, _) => Center(
                     child: Padding(
                       padding: const EdgeInsets.all(Insets.xl),

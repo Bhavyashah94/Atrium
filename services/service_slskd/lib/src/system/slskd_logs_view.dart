@@ -355,7 +355,7 @@ class _SlskdLogsViewState extends ConsumerState<SlskdLogsView> {
           loading: () => const Center(
             child: Padding(
               padding: EdgeInsets.all(Insets.xl),
-              child: CircularProgressIndicator(),
+              child: ExpressiveProgressIndicator(),
             ),
           ),
           error: (error, _) => Center(
@@ -532,7 +532,7 @@ class _SlskdLogsViewState extends ConsumerState<SlskdLogsView> {
       loading: () => const Center(
         child: Padding(
           padding: EdgeInsets.all(Insets.xl),
-          child: CircularProgressIndicator(),
+          child: ExpressiveProgressIndicator(),
         ),
       ),
       error: (err, _) => Center(

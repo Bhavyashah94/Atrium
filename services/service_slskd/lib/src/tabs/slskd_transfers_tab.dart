@@ -201,7 +201,7 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
                 child: Center(
                   child: Padding(
                     padding: EdgeInsets.all(Insets.xl),
-                    child: CircularProgressIndicator(),
+                    child: ExpressiveProgressIndicator(),
                   ),
                 ),
               )

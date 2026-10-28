@@ -3,6 +3,7 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 import '../models/slskd_models.dart';
 import '../slskd_format.dart';
@@ -217,11 +218,12 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
                   const SizedBox(height: Insets.xs),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
+                    child: LinearProgressIndicatorM3E(
                       value: progress.clamp(0.0, 1.0),
-                      minHeight: 8,
-                      backgroundColor: colorScheme.surfaceContainerHighest,
-                      color: isDownload ? colorScheme.primary : colorScheme.tertiary,
+                      size: LinearProgressM3ESize.s,
+                      shape: ProgressM3EShape.flat,
+                      activeColor: isDownload ? colorScheme.primary : colorScheme.tertiary,
+                      trackColor: colorScheme.surfaceContainerHighest,
                     ),
                   ),
                   const SizedBox(height: Insets.sm),

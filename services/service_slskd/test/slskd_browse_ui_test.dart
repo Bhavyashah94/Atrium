@@ -8,6 +8,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 import 'package:service_slskd/service_slskd.dart';
 
 final String? _fontDir = () {
@@ -375,7 +376,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Retrieving shares (68% complete)...'), findsOneWidget);
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(find.byType(LinearProgressIndicatorM3E), findsOneWidget);
 
       await capture(tester, repaintKey, 'slskd_browse_progress.png');
     });

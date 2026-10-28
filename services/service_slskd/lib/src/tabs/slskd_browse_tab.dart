@@ -4,6 +4,7 @@ import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 import '../browse/slskd_browse_file_tile.dart';
 import '../browse/slskd_browse_folder_tile.dart';
@@ -494,10 +495,12 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
                                 width: 220,
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(999),
-                                  child: LinearProgressIndicator(
+                                  child: LinearProgressIndicatorM3E(
                                     value: normalized,
-                                    minHeight: 8,
-                                    backgroundColor: colorScheme.surfaceContainerHighest,
+                                    size: LinearProgressM3ESize.s,
+                                    shape: ProgressM3EShape.flat,
+                                    activeColor: colorScheme.primary,
+                                    trackColor: colorScheme.surfaceContainerHighest,
                                   ),
                                 ),
                               ),
@@ -509,7 +512,7 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
                                     ),
                               ),
                             ] else ...<Widget>[
-                              const CircularProgressIndicator(),
+                              const ExpressiveProgressIndicator(),
                               const SizedBox(height: Insets.md),
                               Text(
                                 'Requesting peer library...',

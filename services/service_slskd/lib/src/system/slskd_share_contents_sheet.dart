@@ -257,7 +257,7 @@ class _SlskdShareContentsSheetState
               // Folder & File Content
               Expanded(
                 child: contentsAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () => const Center(child: ExpressiveProgressIndicator()),
                   error: (err, _) => Center(
                     child: Padding(
                       padding: const EdgeInsets.all(Insets.xl),

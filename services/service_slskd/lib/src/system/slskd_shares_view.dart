@@ -5,6 +5,7 @@ import 'package:core_ui/core_ui.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 import '../models/slskd_system_models.dart';
 import '../slskd_api.dart';
@@ -253,16 +254,15 @@ class _SlskdSharesViewState extends ConsumerState<SlskdSharesView> {
                   const SizedBox(height: Insets.md),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
-                    child: widget.sharesState.scanProgress > 0
-                        ? LinearProgressIndicator(
-                            value: widget.sharesState.scanProgress.clamp(0.0, 1.0),
-                            backgroundColor: colorScheme.surfaceContainerHighest,
-                            valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
-                          )
-                        : LinearProgressIndicator(
-                            backgroundColor: colorScheme.surfaceContainerHighest,
-                            valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
-                          ),
+                    child: LinearProgressIndicatorM3E(
+                      size: LinearProgressM3ESize.s,
+                      shape: ProgressM3EShape.flat,
+                      value: widget.sharesState.scanProgress > 0
+                          ? widget.sharesState.scanProgress.clamp(0.0, 1.0)
+                          : null,
+                      activeColor: colorScheme.primary,
+                      trackColor: colorScheme.surfaceContainerHighest,
+                    ),
                   ),
                   const SizedBox(height: Insets.xs),
                   Text(
@@ -339,7 +339,7 @@ class _SlskdSharesViewState extends ConsumerState<SlskdSharesView> {
           loading: () => const Center(
             child: Padding(
               padding: EdgeInsets.all(Insets.xl),
-              child: CircularProgressIndicator(),
+              child: ExpressiveProgressIndicator(),
             ),
           ),
           error: (error, _) => Center(

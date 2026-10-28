@@ -511,7 +511,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
         ref.invalidate(slskdConversationsProvider(widget.instance));
       },
       child: convosAsync.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: ExpressiveProgressIndicator())
           : filteredConvos.isEmpty
               ? ListView(
                   controller: _dmScrollController,
@@ -613,7 +613,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
         ref.invalidate(slskdAvailableRoomsProvider(widget.instance));
       },
       child: joinedRoomsAsync.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: ExpressiveProgressIndicator())
           : filteredJoined.isEmpty
               ? ListView(
                   controller: _roomScrollController,
@@ -812,7 +812,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
             // Messages Feed
             Expanded(
               child: messagesAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: ExpressiveProgressIndicator()),
                 error: (error, _) => Center(
                   child: Padding(
                     padding: const EdgeInsets.all(Insets.lg),
@@ -1011,7 +1011,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
             // Messages Feed
             Expanded(
               child: messagesAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: ExpressiveProgressIndicator()),
                 error: (error, _) => Center(
                   child: Padding(
                     padding: const EdgeInsets.all(Insets.lg),
