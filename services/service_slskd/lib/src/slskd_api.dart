@@ -543,7 +543,7 @@ class SlskdApi {
     DateTime? end,
     String? direction,
     String? username,
-    String? interval,
+    int? interval,
   }) async {
     final queryParams = <String, dynamic>{};
     if (start != null) queryParams['start'] = start.toUtc().toIso8601String();

@@ -998,8 +998,9 @@ void main() {
       expect(lastPath, 'api/v0/telemetry/reports/transfers/summary');
       expect(summary['Download'], isNotNull);
 
-      final histogram = await api.getTransferHistogram(interval: 'Day');
+      final histogram = await api.getTransferHistogram(interval: 86400);
       expect(lastPath, 'api/v0/telemetry/reports/transfers/histogram');
+      expect(lastQueryParams?['interval'], 86400);
       expect(histogram, isNotEmpty);
 
       // 2. Leaderboard
