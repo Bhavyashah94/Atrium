@@ -2,14 +2,12 @@ import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../slskd_api.dart';
 import '../slskd_providers.dart';
 
-/// Modal bottom sheet allowing inspection of daemon configuration, editing slskd.yml,
-/// dry-run YAML validation, and triggering runtime diagnostics.
+/// Modal bottom sheet allowing inspection of daemon configuration and runtime diagnostics.
 class SlskdOptionsSheet extends ConsumerStatefulWidget {
   const SlskdOptionsSheet({
     required this.instance,
@@ -37,94 +35,18 @@ class SlskdOptionsSheet extends ConsumerStatefulWidget {
 class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  final TextEditingController _yamlController = TextEditingController();
-  bool _isYamlLoaded = false;
   bool _isActionInProgress = false;
-  String? _validationResult;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _yamlController.dispose();
     super.dispose();
-  }
-
-  Future<void> _handleValidateYaml() async {
-    setState(() {
-      _isActionInProgress = true;
-      _validationResult = null;
-    });
-    try {
-      final SlskdApi api =
-          await ref.read(slskdApiProvider(widget.instance).future);
-      final error = await api.validateYaml(_yamlController.text);
-      if (mounted) {
-        setState(() {
-          _validationResult = error ?? 'Configuration is valid! No syntax errors.';
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _validationResult = 'Validation request error: $e');
-      }
-    } finally {
-      if (mounted) setState(() => _isActionInProgress = false);
-    }
-  }
-
-  Future<void> _handleSaveYaml() async {
-    final messenger = ScaffoldMessenger.of(context);
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Save Configuration?'),
-        content: const Text(
-          'A backup copy of slskd.yml will be created automatically. The daemon may reload or require a restart.',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Save & Apply'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !mounted) return;
-
-    setState(() => _isActionInProgress = true);
-    try {
-      final SlskdApi api =
-          await ref.read(slskdApiProvider(widget.instance).future);
-      await api.updateYaml(_yamlController.text);
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Configuration saved to daemon host!'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      ref.invalidate(slskdYamlContentProvider(widget.instance));
-      ref.invalidate(slskdOptionsProvider(widget.instance));
-    } catch (e) {
-      final msg = (e is DioException && e.response?.statusCode == 403)
-          ? 'Saving configuration requires an API key with Administrator role in slskd.yml'
-          : 'Failed to save configuration: $e';
-      messenger.showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
-    } finally {
-      if (mounted) setState(() => _isActionInProgress = false);
-    }
   }
 
   Future<void> _triggerGarbageCollection() async {
@@ -189,15 +111,6 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     final optionsAsync = ref.watch(slskdOptionsProvider(widget.instance));
-    final yamlAsync = ref.watch(slskdYamlContentProvider(widget.instance));
-
-    // Initialize YAML editor once data arrives
-    yamlAsync.whenData((content) {
-      if (!_isYamlLoaded) {
-        _yamlController.text = content;
-        _isYamlLoaded = true;
-      }
-    });
 
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
@@ -254,7 +167,7 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
                             ),
                           ),
                           Text(
-                            'Host options, slskd.yml editor & runtime tools',
+                            'Host options & runtime diagnostics',
                             style: textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -286,7 +199,6 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
                 unselectedLabelStyle: textTheme.titleSmall,
                 tabs: const <Widget>[
                   Tab(text: 'Overview'),
-                  Tab(text: 'slskd.yml'),
                   Tab(text: 'Diagnostics'),
                 ],
               ),
@@ -297,7 +209,6 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
                   controller: _tabController,
                   children: <Widget>[
                     _buildOverview(context, optionsAsync, colorScheme, textTheme, scrollController),
-                    _buildYamlEditor(context, yamlAsync, colorScheme, textTheme),
                     _buildDiagnostics(context, colorScheme, textTheme),
                   ],
                 ),
@@ -478,162 +389,6 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildYamlEditor(
-    BuildContext context,
-    AsyncValue<String> yamlAsync,
-    ColorScheme colorScheme,
-    TextTheme textTheme,
-  ) {
-    return yamlAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) {
-        final isForbidden =
-            err is DioException && err.response?.statusCode == 403;
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(Insets.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Icon(
-                  Icons.lock_outline_rounded,
-                  size: 40,
-                  color: colorScheme.error,
-                ),
-                const SizedBox(height: Insets.sm),
-                Text(
-                  isForbidden
-                      ? 'Access restricted: Reading and writing slskd.yml requires an API key with Administrator role or active JWT session.'
-                      : 'Failed to read slskd.yml: $err',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: colorScheme.error),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-      data: (_) {
-        return Column(
-          children: <Widget>[
-            // Info banner
-            Container(
-              margin: const EdgeInsets.symmetric(
-                horizontal: Insets.md,
-                vertical: Insets.xs,
-              ),
-              padding: const EdgeInsets.all(Insets.xs),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: <Widget>[
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 16,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: Insets.xs),
-                  Expanded(
-                    child: Text(
-                      'Viewing and modifying slskd.yml requires an Administrator role or active JWT session.',
-                      style: textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Action toolbar
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Insets.md,
-                vertical: Insets.xs,
-              ),
-              child: Row(
-                children: <Widget>[
-                  OutlinedButton.icon(
-                    onPressed: _isActionInProgress ? null : _handleValidateYaml,
-                    icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
-                    label: const Text('Validate'),
-                  ),
-                  const SizedBox(width: Insets.xs),
-                  FilledButton.icon(
-                    onPressed: _isActionInProgress ? null : _handleSaveYaml,
-                    icon: const Icon(Icons.save_rounded, size: 16),
-                    label: const Text('Save'),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.copy_rounded, size: 18),
-                    tooltip: 'Copy YAML',
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: _yamlController.text));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('YAML copied to clipboard'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            if (_validationResult != null)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: Insets.md, vertical: Insets.xs),
-                padding: const EdgeInsets.all(Insets.sm),
-                decoration: BoxDecoration(
-                  color: _validationResult!.contains('valid')
-                      ? colorScheme.primaryContainer.withValues(alpha: 0.3)
-                      : colorScheme.errorContainer.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _validationResult!,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: _validationResult!.contains('valid')
-                        ? colorScheme.primary
-                        : colorScheme.error,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-
-            // Multi-line editor
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(Insets.md),
-                child: TextField(
-                  controller: _yamlController,
-                  maxLines: null,
-                  expands: true,
-                  textAlignVertical: TextAlignVertical.top,
-                  style: textTheme.bodySmall?.copyWith(fontSize: 12),
-                  decoration: InputDecoration(
-                    hintText: '# slskd configuration YAML...',
-                    filled: true,
-                    fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 

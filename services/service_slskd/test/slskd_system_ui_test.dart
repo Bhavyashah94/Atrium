@@ -38,17 +38,43 @@ Future<void> _loadFonts() async {
   if (_fontDir == null) {
     return;
   }
+  final Directory dir = Directory(_fontDir!);
+  if (!dir.existsSync()) {
+    return;
+  }
+
+  File? findFontFile(String filename) {
+    final File direct = File('$_fontDir/$filename');
+    if (direct.existsSync()) {
+      return direct;
+    }
+    final String lower = filename.toLowerCase();
+    try {
+      for (final FileSystemEntity entity in dir.listSync()) {
+        if (entity is File &&
+            entity.path.split(RegExp(r'[/\\]')).last.toLowerCase() == lower) {
+          return entity;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
   final FontLoader roboto = FontLoader('Roboto');
-  for (final String font in ['roboto-regular.ttf', 'roboto-medium.ttf', 'roboto-bold.ttf']) {
-    final File f = File('$_fontDir/$font');
-    if (f.existsSync()) {
+  for (final String font in <String>[
+    'Roboto-Regular.ttf',
+    'Roboto-Medium.ttf',
+    'Roboto-Bold.ttf',
+  ]) {
+    final File? f = findFontFile(font);
+    if (f != null && f.existsSync()) {
       roboto.addFont(Future.value(ByteData.view(f.readAsBytesSync().buffer)));
     }
   }
   await roboto.load();
 
-  final File icons = File('$_fontDir/materialicons-regular.otf');
-  if (icons.existsSync()) {
+  final File? icons = findFontFile('MaterialIcons-Regular.otf');
+  if (icons != null && icons.existsSync()) {
     final FontLoader materialIcons = FontLoader('MaterialIcons');
     materialIcons.addFont(Future.value(ByteData.view(icons.readAsBytesSync().buffer)));
     await materialIcons.load();
@@ -180,7 +206,7 @@ void main() {
   ];
 
   group('SlskdSystemTab Widget & Screenshot Tests', () {
-    testWidgets('renders System Health, Shares, Logs, details sheet, and restart dialog',
+    testWidgets('renders System Health, Shares, Logs, details sheet, and actions menu',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1179, 2556);
       tester.view.devicePixelRatio = 3.0;
@@ -272,17 +298,13 @@ void main() {
       await tester.tapAt(const Offset(20, 20));
       await tester.pumpAndSettle();
 
-      // 5. Open more actions menu and trigger Restart dialog
+      // 5. Open more actions menu and verify actions
       await tester.tap(find.byIcon(Icons.more_vert));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Restart daemon'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Restart slskd daemon?'), findsOneWidget);
-      expect(find.text('The background daemon will restart. Network transfers and connections will briefly reconnect.'), findsOneWidget);
-
-      await capture(tester, repaintKey, 'slskd_system_restart_dialog.png');
+      expect(find.text('Transfer analytics & KPIs'), findsOneWidget);
+      expect(find.text('Host storage explorer'), findsOneWidget);
+      expect(find.text('Configuration & diagnostics'), findsOneWidget);
     });
 
     testWidgets('renders SlskdShareContentsSheet with folder tree and files',
@@ -418,7 +440,7 @@ void main() {
       await capture(tester, repaintKey, 'slskd_disk_files_sheet.png');
     });
 
-    testWidgets('renders SlskdOptionsSheet with overview, yaml editor and diagnostics',
+    testWidgets('renders SlskdOptionsSheet with overview and diagnostics',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1179, 2556);
       tester.view.devicePixelRatio = 3.0;
@@ -444,19 +466,11 @@ void main() {
           'noVersionCheck': false,
         },
       };
-      const mockYaml = '''soulseek:
-  username: AudioPhileX
-  listen_port: 50300
-directories:
-  downloads: /storage/downloads
-  incomplete: /storage/incomplete
-''';
 
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             slskdOptionsProvider(testInstance).overrideWith((ref) => mockOptions),
-            slskdYamlContentProvider(testInstance).overrideWith((ref) => mockYaml),
             slskdDebugTransfersProvider(testInstance).overrideWith((ref) => <String, dynamic>{'active': <dynamic>[], 'queued': <dynamic>[]}),
           ],
           child: MaterialApp(
@@ -490,13 +504,6 @@ directories:
       expect(find.text('/storage/downloads'), findsOneWidget);
 
       await capture(tester, repaintKey, 'slskd_system_options_sheet.png');
-
-      // Test YAML editor segment
-      await tester.tap(find.text('slskd.yml'));
-      await tester.pumpAndSettle();
-      expect(find.text('Validate'), findsOneWidget);
-      expect(find.text('Save'), findsOneWidget);
-      await capture(tester, repaintKey, 'slskd_system_options_yaml.png');
 
       // Test Diagnostics segment
       await tester.tap(find.text('Diagnostics'));

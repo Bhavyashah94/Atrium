@@ -34,17 +34,43 @@ Future<void> _loadFonts() async {
   if (_fontDir == null) {
     return;
   }
+  final Directory dir = Directory(_fontDir!);
+  if (!dir.existsSync()) {
+    return;
+  }
+
+  File? findFontFile(String filename) {
+    final File direct = File('$_fontDir/$filename');
+    if (direct.existsSync()) {
+      return direct;
+    }
+    final String lower = filename.toLowerCase();
+    try {
+      for (final FileSystemEntity entity in dir.listSync()) {
+        if (entity is File &&
+            entity.path.split(RegExp(r'[/\\]')).last.toLowerCase() == lower) {
+          return entity;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
   final FontLoader roboto = FontLoader('Roboto');
-  for (final String font in ['roboto-regular.ttf', 'roboto-medium.ttf', 'roboto-bold.ttf']) {
-    final File f = File('$_fontDir/$font');
-    if (f.existsSync()) {
+  for (final String font in <String>[
+    'Roboto-Regular.ttf',
+    'Roboto-Medium.ttf',
+    'Roboto-Bold.ttf',
+  ]) {
+    final File? f = findFontFile(font);
+    if (f != null && f.existsSync()) {
       roboto.addFont(Future.value(ByteData.view(f.readAsBytesSync().buffer)));
     }
   }
   await roboto.load();
 
-  final File icons = File('$_fontDir/materialicons-regular.otf');
-  if (icons.existsSync()) {
+  final File? icons = findFontFile('MaterialIcons-Regular.otf');
+  if (icons != null && icons.existsSync()) {
     final FontLoader materialIcons = FontLoader('MaterialIcons');
     materialIcons.addFont(Future.value(ByteData.view(icons.readAsBytesSync().buffer)));
     await materialIcons.load();
