@@ -7,8 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/slskd_models.dart';
 import '../slskd_providers.dart';
-import '../system/slskd_disk_files_sheet.dart';
-import '../transfers/slskd_analytics_sheet.dart';
 import '../transfers/slskd_transfer_flat_tile.dart';
 import '../transfers/slskd_transfer_peer_card.dart';
 import '../transfers/slskd_transfers_stats_bar.dart';
@@ -183,20 +181,6 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
                 },
               ),
               actions: <Widget>[
-                IconButton(
-                  tooltip: 'Transfer Analytics & KPIs',
-                  icon: const Icon(Icons.analytics_outlined),
-                  onPressed: () {
-                    SlskdAnalyticsSheet.show(context, instance: widget.instance);
-                  },
-                ),
-                IconButton(
-                  tooltip: 'Host Storage Explorer',
-                  icon: const Icon(Icons.folder_open_rounded),
-                  onPressed: () {
-                    SlskdDiskFilesSheet.show(context, instance: widget.instance);
-                  },
-                ),
                 IconButton(
                   tooltip: _isGrouped ? 'Switch to plain list' : 'Switch to grouped view',
                   icon: Icon(
