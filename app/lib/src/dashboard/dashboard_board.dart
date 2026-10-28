@@ -162,6 +162,7 @@ class DashboardBoard extends ConsumerWidget {
           transmissionInstances: _byKind(instances, ServiceKind.transmission),
           rtorrentInstances: _byKind(instances, ServiceKind.rtorrent),
           aria2Instances: _byKind(instances, ServiceKind.aria2),
+          slskdInstances: _byKind(instances, ServiceKind.slskd),
         );
       case DashboardWidgetKind.streams:
         return DashboardStreamsWidget(

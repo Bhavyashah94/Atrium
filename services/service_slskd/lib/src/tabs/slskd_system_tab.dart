@@ -3,6 +3,7 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/slskd_system_models.dart';
 import '../slskd_providers.dart';
 import '../system/slskd_daemon_card.dart';
 import '../system/slskd_disk_files_sheet.dart';
@@ -29,18 +30,35 @@ class SlskdSystemTab extends ConsumerStatefulWidget {
   ConsumerState<SlskdSystemTab> createState() => _SlskdSystemTabState();
 }
 
-class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab> {
-  late final ScrollController _scrollController;
+class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+  late final ScrollController _healthScrollController;
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
+    final int initialTab = ref.read(slskdSystemSegmentProvider(widget.instance));
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: initialTab.clamp(0, 2),
+    );
+    _tabController.addListener(_handleTabChanged);
+    _healthScrollController = ScrollController();
+  }
+
+  void _handleTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    ref.read(slskdSystemSegmentProvider(widget.instance).notifier).state =
+        _tabController.index;
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _tabController.removeListener(_handleTabChanged);
+    _tabController.dispose();
+    _healthScrollController.dispose();
     super.dispose();
   }
 
@@ -48,13 +66,21 @@ class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab> {
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final stateAsync = ref.watch(slskdApplicationStateProvider(widget.instance));
-    final activeSegment = ref.watch(slskdSystemSegmentProvider(widget.instance));
+
+    ref.listen<int>(
+      slskdSystemSegmentProvider(widget.instance),
+      (previous, next) {
+        if (_tabController.index != next && next >= 0 && next < 3) {
+          _tabController.animateTo(next);
+        }
+      },
+    );
 
     ref.listen<int>(
       slskdScrollToTopProvider((widget.instance, 4)),
       (previous, next) {
-        if (next > 0 && _scrollController.hasClients) {
-          _scrollController.animateTo(
+        if (next > 0 && _healthScrollController.hasClients) {
+          _healthScrollController.animateTo(
             0.0,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
@@ -124,137 +150,181 @@ class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab> {
             ],
           ),
         ],
-      ),
-      body: EasyRefresh(
-        onRefresh: () async {
-          ref.invalidate(slskdApplicationStateProvider(widget.instance));
-          ref.invalidate(slskdSharesProvider(widget.instance));
-          ref.invalidate(slskdLogsProvider(widget.instance));
-        },
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: <Widget>[
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                Insets.md,
-                Insets.sm,
-                Insets.md,
-                Insets.sm,
-              ),
-              sliver: SliverToBoxAdapter(
-                child: SegmentedButton<int>(
-                  segments: const <ButtonSegment<int>>[
-                    ButtonSegment<int>(
-                      value: 0,
-                      label: Text('Health'),
-                      icon: Icon(Icons.health_and_safety_rounded, size: 18),
-                    ),
-                    ButtonSegment<int>(
-                      value: 1,
-                      label: Text('Shares'),
-                      icon: Icon(Icons.folder_shared_rounded, size: 18),
-                    ),
-                    ButtonSegment<int>(
-                      value: 2,
-                      label: Text('Logs'),
-                      icon: Icon(Icons.article_rounded, size: 18),
-                    ),
-                  ],
-                  selected: <int>{activeSegment},
-                  onSelectionChanged: (Set<int> newSelection) {
-                    ref
-                        .read(
-                          slskdSystemSegmentProvider(widget.instance).notifier,
-                        )
-                        .state = newSelection.first;
-                  },
-                ),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: colorScheme.primary,
+          unselectedLabelColor: colorScheme.onSurfaceVariant,
+          indicatorColor: colorScheme.primary,
+          indicatorSize: TabBarIndicatorSize.tab,
+          tabs: const <Widget>[
+            Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(Icons.health_and_safety_outlined, size: 18),
+                  SizedBox(width: Insets.xs),
+                  Text('Health'),
+                ],
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                Insets.md,
-                0,
-                Insets.md,
-                Insets.xl,
+            Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(Icons.folder_shared_outlined, size: 18),
+                  SizedBox(width: Insets.xs),
+                  Text('Shares'),
+                ],
               ),
-              sliver: SliverToBoxAdapter(
-                child: stateAsync.when(
-                  loading: () => const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(Insets.xl),
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                  error: (error, _) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(Insets.xl),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Icon(
-                            Icons.error_outline_rounded,
-                            size: 40,
-                            color: colorScheme.error,
-                          ),
-                          const SizedBox(height: Insets.sm),
-                          Text(
-                            'Failed to load system state',
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: Insets.xs),
-                          Text(
-                            '$error',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colorScheme.error,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  data: (state) {
-                    if (activeSegment == 0) {
-                      // Health & Status
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          SlskdServerCard(
-                            instance: widget.instance,
-                            server: state.server,
-                            watchdog: state.connectionWatchdog,
-                          ),
-                          const SizedBox(height: Insets.sm),
-                          SlskdUserCard(user: state.user),
-                          const SizedBox(height: Insets.sm),
-                          SlskdDaemonCard(
-                            instance: widget.instance,
-                            version: state.version,
-                          ),
-                          if (state.vpn != null) ...<Widget>[
-                            const SizedBox(height: Insets.sm),
-                            SlskdVpnCard(vpn: state.vpn!),
-                          ],
-                        ],
-                      );
-                    } else if (activeSegment == 1) {
-                      // Shares
-                      return SlskdSharesView(
-                        instance: widget.instance,
-                        sharesState: state.shares,
-                      );
-                    } else {
-                      // Logs
-                      return SlskdLogsView(instance: widget.instance);
-                    }
-                  },
-                ),
+            ),
+            Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(Icons.article_outlined, size: 18),
+                  SizedBox(width: Insets.xs),
+                  Text('Logs'),
+                ],
               ),
             ),
           ],
         ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: <Widget>[
+          _buildHealthTab(context, colorScheme, stateAsync),
+          _buildSharesTab(context, colorScheme, stateAsync),
+          _buildLogsTab(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHealthTab(
+    BuildContext context,
+    ColorScheme colorScheme,
+    AsyncValue<SlskdApplicationState> stateAsync,
+  ) {
+    return EasyRefresh(
+      onRefresh: () async {
+        ref.invalidate(slskdApplicationStateProvider(widget.instance));
+      },
+      child: stateAsync.when(
+        loading: () => const Center(
+          child: Padding(
+            padding: EdgeInsets.all(Insets.xl),
+            child: ExpressiveProgressIndicator(),
+          ),
+        ),
+        error: (error, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(Insets.xl),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 40,
+                  color: colorScheme.error,
+                ),
+                const SizedBox(height: Insets.sm),
+                Text(
+                  'Failed to load system state',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: Insets.xs),
+                Text(
+                  '$error',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.error,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        data: (state) {
+          return ListView(
+            controller: _healthScrollController,
+            padding: const EdgeInsets.all(Insets.md),
+            children: <Widget>[
+              SlskdServerCard(
+                instance: widget.instance,
+                server: state.server,
+                watchdog: state.connectionWatchdog,
+              ),
+              const SizedBox(height: Insets.sm),
+              SlskdUserCard(user: state.user),
+              const SizedBox(height: Insets.sm),
+              SlskdDaemonCard(
+                instance: widget.instance,
+                version: state.version,
+              ),
+              if (state.vpn != null) ...<Widget>[
+                const SizedBox(height: Insets.sm),
+                SlskdVpnCard(vpn: state.vpn!),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSharesTab(
+    BuildContext context,
+    ColorScheme colorScheme,
+    AsyncValue<SlskdApplicationState> stateAsync,
+  ) {
+    return EasyRefresh(
+      onRefresh: () async {
+        ref.invalidate(slskdApplicationStateProvider(widget.instance));
+        ref.invalidate(slskdSharesProvider(widget.instance));
+      },
+      child: stateAsync.when(
+        loading: () => const Center(
+          child: Padding(
+            padding: EdgeInsets.all(Insets.xl),
+            child: ExpressiveProgressIndicator(),
+          ),
+        ),
+        error: (error, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(Insets.xl),
+            child: Text(
+              'Failed to load shares: $error',
+              style: TextStyle(color: colorScheme.error),
+            ),
+          ),
+        ),
+        data: (state) {
+          return ListView(
+            padding: const EdgeInsets.all(Insets.md),
+            children: <Widget>[
+              SlskdSharesView(
+                instance: widget.instance,
+                sharesState: state.shares,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLogsTab(BuildContext context) {
+    return EasyRefresh(
+      onRefresh: () async {
+        ref.invalidate(slskdLogsProvider(widget.instance));
+        ref.invalidate(slskdLogFilesProvider(widget.instance));
+      },
+      child: ListView(
+        padding: const EdgeInsets.all(Insets.md),
+        children: <Widget>[
+          SlskdLogsView(instance: widget.instance),
+        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:core_models/core_models.dart';
 import 'package:core_router/core_router.dart';
+import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -174,58 +175,49 @@ class SlskdHome extends ConsumerWidget {
           },
         ),
       ),
-      bottomNavigationBar: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: isNavbarVisible ? 80 : 0,
-        child: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
-          child: SizedBox(
-            height: 80,
-            child: NavigationBar(
-              selectedIndex: currentIndex,
-              onDestinationSelected: (int index) {
-                if (index == currentIndex) {
-                  ref
-                      .read(slskdBottomNavVisibleProvider(instance).notifier)
-                      .state = true;
-                  ref
-                      .read(slskdScrollToTopProvider((instance, index)).notifier)
-                      .update((int state) => state + 1);
-                } else {
-                  ref.read(slskdActiveTabProvider(instance).notifier).state =
-                      index;
-                }
-              },
-              destinations: const <NavigationDestination>[
-                NavigationDestination(
-                  icon: Icon(Icons.swap_vert_rounded),
-                  selectedIcon: Icon(Icons.swap_vert_rounded),
-                  label: 'Transfers',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.search_rounded),
-                  selectedIcon: Icon(Icons.search_rounded),
-                  label: 'Search',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.folder_outlined),
-                  selectedIcon: Icon(Icons.folder_rounded),
-                  label: 'Browse',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.forum_outlined),
-                  selectedIcon: Icon(Icons.forum_rounded),
-                  label: 'Community',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.dns_outlined),
-                  selectedIcon: Icon(Icons.dns_rounded),
-                  label: 'System',
-                ),
-              ],
-            ),
+      bottomNavigationBar: AtriumBottomNav(
+        visible: isNavbarVisible,
+        selectedIndex: currentIndex,
+        onDestinationSelected: (int index) {
+          if (index == currentIndex) {
+            ref
+                .read(slskdBottomNavVisibleProvider(instance).notifier)
+                .state = true;
+            ref
+                .read(slskdScrollToTopProvider((instance, index)).notifier)
+                .update((int state) => state + 1);
+          } else {
+            ref.read(slskdActiveTabProvider(instance).notifier).state =
+                index;
+          }
+        },
+        destinations: const <NavigationDestination>[
+          NavigationDestination(
+            icon: Icon(Icons.swap_vert_rounded),
+            selectedIcon: Icon(Icons.swap_vert_rounded),
+            label: 'Transfers',
           ),
-        ),
+          NavigationDestination(
+            icon: Icon(Icons.search_rounded),
+            selectedIcon: Icon(Icons.search_rounded),
+            label: 'Search',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.folder_outlined),
+            selectedIcon: Icon(Icons.folder_rounded),
+            label: 'Browse',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.forum_outlined),
+            selectedIcon: Icon(Icons.forum_rounded),
+            label: 'Community',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.dns_outlined),
+            selectedIcon: Icon(Icons.dns_rounded),
+            label: 'System',
+          ),
+        ],
       ),
     );
   }
