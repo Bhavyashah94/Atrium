@@ -531,14 +531,6 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
           _hasActiveFilters ? colorScheme.primaryContainer : colorScheme.surfaceContainerHigh,
       foregroundColor:
           _hasActiveFilters ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: _hasActiveFilters
-              ? colorScheme.primary
-              : colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
       onPressed: () => _openFilterSheet(context),
       child: _hasActiveFilters
           ? Badge(

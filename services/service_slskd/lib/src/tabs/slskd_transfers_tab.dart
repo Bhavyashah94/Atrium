@@ -277,14 +277,6 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
           _hasActiveFilters ? colorScheme.primaryContainer : colorScheme.surfaceContainerHigh,
       foregroundColor:
           _hasActiveFilters ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: _hasActiveFilters
-              ? colorScheme.primary
-              : colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
       onPressed: () => _openSortAndFilterSheet(
         context,
         downloads: downloads,
