@@ -1422,7 +1422,7 @@ class _TorrentTileState extends ConsumerState<_TorrentTile> {
                         <String>{hash},
                       );
                     },
-                    color: Theme.of(context).colorScheme.error,
+                    color: Colors.red,
                   ),
                 ],
               ),
