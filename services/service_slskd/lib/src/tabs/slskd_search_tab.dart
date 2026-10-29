@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:dio/dio.dart';
@@ -307,6 +305,7 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
           },
           child: CustomScrollView(
             controller: _scrollController,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: <Widget>[
             // 1. Pinned Search & App Bar
@@ -319,10 +318,19 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
               backgroundColor: colorScheme.surface,
               toolbarHeight: 68,
               leadingWidth: 52,
-              leading: IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: widget.onOpenDrawer ?? Scaffold.of(context).openDrawer,
-              ),
+              leading: (widget.onOpenDrawer != null ||
+                      (Scaffold.maybeOf(context)?.hasDrawer ?? false))
+                  ? IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: () {
+                        if (widget.onOpenDrawer != null) {
+                          widget.onOpenDrawer!();
+                        } else {
+                          Scaffold.maybeOf(context)?.openDrawer();
+                        }
+                      },
+                    )
+                  : null,
               titleSpacing: Insets.xs,
               title: SearchBar(
                 controller: _searchController,
@@ -333,6 +341,7 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
                   EdgeInsets.symmetric(horizontal: Insets.sm),
                 ),
                 leading: const Icon(Icons.search, size: 20),
+                onChanged: (_) => setState(() {}),
                 trailing: <Widget>[
                   if (_searchController.text.isNotEmpty)
                     IconButton(
@@ -395,12 +404,26 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
                           ref.read(slskdSelectedSearchIdProvider(widget.instance).notifier).state = s.id;
                         },
                         onDeleted: () async {
-                          final api = await ref.read(slskdApiProvider(widget.instance).future);
-                          await api.deleteSearch(s.id);
-                          if (!mounted) return;
-                          ref.invalidate(slskdSearchesProvider(widget.instance));
-                          if (ref.read(slskdSelectedSearchIdProvider(widget.instance)) == s.id) {
-                            ref.read(slskdSelectedSearchIdProvider(widget.instance).notifier).state = null;
+                          try {
+                            final api = await ref.read(slskdApiProvider(widget.instance).future);
+                            await api.deleteSearch(s.id);
+                            if (!mounted) return;
+                            ref.invalidate(slskdSearchesProvider(widget.instance));
+                            if (ref.read(slskdSelectedSearchIdProvider(widget.instance)) == s.id) {
+                              ref.read(slskdSelectedSearchIdProvider(widget.instance).notifier).state = null;
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Failed to delete search: $e',
+                                    style: TextStyle(color: colorScheme.onError),
+                                  ),
+                                  backgroundColor: colorScheme.error,
+                                ),
+                              );
+                            }
                           }
                         },
                       );
@@ -523,7 +546,9 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
     // Filter and sort album groups
     final List<SlskdAlbumGroup> filteredGroups = _filterAndSortGroups(rawGroups);
 
-    if (!search.isComplete && rawGroups.isEmpty) {
+    if ((!search.isComplete || responsesAsync.isLoading) &&
+        rawGroups.isEmpty &&
+        !responsesAsync.hasError) {
       return <Widget>[
         SliverFillRemaining(
           hasScrollBody: false,
@@ -564,7 +589,11 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
       return <Widget>[
         SliverFillRemaining(
           hasScrollBody: false,
-          child: _buildNoMatchesState(context, search),
+          child: _buildNoMatchesState(
+            context,
+            search,
+            error: responsesAsync.hasError ? responsesAsync.error : null,
+          ),
         ),
       ];
     }
@@ -649,12 +678,16 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
     );
   }
 
-  Widget _buildNoMatchesState(BuildContext context, SlskdSearch search) {
+  Widget _buildNoMatchesState(
+    BuildContext context,
+    SlskdSearch search, {
+    Object? error,
+  }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     // A failed search is complete with no responses too, but it is not an
     // empty result, so it must not read as one.
-    final bool failed = search.isErrored;
+    final bool failed = search.isErrored || error != null;
 
     return Center(
       child: Padding(
@@ -685,7 +718,9 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
             const SizedBox(height: Insets.xs),
             Text(
               failed
-                  ? 'slskd could not run it. Check that it is connected to Soulseek in System.'
+                  ? (error != null
+                      ? '$error'
+                      : 'slskd could not run it. Check that it is connected to Soulseek in System.')
                   : (_hasActiveFilters
                       ? 'Try relaxing audio format or slot availability filters.'
                       : 'Check spelling or try broader artist or album keywords.'),
@@ -768,6 +803,17 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
           final bIsFlac = b.qualityBadge.contains('FLAC');
           if (aIsFlac && !bIsFlac) return -1;
           if (!aIsFlac && bIsFlac) return 1;
+          final aMaxBitrate = a.files.fold<int>(
+            0,
+            (max, f) => (f.bitRate ?? 0) > max ? (f.bitRate ?? 0) : max,
+          );
+          final bMaxBitrate = b.files.fold<int>(
+            0,
+            (max, f) => (f.bitRate ?? 0) > max ? (f.bitRate ?? 0) : max,
+          );
+          if (aMaxBitrate != bMaxBitrate) {
+            return bMaxBitrate.compareTo(aMaxBitrate);
+          }
           return b.uploadSpeed.compareTo(a.uploadSpeed);
         });
         break;

@@ -24,16 +24,11 @@ class SlskdBrowsePeerCard extends StatelessWidget {
 
   void _openBio(BuildContext context) {
     if (userInfo == null && userStatus == null) return;
-    showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (BuildContext _) => SlskdUserBioSheet(
-        username: username,
-        userInfo: userInfo ?? const SlskdUserInfo(description: ''),
-        userStatus: userStatus ?? const SlskdUserStatus(),
-      ),
+    showSlskdUserBioSheet(
+      context,
+      username: username,
+      userInfo: userInfo,
+      userStatus: userStatus,
     );
   }
 
@@ -181,7 +176,9 @@ class SlskdBrowsePeerCard extends StatelessWidget {
               tooltip: 'View Peer Profile & Bio',
               visualDensity: VisualDensity.compact,
               icon: const Icon(Icons.info_outline_rounded, size: 18),
-              onPressed: () => _openBio(context),
+              onPressed: (userInfo == null && userStatus == null)
+                  ? null
+                  : () => _openBio(context),
             ),
           ],
         ),

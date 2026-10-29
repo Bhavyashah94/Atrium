@@ -94,37 +94,47 @@ class SlskdVpnCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: Insets.sm),
-            Row(
+            Wrap(
+              spacing: Insets.md,
+              runSpacing: Insets.xs,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: <Widget>[
-                if (vpn.publicIpAddress != null) ...<Widget>[
-                  Icon(
-                    Icons.public_rounded,
-                    size: 14,
-                    color: colorScheme.onSurfaceVariant,
+                if (vpn.publicIpAddress != null)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.public_rounded,
+                        size: 14,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: Insets.xs / 2),
+                      Text(
+                        'IP: ${vpn.publicIpAddress}',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: Insets.xs / 2),
-                  Text(
-                    'IP: ${vpn.publicIpAddress}',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                if (vpn.forwardedPort != null)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.alt_route_rounded,
+                        size: 14,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: Insets.xs / 2),
+                      Text(
+                        'Port: ${vpn.forwardedPort}',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: Insets.md),
-                ],
-                if (vpn.forwardedPort != null) ...<Widget>[
-                  Icon(
-                    Icons.alt_route_rounded,
-                    size: 14,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: Insets.xs / 2),
-                  Text(
-                    'Port: ${vpn.forwardedPort}',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
               ],
             ),
           ],

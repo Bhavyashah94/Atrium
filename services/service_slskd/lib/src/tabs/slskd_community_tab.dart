@@ -264,6 +264,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
                 final target = userCtrl.text.trim();
                 if (target.isEmpty) return;
                 Navigator.of(ctx).pop();
+                ref.read(slskdActiveRoomNameProvider(widget.instance).notifier).state = null;
                 ref.read(slskdActiveConversationUsernameProvider(widget.instance).notifier).state = target;
               },
               child: const Text('Start Chat'),
@@ -349,10 +350,17 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
 
     return Scaffold(
       appBar: AppBar(
-        leading: widget.onOpenDrawer != null
+        leading: (widget.onOpenDrawer != null ||
+                (Scaffold.maybeOf(context)?.hasDrawer ?? false))
             ? IconButton(
                 icon: const Icon(Icons.menu),
-                onPressed: widget.onOpenDrawer,
+                onPressed: () {
+                  if (widget.onOpenDrawer != null) {
+                    widget.onOpenDrawer!();
+                  } else {
+                    Scaffold.maybeOf(context)?.openDrawer();
+                  }
+                },
               )
             : null,
         titleSpacing: widget.onOpenDrawer != null ? Insets.xs : Insets.md,
@@ -546,6 +554,9 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
                       conversation: conversation,
                       onTap: () {
                         ref
+                            .read(slskdActiveRoomNameProvider(widget.instance).notifier)
+                            .state = null;
+                        ref
                             .read(slskdActiveConversationUsernameProvider(widget.instance)
                                 .notifier)
                             .state = conversation.username;
@@ -654,6 +665,9 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
                       isJoined: true,
                       isPrivate: roomInfo.isPrivate,
                       onTap: () {
+                        ref
+                            .read(slskdActiveConversationUsernameProvider(widget.instance).notifier)
+                            .state = null;
                         ref
                             .read(slskdActiveRoomNameProvider(widget.instance).notifier)
                             .state = roomName;
@@ -814,6 +828,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
                   }
 
                   return ListView.builder(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.symmetric(
                       horizontal: Insets.md,
                       vertical: Insets.sm,
@@ -1017,6 +1032,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
                   }
 
                   return ListView.builder(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.symmetric(
                       horizontal: Insets.md,
                       vertical: Insets.sm,

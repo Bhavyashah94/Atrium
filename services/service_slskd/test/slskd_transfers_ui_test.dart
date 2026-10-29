@@ -372,6 +372,7 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1179, 2556));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(
         ProviderScope(

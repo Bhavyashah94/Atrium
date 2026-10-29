@@ -39,7 +39,8 @@ enum SlskdSearchFormatFilter {
       };
 
   bool matchesExtension(String ext) {
-    final String upper = ext.toUpperCase();
+    final String clean = ext.trim().replaceAll(RegExp(r'^\.+'), '');
+    final String upper = clean.toUpperCase();
     return switch (this) {
       SlskdSearchFormatFilter.all => true,
       SlskdSearchFormatFilter.flacOnly => upper == 'FLAC',
@@ -90,12 +91,13 @@ class SlskdAlbumGroup {
 
   /// Predominant quality in this folder.
   String get qualityBadge {
-    if (files.any((f) => f.extension.toUpperCase() == 'FLAC')) {
-      final highRes = files.firstWhere(
-        (f) => f.bitDepth != null && f.bitDepth! > 16,
-        orElse: () => files.first,
+    final flacFiles = files.where((f) => f.extension.toUpperCase().replaceAll(RegExp(r'^\.+'), '') == 'FLAC');
+    if (flacFiles.isNotEmpty) {
+      final highRes = flacFiles.firstWhere(
+        (f) => (f.bitDepth ?? 0) > 16,
+        orElse: () => flacFiles.first,
       );
-      if (highRes.bitDepth != null && highRes.bitDepth! > 16) {
+      if ((highRes.bitDepth ?? 0) > 16) {
         return 'FLAC ${highRes.bitDepth}-bit';
       }
       return 'FLAC';

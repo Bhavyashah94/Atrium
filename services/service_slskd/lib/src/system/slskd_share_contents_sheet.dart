@@ -98,12 +98,19 @@ class _SlskdShareContentsSheetState
         ? ref.watch(slskdShareContentsProvider((widget.instance, widget.shareId!)))
         : ref.watch(slskdAllSharedContentsProvider(widget.instance));
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) {
+    return PopScope(
+      canPop: _pathSegments.isEmpty,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (!didPop) {
+          _navigateBack();
+        }
+      },
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
         return Material(
           color: colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -314,6 +321,8 @@ class _SlskdShareContentsSheetState
                     for (final seg in _pathSegments) {
                       if (currentNode.subfolders.containsKey(seg)) {
                         currentNode = currentNode.subfolders[seg]!;
+                      } else {
+                        break;
                       }
                     }
 
@@ -372,7 +381,7 @@ class _SlskdShareContentsSheetState
                         // Subfolders
                         if (currentIdx < folders.length) {
                           final folder = folders[currentIdx];
-                          final totalFiles = folder.getAllFilesRecursive().length;
+                          final totalFiles = folder.totalFiles;
                           return ListTile(
                             leading: Icon(
                               Icons.folder_rounded,
@@ -426,8 +435,9 @@ class _SlskdShareContentsSheetState
           ),
         );
       },
-    );
-  }
+    ),
+  );
+}
 
   IconData _getFileIcon(String ext) {
     switch (ext.toLowerCase()) {

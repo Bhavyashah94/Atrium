@@ -209,6 +209,7 @@ class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab>
     return EasyRefresh(
       onRefresh: () async {
         ref.invalidate(slskdApplicationStateProvider(widget.instance));
+        await ref.read(slskdApplicationStateProvider(widget.instance).future);
       },
       child: stateAsync.when(
         loading: () => const Center(
@@ -282,6 +283,10 @@ class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab>
       onRefresh: () async {
         ref.invalidate(slskdApplicationStateProvider(widget.instance));
         ref.invalidate(slskdSharesProvider(widget.instance));
+        await Future.wait(<Future<dynamic>>[
+          ref.read(slskdApplicationStateProvider(widget.instance).future),
+          ref.read(slskdSharesProvider(widget.instance).future),
+        ]);
       },
       child: stateAsync.when(
         loading: () => const Center(
@@ -319,6 +324,10 @@ class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab>
       onRefresh: () async {
         ref.invalidate(slskdLogsProvider(widget.instance));
         ref.invalidate(slskdLogFilesProvider(widget.instance));
+        await Future.wait(<Future<dynamic>>[
+          ref.read(slskdLogsProvider(widget.instance).future),
+          ref.read(slskdLogFilesProvider(widget.instance).future),
+        ]);
       },
       child: ListView(
         padding: const EdgeInsets.all(Insets.md),

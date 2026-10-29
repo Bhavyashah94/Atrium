@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/slskd_browse_models.dart';
+import '../models/slskd_community_models.dart';
 import '../slskd_format.dart';
 import '../slskd_providers.dart';
 import 'slskd_peer_action_sheet.dart';
@@ -187,103 +188,163 @@ class _SlskdRoomMembersSheetState extends ConsumerState<SlskdRoomMembersSheet> {
 
           // Member List
           Expanded(
-            child: filtered.isEmpty
-                ? Center(
-                    child: Text(
-                      _filterQuery.isNotEmpty ? 'No members match "$_filterQuery"' : 'No members found',
-                      style: textTheme.bodyMedium?.copyWith(color: colorScheme.outline),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: filtered.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final member = filtered[index];
-                      final bool isOnline = member.status == 2;
-                      final bool isAway = member.status == 1;
-
-                      final Color presenceColor = slskdPresenceColor(
-                        colorScheme,
-                        isOnline: isOnline,
-                        isAway: isAway,
-                      );
-
-                      final String subtitle = member.fileCount > 0
-                          ? '${member.fileCount} shares • ${member.averageSpeed > 0 ? slskdFormatRate(member.averageSpeed) : 'Direct'}'
-                          : (isOnline ? 'Online' : (isAway ? 'Away' : 'Offline'));
-
-                      return ListTile(
-                        dense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: Insets.xs),
-                        leading: Stack(
-                          children: <Widget>[
-                            CircleAvatar(
-                              radius: 16,
-                              backgroundColor: colorScheme.surfaceContainerHighest,
-                              child: Text(
-                                member.username.isNotEmpty ? member.username[0].toUpperCase() : '?',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              right: 0,
-                              bottom: 0,
-                              child: Container(
-                                width: 9,
-                                height: 9,
-                                decoration: BoxDecoration(
-                                  color: presenceColor,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: colorScheme.surface, width: 1.5),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        title: Text(
-                          member.username,
-                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        subtitle: Row(
-                          children: <Widget>[
-                            Icon(
-                              slskdPresenceIcon(
-                                isOnline: isOnline,
-                                isAway: isAway,
-                              ),
-                              size: 11,
-                              color: presenceColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                subtitle,
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: colorScheme.outline,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        trailing: const Icon(Icons.more_vert_rounded, size: 18),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          showSlskdPeerActionSheet(
-                            context,
-                            instance: widget.instance,
-                            username: member.username,
-                          );
-                        },
-                      );
-                    },
-                  ),
+            child: _buildMemberList(
+              context,
+              colorScheme: colorScheme,
+              textTheme: textTheme,
+              isLoading: usersAsync.isLoading && members.isEmpty,
+              filtered: filtered,
+              roomDetail: roomDetailAsync.value,
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMemberList(
+    BuildContext context, {
+    required ColorScheme colorScheme,
+    required TextTheme textTheme,
+    required bool isLoading,
+    required List<SlskdUserPresence> filtered,
+    required SlskdRoom? roomDetail,
+  }) {
+    if (isLoading) {
+      return const Center(child: ExpressiveProgressIndicator());
+    }
+    if (filtered.isEmpty) {
+      return Center(
+        child: Text(
+          _filterQuery.isNotEmpty
+              ? 'No members match "$_filterQuery"'
+              : 'No members found',
+          style: textTheme.bodyMedium?.copyWith(color: colorScheme.outline),
+        ),
+      );
+    }
+    return ListView.builder(
+      itemCount: filtered.length,
+      itemBuilder: (BuildContext context, int index) {
+        final member = filtered[index];
+        final bool isOnline = member.status == 2;
+        final bool isAway = member.status == 1;
+        final bool isOperator = roomDetail != null &&
+            (roomDetail.operators.contains(member.username) ||
+                roomDetail.owner == member.username);
+
+        final Color presenceColor = slskdPresenceColor(
+          colorScheme,
+          isOnline: isOnline,
+          isAway: isAway,
+        );
+
+        final String subtitle = member.fileCount > 0
+            ? '${member.fileCount} shares • ${member.averageSpeed > 0 ? slskdFormatRate(member.averageSpeed) : 'Direct'}'
+            : (isOnline ? 'Online' : (isAway ? 'Away' : 'Offline'));
+
+        return ListTile(
+          dense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: Insets.xs),
+          leading: Stack(
+            children: <Widget>[
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: colorScheme.surfaceContainerHighest,
+                child: Text(
+                  member.username.isNotEmpty
+                      ? member.username[0].toUpperCase()
+                      : '?',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: presenceColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colorScheme.surface, width: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Flexible(
+                child: Text(
+                  member.username,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (isOperator) ...<Widget>[
+                const SizedBox(width: Insets.xs),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'OP',
+                    style: textTheme.labelSmall?.copyWith(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          subtitle: Row(
+            children: <Widget>[
+              Icon(
+                slskdPresenceIcon(
+                  isOnline: isOnline,
+                  isAway: isAway,
+                ),
+                size: 11,
+                color: presenceColor,
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  subtitle,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.outline,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          trailing: const Icon(Icons.more_vert_rounded, size: 18),
+          onTap: () {
+            Navigator.of(context).pop();
+            showSlskdPeerActionSheet(
+              context,
+              instance: widget.instance,
+              username: member.username,
+            );
+          },
+        );
+      },
     );
   }
 }

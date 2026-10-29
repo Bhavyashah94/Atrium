@@ -24,6 +24,7 @@ class SlskdAnalyticsSheet extends ConsumerStatefulWidget {
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => SlskdAnalyticsSheet(instance: instance),
     );
@@ -454,7 +455,9 @@ class _SlskdAnalyticsSheetState extends ConsumerState<SlskdAnalyticsSheet> {
                                   ),
                                 ),
                                 title: Text(
-                                  p.username ?? 'Unknown Peer',
+                                  (p.username != null && p.username!.isNotEmpty)
+                                      ? p.username!
+                                      : 'Unknown Peer',
                                   style: textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -581,7 +584,7 @@ class _SlskdAnalyticsSheetState extends ConsumerState<SlskdAnalyticsSheet> {
                                   color: colorScheme.error,
                                   size: 20,
                                 ),
-                                title: Text(
+                                title: SelectableText(
                                   e.exception.isNotEmpty
                                       ? e.exception
                                       : 'Generic Network Failure',

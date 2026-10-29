@@ -335,8 +335,8 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
                   const SizedBox(height: Insets.xs),
                   _DiagnosticRow(
                     label: 'Queue Rank',
-                    value: transfer.placeInQueue != null && transfer.placeInQueue! > 0
-                        ? '#${transfer.placeInQueue}'
+                    value: liveQueuePos != null && liveQueuePos > 0
+                        ? '#$liveQueuePos'
                         : 'Active / Direct',
                     colorScheme: colorScheme,
                     textTheme: textTheme,
@@ -361,7 +361,7 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
                           Icon(Icons.warning_amber_rounded, size: 18, color: colorScheme.onErrorContainer),
                           const SizedBox(width: Insets.xs),
                           Expanded(
-                            child: Text(
+                            child: SelectableText(
                               transfer.exception!,
                               style: textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onErrorContainer,
@@ -468,14 +468,14 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
                   const SizedBox(height: Insets.sm),
                   _DiagnosticRow(
                     label: 'Requested',
-                    value: _formatDate(transfer.requestedAt),
+                    value: slskdFormatDateTime(transfer.requestedAt),
                     colorScheme: colorScheme,
                     textTheme: textTheme,
                   ),
                   const SizedBox(height: Insets.xs),
                   _DiagnosticRow(
                     label: 'Started',
-                    value: transfer.startedAt != null ? _formatDate(transfer.startedAt!) : 'Waiting in queue',
+                    value: transfer.startedAt != null ? slskdFormatDateTime(transfer.startedAt!) : 'Waiting in queue',
                     colorScheme: colorScheme,
                     textTheme: textTheme,
                   ),
@@ -483,7 +483,7 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
                     const SizedBox(height: Insets.xs),
                     _DiagnosticRow(
                       label: 'Ended',
-                      value: _formatDate(transfer.endedAt!),
+                      value: slskdFormatDateTime(transfer.endedAt!),
                       colorScheme: colorScheme,
                       textTheme: textTheme,
                     ),
@@ -650,11 +650,6 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
     ),
   );
 }
-
-  String _formatDate(DateTime dt) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    return '${dt.year}-${twoDigits(dt.month)}-${twoDigits(dt.day)} ${twoDigits(dt.hour)}:${twoDigits(dt.minute)}:${twoDigits(dt.second)}';
-  }
 }
 
 class _MetricItem extends StatelessWidget {

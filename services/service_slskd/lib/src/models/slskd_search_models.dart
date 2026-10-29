@@ -115,7 +115,8 @@ class SlskdSearch {
 
   /// slskd could not run the search, most often because it is not logged in
   /// to Soulseek. Such a search is also complete, with no responses.
-  bool get isErrored => state.toLowerCase().contains('errored');
+  bool get isErrored =>
+      state.toLowerCase().contains('error') || state.toLowerCase().contains('fail');
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -250,7 +251,8 @@ class SlskdSearchFile {
 
   String get albumDirectory {
     final sep = filename.contains('\\') ? '\\' : '/';
-    final parts = filename.split(sep);
+    final normalized = filename.replaceAll('\\', '/');
+    final parts = normalized.split('/').where((p) => p.isNotEmpty).toList();
     if (parts.length > 1) {
       return parts.sublist(0, parts.length - 1).join(sep);
     }

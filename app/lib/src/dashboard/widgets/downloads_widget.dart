@@ -335,11 +335,16 @@ class DashboardDownloadsWidget extends ConsumerWidget {
             if (file.category == TransferCategory.inProgress ||
                 file.category == TransferCategory.queued) {
               final bool moving = file.category == TransferCategory.inProgress;
-              if (moving) {
+              if (moving && file.averageSpeed > 0 && file.averageSpeed.isFinite) {
                 totalSpeed += file.averageSpeed.round();
               }
+              final String name = file.filename
+                      .split(RegExp(r'[\\/]'))
+                      .where((s) => s.isNotEmpty)
+                      .lastOrNull ??
+                  file.filename;
               rows.add(_DownloadRow(
-                name: file.filename.split(RegExp(r'[\\/]')).last,
+                name: name,
                 progress: file.progress,
                 instance: i,
                 moving: moving,

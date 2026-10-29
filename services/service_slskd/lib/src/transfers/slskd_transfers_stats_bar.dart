@@ -191,7 +191,10 @@ class SlskdTransfersStatsBar extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Failed to clear: $e'),
+                              content: Text(
+                                'Failed to clear: $e',
+                                style: TextStyle(color: colorScheme.onError),
+                              ),
                               backgroundColor: colorScheme.error,
                             ),
                           );

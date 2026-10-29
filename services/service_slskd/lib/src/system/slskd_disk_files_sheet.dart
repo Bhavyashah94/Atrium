@@ -230,12 +230,19 @@ class _SlskdDiskFilesSheetState extends ConsumerState<SlskdDiskFilesSheet>
             slskdIncompleteDirectoryProvider((widget.instance, _currentSubdirectory)),
           );
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) {
+    return PopScope(
+      canPop: _pathSegments.isEmpty,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (!didPop) {
+          _navigateBack();
+        }
+      },
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
         return Material(
           color: colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -548,8 +555,9 @@ class _SlskdDiskFilesSheetState extends ConsumerState<SlskdDiskFilesSheet>
           ),
         );
       },
-    );
-  }
+    ),
+  );
+}
 
   IconData _getFileIcon(String fileName) {
     final lower = fileName.toLowerCase();

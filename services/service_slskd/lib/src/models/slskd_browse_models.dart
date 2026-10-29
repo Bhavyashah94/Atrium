@@ -19,9 +19,9 @@ class SlskdDirectory {
     if (filesRaw is Iterable) {
       for (final item in filesRaw) {
         if (item is Map<String, dynamic>) {
-          filesList.add(SlskdSearchFile.fromJson(item));
+          filesList.add(SlskdSearchFile.fromJson(item, defaultLocked: locked));
         } else if (item is Map) {
-          filesList.add(SlskdSearchFile.fromJson(item.cast<String, dynamic>()));
+          filesList.add(SlskdSearchFile.fromJson(item.cast<String, dynamic>(), defaultLocked: locked));
         }
       }
     }
@@ -152,7 +152,7 @@ class SlskdUserPresence {
 
   bool get isOnline => status == 2;
   bool get isAway => status == 1;
-  bool get isOffline => status == 0;
+  bool get isOffline => !isOnline && !isAway;
 
   String get statusLabel {
     switch (status) {

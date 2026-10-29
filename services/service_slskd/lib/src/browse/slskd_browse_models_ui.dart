@@ -1,4 +1,5 @@
 import '../models/slskd_models.dart';
+import '../slskd_format.dart';
 
 /// In-memory tree node representing a directory in a peer's file shares.
 class BrowseNode {
@@ -24,16 +25,7 @@ class BrowseNode {
       files.fold<int>(0, (sum, f) => sum + f.size) +
       subfolders.values.fold<int>(0, (sum, child) => sum + child.totalBytes);
 
-  String get formattedTotalSize {
-    final b = totalBytes;
-    if (b >= 1024 * 1024 * 1024) {
-      return '${(b / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
-    }
-    if (b >= 1024 * 1024) {
-      return '${(b / (1024 * 1024)).toStringAsFixed(1)} MB';
-    }
-    return '${(b / 1024).toStringAsFixed(0)} KB';
-  }
+  String get formattedTotalSize => slskdFormatBytes(totalBytes);
 
   /// Collects all files in this node and all descendant subfolders.
   List<SlskdSearchFile> getAllFilesRecursive() {

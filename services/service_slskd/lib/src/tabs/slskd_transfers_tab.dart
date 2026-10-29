@@ -128,13 +128,19 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
               backgroundColor: colorScheme.surface,
               toolbarHeight: 68,
               leadingWidth: 52,
-              leading: IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: widget.onOpenDrawer ??
-                    () {
-                      Scaffold.of(context).openDrawer();
-                    },
-              ),
+              leading: (widget.onOpenDrawer != null ||
+                      (Scaffold.maybeOf(context)?.hasDrawer ?? false))
+                  ? IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: () {
+                        if (widget.onOpenDrawer != null) {
+                          widget.onOpenDrawer!();
+                        } else {
+                          Scaffold.maybeOf(context)?.openDrawer();
+                        }
+                      },
+                    )
+                  : null,
               titleSpacing: Insets.xs,
               title: SearchBar(
                 controller: _searchController,

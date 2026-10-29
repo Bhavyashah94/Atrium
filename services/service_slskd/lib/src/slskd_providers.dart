@@ -81,7 +81,7 @@ final slskdSelectedHistoricalLogProvider =
 
 /// Dio HTTP API client instance for [SlskdApi].
 final slskdApiProvider =
-    FutureProvider.autoDispose.family<SlskdApi, Instance>((ref, instance) async {
+    FutureProvider.family<SlskdApi, Instance>((ref, instance) async {
   final dio = await ref.watch(instanceDioProvider(instance).future);
   return SlskdApi(dio);
 }, retry: (_, _) => null);
@@ -285,7 +285,9 @@ final slskdTransferDirectoriesProvider =
   instance,
 ) async {
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
-  return api.getTransferDirectories(limit: 10);
+  final days = ref.watch(slskdAnalyticsTimeframeDaysProvider(instance));
+  final start = DateTime.now().subtract(Duration(days: days));
+  return api.getTransferDirectories(start: start, limit: 10);
 }, retry: (_, _) => null);
 
 /// Prometheus KPIs from GET /api/v0/telemetry/metrics/kpis.

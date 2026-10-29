@@ -589,6 +589,8 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
     for (final segment in currentPathSegments) {
       if (currentNode.subfolders.containsKey(segment)) {
         currentNode = currentNode.subfolders[segment]!;
+      } else {
+        break;
       }
     }
 
@@ -816,9 +818,12 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
                     visualDensity: VisualDensity.compact,
                     padding: const EdgeInsets.symmetric(horizontal: Insets.sm),
                   ),
-                  icon: const Icon(Icons.download_rounded, size: 16),
-                  label: const Text('Download Folder'),
-                  onPressed: () => _downloadFolder(username, node),
+                  icon: Icon(
+                    node.isLocked ? Icons.lock_clock_outlined : Icons.download_rounded,
+                    size: 16,
+                  ),
+                  label: Text(node.isLocked ? 'Locked' : 'Download Folder'),
+                  onPressed: node.isLocked ? null : () => _downloadFolder(username, node),
                 ),
             ],
           ),

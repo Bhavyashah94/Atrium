@@ -79,11 +79,24 @@ class SlskdSearchFlatTile extends ConsumerWidget {
                     ),
                   ),
                 ),
+                if (file.isLocked) ...<Widget>[
+                  Icon(
+                    Icons.lock_outline_rounded,
+                    size: 14,
+                    color: colorScheme.error,
+                  ),
+                  const SizedBox(width: Insets.xs / 2),
+                ],
                 IconButton(
-                  tooltip: 'Download track',
+                  tooltip: file.isLocked ? 'File is locked' : 'Download track',
                   visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.download_rounded, size: 20),
-                  onPressed: onDownload,
+                  icon: Icon(
+                    file.isLocked
+                        ? Icons.lock_clock_outlined
+                        : Icons.download_rounded,
+                    size: 20,
+                  ),
+                  onPressed: file.isLocked ? null : onDownload,
                 ),
               ],
             ),
@@ -166,6 +179,13 @@ class SlskdSearchFlatTile extends ConsumerWidget {
                   Text(' • ', style: textTheme.labelSmall?.copyWith(color: colorScheme.outline)),
                   Text(
                     duration,
+                    style: textTheme.labelSmall?.copyWith(fontSize: 10, color: colorScheme.outline),
+                  ),
+                ],
+                if (group.formattedSpeed.isNotEmpty) ...<Widget>[
+                  Text(' • ', style: textTheme.labelSmall?.copyWith(color: colorScheme.outline)),
+                  Text(
+                    group.formattedSpeed,
                     style: textTheme.labelSmall?.copyWith(fontSize: 10, color: colorScheme.outline),
                   ),
                 ],

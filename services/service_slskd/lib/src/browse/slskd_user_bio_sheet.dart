@@ -249,7 +249,7 @@ class SlskdUserBioSheet extends StatelessWidget {
               ),
             ),
             child: SingleChildScrollView(
-              child: Text(
+              child: SelectableText(
                 userInfo.description.isNotEmpty
                     ? userInfo.description
                     : 'This peer has not set a user bio.',

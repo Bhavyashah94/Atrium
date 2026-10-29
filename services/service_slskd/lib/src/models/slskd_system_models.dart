@@ -79,10 +79,11 @@ class SlskdApplicationState {
       connectionWatchdog: dogRaw != null
           ? SlskdConnectionWatchdogState.fromJson(asStringMap(dogRaw))
           : null,
-      rooms: ((json['rooms'] ?? json['Rooms']) as Iterable?)
-              ?.map((dynamic e) => e.toString())
-              .toList() ??
-          const <String>[],
+      rooms: ((json['rooms'] ?? json['Rooms']) is Iterable)
+          ? ((json['rooms'] ?? json['Rooms']) as Iterable)
+              .map((dynamic e) => e.toString())
+              .toList()
+          : const <String>[],
     );
   }
 
@@ -192,6 +193,8 @@ class SlskdServerStatus {
   final bool isLoggingIn;
   final bool isTransitioning;
 
+  bool get isDisconnecting => state.toLowerCase().contains('disconnecting');
+
   Map<String, dynamic> toJson() => {
         'address': address,
         'state': state,
@@ -216,10 +219,14 @@ class SlskdUserState {
 
   factory SlskdUserState.fromJson(Map<String, dynamic> json) {
     final privRaw = json['privileges'] ?? json['Privileges'];
-    final priv = privRaw is Map<String, dynamic> ? privRaw : const <String, dynamic>{};
+    final priv = privRaw is Map<String, dynamic>
+        ? privRaw
+        : (privRaw is Map ? privRaw.cast<String, dynamic>() : const <String, dynamic>{});
 
     final statsRaw = json['statistics'] ?? json['Statistics'];
-    final stats = statsRaw is Map<String, dynamic> ? statsRaw : const <String, dynamic>{};
+    final stats = statsRaw is Map<String, dynamic>
+        ? statsRaw
+        : (statsRaw is Map ? statsRaw.cast<String, dynamic>() : const <String, dynamic>{});
 
     return SlskdUserState(
       username: (json['username'] ?? json['Username'] ?? '').toString(),

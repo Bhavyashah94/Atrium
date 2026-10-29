@@ -233,8 +233,13 @@ class SlskdPrivateMessage {
       return DateTime.tryParse(v.toString())?.toLocal();
     }
 
+    final rawId = json['id'] ?? json['Id'] ?? 0;
+    final int id = rawId is num
+        ? rawId.toInt()
+        : (rawId is String ? int.tryParse(rawId) ?? 0 : 0);
+
     return SlskdPrivateMessage(
-      id: ((json['id'] ?? json['Id'] ?? 0) as num).toInt(),
+      id: id,
       username: (json['username'] ?? json['Username'] ?? '').toString(),
       timestamp: parseDate(json['timestamp'] ?? json['Timestamp']) ?? DateTime.now(),
       direction: MessageDirection.fromJson(json['direction'] ?? json['Direction']),
@@ -276,9 +281,14 @@ class SlskdRoomInfo {
   });
 
   factory SlskdRoomInfo.fromJson(Map<String, dynamic> json) {
+    final rawCount = json['userCount'] ?? json['UserCount'] ?? 0;
+    final int count = rawCount is num
+        ? rawCount.toInt()
+        : (rawCount is String ? int.tryParse(rawCount) ?? 0 : 0);
+
     return SlskdRoomInfo(
       name: (json['name'] ?? json['Name'] ?? '').toString(),
-      userCount: ((json['userCount'] ?? json['UserCount'] ?? 0) as num).toInt(),
+      userCount: count,
       isPrivate: (json['isPrivate'] ?? json['IsPrivate'] ?? false) as bool? ?? false,
       isOwned: (json['isOwned'] ?? json['IsOwned'] ?? false) as bool? ?? false,
       isModerated: (json['isModerated'] ?? json['IsModerated'] ?? false) as bool? ?? false,

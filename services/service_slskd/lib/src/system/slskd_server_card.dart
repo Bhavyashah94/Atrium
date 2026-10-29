@@ -131,7 +131,13 @@ class _SlskdServerCardState extends ConsumerState<SlskdServerCard> {
 
     String statusLabel = 'Disconnected';
     if (isTransitioning) {
-      statusLabel = widget.server.isLoggingIn ? 'Logging In...' : 'Connecting...';
+      if (widget.server.isDisconnecting) {
+        statusLabel = 'Disconnecting...';
+      } else if (widget.server.isLoggingIn) {
+        statusLabel = 'Logging In...';
+      } else {
+        statusLabel = 'Connecting...';
+      }
     } else if (widget.server.isLoggedIn) {
       statusLabel = 'Logged In';
     } else if (widget.server.isConnected) {

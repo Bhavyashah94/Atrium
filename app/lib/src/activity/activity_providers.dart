@@ -822,7 +822,11 @@ List<ActivityDownload> _slskdDownloads(
       for (final SlskdTransfer file in dir.files) {
         if (file.category == TransferCategory.inProgress ||
             file.category == TransferCategory.queued) {
-          final String title = file.filename.split(RegExp(r'[/\\]')).last;
+          final String title = file.filename
+                  .split(RegExp(r'[/\\]'))
+                  .where((p) => p.isNotEmpty)
+                  .lastOrNull ??
+              file.filename;
           result.add(
             ActivityDownload(
               key: '${instance.id}:${file.id}',
@@ -831,7 +835,8 @@ List<ActivityDownload> _slskdDownloads(
               title: title,
               progress: file.progress.clamp(0.0, 1.0).toDouble(),
               speedBps: file.category == TransferCategory.inProgress &&
-                      file.averageSpeed > 0
+                      file.averageSpeed > 0 &&
+                      file.averageSpeed.isFinite
                   ? file.averageSpeed.round()
                   : null,
               status: file.category == TransferCategory.inProgress

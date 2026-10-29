@@ -75,6 +75,24 @@ class SlskdBrowseFileTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Row(
                     children: <Widget>[
+                      if (file.isLocked) ...<Widget>[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: colorScheme.errorContainer,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'LOCKED',
+                            style: textTheme.labelSmall?.copyWith(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onErrorContainer,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: Insets.xs),
+                      ],
                       // Format badge
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
@@ -107,10 +125,15 @@ class SlskdBrowseFileTile extends StatelessWidget {
 
             // 1-Tap download track button
             IconButton(
-              tooltip: 'Download track (${file.trackTitle})',
+              tooltip: file.isLocked
+                  ? 'File is locked'
+                  : 'Download track (${file.trackTitle})',
               visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.download_rounded, size: 20),
-              onPressed: onDownload,
+              icon: Icon(
+                file.isLocked ? Icons.lock_clock_outlined : Icons.download_rounded,
+                size: 20,
+              ),
+              onPressed: file.isLocked ? null : onDownload,
             ),
           ],
         ),
