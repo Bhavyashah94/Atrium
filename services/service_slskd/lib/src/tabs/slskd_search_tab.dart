@@ -546,7 +546,9 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
     // Filter and sort album groups
     final List<SlskdAlbumGroup> filteredGroups = _filterAndSortGroups(rawGroups);
 
-    if ((!search.isComplete || responsesAsync.isLoading) &&
+    // Waiting on the first responses only: they poll, and a finished search
+    // with none would otherwise flip back to searching on every refresh.
+    if ((!search.isComplete || !responsesAsync.hasValue) &&
         rawGroups.isEmpty &&
         !responsesAsync.hasError) {
       return <Widget>[

@@ -400,5 +400,46 @@ void main() {
       expect(find.textContaining('connected to Soulseek'), findsOneWidget);
       expect(find.text('No results found for "Daft Punk"'), findsNothing);
     });
+
+    testWidgets('keeps a finished search finished through a poll', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
+
+      final failedSearch = <SlskdSearch>[
+        SlskdSearch(
+          id: 'search-failed',
+          searchText: 'Daft Punk',
+          state: 'Completed, Errored',
+          isComplete: true,
+          startedAt: DateTime.now(),
+        ),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdActiveTabProvider(testInstance).overrideWith((ref) => 1),
+            slskdSearchesProvider(testInstance).overrideWith((ref) => failedSearch),
+            slskdSearchResponsesProvider((testInstance, 'search-failed')).overrideWith(
+              (ref) async {
+                await Future<void>.delayed(const Duration(milliseconds: 50));
+                return const <SlskdSearchResponse>[];
+              },
+            ),
+          ],
+          child: const MaterialApp(home: SlskdHome(instance: testInstance)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Search for "Daft Punk" failed'), findsOneWidget);
+
+      ProviderScope.containerOf(tester.element(find.byType(SlskdHome)))
+          .invalidate(slskdSearchResponsesProvider((testInstance, 'search-failed')));
+      await tester.pump();
+      expect(find.text('Search for "Daft Punk" failed'), findsOneWidget);
+      expect(find.text('Stop Search'), findsNothing);
+      await tester.pumpAndSettle();
+    });
   });
 }
