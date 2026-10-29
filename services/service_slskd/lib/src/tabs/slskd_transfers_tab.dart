@@ -94,7 +94,11 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
     final List<SlskdUserTransfers> downloads = downloadsAsync.value ?? const [];
     final List<SlskdUserTransfers> uploads = uploadsAsync.value ?? const [];
 
-    final bool isLoading = (downloadsAsync.isLoading || uploadsAsync.isLoading) &&
+    // Only the first load, not every poll: an empty queue would otherwise
+    // swap the whole list for a spinner and back on each refresh.
+    final bool isLoading = (!downloadsAsync.hasValue || !uploadsAsync.hasValue) &&
+        !downloadsAsync.hasError &&
+        !uploadsAsync.hasError &&
         downloads.isEmpty &&
         uploads.isEmpty;
     final bool hasError = (downloadsAsync.hasError || uploadsAsync.hasError) &&

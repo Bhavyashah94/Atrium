@@ -396,6 +396,47 @@ void main() {
       expect(find.text('Search Music'), findsOneWidget);
     });
 
+    testWidgets('keeps an empty queue and its filter row through a poll', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdDownloadsProvider(testInstance).overrideWith((ref) async {
+              await Future<void>.delayed(const Duration(milliseconds: 50));
+              return const <SlskdUserTransfers>[];
+            }),
+            slskdUploadsProvider(testInstance).overrideWith((ref) => const []),
+          ],
+          child: const MaterialApp(home: SlskdHome(instance: testInstance)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Sort & Filter'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('Downloads ('));
+      await tester.tap(find.text('Completed').last);
+      await tester.tap(find.text('File Size (Largest)'));
+      await tester.pump();
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+
+      // The chips overflow the row, so scroll it along.
+      await tester.drag(find.text('Downloads').first, const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      final double scrolledX = tester.getTopLeft(find.text('Reset')).dx;
+
+      ProviderScope.containerOf(tester.element(find.byType(SlskdHome)))
+          .invalidate(slskdDownloadsProvider(testInstance));
+      await tester.pump();
+      expect(find.text('Reset'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(tester.getTopLeft(find.text('Reset')).dx, scrolledX);
+    });
+
     testWidgets('renders SlskdAnalyticsSheet with KPIs, leaderboard, and Pareto failure charts',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1179, 2556);
