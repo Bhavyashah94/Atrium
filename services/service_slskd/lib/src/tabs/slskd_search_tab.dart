@@ -89,7 +89,10 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(msg),
+            content: Text(
+              msg,
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -110,7 +113,10 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to stop search: $e'),
+            content: Text(
+              'Failed to stop search: $e',
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -138,9 +144,9 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
               .toList(),
         ),
       );
-      ref.invalidate(slskdDownloadsProvider(widget.instance));
 
       if (mounted) {
+        ref.invalidate(slskdDownloadsProvider(widget.instance));
         final enqueuedCount = response.batch?.transfers.length ?? 0;
         final failureCount = response.failures.length;
 
@@ -148,7 +154,10 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
           final firstFailure = response.failures.first.message ?? 'already downloading or queued';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Could not queue "${group.albumTitle}": $firstFailure'),
+              content: Text(
+                'Could not queue "${group.albumTitle}": $firstFailure',
+                style: TextStyle(color: Theme.of(context).colorScheme.onError),
+              ),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
@@ -173,7 +182,10 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to enqueue album: $e'),
+            content: Text(
+              'Failed to enqueue album: $e',
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -181,25 +193,33 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
     }
   }
 
-  Future<void> _downloadTrack(SlskdAlbumGroup group, SlskdSearchFile file) async {
+  Future<void> _downloadTrack(
+    SlskdAlbumGroup group,
+    SlskdSearchFile file, [
+    String? searchId,
+  ]) async {
     try {
       final api = await ref.read(slskdApiProvider(widget.instance).future);
       final EnqueueDownloadBatchResponse response = await api.enqueueBatch(
         EnqueueDownloadBatchRequest(
           username: group.username,
+          searchId: searchId,
           files: <EnqueueDownloadBatchItem>[
             EnqueueDownloadBatchItem(filename: file.filename, size: file.size),
           ],
         ),
       );
-      ref.invalidate(slskdDownloadsProvider(widget.instance));
 
       if (mounted) {
+        ref.invalidate(slskdDownloadsProvider(widget.instance));
         if (response.failures.isNotEmpty) {
           final failMsg = response.failures.first.message ?? 'already queued or downloading';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Could not queue "${file.trackTitle}": $failMsg'),
+              content: Text(
+                'Could not queue "${file.trackTitle}": $failMsg',
+                style: TextStyle(color: Theme.of(context).colorScheme.onError),
+              ),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
@@ -221,7 +241,10 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to enqueue track: $e'),
+            content: Text(
+              'Failed to enqueue track: $e',
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -611,7 +634,8 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
                 instance: widget.instance,
                 group: group,
                 onDownloadAlbum: (group) => _downloadAlbum(group, search.id),
-                onDownloadTrack: _downloadTrack,
+                onDownloadTrack: (group, file) =>
+                    _downloadTrack(group, file, search.id),
               );
             },
             childCount: filteredGroups.length,
@@ -638,7 +662,8 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
               instance: widget.instance,
               file: item.file,
               group: item.group,
-              onDownload: () => _downloadTrack(item.group, item.file),
+              onDownload: () =>
+                  _downloadTrack(item.group, item.file, search.id),
             );
           },
           childCount: flatItems.length,

@@ -53,7 +53,7 @@ class SlskdTransferFlatTile extends ConsumerWidget {
     final Duration? remaining = transfer.remainingTime;
 
     final bool isActive = transfer.category == TransferCategory.inProgress;
-    final String speedText = (isActive && speed > 0) ? slskdFormatRate(speed) : '';
+    final String speedText = (isActive && speed.isFinite && speed > 0) ? slskdFormatRate(speed) : '';
     final String remainingText = (isActive && remaining != null) ? slskdFormatDuration(remaining) : '';
     final String bytesText = '${slskdFormatBytes(transferred)} / ${slskdFormatBytes(total)}';
     final String folderLeaf = _extractDirectoryLeaf(item.directory);
@@ -317,8 +317,11 @@ class SlskdTransferFlatTile extends ConsumerWidget {
                     'File already downloading or queued';
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Could not retry: $failReason'),
-                    backgroundColor: Theme.of(context).colorScheme.error,
+                    content: Text(
+                      'Could not retry: $failReason',
+                      style: TextStyle(color: colorScheme.onError),
+                    ),
+                    backgroundColor: colorScheme.error,
                   ),
                 );
               } else {
@@ -331,11 +334,13 @@ class SlskdTransferFlatTile extends ConsumerWidget {
               }
             }
           } else if (action == 'cancel') {
+            final String peerUser =
+                item.username.isNotEmpty ? item.username : item.transfer.username;
             if (isDownload) {
-              await api.cancelDownload(item.transfer.username, item.transfer.id);
+              await api.cancelDownload(peerUser, item.transfer.id);
               ref.invalidate(slskdDownloadsProvider(instance));
             } else {
-              await api.cancelUpload(item.transfer.username, item.transfer.id);
+              await api.cancelUpload(peerUser, item.transfer.id);
               ref.invalidate(slskdUploadsProvider(instance));
             }
             if (context.mounted) {
@@ -347,11 +352,13 @@ class SlskdTransferFlatTile extends ConsumerWidget {
               );
             }
           } else if (action == 'remove') {
+            final String peerUser =
+                item.username.isNotEmpty ? item.username : item.transfer.username;
             if (isDownload) {
-              await api.cancelDownload(item.transfer.username, item.transfer.id, remove: true);
+              await api.cancelDownload(peerUser, item.transfer.id, remove: true);
               ref.invalidate(slskdDownloadsProvider(instance));
             } else {
-              await api.cancelUpload(item.transfer.username, item.transfer.id, remove: true);
+              await api.cancelUpload(peerUser, item.transfer.id, remove: true);
               ref.invalidate(slskdUploadsProvider(instance));
             }
             if (context.mounted) {
@@ -367,7 +374,10 @@ class SlskdTransferFlatTile extends ConsumerWidget {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Operation failed: $e'),
+                content: Text(
+                  'Operation failed: $e',
+                  style: TextStyle(color: colorScheme.onError),
+                ),
                 backgroundColor: colorScheme.error,
               ),
             );
@@ -375,7 +385,7 @@ class SlskdTransferFlatTile extends ConsumerWidget {
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        if (item.transfer.canRetry)
+        if (isDownload && item.transfer.canRetry)
           const PopupMenuItem<String>(
             value: 'retry',
             child: Row(

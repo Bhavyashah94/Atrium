@@ -401,7 +401,7 @@ class _SlskdSharesViewState extends ConsumerState<SlskdSharesView> {
                               SlskdShareContentsSheet.show(
                                 context,
                                 instance: widget.instance,
-                                shareId: share.id,
+                                shareId: share.id.isNotEmpty ? share.id : null,
                                 title: share.name.isNotEmpty
                                     ? share.name
                                     : share.path,

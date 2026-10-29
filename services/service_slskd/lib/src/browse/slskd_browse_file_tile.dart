@@ -110,11 +110,15 @@ class SlskdBrowseFileTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: Insets.xs),
-                      Text(
-                        duration.isNotEmpty ? '$size • $duration' : size,
-                        style: textTheme.labelSmall?.copyWith(
-                          fontSize: 10,
-                          color: colorScheme.outline,
+                      Flexible(
+                        child: Text(
+                          duration.isNotEmpty ? '$size • $duration' : size,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.labelSmall?.copyWith(
+                            fontSize: 10,
+                            color: colorScheme.outline,
+                          ),
                         ),
                       ),
                     ],

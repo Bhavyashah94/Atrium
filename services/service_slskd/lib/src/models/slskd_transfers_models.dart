@@ -37,7 +37,11 @@ enum TransferCategory {
     if (s.contains('succeeded') || s.contains('completed')) {
       return TransferCategory.completed;
     }
-    if (s.contains('initializing') || s.contains('inprogress') || s.contains('in progress')) {
+    if (s.contains('initializing') ||
+        s.contains('inprogress') ||
+        s.contains('in progress') ||
+        s.contains('transferring') ||
+        s.contains('running')) {
       return TransferCategory.inProgress;
     }
     return TransferCategory.queued;
@@ -69,6 +73,8 @@ class SlskdUserTransfers {
       for (final item in dirsRaw) {
         if (item is Map<String, dynamic>) {
           dirs.add(SlskdDirectoryTransfers.fromJson(item));
+        } else if (item is Map) {
+          dirs.add(SlskdDirectoryTransfers.fromJson(Map<String, dynamic>.from(item)));
         }
       }
     }
@@ -114,6 +120,8 @@ class SlskdDirectoryTransfers {
       for (final item in filesRaw) {
         if (item is Map<String, dynamic>) {
           filesList.add(SlskdTransfer.fromJson(item));
+        } else if (item is Map) {
+          filesList.add(SlskdTransfer.fromJson(Map<String, dynamic>.from(item)));
         }
       }
     }
@@ -242,7 +250,8 @@ class SlskdTransfer {
 
   Duration? get remainingTime {
     if (!averageSpeed.isFinite || averageSpeed <= 0 || bytesRemaining <= 0) return null;
-    return Duration(seconds: (bytesRemaining / averageSpeed).round());
+    final int secs = (bytesRemaining / averageSpeed).round().clamp(0, 2592000);
+    return Duration(seconds: secs);
   }
 
   String get fileBaseName {

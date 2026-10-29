@@ -49,11 +49,15 @@ class BrowseNode {
 
       for (int i = 0; i < parts.length; i++) {
         final part = parts[i];
+        final bool parentLocked = current.isLocked;
         currentPath = currentPath.isEmpty ? part : '$currentPath/$part';
         current = current.subfolders.putIfAbsent(
           part,
-          () => BrowseNode(segment: part, fullPath: currentPath),
+          () => BrowseNode(segment: part, fullPath: currentPath, isLocked: parentLocked),
         );
+        if (parentLocked) {
+          current.isLocked = true;
+        }
       }
 
       // Add files to the leaf directory node

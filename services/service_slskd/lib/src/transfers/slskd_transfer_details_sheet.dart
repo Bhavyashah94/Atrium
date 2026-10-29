@@ -74,7 +74,9 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
     final queuePosAsync = (isDownload && transfer.category == TransferCategory.queued)
         ? ref.watch(slskdQueuePositionProvider((instance, transfer.username, transfer.id)))
         : null;
-    final int? liveQueuePos = queuePosAsync?.value ?? transfer.placeInQueue;
+    final int? liveQueuePos = (queuePosAsync != null && queuePosAsync.hasValue)
+        ? queuePosAsync.value
+        : transfer.placeInQueue;
 
     // Status styling
     final (Color badgeBg, Color badgeFg, IconData statusIcon, String statusText) =
@@ -529,7 +531,10 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
                                 'File already downloading or queued';
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Could not retry: $failReason'),
+                                content: Text(
+                                  'Could not retry: $failReason',
+                                  style: TextStyle(color: colorScheme.onError),
+                                ),
                                 backgroundColor: colorScheme.error,
                               ),
                             );
@@ -547,7 +552,10 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Retry failed: $e'),
+                              content: Text(
+                                'Retry failed: $e',
+                                style: TextStyle(color: colorScheme.onError),
+                              ),
                               backgroundColor: colorScheme.error,
                             ),
                           );
@@ -591,7 +599,10 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Operation failed: $e'),
+                              content: Text(
+                                'Operation failed: $e',
+                                style: TextStyle(color: colorScheme.onError),
+                              ),
                               backgroundColor: colorScheme.error,
                             ),
                           );
@@ -634,7 +645,10 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Operation failed: $e'),
+                            content: Text(
+                              'Operation failed: $e',
+                              style: TextStyle(color: colorScheme.onError),
+                            ),
                             backgroundColor: colorScheme.error,
                           ),
                         );

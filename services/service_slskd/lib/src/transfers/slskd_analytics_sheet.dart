@@ -330,7 +330,9 @@ class _SlskdAnalyticsSheetState extends ConsumerState<SlskdAnalyticsSheet> {
                                   child: _buildMetricItem(
                                     context,
                                     label: 'TCP Connections',
-                                    value: connCount.toInt().toString(),
+                                    value: connCount.isFinite
+                                        ? connCount.toInt().toString()
+                                        : '0',
                                     icon: Icons.hub_rounded,
                                     colorScheme: colorScheme,
                                   ),

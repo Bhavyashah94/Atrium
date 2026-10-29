@@ -44,11 +44,14 @@ class _SlskdTransferPeerCardState extends ConsumerState<SlskdTransferPeerCard> {
       0.0,
       (sum, d) => sum + d.files.fold<double>(
         0.0,
-        (s, f) => s + (f.category == TransferCategory.inProgress ? f.averageSpeed : 0.0),
+        (s, f) => s + (f.category == TransferCategory.inProgress && f.averageSpeed.isFinite && f.averageSpeed > 0
+            ? f.averageSpeed
+            : 0.0),
       ),
     );
 
-    final String peerSpeedText = peerSpeed > 0 ? slskdFormatRate(peerSpeed) : '';
+    final String peerSpeedText =
+        (peerSpeed.isFinite && peerSpeed > 0) ? slskdFormatRate(peerSpeed) : '';
 
     final Color dirContainerColor =
         isDownload ? colorScheme.primaryContainer : colorScheme.tertiaryContainer;

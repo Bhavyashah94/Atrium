@@ -57,6 +57,7 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
       final SlskdApi api =
           await ref.read(slskdApiProvider(widget.instance).future);
       await api.collectGarbage();
+      if (!mounted) return;
       messenger.showSnackBar(
         const SnackBar(
           content: Text('.NET CLR Garbage Collection completed'),
@@ -65,12 +66,20 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
       );
       ref.invalidate(slskdPrometheusKpisProvider(widget.instance));
     } catch (e) {
-      final msg = (e is DioException && e.response?.statusCode == 403)
-          ? 'Garbage collection requires an API key with Administrator/ReadWrite role'
-          : 'Failed to trigger GC: $e';
-      messenger.showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
+      if (mounted) {
+        final msg = (e is DioException && e.response?.statusCode == 403)
+            ? 'Garbage collection requires an API key with Administrator/ReadWrite role'
+            : 'Failed to trigger GC: $e';
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              msg,
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isActionInProgress = false);
     }
@@ -382,10 +391,15 @@ class _SlskdOptionsSheetState extends ConsumerState<SlskdOptionsSheet>
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          Text(
-            value,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.bold,
+          const SizedBox(width: Insets.sm),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

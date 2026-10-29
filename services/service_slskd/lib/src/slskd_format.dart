@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 /// Formats a byte count into a human-readable string (e.g., '12.4 MB', '1.2 GB').
 String slskdFormatBytes(num bytes) {
-  if (bytes <= 0) return '0 B';
+  if (bytes <= 0 || !bytes.isFinite) return '0 B';
   if (bytes < 1024) {
     return '${bytes.round()} B';
   }
@@ -22,6 +22,9 @@ String slskdFormatBytes(num bytes) {
 
 /// Formats transfer speed (e.g., '1.5 MB/s').
 String slskdFormatRate(num bytesPerSecond) => '${slskdFormatBytes(bytesPerSecond)}/s';
+
+/// Formats transfer speed (alias for [slskdFormatRate]).
+String slskdFormatSpeed(num bytesPerSecond) => slskdFormatRate(bytesPerSecond);
 
 /// Formats a duration into short human format ('45s', '3m 20s', '2h 5m').
 String slskdFormatDuration(Duration d) {
@@ -85,22 +88,22 @@ String slskdFormatFolderAndFileCounts(
 /// Theme-aware status color for peer presence (Online, Away, Offline).
 /// Adheres to Material 3 dynamic color scheme with zero hardcoded hex constants.
 Color slskdPresenceColor(ColorScheme colorScheme, {required bool isOnline, bool isAway = false}) {
-  if (isOnline) {
-    return colorScheme.primary;
-  }
   if (isAway) {
     return colorScheme.tertiary;
+  }
+  if (isOnline) {
+    return colorScheme.primary;
   }
   return colorScheme.outline;
 }
 
 /// Accessible icon hint for peer presence.
 IconData slskdPresenceIcon({required bool isOnline, bool isAway = false}) {
-  if (isOnline) {
-    return Icons.check_circle_rounded;
-  }
   if (isAway) {
     return Icons.access_time_rounded;
+  }
+  if (isOnline) {
+    return Icons.check_circle_rounded;
   }
   return Icons.remove_circle_outline_rounded;
 }

@@ -86,7 +86,7 @@ class SlskdBrowseFolderTile extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                             decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest,
+                              color: colorScheme.errorContainer,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -94,7 +94,7 @@ class SlskdBrowseFolderTile extends StatelessWidget {
                               style: textTheme.labelSmall?.copyWith(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
-                                color: colorScheme.outline,
+                                color: colorScheme.onErrorContainer,
                               ),
                             ),
                           ),

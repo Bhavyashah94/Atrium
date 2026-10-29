@@ -41,7 +41,7 @@ class SlskdTransferFileTile extends ConsumerWidget {
     final bool isActive = transfer.category == TransferCategory.inProgress;
 
     // Formatting speed & ETA
-    final String speedText = (isActive && speed > 0) ? slskdFormatRate(speed) : '';
+    final String speedText = (isActive && speed.isFinite && speed > 0) ? slskdFormatRate(speed) : '';
     final String remainingText = (isActive && remaining != null) ? slskdFormatDuration(remaining) : '';
     final String bytesText = '${slskdFormatBytes(transferred)} / ${slskdFormatBytes(total)}';
 
@@ -232,8 +232,11 @@ class SlskdTransferFileTile extends ConsumerWidget {
                     'File already downloading or queued';
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Could not retry: $failReason'),
-                    backgroundColor: Theme.of(context).colorScheme.error,
+                    content: Text(
+                      'Could not retry: $failReason',
+                      style: TextStyle(color: colorScheme.onError),
+                    ),
+                    backgroundColor: colorScheme.error,
                   ),
                 );
               } else {
@@ -282,7 +285,10 @@ class SlskdTransferFileTile extends ConsumerWidget {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Operation failed: $e'),
+                content: Text(
+                  'Operation failed: $e',
+                  style: TextStyle(color: colorScheme.onError),
+                ),
                 backgroundColor: colorScheme.error,
               ),
             );
@@ -290,7 +296,7 @@ class SlskdTransferFileTile extends ConsumerWidget {
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        if (transfer.canRetry)
+        if (isDownload && transfer.canRetry)
           const PopupMenuItem<String>(
             value: 'retry',
             child: Row(

@@ -39,7 +39,9 @@ class SlskdTransfersStatsBar extends ConsumerWidget {
     for (final user in downloads) {
       for (final dir in user.directories) {
         for (final transfer in dir.files) {
-          if (transfer.category == TransferCategory.inProgress) {
+          if (transfer.category == TransferCategory.inProgress &&
+              transfer.averageSpeed.isFinite &&
+              transfer.averageSpeed > 0) {
             downloadSpeed += transfer.averageSpeed;
           }
           switch (transfer.category) {
@@ -70,7 +72,9 @@ class SlskdTransfersStatsBar extends ConsumerWidget {
     for (final user in uploads) {
       for (final dir in user.directories) {
         for (final transfer in dir.files) {
-          if (transfer.category == TransferCategory.inProgress) {
+          if (transfer.category == TransferCategory.inProgress &&
+              transfer.averageSpeed.isFinite &&
+              transfer.averageSpeed > 0) {
             uploadSpeed += transfer.averageSpeed;
           }
           switch (transfer.category) {
@@ -116,8 +120,10 @@ class SlskdTransfersStatsBar extends ConsumerWidget {
       null => dlFailed + ulFailed,
     };
 
-    final String dlFormatted = downloadSpeed > 0 ? slskdFormatRate(downloadSpeed) : '0 B/s';
-    final String ulFormatted = uploadSpeed > 0 ? slskdFormatRate(uploadSpeed) : '0 B/s';
+    final String dlFormatted =
+        (downloadSpeed.isFinite && downloadSpeed > 0) ? slskdFormatRate(downloadSpeed) : '0 B/s';
+    final String ulFormatted =
+        (uploadSpeed.isFinite && uploadSpeed > 0) ? slskdFormatRate(uploadSpeed) : '0 B/s';
 
     return Card(
       elevation: 0,

@@ -111,7 +111,8 @@ class _SlskdServerCardState extends ConsumerState<SlskdServerCard> {
     final bool isOnline = widget.server.isConnected || widget.server.isLoggedIn;
     final bool isTransitioning = widget.server.isTransitioning ||
         widget.server.isConnecting ||
-        widget.server.isLoggingIn;
+        widget.server.isLoggingIn ||
+        widget.server.isDisconnecting;
 
     final Color statusColor = isTransitioning
         ? colorScheme.tertiary

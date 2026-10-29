@@ -82,13 +82,17 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
       await api.joinRoom(roomName);
       if (!mounted) return false;
       ref.invalidate(slskdJoinedRoomNamesProvider(widget.instance));
+      ref.read(slskdActiveConversationUsernameProvider(widget.instance).notifier).state = null;
       ref.read(slskdActiveRoomNameProvider(widget.instance).notifier).state = roomName;
       return true;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to join room: $e'),
+            content: Text(
+              'Failed to join room: $e',
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -138,31 +142,9 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
   }
 
   Future<void> _showSetTickerDialog(String roomName) async {
-    final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Set Ticker for #$roomName'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: 2,
-          decoration: const InputDecoration(
-            labelText: 'Announcement / Ticker',
-            hintText: 'Enter room ticker message',
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: const Text('Set Ticker'),
-          ),
-        ],
-      ),
+      builder: (ctx) => _SetTickerDialog(roomName: roomName),
     );
 
     if (result != null && mounted) {
@@ -1079,6 +1061,54 @@ class _NewChatDialogState extends State<_NewChatDialog> {
             Navigator.of(context).pop(target);
           },
           child: const Text('Start Chat'),
+        ),
+      ],
+    );
+  }
+}
+
+class _SetTickerDialog extends StatefulWidget {
+  const _SetTickerDialog({required this.roomName});
+
+  final String roomName;
+
+  @override
+  State<_SetTickerDialog> createState() => _SetTickerDialogState();
+}
+
+class _SetTickerDialogState extends State<_SetTickerDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Set Ticker for #${widget.roomName}'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        maxLines: 2,
+        decoration: const InputDecoration(
+          labelText: 'Announcement / Ticker',
+          hintText: 'Enter room ticker message',
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final text = _controller.text.trim();
+            Navigator.of(context).pop(text);
+          },
+          child: const Text('Set Ticker'),
         ),
       ],
     );

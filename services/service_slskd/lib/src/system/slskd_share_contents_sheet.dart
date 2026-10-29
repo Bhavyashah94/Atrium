@@ -94,9 +94,10 @@ class _SlskdShareContentsSheetState
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    final AsyncValue<List<SlskdDirectory>> contentsAsync = widget.shareId != null
-        ? ref.watch(slskdShareContentsProvider((widget.instance, widget.shareId!)))
-        : ref.watch(slskdAllSharedContentsProvider(widget.instance));
+    final AsyncValue<List<SlskdDirectory>> contentsAsync =
+        (widget.shareId != null && widget.shareId!.isNotEmpty)
+            ? ref.watch(slskdShareContentsProvider((widget.instance, widget.shareId!)))
+            : ref.watch(slskdAllSharedContentsProvider(widget.instance));
 
     return PopScope(
       canPop: _pathSegments.isEmpty,

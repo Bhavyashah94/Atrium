@@ -92,7 +92,8 @@ class _SlskdSearchAlbumCardState extends ConsumerState<SlskdSearchAlbumCard> {
                               children: <Widget>[
                                 Icon(Icons.person_outline_rounded, size: 13, color: colorScheme.primary),
                                 const SizedBox(width: 3),
-                                Flexible(
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 100),
                                   child: Text(
                                     group.username,
                                     style: textTheme.labelSmall?.copyWith(
@@ -310,10 +311,13 @@ class _TrackRow extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Download track',
+            tooltip: file.isLocked ? 'Track is locked by peer' : 'Download track',
             visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.download_rounded, size: 18),
-            onPressed: onDownload,
+            icon: Icon(
+              file.isLocked ? Icons.lock_clock_outlined : Icons.download_rounded,
+              size: 18,
+            ),
+            onPressed: file.isLocked ? null : onDownload,
           ),
         ],
       ),

@@ -130,6 +130,7 @@ class _SlskdDiskFilesSheetState extends ConsumerState<SlskdDiskFilesSheet>
         await api.deleteIncompleteFile(relativeFilePath);
       }
 
+      if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
           content: Text('Deleted "${file.name}"'),
@@ -138,9 +139,17 @@ class _SlskdDiskFilesSheetState extends ConsumerState<SlskdDiskFilesSheet>
       );
       _refreshDirectory();
     } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Failed to delete file: $e')),
-      );
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to delete file: $e',
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isActionInProgress = false);
     }
@@ -189,6 +198,7 @@ class _SlskdDiskFilesSheetState extends ConsumerState<SlskdDiskFilesSheet>
         await api.deleteIncompleteDirectory(relativeDirPath);
       }
 
+      if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
           content: Text('Deleted folder "${dir.name}"'),
@@ -197,9 +207,17 @@ class _SlskdDiskFilesSheetState extends ConsumerState<SlskdDiskFilesSheet>
       );
       _refreshDirectory();
     } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Failed to delete folder: $e')),
-      );
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to delete folder: $e',
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isActionInProgress = false);
     }

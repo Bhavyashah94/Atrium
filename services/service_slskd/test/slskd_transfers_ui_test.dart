@@ -369,8 +369,8 @@ void main() {
     });
 
     testWidgets('renders clean empty queue state when 0 transfers exist', (WidgetTester tester) async {
-      await tester.binding.setSurfaceSize(const Size(1179, 2556));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+      tester.view.physicalSize = const Size(1179, 2556);
+      addTearDown(tester.view.resetPhysicalSize);
       tester.view.devicePixelRatio = 3.0;
       addTearDown(tester.view.resetDevicePixelRatio);
 

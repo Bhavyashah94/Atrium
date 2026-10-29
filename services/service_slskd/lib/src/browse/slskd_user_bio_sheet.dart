@@ -49,17 +49,18 @@ class SlskdUserBioSheet extends StatelessWidget {
     final Uint8List? picBytes =
         userInfo.picture != null ? Uint8List.fromList(userInfo.picture!) : null;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + Insets.lg,
-        left: Insets.md,
-        right: Insets.md,
-        top: Insets.sm,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom + Insets.lg,
+          left: Insets.md,
+          right: Insets.md,
+          top: Insets.sm,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
           // Header: Avatar, Username, Status & Privileged pill
           Row(
             children: <Widget>[
@@ -157,6 +158,7 @@ class SlskdUserBioSheet extends StatelessWidget {
               ),
 
               IconButton(
+                tooltip: 'Close',
                 icon: const Icon(Icons.close_rounded),
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -241,7 +243,7 @@ class SlskdUserBioSheet extends StatelessWidget {
             padding: const EdgeInsets.all(Insets.sm),
             constraints: const BoxConstraints(maxHeight: 180),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
+              color: colorScheme.surfaceContainer,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: colorScheme.outlineVariant.withValues(alpha: 0.4),
@@ -271,6 +273,7 @@ class SlskdUserBioSheet extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }

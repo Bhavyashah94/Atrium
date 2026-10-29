@@ -109,13 +109,16 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
       floatingActionButton: _buildMiniFab(context, downloads: downloads, uploads: uploads),
       body: EasyRefresh(
         onRefresh: () async {
-          await Future.wait([
-            ref.refresh(slskdDownloadsProvider(widget.instance).future),
-            ref.refresh(slskdUploadsProvider(widget.instance).future),
-          ]);
+          try {
+            await Future.wait([
+              ref.refresh(slskdDownloadsProvider(widget.instance).future),
+              ref.refresh(slskdUploadsProvider(widget.instance).future),
+            ]);
+          } catch (_) {}
         },
         child: CustomScrollView(
           controller: _scrollController,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: <Widget>[
             // 1. Pinned AppBar (Hamburger + SearchBar + View Toggle)
@@ -465,8 +468,8 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
                         const Spacer(),
                         TextButton(
                           onPressed: () {
-                            setModalState(_resetFilters);
-                            setState(_resetFilters);
+                            _resetFilters();
+                            setModalState(() {});
                           },
                           child: const Text('Reset All'),
                         ),
@@ -778,20 +781,38 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
               a.transfer.category != TransferCategory.inProgress) {
             return 1;
           }
-          return b.transfer.averageSpeed.compareTo(a.transfer.averageSpeed);
+          final speedComp = b.transfer.averageSpeed.compareTo(a.transfer.averageSpeed);
+          if (speedComp != 0) return speedComp;
+          return a.transfer.filename.toLowerCase().compareTo(b.transfer.filename.toLowerCase());
         });
         break;
       case SlskdTransferSort.speed:
-        items.sort((a, b) => b.transfer.averageSpeed.compareTo(a.transfer.averageSpeed));
+        items.sort((a, b) {
+          final comp = b.transfer.averageSpeed.compareTo(a.transfer.averageSpeed);
+          if (comp != 0) return comp;
+          return a.transfer.filename.toLowerCase().compareTo(b.transfer.filename.toLowerCase());
+        });
         break;
       case SlskdTransferSort.peerName:
-        items.sort((a, b) => a.username.toLowerCase().compareTo(b.username.toLowerCase()));
+        items.sort((a, b) {
+          final comp = a.username.toLowerCase().compareTo(b.username.toLowerCase());
+          if (comp != 0) return comp;
+          return a.transfer.filename.toLowerCase().compareTo(b.transfer.filename.toLowerCase());
+        });
         break;
       case SlskdTransferSort.progress:
-        items.sort((a, b) => b.transfer.progress.compareTo(a.transfer.progress));
+        items.sort((a, b) {
+          final comp = b.transfer.progress.compareTo(a.transfer.progress);
+          if (comp != 0) return comp;
+          return a.transfer.filename.toLowerCase().compareTo(b.transfer.filename.toLowerCase());
+        });
         break;
       case SlskdTransferSort.size:
-        items.sort((a, b) => b.transfer.size.compareTo(a.transfer.size));
+        items.sort((a, b) {
+          final comp = b.transfer.size.compareTo(a.transfer.size);
+          if (comp != 0) return comp;
+          return a.transfer.filename.toLowerCase().compareTo(b.transfer.filename.toLowerCase());
+        });
         break;
     }
 
@@ -836,7 +857,9 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
             if (b.category == TransferCategory.inProgress && a.category != TransferCategory.inProgress) {
               return 1;
             }
-            return b.averageSpeed.compareTo(a.averageSpeed);
+            final speedComp = b.averageSpeed.compareTo(a.averageSpeed);
+            if (speedComp != 0) return speedComp;
+            return a.filename.toLowerCase().compareTo(b.filename.toLowerCase());
           });
 
           filteredDirs.add(
@@ -866,16 +889,25 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
     switch (sort) {
       case SlskdTransferSort.activeFirst:
         result.sort((a, b) {
-          final double aSpeed = a.user.averageSpeed;
-          final double bSpeed = b.user.averageSpeed;
-          if (aSpeed > 0 || bSpeed > 0) {
-            return bSpeed.compareTo(aSpeed);
-          }
-          return a.user.username.compareTo(b.user.username);
+          final bool aActive = a.user.directories.any(
+            (d) => d.files.any((f) => f.category == TransferCategory.inProgress),
+          );
+          final bool bActive = b.user.directories.any(
+            (d) => d.files.any((f) => f.category == TransferCategory.inProgress),
+          );
+          if (aActive && !bActive) return -1;
+          if (bActive && !aActive) return 1;
+          final speedComp = b.user.averageSpeed.compareTo(a.user.averageSpeed);
+          if (speedComp != 0) return speedComp;
+          return a.user.username.toLowerCase().compareTo(b.user.username.toLowerCase());
         });
         break;
       case SlskdTransferSort.speed:
-        result.sort((a, b) => b.user.averageSpeed.compareTo(a.user.averageSpeed));
+        result.sort((a, b) {
+          final comp = b.user.averageSpeed.compareTo(a.user.averageSpeed);
+          if (comp != 0) return comp;
+          return a.user.username.toLowerCase().compareTo(b.user.username.toLowerCase());
+        });
         break;
       case SlskdTransferSort.peerName:
         result.sort((a, b) => a.user.username.toLowerCase().compareTo(b.user.username.toLowerCase()));
@@ -884,11 +916,17 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
         result.sort((a, b) {
           final aProg = a.user.totalBytes > 0 ? a.user.transferredBytes / a.user.totalBytes : 0.0;
           final bProg = b.user.totalBytes > 0 ? b.user.transferredBytes / b.user.totalBytes : 0.0;
-          return bProg.compareTo(aProg);
+          final comp = bProg.compareTo(aProg);
+          if (comp != 0) return comp;
+          return a.user.username.toLowerCase().compareTo(b.user.username.toLowerCase());
         });
         break;
       case SlskdTransferSort.size:
-        result.sort((a, b) => b.user.totalBytes.compareTo(a.user.totalBytes));
+        result.sort((a, b) {
+          final comp = b.user.totalBytes.compareTo(a.user.totalBytes);
+          if (comp != 0) return comp;
+          return a.user.username.toLowerCase().compareTo(b.user.username.toLowerCase());
+        });
         break;
     }
 

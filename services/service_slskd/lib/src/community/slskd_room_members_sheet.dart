@@ -61,30 +61,9 @@ class _SlskdRoomMembersSheetState extends ConsumerState<SlskdRoomMembersSheet> {
   }
 
   Future<void> _showInviteMemberDialog() async {
-    final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Invite to #${widget.roomName}'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Soulseek Username',
-            hintText: 'Enter username to grant access',
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: const Text('Invite'),
-          ),
-        ],
-      ),
+      builder: (ctx) => _InviteMemberDialog(roomName: widget.roomName),
     );
 
     if (result != null && result.isNotEmpty && mounted) {
@@ -345,6 +324,54 @@ class _SlskdRoomMembersSheetState extends ConsumerState<SlskdRoomMembersSheet> {
           },
         );
       },
+    );
+  }
+}
+
+class _InviteMemberDialog extends StatefulWidget {
+  const _InviteMemberDialog({required this.roomName});
+
+  final String roomName;
+
+  @override
+  State<_InviteMemberDialog> createState() => _InviteMemberDialogState();
+}
+
+class _InviteMemberDialogState extends State<_InviteMemberDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Invite to #${widget.roomName}'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          labelText: 'Soulseek Username',
+          hintText: 'Enter username to grant access',
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final text = _controller.text.trim();
+            if (text.isEmpty) return;
+            Navigator.of(context).pop(text);
+          },
+          child: const Text('Invite'),
+        ),
+      ],
     );
   }
 }

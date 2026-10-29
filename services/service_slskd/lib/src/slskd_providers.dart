@@ -206,11 +206,11 @@ final slskdFilteredLogsProvider =
   ref,
   instance,
 ) async {
-  final List<SlskdLogRecord> logs =
-      await ref.watch(slskdLogsProvider(instance).future);
   final String severity = ref.watch(slskdLogSeverityFilterProvider(instance));
   final String query =
       ref.watch(slskdLogSearchQueryProvider(instance)).trim().toLowerCase();
+  final List<SlskdLogRecord> logs =
+      await ref.watch(slskdLogsProvider(instance).future);
 
   return logs.where((SlskdLogRecord log) {
     if (severity != 'All' && log.level.toLowerCase() != severity.toLowerCase()) {
@@ -260,9 +260,9 @@ final slskdTransferLeaderboardProvider =
   ref,
   arg,
 ) async {
+  final int days = ref.watch(slskdAnalyticsTimeframeDaysProvider(arg.$1));
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
-  final days = ref.watch(slskdAnalyticsTimeframeDaysProvider(arg.$1));
-  final start = DateTime.now().subtract(Duration(days: days));
+  final DateTime start = DateTime.now().subtract(Duration(days: days));
   return api.getTransferLeaderboard(direction: arg.$2, start: start, limit: 15);
 }, retry: (_, _) => null);
 
@@ -272,9 +272,9 @@ final slskdTransferExceptionsParetoProvider =
   ref,
   arg,
 ) async {
+  final int days = ref.watch(slskdAnalyticsTimeframeDaysProvider(arg.$1));
   final SlskdApi api = await ref.watch(slskdApiProvider(arg.$1).future);
-  final days = ref.watch(slskdAnalyticsTimeframeDaysProvider(arg.$1));
-  final start = DateTime.now().subtract(Duration(days: days));
+  final DateTime start = DateTime.now().subtract(Duration(days: days));
   return api.getTransferExceptionsPareto(direction: arg.$2, start: start, limit: 10);
 }, retry: (_, _) => null);
 
@@ -284,9 +284,9 @@ final slskdTransferDirectoriesProvider =
   ref,
   instance,
 ) async {
+  final int days = ref.watch(slskdAnalyticsTimeframeDaysProvider(instance));
   final SlskdApi api = await ref.watch(slskdApiProvider(instance).future);
-  final days = ref.watch(slskdAnalyticsTimeframeDaysProvider(instance));
-  final start = DateTime.now().subtract(Duration(days: days));
+  final DateTime start = DateTime.now().subtract(Duration(days: days));
   return api.getTransferDirectories(start: start, limit: 10);
 }, retry: (_, _) => null);
 
