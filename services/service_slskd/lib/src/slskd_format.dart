@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 /// Formats a byte count into a human-readable string (e.g., '12.4 MB', '1.2 GB').
 String slskdFormatBytes(num bytes) {
+  if (bytes <= 0) return '0 B';
   if (bytes < 1024) {
     return '${bytes.round()} B';
   }
@@ -36,27 +37,30 @@ String slskdFormatDuration(Duration d) {
   return '${d.inSeconds}s';
 }
 
-/// Formats a DateTime into a short time string (e.g., '14:32').
+/// Formats a DateTime into a short time string in local time (e.g., '14:32').
 String slskdFormatTime(DateTime dt) {
-  final h = dt.hour.toString().padLeft(2, '0');
-  final m = dt.minute.toString().padLeft(2, '0');
+  final local = dt.toLocal();
+  final h = local.hour.toString().padLeft(2, '0');
+  final m = local.minute.toString().padLeft(2, '0');
   return '$h:$m';
 }
 
-/// Formats a DateTime into a time string with seconds (e.g., '14:32:05').
+/// Formats a DateTime into a time string with seconds in local time (e.g., '14:32:05').
 String slskdFormatTimeWithSeconds(DateTime dt) {
-  final h = dt.hour.toString().padLeft(2, '0');
-  final m = dt.minute.toString().padLeft(2, '0');
-  final s = dt.second.toString().padLeft(2, '0');
+  final local = dt.toLocal();
+  final h = local.hour.toString().padLeft(2, '0');
+  final m = local.minute.toString().padLeft(2, '0');
+  final s = local.second.toString().padLeft(2, '0');
   return '$h:$m:$s';
 }
 
-/// Formats a DateTime into a readable date and time string ('2026-10-24 14:32:05').
+/// Formats a DateTime into a readable date and time string in local time ('2026-10-24 14:32:05').
 String slskdFormatDateTime(DateTime dt) {
-  final y = dt.year.toString().padLeft(4, '0');
-  final m = dt.month.toString().padLeft(2, '0');
-  final d = dt.day.toString().padLeft(2, '0');
-  return '$y-$m-$d ${slskdFormatTimeWithSeconds(dt)}';
+  final local = dt.toLocal();
+  final y = local.year.toString().padLeft(4, '0');
+  final m = local.month.toString().padLeft(2, '0');
+  final d = local.day.toString().padLeft(2, '0');
+  return '$y-$m-$d ${slskdFormatTimeWithSeconds(local)}';
 }
 
 /// Formats a count with appropriate singular or plural noun.

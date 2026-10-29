@@ -20,6 +20,8 @@ class SlskdDirectory {
       for (final item in filesRaw) {
         if (item is Map<String, dynamic>) {
           filesList.add(SlskdSearchFile.fromJson(item));
+        } else if (item is Map) {
+          filesList.add(SlskdSearchFile.fromJson(item.cast<String, dynamic>()));
         }
       }
     }
@@ -36,8 +38,8 @@ class SlskdDirectory {
   final bool isLocked;
 
   String get directoryBaseName {
-    final sep = name.contains('\\') ? '\\' : '/';
-    final parts = name.split(sep).where((p) => p.isNotEmpty).toList();
+    final normalized = name.replaceAll('\\', '/');
+    final parts = normalized.split('/').where((p) => p.isNotEmpty).toList();
     return parts.isNotEmpty ? parts.last : name;
   }
 

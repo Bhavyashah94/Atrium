@@ -429,6 +429,9 @@ class DashboardDownloadsWidget extends ConsumerWidget {
     for (final Instance i in aria2Instances) {
       ref.invalidate(aria2SnapshotProvider(i));
     }
+    for (final Instance i in slskdInstances) {
+      ref.invalidate(slskdDownloadsProvider(i));
+    }
   }
 }
 

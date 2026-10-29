@@ -83,7 +83,11 @@ class SlskdHome extends ConsumerWidget {
         },
         child: Builder(
           builder: (BuildContext context) {
-            void openDrawer() => Scaffold.of(context).openDrawer();
+            void openDrawer() {
+              if (Scaffold.of(context).hasDrawer) {
+                Scaffold.of(context).openDrawer();
+              }
+            }
             final List<Widget> tabs = <Widget>[
               SlskdTransfersTab(instance: instance, onOpenDrawer: openDrawer),
               SlskdSearchTab(instance: instance, onOpenDrawer: openDrawer),
@@ -99,7 +103,7 @@ class SlskdHome extends ConsumerWidget {
 
                 // 1. Close drawer if open
                 if (Scaffold.of(context).isDrawerOpen) {
-                  Navigator.of(context).pop();
+                  Scaffold.of(context).closeDrawer();
                   return;
                 }
 
@@ -163,6 +167,7 @@ class SlskdHome extends ConsumerWidget {
 
                 // 3. Return to Tab 0 if on another tab
                 if (currentIndex != 0) {
+                  ref.read(slskdBottomNavVisibleProvider(instance).notifier).state = true;
                   ref.read(slskdActiveTabProvider(instance).notifier).state = 0;
                   return;
                 }
@@ -187,6 +192,7 @@ class SlskdHome extends ConsumerWidget {
                 .read(slskdScrollToTopProvider((instance, index)).notifier)
                 .update((int state) => state + 1);
           } else {
+            ref.read(slskdBottomNavVisibleProvider(instance).notifier).state = true;
             ref.read(slskdActiveTabProvider(instance).notifier).state =
                 index;
           }

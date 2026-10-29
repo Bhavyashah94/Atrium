@@ -497,5 +497,99 @@ void main() {
       expect(SlskdSearchFormatFilter.m4aOnly.matchesExtension('M4A'), isTrue);
       expect(SlskdSearchFormatFilter.opusOnly.matchesExtension('opus'), isTrue);
     });
+
+    test('SlskdServerStatus disconnected and disconnecting heuristic tests', () {
+      final disconnected = SlskdServerStatus.fromJson({
+        'address': 'vps.slsknet.org',
+        'state': 'Disconnected',
+      });
+      expect(disconnected.isConnected, isFalse);
+      expect(disconnected.isConnecting, isFalse);
+      expect(disconnected.isTransitioning, isFalse);
+
+      final disconnecting = SlskdServerStatus.fromJson({
+        'address': 'vps.slsknet.org',
+        'state': 'Disconnecting',
+      });
+      expect(disconnecting.isConnected, isFalse);
+      expect(disconnecting.isConnecting, isFalse);
+      expect(disconnecting.isTransitioning, isTrue);
+
+      final connecting = SlskdServerStatus.fromJson({
+        'address': 'vps.slsknet.org',
+        'state': 'Connecting',
+      });
+      expect(connecting.isConnected, isFalse);
+      expect(connecting.isConnecting, isTrue);
+      expect(connecting.isTransitioning, isTrue);
+    });
+
+    test('SlskdTransfer compound failure state', () {
+      final transfer = SlskdTransfer.fromJson({
+        'id': '99',
+        'username': 'u1',
+        'direction': 'Download',
+        'filename': 'Music/album/song.mp3',
+        'size': 5000,
+        'state': 'Completed, Failed',
+      });
+      expect(transfer.category, TransferCategory.failed);
+      expect(transfer.isTerminal, isTrue);
+    });
+
+    test('SlskdSearch Errored state completion heuristic', () {
+      final search = SlskdSearch.fromJson({
+        'id': 's1',
+        'searchText': 'test query',
+        'state': 'Errored',
+      });
+      expect(search.isComplete, isTrue);
+    });
+
+    test('SlskdSearchResponse lockedFiles defaultLocked flag', () {
+      final response = SlskdSearchResponse.fromJson({
+        'username': 'locked_user',
+        'fileCount': 1,
+        'lockedFileCount': 1,
+        'hasFreeUploadSlot': false,
+        'queueLength': 0,
+        'uploadSpeed': 0,
+        'token': 1,
+        'lockedFiles': [
+          {
+            'filename': 'secret/vault.flac',
+            'size': 12345,
+            'extension': 'flac',
+          },
+        ],
+      });
+      expect(response.lockedFiles.length, 1);
+      expect(response.lockedFiles.first.isLocked, isTrue);
+    });
+
+    test('SlskdAlbumGroup qualityBadge derives from audio format extension', () {
+      final album = SlskdAlbumGroup(
+        albumDirectory: 'Music/Artist/Album',
+        username: 'user1',
+        hasFreeUploadSlot: true,
+        queueLength: 0,
+        uploadSpeed: 1000,
+        files: [
+          const SlskdSearchFile(
+            filename: 'song1.m4a',
+            size: 5000,
+            extension: 'm4a',
+            bitRate: 256,
+          ),
+          const SlskdSearchFile(
+            filename: 'song2.m4a',
+            size: 5000,
+            extension: 'm4a',
+            bitRate: 320,
+          ),
+        ],
+      );
+      expect(album.qualityBadge, 'M4A 320k');
+    });
   });
 }

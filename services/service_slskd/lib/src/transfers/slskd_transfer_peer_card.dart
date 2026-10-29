@@ -236,6 +236,7 @@ class _SlskdTransferPeerCardState extends ConsumerState<SlskdTransferPeerCard> {
         if (isExpanded)
           for (final transfer in dir.files) ...<Widget>[
             SlskdTransferFileTile(
+              key: ValueKey('file_${transfer.id}'),
               instance: widget.instance,
               transfer: transfer,
               direction: widget.direction,

@@ -304,7 +304,8 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
       // 2. Active Filter Chips Pill (visible only when filters are active)
       if (_hasActiveFilters)
         SliverToBoxAdapter(
-          child: Padding(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: Insets.md, vertical: Insets.xs),
             child: Row(
               children: <Widget>[
@@ -341,7 +342,7 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
                     onDeleted: () => setState(() => _selectedSort = SlskdTransferSort.activeFirst),
                   ),
                 ],
-                const Spacer(),
+                const SizedBox(width: Insets.sm),
                 TextButton(
                   style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
                   onPressed: _resetFilters,
@@ -377,9 +378,10 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
         ..._buildFlatFeedList(filteredGroups),
 
       // Scroll clearance for Mini FAB
-      const SliverToBoxAdapter(
-        child: SizedBox(height: Insets.xxl + Insets.lg),
-      ),
+      if (filteredGroups.isNotEmpty)
+        const SliverToBoxAdapter(
+          child: SizedBox(height: Insets.xxl + Insets.lg),
+        ),
     ];
   }
 

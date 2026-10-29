@@ -60,8 +60,8 @@ class SlskdSearch {
   factory SlskdSearch.fromJson(Map<String, dynamic> json) {
     DateTime? parseDate(dynamic v) {
       if (v == null) return null;
-      if (v is DateTime) return v;
-      return DateTime.tryParse(v.toString());
+      if (v is DateTime) return v.toLocal();
+      return DateTime.tryParse(v.toString())?.toLocal();
     }
 
     final stateStr = (json['state'] ?? json['State'] ?? '').toString();
@@ -70,6 +70,8 @@ class SlskdSearch {
         (stateStr.toLowerCase().contains('complete') ||
             stateStr.toLowerCase().contains('succeed') ||
             stateStr.toLowerCase().contains('timedout') ||
+            stateStr.toLowerCase().contains('error') ||
+            stateStr.toLowerCase().contains('fail') ||
             stateStr.toLowerCase().contains('cancel'));
 
     final resRaw = json['responses'] ?? json['Responses'];
@@ -78,6 +80,8 @@ class SlskdSearch {
       for (final item in resRaw) {
         if (item is Map<String, dynamic>) {
           resList.add(SlskdSearchResponse.fromJson(item));
+        } else if (item is Map) {
+          resList.add(SlskdSearchResponse.fromJson(item.cast<String, dynamic>()));
         }
       }
     }
@@ -142,12 +146,14 @@ class SlskdSearchResponse {
   });
 
   factory SlskdSearchResponse.fromJson(Map<String, dynamic> json) {
-    List<SlskdSearchFile> parseFiles(dynamic raw) {
+    List<SlskdSearchFile> parseFiles(dynamic raw, {bool defaultLocked = false}) {
       final List<SlskdSearchFile> list = [];
       if (raw is Iterable) {
         for (final item in raw) {
           if (item is Map<String, dynamic>) {
-            list.add(SlskdSearchFile.fromJson(item));
+            list.add(SlskdSearchFile.fromJson(item, defaultLocked: defaultLocked));
+          } else if (item is Map) {
+            list.add(SlskdSearchFile.fromJson(item.cast<String, dynamic>(), defaultLocked: defaultLocked));
           }
         }
       }
@@ -163,7 +169,7 @@ class SlskdSearchResponse {
       uploadSpeed: ((json['uploadSpeed'] ?? json['UploadSpeed'] ?? 0) as num).toInt(),
       token: ((json['token'] ?? json['Token'] ?? 0) as num).toInt(),
       files: parseFiles(json['files'] ?? json['Files']),
-      lockedFiles: parseFiles(json['lockedFiles'] ?? json['LockedFiles']),
+      lockedFiles: parseFiles(json['lockedFiles'] ?? json['LockedFiles'], defaultLocked: true),
     );
   }
 
@@ -204,7 +210,7 @@ class SlskdSearchFile {
     this.isLocked = false,
   });
 
-  factory SlskdSearchFile.fromJson(Map<String, dynamic> json) {
+  factory SlskdSearchFile.fromJson(Map<String, dynamic> json, {bool defaultLocked = false}) {
     int? parseOptionalInt(dynamic v) {
       if (v == null) return null;
       if (v is num) return v.toInt();
@@ -221,7 +227,7 @@ class SlskdSearchFile {
       isVariableBitRate: (json['isVariableBitRate'] ?? json['IsVariableBitRate']) as bool?,
       length: parseOptionalInt(json['length'] ?? json['Length']),
       sampleRate: parseOptionalInt(json['sampleRate'] ?? json['SampleRate']),
-      isLocked: (json['isLocked'] ?? json['IsLocked'] ?? false) as bool? ?? false,
+      isLocked: (json['isLocked'] ?? json['IsLocked']) as bool? ?? defaultLocked,
     );
   }
 
@@ -237,8 +243,8 @@ class SlskdSearchFile {
   final bool isLocked;
 
   String get trackTitle {
-    final sep = filename.contains('\\') ? '\\' : '/';
-    final parts = filename.split(sep);
+    final normalized = filename.replaceAll('\\', '/');
+    final parts = normalized.split('/').where((p) => p.isNotEmpty).toList();
     return parts.isNotEmpty ? parts.last : filename;
   }
 

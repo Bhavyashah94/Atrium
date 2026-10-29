@@ -48,6 +48,8 @@ class SlskdRoom {
         for (final item in raw) {
           if (item is Map<String, dynamic>) {
             list.add(SlskdUserPresence.fromJson(item));
+          } else if (item is Map) {
+            list.add(SlskdUserPresence.fromJson(item.cast<String, dynamic>()));
           }
         }
       }
@@ -60,6 +62,8 @@ class SlskdRoom {
         for (final item in raw) {
           if (item is Map<String, dynamic>) {
             list.add(SlskdRoomMessage.fromJson(item));
+          } else if (item is Map) {
+            list.add(SlskdRoomMessage.fromJson(item.cast<String, dynamic>()));
           }
         }
       }
@@ -67,7 +71,14 @@ class SlskdRoom {
     }
 
     final usersList = parseUsers(json['users'] ?? json['Users']);
-    final int? count = (json['userCount'] ?? json['UserCount']) as int?;
+    final rawCount = json['userCount'] ?? json['UserCount'];
+    final int? count = rawCount is num
+        ? rawCount.toInt()
+        : (rawCount is String ? int.tryParse(rawCount) : null);
+    final rawOpCount = json['operatorCount'] ?? json['OperatorCount'];
+    final int? opCount = rawOpCount is num
+        ? rawOpCount.toInt()
+        : (rawOpCount is String ? int.tryParse(rawOpCount) : null);
 
     return SlskdRoom(
       name: (json['name'] ?? json['Name'] ?? '').toString(),
@@ -75,7 +86,7 @@ class SlskdRoom {
       isPrivate: (json['isPrivate'] ?? json['IsPrivate'] ?? false) as bool? ?? false,
       isOwned: (json['isOwned'] ?? json['IsOwned'] ?? false) as bool? ?? false,
       isModerated: (json['isModerated'] ?? json['IsModerated'] ?? false) as bool? ?? false,
-      operatorCount: (json['operatorCount'] ?? json['OperatorCount']) as int?,
+      operatorCount: opCount,
       operators: parseOperators(json['operators'] ?? json['Operators']),
       owner: (json['owner'] ?? json['Owner'])?.toString(),
       users: usersList,
@@ -122,8 +133,8 @@ class SlskdRoomMessage {
   factory SlskdRoomMessage.fromJson(Map<String, dynamic> json) {
     DateTime? parseDate(dynamic v) {
       if (v == null) return null;
-      if (v is DateTime) return v;
-      return DateTime.tryParse(v.toString());
+      if (v is DateTime) return v.toLocal();
+      return DateTime.tryParse(v.toString())?.toLocal();
     }
 
     return SlskdRoomMessage(
@@ -165,17 +176,23 @@ class SlskdConversation {
       for (final item in msgsRaw) {
         if (item is Map<String, dynamic>) {
           msgList.add(SlskdPrivateMessage.fromJson(item));
+        } else if (item is Map) {
+          msgList.add(SlskdPrivateMessage.fromJson(item.cast<String, dynamic>()));
         }
       }
     }
 
+    final rawUnack = json['unAcknowledgedMessageCount'] ??
+        json['UnAcknowledgedMessageCount'] ??
+        0;
+    final int unackCount = rawUnack is num
+        ? rawUnack.toInt()
+        : (rawUnack is String ? int.tryParse(rawUnack) ?? 0 : 0);
+
     return SlskdConversation(
       username: (json['username'] ?? json['Username'] ?? '').toString(),
       isActive: (json['isActive'] ?? json['IsActive'] ?? true) as bool? ?? true,
-      unAcknowledgedMessageCount: (json['unAcknowledgedMessageCount'] ??
-              json['UnAcknowledgedMessageCount'] ??
-              0) as int? ??
-          0,
+      unAcknowledgedMessageCount: unackCount,
       messages: msgList,
     );
   }
@@ -212,8 +229,8 @@ class SlskdPrivateMessage {
   factory SlskdPrivateMessage.fromJson(Map<String, dynamic> json) {
     DateTime? parseDate(dynamic v) {
       if (v == null) return null;
-      if (v is DateTime) return v;
-      return DateTime.tryParse(v.toString());
+      if (v is DateTime) return v.toLocal();
+      return DateTime.tryParse(v.toString())?.toLocal();
     }
 
     return SlskdPrivateMessage(

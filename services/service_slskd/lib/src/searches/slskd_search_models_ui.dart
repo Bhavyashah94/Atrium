@@ -101,7 +101,14 @@ class SlskdAlbumGroup {
       return 'FLAC';
     }
     final maxBitrate = files.fold<int>(0, (max, f) => (f.bitRate ?? 0) > max ? f.bitRate! : max);
-    if (maxBitrate > 0) return 'MP3 ${maxBitrate}k';
+    if (maxBitrate > 0) {
+      final topFile = files.firstWhere(
+        (f) => (f.bitRate ?? 0) == maxBitrate,
+        orElse: () => files.first,
+      );
+      final ext = topFile.extension.isNotEmpty ? topFile.extension.toUpperCase() : 'MP3';
+      return '$ext ${maxBitrate}k';
+    }
     return files.isNotEmpty ? files.first.extension.toUpperCase() : 'AUDIO';
   }
 }

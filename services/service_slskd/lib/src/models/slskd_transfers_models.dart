@@ -24,23 +24,18 @@ enum TransferCategory {
 
   static TransferCategory fromStateString(String state) {
     final s = state.toLowerCase();
-    if (s.contains('succeeded') ||
-        (s.contains('completed') &&
-            !s.contains('cancel') &&
-            !s.contains('time') &&
-            !s.contains('error') &&
-            !s.contains('reject') &&
-            !s.contains('abort'))) {
-      return TransferCategory.completed;
-    }
     if (s.contains('cancel') ||
         s.contains('timedout') ||
         s.contains('timed out') ||
         s.contains('error') ||
         s.contains('reject') ||
         s.contains('abort') ||
-        s.contains('failed')) {
+        s.contains('failed') ||
+        s.contains('fail')) {
       return TransferCategory.failed;
+    }
+    if (s.contains('succeeded') || s.contains('completed')) {
+      return TransferCategory.completed;
     }
     if (s.contains('initializing') || s.contains('inprogress') || s.contains('in progress')) {
       return TransferCategory.inProgress;
@@ -174,8 +169,8 @@ class SlskdTransfer {
   factory SlskdTransfer.fromJson(Map<String, dynamic> json) {
     DateTime? parseDate(dynamic v) {
       if (v == null) return null;
-      if (v is DateTime) return v;
-      return DateTime.tryParse(v.toString());
+      if (v is DateTime) return v.toLocal();
+      return DateTime.tryParse(v.toString())?.toLocal();
     }
 
     final stateStr = (json['state'] ?? json['State'] ?? '').toString();
@@ -246,13 +241,13 @@ class SlskdTransfer {
       startedAt == null ? null : (endedAt ?? DateTime.now()).difference(startedAt!);
 
   Duration? get remainingTime {
-    if (averageSpeed <= 0 || bytesRemaining <= 0) return null;
+    if (!averageSpeed.isFinite || averageSpeed <= 0 || bytesRemaining <= 0) return null;
     return Duration(seconds: (bytesRemaining / averageSpeed).round());
   }
 
   String get fileBaseName {
-    final sep = filename.contains('\\') ? '\\' : '/';
-    final parts = filename.split(sep);
+    final normalized = filename.replaceAll('\\', '/');
+    final parts = normalized.split('/').where((p) => p.isNotEmpty).toList();
     return parts.isNotEmpty ? parts.last : filename;
   }
 
@@ -369,8 +364,8 @@ class SlskdBatch {
   factory SlskdBatch.fromJson(Map<String, dynamic> json) {
     DateTime? parseDate(dynamic v) {
       if (v == null) return null;
-      if (v is DateTime) return v;
-      return DateTime.tryParse(v.toString());
+      if (v is DateTime) return v.toLocal();
+      return DateTime.tryParse(v.toString())?.toLocal();
     }
 
     final xfersRaw = json['transfers'] ?? json['Transfers'];

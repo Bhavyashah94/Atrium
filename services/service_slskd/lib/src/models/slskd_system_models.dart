@@ -12,8 +12,8 @@ class SlskdConnectionWatchdogState {
   factory SlskdConnectionWatchdogState.fromJson(Map<String, dynamic> json) {
     DateTime? parseDate(dynamic v) {
       if (v == null) return null;
-      if (v is DateTime) return v;
-      return DateTime.tryParse(v.toString());
+      if (v is DateTime) return v.toLocal();
+      return DateTime.tryParse(v.toString())?.toLocal();
     }
 
     return SlskdConnectionWatchdogState(
@@ -163,11 +163,12 @@ class SlskdServerStatus {
     final stateLower = stateStr.toLowerCase();
 
     final bool connected = (json['isConnected'] ?? json['IsConnected']) as bool? ??
-        (stateLower.contains('connected') || stateLower.contains('loggedin'));
+        (!stateLower.contains('disconnected') &&
+            (stateLower.contains('connected') || stateLower.contains('loggedin')));
     final bool loggedIn = (json['isLoggedIn'] ?? json['IsLoggedIn']) as bool? ??
         stateLower.contains('loggedin');
     final bool connecting = (json['isConnecting'] ?? json['IsConnecting']) as bool? ??
-        stateLower.contains('connecting');
+        (!stateLower.contains('disconnecting') && stateLower.contains('connecting'));
     final bool loggingIn = (json['isLoggingIn'] ?? json['IsLoggingIn']) as bool? ??
         stateLower.contains('loggingin');
 
@@ -398,8 +399,8 @@ class SlskdLogRecord {
   factory SlskdLogRecord.fromJson(Map<String, dynamic> json) {
     DateTime? parseDate(dynamic v) {
       if (v == null) return null;
-      if (v is DateTime) return v;
-      return DateTime.tryParse(v.toString());
+      if (v is DateTime) return v.toLocal();
+      return DateTime.tryParse(v.toString())?.toLocal();
     }
 
     return SlskdLogRecord(
@@ -449,8 +450,8 @@ class SlskdDiskFile {
   factory SlskdDiskFile.fromJson(Map<String, dynamic> json) {
     DateTime? parseDate(dynamic v) {
       if (v == null) return null;
-      if (v is DateTime) return v;
-      return DateTime.tryParse(v.toString());
+      if (v is DateTime) return v.toLocal();
+      return DateTime.tryParse(v.toString())?.toLocal();
     }
 
     return SlskdDiskFile(
@@ -491,8 +492,8 @@ class SlskdDiskDirectory {
   factory SlskdDiskDirectory.fromJson(Map<String, dynamic> json) {
     DateTime? parseDate(dynamic v) {
       if (v == null) return null;
-      if (v is DateTime) return v;
-      return DateTime.tryParse(v.toString());
+      if (v is DateTime) return v.toLocal();
+      return DateTime.tryParse(v.toString())?.toLocal();
     }
 
     final rawFiles = json['files'] ?? json['Files'];

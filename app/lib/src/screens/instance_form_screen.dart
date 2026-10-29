@@ -629,7 +629,8 @@ class _InstanceFormScreenState extends ConsumerState<InstanceFormScreen> {
                 if (_kind == ServiceKind.glances ||
                     _kind == ServiceKind.dashdot ||
                     _kind == ServiceKind.gluetun ||
-                    _kind == ServiceKind.qbittorrent) ...<Widget>[
+                    _kind == ServiceKind.qbittorrent ||
+                    _kind == ServiceKind.slskd) ...<Widget>[
                   const SizedBox(height: Insets.md),
                   TextFormField(
                     controller: _pollingInterval,

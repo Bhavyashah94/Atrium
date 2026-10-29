@@ -52,8 +52,9 @@ class SlskdTransferFlatTile extends ConsumerWidget {
     final double speed = transfer.averageSpeed;
     final Duration? remaining = transfer.remainingTime;
 
-    final String speedText = speed > 0 ? slskdFormatRate(speed) : '';
-    final String remainingText = remaining != null ? slskdFormatDuration(remaining) : '';
+    final bool isActive = transfer.category == TransferCategory.inProgress;
+    final String speedText = (isActive && speed > 0) ? slskdFormatRate(speed) : '';
+    final String remainingText = (isActive && remaining != null) ? slskdFormatDuration(remaining) : '';
     final String bytesText = '${slskdFormatBytes(transferred)} / ${slskdFormatBytes(total)}';
     final String folderLeaf = _extractDirectoryLeaf(item.directory);
 
@@ -221,7 +222,9 @@ class SlskdTransferFlatTile extends ConsumerWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicatorM3E(
-                value: transfer.category == TransferCategory.completed ? 1.0 : progress,
+                value: transfer.category == TransferCategory.completed
+                    ? 1.0
+                    : progress.clamp(0.0, 1.0),
                 size: LinearProgressM3ESize.s,
                 shape: ProgressM3EShape.flat,
                 trackColor: colorScheme.surfaceContainerHighest,
