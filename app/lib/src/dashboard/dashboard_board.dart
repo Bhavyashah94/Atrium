@@ -26,6 +26,7 @@ import 'package:service_gluetun/service_gluetun.dart';
 import 'package:service_myspeed/service_myspeed.dart';
 import 'package:service_aria2/service_aria2.dart';
 import 'package:service_cleanuparr/service_cleanuparr.dart';
+import 'package:service_slskd/service_slskd.dart';
 
 import '../health_providers.dart';
 import '../screens/calendar_screen.dart';
@@ -294,6 +295,9 @@ class DashboardBoard extends ConsumerWidget {
           ref.invalidate(cleanuparrStrikesProvider(i));
           ref.invalidate(cleanuparrStrikesCountProvider(i));
           ref.invalidate(cleanuparrJobsProvider(i));
+        case ServiceKind.slskd:
+          ref.invalidate(slskdDownloadsProvider(i));
+          ref.invalidate(slskdUploadsProvider(i));
         default:
           break;
       }

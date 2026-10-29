@@ -219,7 +219,7 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: LinearProgressIndicatorM3E(
-                      value: progress.clamp(0.0, 1.0),
+                      value: progress.clamp(0.0, 1.0).toDouble(),
                       size: LinearProgressM3ESize.s,
                       shape: ProgressM3EShape.flat,
                       activeColor: isDownload ? colorScheme.primary : colorScheme.tertiary,

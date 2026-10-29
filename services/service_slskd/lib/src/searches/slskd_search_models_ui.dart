@@ -20,13 +20,37 @@ enum SlskdSearchSort {
 enum SlskdSearchFormatFilter {
   all,
   flacOnly,
-  mp3Only;
+  mp3Only,
+  oggOnly,
+  wavOnly,
+  aacOnly,
+  m4aOnly,
+  opusOnly;
 
   String get label => switch (this) {
         SlskdSearchFormatFilter.all => 'All Formats',
         SlskdSearchFormatFilter.flacOnly => 'FLAC Only',
         SlskdSearchFormatFilter.mp3Only => 'MP3 Only',
+        SlskdSearchFormatFilter.oggOnly => 'OGG Only',
+        SlskdSearchFormatFilter.wavOnly => 'WAV Only',
+        SlskdSearchFormatFilter.aacOnly => 'AAC Only',
+        SlskdSearchFormatFilter.m4aOnly => 'M4A Only',
+        SlskdSearchFormatFilter.opusOnly => 'Opus Only',
       };
+
+  bool matchesExtension(String ext) {
+    final String upper = ext.toUpperCase();
+    return switch (this) {
+      SlskdSearchFormatFilter.all => true,
+      SlskdSearchFormatFilter.flacOnly => upper == 'FLAC',
+      SlskdSearchFormatFilter.mp3Only => upper == 'MP3',
+      SlskdSearchFormatFilter.oggOnly => upper == 'OGG',
+      SlskdSearchFormatFilter.wavOnly => upper == 'WAV',
+      SlskdSearchFormatFilter.aacOnly => upper == 'AAC',
+      SlskdSearchFormatFilter.m4aOnly => upper == 'M4A',
+      SlskdSearchFormatFilter.opusOnly => upper == 'OPUS',
+    };
+  }
 }
 
 /// Grouped search results representing an entire album directory from a single peer.

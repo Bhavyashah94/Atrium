@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_slskd/service_slskd.dart';
+import 'package:service_slskd/src/searches/slskd_search_models_ui.dart';
 
 void main() {
   group('Slskd Transfers Models', () {
@@ -482,6 +483,19 @@ void main() {
       expect(share.remotePath, 'FLAC\\');
       expect(share.directories, 15);
       expect(share.files, 320);
+    });
+
+    test('SlskdSearchFormatFilter matchesExtension tests', () {
+      expect(SlskdSearchFormatFilter.all.matchesExtension('flac'), isTrue);
+      expect(SlskdSearchFormatFilter.all.matchesExtension('mp3'), isTrue);
+      expect(SlskdSearchFormatFilter.flacOnly.matchesExtension('FLAC'), isTrue);
+      expect(SlskdSearchFormatFilter.flacOnly.matchesExtension('mp3'), isFalse);
+      expect(SlskdSearchFormatFilter.mp3Only.matchesExtension('mp3'), isTrue);
+      expect(SlskdSearchFormatFilter.oggOnly.matchesExtension('ogg'), isTrue);
+      expect(SlskdSearchFormatFilter.wavOnly.matchesExtension('WAV'), isTrue);
+      expect(SlskdSearchFormatFilter.aacOnly.matchesExtension('aac'), isTrue);
+      expect(SlskdSearchFormatFilter.m4aOnly.matchesExtension('M4A'), isTrue);
+      expect(SlskdSearchFormatFilter.opusOnly.matchesExtension('opus'), isTrue);
     });
   });
 }

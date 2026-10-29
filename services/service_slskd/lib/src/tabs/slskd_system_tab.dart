@@ -42,7 +42,7 @@ class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab>
     _tabController = TabController(
       length: 3,
       vsync: this,
-      initialIndex: initialTab.clamp(0, 2),
+      initialIndex: initialTab.clamp(0, 2).toInt(),
     );
     _tabController.addListener(_handleTabChanged);
     _healthScrollController = ScrollController();

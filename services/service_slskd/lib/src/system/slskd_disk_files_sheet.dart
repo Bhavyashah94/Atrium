@@ -53,7 +53,7 @@ class _SlskdDiskFilesSheetState extends ConsumerState<SlskdDiskFilesSheet>
     _tabController = TabController(
       length: 2,
       vsync: this,
-      initialIndex: widget.initialSegment.clamp(0, 1),
+      initialIndex: widget.initialSegment.clamp(0, 1).toInt(),
     );
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging && mounted) {

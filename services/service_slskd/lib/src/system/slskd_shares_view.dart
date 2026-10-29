@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:dio/dio.dart';
@@ -29,48 +27,6 @@ class SlskdSharesView extends ConsumerStatefulWidget {
 
 class _SlskdSharesViewState extends ConsumerState<SlskdSharesView> {
   bool _isActionInProgress = false;
-  Timer? _scanProgressTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkScanPolling();
-  }
-
-  @override
-  void didUpdateWidget(SlskdSharesView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _checkScanPolling();
-  }
-
-  void _checkScanPolling() {
-    final isScanning =
-        widget.sharesState.scanning || widget.sharesState.scanPending;
-    if (isScanning && _scanProgressTimer == null) {
-      _scanProgressTimer =
-          Timer.periodic(const Duration(milliseconds: 1500), (_) {
-        if (!mounted) return;
-        if (WidgetsBinding.instance.lifecycleState != null &&
-            WidgetsBinding.instance.lifecycleState !=
-                AppLifecycleState.resumed) {
-          return;
-        }
-        final activeTab = ref.read(slskdActiveTabProvider(widget.instance));
-        if (activeTab != 4) return;
-
-        ref.invalidate(slskdApplicationStateProvider(widget.instance));
-      });
-    } else if (!isScanning && _scanProgressTimer != null) {
-      _scanProgressTimer?.cancel();
-      _scanProgressTimer = null;
-    }
-  }
-
-  @override
-  void dispose() {
-    _scanProgressTimer?.cancel();
-    super.dispose();
-  }
 
   Future<void> _handleScanShares() async {
     setState(() => _isActionInProgress = true);
@@ -258,7 +214,7 @@ class _SlskdSharesViewState extends ConsumerState<SlskdSharesView> {
                       size: LinearProgressM3ESize.s,
                       shape: ProgressM3EShape.flat,
                       value: widget.sharesState.scanProgress > 0
-                          ? widget.sharesState.scanProgress.clamp(0.0, 1.0)
+                          ? widget.sharesState.scanProgress.clamp(0.0, 1.0).toDouble()
                           : null,
                       activeColor: colorScheme.primary,
                       trackColor: colorScheme.surfaceContainerHighest,

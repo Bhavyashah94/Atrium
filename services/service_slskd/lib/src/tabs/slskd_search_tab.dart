@@ -722,9 +722,7 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
         if (_hideLocked && file.isLocked) continue;
 
         // Apply audio format filter
-        final ext = file.extension.toUpperCase();
-        if (_selectedFormat == SlskdSearchFormatFilter.flacOnly && ext != 'FLAC') continue;
-        if (_selectedFormat == SlskdSearchFormatFilter.mp3Only && ext != 'MP3') continue;
+        if (!_selectedFormat.matchesExtension(file.extension)) continue;
 
         final dir = file.albumDirectory;
         dirMap.putIfAbsent(dir, () => []).add(file);

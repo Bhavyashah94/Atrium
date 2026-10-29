@@ -8,7 +8,7 @@ import 'slskd_api.dart';
 
 /// Configured polling interval for a given [Instance], respecting [Instance.pollingIntervalSeconds].
 Duration slskdPollInterval(Instance instance) =>
-    Duration(seconds: instance.pollingIntervalSeconds.clamp(1, 60));
+    Duration(seconds: instance.pollingIntervalSeconds.clamp(1, 60).toInt());
 
 // -----------------------------------------------------------------------------
 // UI Navigation & Tab State Providers

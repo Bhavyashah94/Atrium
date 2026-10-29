@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:core_models/core_models.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
@@ -41,36 +39,15 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
   final TextEditingController _filterController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  Timer? _statusPollTimer;
   String _filterQuery = '';
   SlskdSearchFormatFilter _formatFilter = SlskdSearchFormatFilter.all;
 
   @override
   void dispose() {
-    _stopStatusPolling();
     _scrollController.dispose();
     _userSearchController.dispose();
     _filterController.dispose();
     super.dispose();
-  }
-
-  void _startStatusPolling(String username) {
-    _statusPollTimer?.cancel();
-    _statusPollTimer = Timer.periodic(const Duration(milliseconds: 750), (_) {
-      if (!mounted) return;
-      if (WidgetsBinding.instance.lifecycleState != null &&
-          WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
-        return;
-      }
-      final int activeTab = ref.read(slskdActiveTabProvider(widget.instance));
-      if (activeTab != 2) return;
-      ref.invalidate(slskdBrowseStatusProvider((widget.instance, username)));
-    });
-  }
-
-  void _stopStatusPolling() {
-    _statusPollTimer?.cancel();
-    _statusPollTimer = null;
   }
 
   void _selectUser(String username) {
@@ -88,7 +65,6 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
   }
 
   void _clearUser() {
-    _stopStatusPolling();
     setState(() {
       _filterQuery = '';
       _filterController.clear();
@@ -364,12 +340,6 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
       },
     );
 
-    if (directoriesAsync.isLoading && _statusPollTimer == null) {
-      _startStatusPolling(username);
-    } else if (!directoriesAsync.isLoading && _statusPollTimer != null) {
-      _stopStatusPolling();
-    }
-
     return Scaffold(
       body: SafeArea(
         bottom: false,
@@ -445,7 +415,7 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
                 final statusVal = ref.watch(slskdBrowseStatusProvider((widget.instance, username))).value;
                 final bool hasProgress = statusVal != null && statusVal > 0;
                 final double normalized = hasProgress
-                    ? (statusVal > 1.0 ? statusVal / 100.0 : statusVal).clamp(0.0, 1.0)
+                    ? (statusVal > 1.0 ? statusVal / 100.0 : statusVal).clamp(0.0, 1.0).toDouble()
                     : 0.0;
                 final int pct = hasProgress
                     ? (statusVal > 1.0 ? statusVal : statusVal * 100).round()
@@ -632,10 +602,8 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
       displayFiles = displayFiles.where((f) => f.trackTitle.toLowerCase().contains(q)).toList();
     }
 
-    if (_formatFilter == SlskdSearchFormatFilter.flacOnly) {
-      displayFiles = displayFiles.where((f) => f.extension.toUpperCase() == 'FLAC').toList();
-    } else if (_formatFilter == SlskdSearchFormatFilter.mp3Only) {
-      displayFiles = displayFiles.where((f) => f.extension.toUpperCase() == 'MP3').toList();
+    if (_formatFilter != SlskdSearchFormatFilter.all) {
+      displayFiles = displayFiles.where((f) => _formatFilter.matchesExtension(f.extension)).toList();
     }
 
     // Sort subfolders alphabetically
@@ -887,35 +855,23 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
           const SizedBox(height: Insets.xs),
 
           // Format filter chips (All, FLAC, MP3)
-          Row(
-            children: <Widget>[
-              ChoiceChip(
-                label: const Text('All'),
-                visualDensity: VisualDensity.compact,
-                selected: _formatFilter == SlskdSearchFormatFilter.all,
-                onSelected: (sel) {
-                  if (sel) setState(() => _formatFilter = SlskdSearchFormatFilter.all);
-                },
-              ),
-              const SizedBox(width: Insets.xs),
-              ChoiceChip(
-                label: const Text('FLAC'),
-                visualDensity: VisualDensity.compact,
-                selected: _formatFilter == SlskdSearchFormatFilter.flacOnly,
-                onSelected: (sel) {
-                  if (sel) setState(() => _formatFilter = SlskdSearchFormatFilter.flacOnly);
-                },
-              ),
-              const SizedBox(width: Insets.xs),
-              ChoiceChip(
-                label: const Text('MP3'),
-                visualDensity: VisualDensity.compact,
-                selected: _formatFilter == SlskdSearchFormatFilter.mp3Only,
-                onSelected: (sel) {
-                  if (sel) setState(() => _formatFilter = SlskdSearchFormatFilter.mp3Only);
-                },
-              ),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: SlskdSearchFormatFilter.values.map((f) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: Insets.xs),
+                  child: ChoiceChip(
+                    label: Text(f == SlskdSearchFormatFilter.all ? 'All' : f.label.replaceAll(' Only', '')),
+                    visualDensity: VisualDensity.compact,
+                    selected: _formatFilter == f,
+                    onSelected: (sel) {
+                      if (sel) setState(() => _formatFilter = f);
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
           ),
         ],
       ),
