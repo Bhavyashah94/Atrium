@@ -238,41 +238,14 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     }
   }
 
-  void _showNewChatDialog(BuildContext context) {
-    final TextEditingController userCtrl = TextEditingController();
-    showDialog<void>(
+  Future<void> _showNewChatDialog(BuildContext context) async {
+    final String? target = await showDialog<String>(
       context: context,
-      builder: (BuildContext ctx) {
-        return AlertDialog(
-          title: const Text('New Direct Message'),
-          content: TextField(
-            controller: userCtrl,
-            autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'Peer Username',
-              hintText: 'Enter Soulseek user...',
-              prefixIcon: Icon(Icons.person_outline_rounded),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final target = userCtrl.text.trim();
-                if (target.isEmpty) return;
-                Navigator.of(ctx).pop();
-                ref.read(slskdActiveRoomNameProvider(widget.instance).notifier).state = null;
-                ref.read(slskdActiveConversationUsernameProvider(widget.instance).notifier).state = target;
-              },
-              child: const Text('Start Chat'),
-            ),
-          ],
-        );
-      },
-    ).whenComplete(userCtrl.dispose);
+      builder: (BuildContext ctx) => const _NewChatDialog(),
+    );
+    if (target == null || !mounted) return;
+    ref.read(slskdActiveRoomNameProvider(widget.instance).notifier).state = null;
+    ref.read(slskdActiveConversationUsernameProvider(widget.instance).notifier).state = target;
   }
 
   // ---------------------------------------------------------------------------
@@ -1059,6 +1032,55 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Asks for a peer's username and pops it. The dialog owns its controller,
+/// so the controller lives until the dialog's exit animation has finished.
+class _NewChatDialog extends StatefulWidget {
+  const _NewChatDialog();
+
+  @override
+  State<_NewChatDialog> createState() => _NewChatDialogState();
+}
+
+class _NewChatDialogState extends State<_NewChatDialog> {
+  final TextEditingController _userCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _userCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('New Direct Message'),
+      content: TextField(
+        controller: _userCtrl,
+        autofocus: true,
+        decoration: const InputDecoration(
+          labelText: 'Peer Username',
+          hintText: 'Enter Soulseek user...',
+          prefixIcon: Icon(Icons.person_outline_rounded),
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final target = _userCtrl.text.trim();
+            if (target.isEmpty) return;
+            Navigator.of(context).pop(target);
+          },
+          child: const Text('Start Chat'),
+        ),
+      ],
     );
   }
 }

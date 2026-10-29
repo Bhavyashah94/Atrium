@@ -418,5 +418,42 @@ void main() {
       expect(find.text('Peer Library Explorer'), findsNothing);
       expect(find.text('AudioPhile99'), findsWidgets);
     });
+
+    testWidgets('new message dialog closes cleanly and opens the chat', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdActiveTabProvider(testInstance).overrideWith((ref) => 3),
+            slskdJoinedRoomNamesProvider(testInstance).overrideWith((ref) => mockJoinedRooms),
+            slskdAvailableRoomsProvider(testInstance).overrideWith((ref) => mockAvailableRooms),
+            slskdConversationsProvider(testInstance).overrideWith((ref) => mockConversations),
+            slskdConversationMessagesProvider((testInstance, 'NewPeer')).overrideWith(
+              (ref) => const <SlskdPrivateMessage>[],
+            ),
+          ],
+          child: const MaterialApp(home: SlskdHome(instance: testInstance)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Cancelling disposes nothing the closing dialog still draws.
+      await tester.tap(find.byTooltip('New direct message'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'NewPeer');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.text('New Direct Message'), findsNothing);
+
+      await tester.tap(find.byTooltip('New direct message'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'NewPeer');
+      await tester.tap(find.text('Start Chat'));
+      await tester.pumpAndSettle();
+      expect(find.text('Message NewPeer...'), findsOneWidget);
+    });
   });
 }
