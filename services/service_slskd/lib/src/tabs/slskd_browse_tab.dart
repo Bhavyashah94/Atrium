@@ -329,40 +329,10 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
                 ],
                 onSubmitted: _selectUser,
               ),
-              const SizedBox(height: Insets.xl),
-
-              // Suggested / Quick Jump Peers
-              Text(
-                'Recent & Featured Peers',
-                style: textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.outline,
-                ),
-              ),
-              const SizedBox(height: Insets.sm),
-
-              Wrap(
-                spacing: Insets.xs,
-                runSpacing: Insets.xs,
-                children: <Widget>[
-                  _buildPeerSuggestionChip('AudioPhile99'),
-                  _buildPeerSuggestionChip('GrooveMaster'),
-                  _buildPeerSuggestionChip('VinylCollector'),
-                  _buildPeerSuggestionChip('LosslessArchive'),
-                ],
-              ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildPeerSuggestionChip(String username) {
-    return ActionChip(
-      avatar: const Icon(Icons.person_outline_rounded, size: 16),
-      label: Text(username),
-      onPressed: () => _selectUser(username),
     );
   }
 

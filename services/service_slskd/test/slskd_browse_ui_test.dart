@@ -251,13 +251,20 @@ void main() {
       // 1. Initial Empty Peer Lookup View
       expect(find.text('Peer Library Explorer'), findsOneWidget);
       expect(find.text('Browse Peer Shares'), findsOneWidget);
-      expect(find.text('AudioPhile99'), findsOneWidget);
-      expect(find.text('GrooveMaster'), findsOneWidget);
+      // No made-up peers to tap: those names belong to real strangers.
+      expect(find.byType(ActionChip), findsNothing);
 
       await capture(tester, repaintKey, 'slskd_browse_empty.png');
 
-      // 2. Tap on suggested peer "AudioPhile99"
-      await tester.tap(find.text('AudioPhile99'));
+      // 2. Look up "AudioPhile99" by name
+      await tester.enterText(
+        find.descendant(
+          of: find.widgetWithText(SearchBar, 'Enter Soulseek username...'),
+          matching: find.byType(TextField),
+        ),
+        'AudioPhile99',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
       // Verify Peer Card & Root shares
