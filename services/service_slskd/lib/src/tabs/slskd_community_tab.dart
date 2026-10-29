@@ -861,6 +861,11 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     final userStatusAsync =
         ref.watch(slskdUserStatusProvider((widget.instance, username)));
     final userStatus = userStatusAsync.value;
+    // Watched, not read on tap: nothing else keeps this autoDispose
+    // provider alive, so a read would only ever see it loading.
+    final userInfo = ref
+        .watch(slskdUserInfoProvider((widget.instance, username)))
+        .value;
     final bool isOnline = userStatus?.isOnline ?? false;
     final bool isAway = userStatus?.isAway ?? false;
     final String statusText = userStatusAsync.isLoading
@@ -954,7 +959,6 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
             tooltip: 'User profile bio',
             icon: const Icon(Icons.info_outline_rounded),
             onPressed: () {
-              final userInfo = ref.read(slskdUserInfoProvider((widget.instance, username))).value;
               showSlskdUserBioSheet(
                 context,
                 username: username,

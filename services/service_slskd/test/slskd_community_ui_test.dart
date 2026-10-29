@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_slskd/service_slskd.dart';
+import 'package:service_slskd/src/browse/slskd_user_bio_sheet.dart';
 import 'package:service_slskd/src/community/slskd_room_members_sheet.dart';
 
 final String? _fontDir = () {
@@ -224,8 +225,10 @@ void main() {
             slskdConversationMessagesProvider((testInstance, 'AudioPhile99')).overrideWith(
               (ref) => mockDmMessages,
             ),
+            // Async like the real request, so the profile button only has the
+            // bio if something keeps this provider alive while it loads.
             slskdUserInfoProvider((testInstance, 'AudioPhile99')).overrideWith(
-              (ref) => const SlskdUserInfo(description: 'Sharing 24-bit FLAC vinyl rips.'),
+              (ref) async => const SlskdUserInfo(description: 'Sharing 24-bit FLAC vinyl rips.'),
             ),
           ],
           child: MaterialApp(
@@ -398,6 +401,13 @@ void main() {
       expect(find.text('Message AudioPhile99...'), findsOneWidget);
 
       await capture(tester, repaintKey, 'slskd_community_active_dm.png');
+
+      // The profile button shows the peer's bio, not an empty placeholder.
+      await tester.tap(find.byTooltip('User profile bio'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sharing 24-bit FLAC vinyl rips.'), findsOneWidget);
+      Navigator.of(tester.element(find.byType(SlskdUserBioSheet))).pop();
+      await tester.pumpAndSettle();
 
       // -----------------------------------------------------------------------
       // 8. Inter-Tab Peer Handoff ("Browse Shares" shortcut)
