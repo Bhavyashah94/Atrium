@@ -652,6 +652,9 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
   Widget _buildNoMatchesState(BuildContext context, SlskdSearch search) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    // A failed search is complete with no responses too, but it is not an
+    // empty result, so it must not read as one.
+    final bool failed = search.isErrored;
 
     return Center(
       child: Padding(
@@ -660,15 +663,19 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Icon(
-              _hasActiveFilters ? Icons.filter_alt_off_rounded : Icons.search_off_rounded,
+              failed
+                  ? Icons.error_outline_rounded
+                  : (_hasActiveFilters ? Icons.filter_alt_off_rounded : Icons.search_off_rounded),
               size: 56,
-              color: colorScheme.outline,
+              color: failed ? colorScheme.error : colorScheme.outline,
             ),
             const SizedBox(height: Insets.md),
             Text(
-              _hasActiveFilters
-                  ? 'No results match active filters'
-                  : 'No results found for "${search.searchText}"',
+              failed
+                  ? 'Search for "${search.searchText}" failed'
+                  : (_hasActiveFilters
+                      ? 'No results match active filters'
+                      : 'No results found for "${search.searchText}"'),
               textAlign: TextAlign.center,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
@@ -677,15 +684,17 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
             ),
             const SizedBox(height: Insets.xs),
             Text(
-              _hasActiveFilters
-                  ? 'Try relaxing audio format or slot availability filters.'
-                  : 'Check spelling or try broader artist or album keywords.',
+              failed
+                  ? 'slskd could not run it. Check that it is connected to Soulseek in System.'
+                  : (_hasActiveFilters
+                      ? 'Try relaxing audio format or slot availability filters.'
+                      : 'Check spelling or try broader artist or album keywords.'),
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
             ),
-            if (_hasActiveFilters) ...<Widget>[
+            if (_hasActiveFilters && !failed) ...<Widget>[
               const SizedBox(height: Insets.md),
               OutlinedButton.icon(
                 icon: const Icon(Icons.filter_alt_off_rounded, size: 18),

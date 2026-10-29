@@ -109,6 +109,10 @@ class SlskdSearch {
   final int token;
   final List<SlskdSearchResponse> responses;
 
+  /// slskd could not run the search, most often because it is not logged in
+  /// to Soulseek. Such a search is also complete, with no responses.
+  bool get isErrored => state.toLowerCase().contains('errored');
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'searchText': searchText,

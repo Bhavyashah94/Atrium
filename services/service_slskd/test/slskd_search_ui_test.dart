@@ -354,5 +354,51 @@ void main() {
       // Capture Screenshot: Initial Empty State
       await capture(tester, repaintKey, 'slskd_search_empty.png');
     });
+
+    testWidgets('says a search failed rather than that it found nothing',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1179, 2556);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      // What slskd stores for a search started while it is not logged in to
+      // Soulseek.
+      final failedSearch = <SlskdSearch>[
+        SlskdSearch(
+          id: 'search-failed',
+          searchText: 'Daft Punk',
+          state: 'Completed, Errored',
+          isComplete: true,
+          startedAt: DateTime.now(),
+        ),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdActiveTabProvider(testInstance).overrideWith((ref) => 1),
+            slskdSearchesProvider(testInstance).overrideWith((ref) => failedSearch),
+            slskdSearchResponsesProvider((testInstance, 'search-failed')).overrideWith(
+              (ref) => const <SlskdSearchResponse>[],
+            ),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(
+              useMaterial3: true,
+              colorSchemeSeed: const Color(0xFF007ACC),
+              brightness: Brightness.dark,
+              fontFamily: 'Roboto',
+            ),
+            home: const SlskdHome(instance: testInstance),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Search for "Daft Punk" failed'), findsOneWidget);
+      expect(find.textContaining('connected to Soulseek'), findsOneWidget);
+      expect(find.text('No results found for "Daft Punk"'), findsNothing);
+    });
   });
 }

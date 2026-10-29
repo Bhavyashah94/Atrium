@@ -195,6 +195,26 @@ void main() {
       expect(flac.qualityBadge, 'FLAC 24-bit');
       expect(flac.formattedDuration, '6:00');
     });
+
+    test('SlskdSearch isErrored from a failed search', () {
+      // What slskd stores for a search started while it is not logged in to
+      // Soulseek: complete, with no responses, but not an empty result.
+      final errored = SlskdSearch.fromJson({
+        'id': 'e1',
+        'searchText': 'daft punk',
+        'state': 'Completed, Errored',
+        'isComplete': true,
+      });
+      final succeeded = SlskdSearch.fromJson({
+        'id': 's1',
+        'searchText': 'daft punk',
+        'state': 'Completed, Succeeded',
+        'isComplete': true,
+      });
+
+      expect(errored.isErrored, isTrue);
+      expect(succeeded.isErrored, isFalse);
+    });
   });
 
   group('Slskd Browse Models', () {
