@@ -568,20 +568,20 @@ void main() {
     });
 
     test('SlskdAlbumGroup qualityBadge derives from audio format extension', () {
-      final album = SlskdAlbumGroup(
+      const album = SlskdAlbumGroup(
         albumDirectory: 'Music/Artist/Album',
         username: 'user1',
         hasFreeUploadSlot: true,
         queueLength: 0,
         uploadSpeed: 1000,
         files: [
-          const SlskdSearchFile(
+          SlskdSearchFile(
             filename: 'song1.m4a',
             size: 5000,
             extension: 'm4a',
             bitRate: 256,
           ),
-          const SlskdSearchFile(
+          SlskdSearchFile(
             filename: 'song2.m4a',
             size: 5000,
             extension: 'm4a',
