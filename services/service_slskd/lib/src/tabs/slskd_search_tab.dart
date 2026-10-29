@@ -123,7 +123,7 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
   Future<void> _downloadAlbum(SlskdAlbumGroup group, [String? searchId]) async {
     try {
       final api = await ref.read(slskdApiProvider(widget.instance).future);
-      final response = await api.enqueueBatch(
+      final EnqueueDownloadBatchResponse response = await api.enqueueBatch(
         EnqueueDownloadBatchRequest(
           username: group.username,
           searchId: searchId,
@@ -186,7 +186,7 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
   Future<void> _downloadTrack(SlskdAlbumGroup group, SlskdSearchFile file) async {
     try {
       final api = await ref.read(slskdApiProvider(widget.instance).future);
-      final response = await api.enqueueBatch(
+      final EnqueueDownloadBatchResponse response = await api.enqueueBatch(
         EnqueueDownloadBatchRequest(
           username: group.username,
           files: <EnqueueDownloadBatchItem>[
