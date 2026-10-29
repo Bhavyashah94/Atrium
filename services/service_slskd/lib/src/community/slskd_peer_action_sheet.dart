@@ -203,13 +203,18 @@ class SlskdPeerActionSheet extends ConsumerWidget {
               subtitle: const Text('Check bio, avatar, and upload slot metrics'),
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () {
+                final parentContext = Navigator.of(context).context;
                 Navigator.of(context).pop();
-                showSlskdUserBioSheet(
-                  context,
-                  username: username,
-                  userInfo: userInfoAsync.value,
-                  userStatus: userStatusAsync.value,
-                );
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (parentContext.mounted) {
+                    showSlskdUserBioSheet(
+                      parentContext,
+                      username: username,
+                      userInfo: userInfoAsync.value,
+                      userStatus: userStatusAsync.value,
+                    );
+                  }
+                });
               },
             ),
           ),

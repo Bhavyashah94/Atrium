@@ -48,7 +48,7 @@ class SlskdSearchFlatTile extends ConsumerWidget {
             Row(
               children: <Widget>[
                 Icon(
-                  file.extension.toUpperCase() == 'FLAC'
+                  file.extension.trim().replaceAll(RegExp(r'^\.+'), '').toUpperCase() == 'FLAC'
                       ? Icons.audio_file_rounded
                       : Icons.music_note_rounded,
                   size: 20,

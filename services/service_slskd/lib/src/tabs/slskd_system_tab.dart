@@ -208,10 +208,13 @@ class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab>
   ) {
     return EasyRefresh(
       onRefresh: () async {
-        ref.invalidate(slskdApplicationStateProvider(widget.instance));
-        await ref.read(slskdApplicationStateProvider(widget.instance).future);
+        try {
+          ref.invalidate(slskdApplicationStateProvider(widget.instance));
+          await ref.read(slskdApplicationStateProvider(widget.instance).future);
+        } catch (_) {}
       },
       child: stateAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(
           child: Padding(
             padding: EdgeInsets.all(Insets.xl),
@@ -281,14 +284,17 @@ class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab>
   ) {
     return EasyRefresh(
       onRefresh: () async {
-        ref.invalidate(slskdApplicationStateProvider(widget.instance));
-        ref.invalidate(slskdSharesProvider(widget.instance));
-        await Future.wait(<Future<dynamic>>[
-          ref.read(slskdApplicationStateProvider(widget.instance).future),
-          ref.read(slskdSharesProvider(widget.instance).future),
-        ]);
+        try {
+          ref.invalidate(slskdApplicationStateProvider(widget.instance));
+          ref.invalidate(slskdSharesProvider(widget.instance));
+          await Future.wait(<Future<dynamic>>[
+            ref.read(slskdApplicationStateProvider(widget.instance).future),
+            ref.read(slskdSharesProvider(widget.instance).future),
+          ]);
+        } catch (_) {}
       },
       child: stateAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(
           child: Padding(
             padding: EdgeInsets.all(Insets.xl),
@@ -322,12 +328,14 @@ class _SlskdSystemTabState extends ConsumerState<SlskdSystemTab>
   Widget _buildLogsTab(BuildContext context) {
     return EasyRefresh(
       onRefresh: () async {
-        ref.invalidate(slskdLogsProvider(widget.instance));
-        ref.invalidate(slskdLogFilesProvider(widget.instance));
-        await Future.wait(<Future<dynamic>>[
-          ref.read(slskdLogsProvider(widget.instance).future),
-          ref.read(slskdLogFilesProvider(widget.instance).future),
-        ]);
+        try {
+          ref.invalidate(slskdLogsProvider(widget.instance));
+          ref.invalidate(slskdLogFilesProvider(widget.instance));
+          await Future.wait(<Future<dynamic>>[
+            ref.read(slskdLogsProvider(widget.instance).future),
+            ref.read(slskdLogFilesProvider(widget.instance).future),
+          ]);
+        } catch (_) {}
       },
       child: ListView(
         padding: const EdgeInsets.all(Insets.md),

@@ -206,11 +206,12 @@ class _SlskdRoomMembersSheetState extends ConsumerState<SlskdRoomMembersSheet> {
       itemCount: filtered.length,
       itemBuilder: (BuildContext context, int index) {
         final member = filtered[index];
-        final bool isOnline = member.status == 2;
-        final bool isAway = member.status == 1;
+        final bool isOnline = member.isOnline;
+        final bool isAway = member.isAway;
+        final String memberLower = member.username.toLowerCase();
         final bool isOperator = roomDetail != null &&
-            (roomDetail.operators.contains(member.username) ||
-                roomDetail.owner == member.username);
+            (roomDetail.operators.any((op) => op.toLowerCase() == memberLower) ||
+                roomDetail.owner?.toLowerCase() == memberLower);
 
         final Color presenceColor = slskdPresenceColor(
           colorScheme,
@@ -218,8 +219,12 @@ class _SlskdRoomMembersSheetState extends ConsumerState<SlskdRoomMembersSheet> {
           isAway: isAway,
         );
 
+        final String speedStr =
+            (member.averageSpeed.isFinite && member.averageSpeed > 0)
+                ? slskdFormatRate(member.averageSpeed)
+                : 'Direct';
         final String subtitle = member.fileCount > 0
-            ? '${member.fileCount} shares • ${member.averageSpeed > 0 ? slskdFormatRate(member.averageSpeed) : 'Direct'}'
+            ? '${member.fileCount} shares • $speedStr'
             : (isOnline ? 'Online' : (isAway ? 'Away' : 'Offline'));
 
         return ListTile(
@@ -315,12 +320,17 @@ class _SlskdRoomMembersSheetState extends ConsumerState<SlskdRoomMembersSheet> {
           ),
           trailing: const Icon(Icons.more_vert_rounded, size: 18),
           onTap: () {
+            final parentContext = Navigator.of(context).context;
             Navigator.of(context).pop();
-            showSlskdPeerActionSheet(
-              context,
-              instance: widget.instance,
-              username: member.username,
-            );
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (parentContext.mounted) {
+                showSlskdPeerActionSheet(
+                  parentContext,
+                  instance: widget.instance,
+                  username: member.username,
+                );
+              }
+            });
           },
         );
       },

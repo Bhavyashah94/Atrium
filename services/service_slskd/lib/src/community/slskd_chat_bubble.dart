@@ -17,7 +17,8 @@ class SlskdChatBubble extends StatelessWidget {
         message = roomMessage.message,
         timestamp = roomMessage.timestamp,
         isOutbound = roomMessage.self,
-        isSystem = roomMessage.username == '' || roomMessage.username == 'System',
+        isSystem = roomMessage.username.isEmpty ||
+            roomMessage.username.toLowerCase() == 'system',
         isRoom = true;
 
   SlskdChatBubble.direct({

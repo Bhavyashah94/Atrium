@@ -12,7 +12,9 @@ class SlskdApi {
 
   Map<String, dynamic> _asMap(dynamic data) {
     if (data is Map<String, dynamic>) return data;
-    if (data is Map) return data.cast<String, dynamic>();
+    if (data is Map) {
+      return data.map((key, value) => MapEntry(key.toString(), value));
+    }
     return const <String, dynamic>{};
   }
 
@@ -149,12 +151,18 @@ class SlskdApi {
 
   /// Deletes a subdirectory within the downloads directory.
   Future<void> deleteDownloadDirectory(String subdirectory) async {
+    if (subdirectory.trim().isEmpty) {
+      throw ArgumentError.value(subdirectory, 'subdirectory', 'Directory path cannot be empty');
+    }
     final b64 = Uri.encodeComponent(base64.encode(utf8.encode(subdirectory)));
     await _dio.delete<void>('api/v0/files/downloads/directories/$b64');
   }
 
   /// Deletes a file within the downloads directory.
   Future<void> deleteDownloadFile(String fileName) async {
+    if (fileName.trim().isEmpty) {
+      throw ArgumentError.value(fileName, 'fileName', 'File name cannot be empty');
+    }
     final b64 = Uri.encodeComponent(base64.encode(utf8.encode(fileName)));
     await _dio.delete<void>('api/v0/files/downloads/files/$b64');
   }
@@ -191,12 +199,18 @@ class SlskdApi {
 
   /// Deletes a subdirectory within the incomplete directory.
   Future<void> deleteIncompleteDirectory(String subdirectory) async {
+    if (subdirectory.trim().isEmpty) {
+      throw ArgumentError.value(subdirectory, 'subdirectory', 'Directory path cannot be empty');
+    }
     final b64 = Uri.encodeComponent(base64.encode(utf8.encode(subdirectory)));
     await _dio.delete<void>('api/v0/files/incomplete/directories/$b64');
   }
 
   /// Deletes a file within the incomplete directory.
   Future<void> deleteIncompleteFile(String fileName) async {
+    if (fileName.trim().isEmpty) {
+      throw ArgumentError.value(fileName, 'fileName', 'File name cannot be empty');
+    }
     final b64 = Uri.encodeComponent(base64.encode(utf8.encode(fileName)));
     await _dio.delete<void>('api/v0/files/incomplete/files/$b64');
   }
@@ -322,8 +336,11 @@ class SlskdApi {
       final Response<dynamic> response = await _dio.get<dynamic>(
         'api/v0/transfers/downloads/$encodedUser/$encodedId/position',
       );
-      if (response.data is num) {
-        return (response.data as num).toInt();
+      if (response.data != null) {
+        if (response.data is num) {
+          return (response.data as num).toInt();
+        }
+        return int.tryParse(response.data.toString());
       }
       return null;
     } on DioException catch (e) {
@@ -539,19 +556,24 @@ class SlskdApi {
 
   /// Retrieves file responses for the search matching [id].
   Future<List<SlskdSearchResponse>> getSearchResponses(String id) async {
-    final encodedId = Uri.encodeComponent(id);
-    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/searches/$encodedId/responses');
-    final List<SlskdSearchResponse> responses = [];
-    if (response.data is Iterable) {
-      for (final item in response.data as Iterable) {
-        if (item is Map<String, dynamic>) {
-          responses.add(SlskdSearchResponse.fromJson(item));
-        } else if (item is Map) {
-          responses.add(SlskdSearchResponse.fromJson(item.cast<String, dynamic>()));
+    try {
+      final encodedId = Uri.encodeComponent(id);
+      final Response<dynamic> response = await _dio.get<dynamic>('api/v0/searches/$encodedId/responses');
+      final List<SlskdSearchResponse> responses = [];
+      if (response.data is Iterable) {
+        for (final item in response.data as Iterable) {
+          if (item is Map<String, dynamic>) {
+            responses.add(SlskdSearchResponse.fromJson(item));
+          } else if (item is Map) {
+            responses.add(SlskdSearchResponse.fromJson(_asMap(item)));
+          }
         }
       }
+      return responses;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return const <SlskdSearchResponse>[];
+      rethrow;
     }
-    return responses;
   }
 
   /// Deletes the search matching [id].
@@ -572,9 +594,14 @@ class SlskdApi {
 
   /// Retrieves the entire file share tree of the specified remote [username].
   Future<List<SlskdDirectory>> browseUser(String username) async {
-    final encodedUser = Uri.encodeComponent(username);
-    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/users/$encodedUser/browse');
-    return _parseDirectoryList(response.data);
+    try {
+      final encodedUser = Uri.encodeComponent(username);
+      final Response<dynamic> response = await _dio.get<dynamic>('api/v0/users/$encodedUser/browse');
+      return _parseDirectoryList(response.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return const <SlskdDirectory>[];
+      rethrow;
+    }
   }
 
   /// Retrieves the status of the current browse operation for [username], if any (0.0 to 1.0 or 0 to 100).
@@ -708,36 +735,46 @@ class SlskdApi {
 
   /// Gets recent messages for [roomName].
   Future<List<SlskdRoomMessage>> getRoomMessages(String roomName) async {
-    final encodedRoom = Uri.encodeComponent(roomName);
-    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/rooms/joined/$encodedRoom/messages');
-    final List<SlskdRoomMessage> messages = [];
-    if (response.data is Iterable) {
-      for (final item in response.data as Iterable) {
-        if (item is Map<String, dynamic>) {
-          messages.add(SlskdRoomMessage.fromJson(item));
-        } else if (item is Map) {
-          messages.add(SlskdRoomMessage.fromJson(item.cast<String, dynamic>()));
+    try {
+      final encodedRoom = Uri.encodeComponent(roomName);
+      final Response<dynamic> response = await _dio.get<dynamic>('api/v0/rooms/joined/$encodedRoom/messages');
+      final List<SlskdRoomMessage> messages = [];
+      if (response.data is Iterable) {
+        for (final item in response.data as Iterable) {
+          if (item is Map<String, dynamic>) {
+            messages.add(SlskdRoomMessage.fromJson(item));
+          } else if (item is Map) {
+            messages.add(SlskdRoomMessage.fromJson(_asMap(item)));
+          }
         }
       }
+      return messages;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return const <SlskdRoomMessage>[];
+      rethrow;
     }
-    return messages;
   }
 
   /// Gets the list of users present in [roomName].
   Future<List<SlskdUserPresence>> getRoomUsers(String roomName) async {
-    final encodedRoom = Uri.encodeComponent(roomName);
-    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/rooms/joined/$encodedRoom/users');
-    final List<SlskdUserPresence> users = [];
-    if (response.data is Iterable) {
-      for (final item in response.data as Iterable) {
-        if (item is Map<String, dynamic>) {
-          users.add(SlskdUserPresence.fromJson(item));
-        } else if (item is Map) {
-          users.add(SlskdUserPresence.fromJson(item.cast<String, dynamic>()));
+    try {
+      final encodedRoom = Uri.encodeComponent(roomName);
+      final Response<dynamic> response = await _dio.get<dynamic>('api/v0/rooms/joined/$encodedRoom/users');
+      final List<SlskdUserPresence> users = [];
+      if (response.data is Iterable) {
+        for (final item in response.data as Iterable) {
+          if (item is Map<String, dynamic>) {
+            users.add(SlskdUserPresence.fromJson(item));
+          } else if (item is Map) {
+            users.add(SlskdUserPresence.fromJson(_asMap(item)));
+          }
         }
       }
+      return users;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return const <SlskdUserPresence>[];
+      rethrow;
     }
-    return users;
   }
 
   /// Joins a chat room by [roomName].

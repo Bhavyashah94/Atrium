@@ -75,8 +75,11 @@ class SlskdAlbumGroup {
   /// Extract friendly album name from full directory path.
   String get albumTitle {
     if (albumDirectory.isEmpty) return 'Loose Tracks';
-    final sep = albumDirectory.contains('\\') ? '\\' : '/';
-    final parts = albumDirectory.split(sep).where((p) => p.trim().isNotEmpty).toList();
+    final parts = albumDirectory
+        .replaceAll('\\', '/')
+        .split('/')
+        .where((p) => p.trim().isNotEmpty)
+        .toList();
     return parts.isNotEmpty ? parts.last : albumDirectory;
   }
 

@@ -208,27 +208,41 @@ class _SlskdSharesViewState extends ConsumerState<SlskdSharesView> {
                 ),
                 if (isScanning) ...<Widget>[
                   const SizedBox(height: Insets.md),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicatorM3E(
-                      size: LinearProgressM3ESize.s,
-                      shape: ProgressM3EShape.flat,
-                      value: widget.sharesState.scanProgress > 0
-                          ? widget.sharesState.scanProgress.clamp(0.0, 1.0).toDouble()
-                          : null,
-                      activeColor: colorScheme.primary,
-                      trackColor: colorScheme.surfaceContainerHighest,
-                    ),
-                  ),
-                  const SizedBox(height: Insets.xs),
-                  Text(
-                    widget.sharesState.scanProgress > 0
-                        ? 'Scanning: ${(widget.sharesState.scanProgress * 100).toStringAsFixed(1)}%'
-                        : 'Indexing shared files...',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 12,
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final double rawProgress = widget.sharesState.scanProgress;
+                      final double? norm = (rawProgress.isFinite && rawProgress > 0)
+                          ? (rawProgress > 1.0 ? rawProgress / 100.0 : rawProgress)
+                              .clamp(0.0, 1.0)
+                              .toDouble()
+                          : null;
+                      final String scanText = (rawProgress.isFinite && rawProgress > 0)
+                          ? 'Scanning: ${(rawProgress > 1.0 ? rawProgress : rawProgress * 100).clamp(0.0, 100.0).toStringAsFixed(1)}%'
+                          : 'Indexing shared files...';
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicatorM3E(
+                              size: LinearProgressM3ESize.s,
+                              shape: ProgressM3EShape.flat,
+                              value: norm,
+                              activeColor: colorScheme.primary,
+                              trackColor: colorScheme.surfaceContainerHighest,
+                            ),
+                          ),
+                          const SizedBox(height: Insets.xs),
+                          Text(
+                            scanText,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: Insets.md),
                   SizedBox(

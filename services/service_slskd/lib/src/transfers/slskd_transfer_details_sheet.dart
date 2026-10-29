@@ -64,7 +64,8 @@ class SlskdTransferDetailsSheet extends ConsumerWidget {
     final double speed = transfer.averageSpeed;
     final Duration? remaining = transfer.remainingTime;
 
-    final String speedText = speed > 0 ? slskdFormatRate(speed) : 'Idle';
+    final String speedText =
+        (speed.isFinite && speed > 0) ? slskdFormatRate(speed) : 'Idle';
     final String remainingText = remaining != null ? slskdFormatDuration(remaining) : '—';
     final String bytesText = '${slskdFormatBytes(transferred)} / ${slskdFormatBytes(total)}';
 

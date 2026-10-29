@@ -212,7 +212,9 @@ class _SlskdSearchAlbumCardState extends ConsumerState<SlskdSearchAlbumCard> {
                   ),
                   icon: const Icon(Icons.download_rounded, size: 16),
                   label: const Text('Download Album'),
-                  onPressed: () => widget.onDownloadAlbum(group),
+                  onPressed: (group.files.isNotEmpty && group.files.any((f) => !f.isLocked))
+                      ? () => widget.onDownloadAlbum(group)
+                      : null,
                 ),
               ],
             ),
