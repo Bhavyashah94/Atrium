@@ -166,7 +166,7 @@ class _SlskdDiscoverRoomsSheetState extends ConsumerState<SlskdDiscoverRoomsShee
 
             // Rooms List
             Expanded(
-              child: availableRoomsAsync.isLoading
+              child: (!availableRoomsAsync.hasValue && !availableRoomsAsync.hasError)
                   ? const Center(child: ExpressiveProgressIndicator())
                   : filteredRooms.isEmpty
                       ? Center(

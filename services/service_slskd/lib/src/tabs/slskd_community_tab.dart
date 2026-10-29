@@ -272,7 +272,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
           ],
         );
       },
-    );
+    ).whenComplete(userCtrl.dispose);
   }
 
   // ---------------------------------------------------------------------------
@@ -487,7 +487,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
       onRefresh: () async {
         ref.invalidate(slskdConversationsProvider(widget.instance));
       },
-      child: convosAsync.isLoading
+      child: (!convosAsync.hasValue && !convosAsync.hasError)
           ? const Center(child: ExpressiveProgressIndicator())
           : filteredConvos.isEmpty
               ? ListView(
@@ -592,7 +592,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
         ref.invalidate(slskdJoinedRoomNamesProvider(widget.instance));
         ref.invalidate(slskdAvailableRoomsProvider(widget.instance));
       },
-      child: joinedRoomsAsync.isLoading
+      child: (!joinedRoomsAsync.hasValue && !joinedRoomsAsync.hasError)
           ? const Center(child: ExpressiveProgressIndicator())
           : filteredJoined.isEmpty
               ? ListView(
@@ -883,7 +883,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
         .value;
     final bool isOnline = userStatus?.isOnline ?? false;
     final bool isAway = userStatus?.isAway ?? false;
-    final String statusText = userStatusAsync.isLoading
+    final String statusText = !userStatusAsync.hasValue
         ? 'Connecting...'
         : (isOnline ? 'Online' : (isAway ? 'Away' : 'Offline'));
     final Color statusColor = slskdPresenceColor(

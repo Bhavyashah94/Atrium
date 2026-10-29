@@ -645,7 +645,11 @@ class SlskdApi {
     try {
       final encodedUser = Uri.encodeComponent(username);
       final Response<dynamic> response = await _dio.get<dynamic>('api/v0/users/$encodedUser/endpoint');
-      return SlskdUserEndpoint.fromJson(response.data);
+      if (response.data == null) return null;
+      if (response.data is Map || response.data is String) {
+        return SlskdUserEndpoint.fromJson(response.data);
+      }
+      return null;
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
       rethrow;

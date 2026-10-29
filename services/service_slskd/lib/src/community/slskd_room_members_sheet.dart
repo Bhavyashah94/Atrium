@@ -192,7 +192,7 @@ class _SlskdRoomMembersSheetState extends ConsumerState<SlskdRoomMembersSheet> {
               context,
               colorScheme: colorScheme,
               textTheme: textTheme,
-              isLoading: usersAsync.isLoading && members.isEmpty,
+              isLoading: !usersAsync.hasValue && !usersAsync.hasError && members.isEmpty,
               filtered: filtered,
               roomDetail: roomDetailAsync.value,
             ),

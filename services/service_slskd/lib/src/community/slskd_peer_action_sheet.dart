@@ -54,7 +54,7 @@ class SlskdPeerActionSheet extends ConsumerWidget {
     final bool isAway = userStatusAsync.value?.isAway ?? false;
     final bool isSupporter = userStatusAsync.value?.isPrivileged ?? false;
     final String? endpointStr = endpointAsync.value?.formatted;
-    final String statusText = userStatusAsync.isLoading
+    final String statusText = !userStatusAsync.hasValue
         ? 'Checking status...'
         : (isOnline
             ? (endpointStr != null && endpointStr.isNotEmpty
