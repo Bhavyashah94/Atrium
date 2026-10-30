@@ -193,6 +193,13 @@ class ConnectionTester {
 
       final Response<dynamic> response =
           await dio.get<dynamic>('api/v0/application');
+      // A forward-auth login portal answers 200 with a web page. The API
+      // always answers with a JSON object, so anything else did not reach it.
+      final String contentType =
+          response.headers.value(Headers.contentTypeHeader)?.toLowerCase() ?? '';
+      if (contentType.contains('text/html') || response.data is! Map) {
+        return connectionResultFromHealth(Health.warning);
+      }
       if (response.statusCode == 200) {
         return ConnectionTestResult(
           ConnectionOutcome.connected,

@@ -370,6 +370,23 @@ void main() {
       expect(result.outcome, ConnectionOutcome.connected);
       expect(result.message, 'Connected (no auth required)');
     });
+
+    test('a login page in front of slskd does not test as connected', () async {
+      // A forward-auth proxy answers an unauthenticated request with its
+      // portal: a 200 web page, not the API.
+      final ConnectionTestResult result = await testSlskd(
+        slskdWithKey,
+        (RequestOptions options) => ResponseBody.fromString(
+          '<!doctype html><html><body>Sign in</body></html>',
+          200,
+          headers: <String, List<String>>{
+            Headers.contentTypeHeader: <String>['text/html; charset=utf-8'],
+          },
+        ),
+      );
+
+      expect(result.outcome, ConnectionOutcome.authFailed);
+    });
   });
 }
 
