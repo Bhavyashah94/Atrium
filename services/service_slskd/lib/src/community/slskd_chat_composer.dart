@@ -49,7 +49,9 @@ class _SlskdChatComposerState extends State<SlskdChatComposer> {
     final bool sent = await widget.onSend(text);
     if (!mounted) return;
     setState(() => _sending = false);
-    if (sent) _controller.clear();
+    // Anything typed while the send was in flight is a new draft, so clear
+    // only if the field still holds what was sent.
+    if (sent && _controller.text.trim() == text) _controller.clear();
   }
 
   @override

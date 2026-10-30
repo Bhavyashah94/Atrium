@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -524,6 +525,29 @@ void main() {
       await tester.pumpAndSettle();
       expect(sent, <String>['hello there', 'hello there']);
       expect(find.text('hello there'), findsNothing);
+    });
+
+    testWidgets('composer keeps a draft typed while a send is in flight', (WidgetTester tester) async {
+      final Completer<bool> pending = Completer<bool>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SlskdChatComposer(onSend: (String text) => pending.future),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), 'first message');
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.send_rounded));
+      await tester.pump();
+
+      // The next message, typed before the first one has gone out.
+      await tester.enterText(find.byType(TextField), 'second message');
+      pending.complete(true);
+      await tester.pumpAndSettle();
+
+      expect(find.text('second message'), findsOneWidget);
     });
 
     testWidgets('browsing a peer from a chat starts at their root folder', (WidgetTester tester) async {
