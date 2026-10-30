@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 import 'package:service_slskd/service_slskd.dart';
+import 'package:service_slskd/src/browse/slskd_browse_peer_card.dart';
 
 final String? _fontDir = () {
   final String? flutterRoot = Platform.environment['FLUTTER_ROOT'];
@@ -504,6 +505,28 @@ void main() {
       expect(requested, isNotEmpty);
       expect(requested, isNot(contains(r'Music\VIP Locked Archive\Exclusive_Master.flac')));
       expect(requested, contains(r'Music\Rock\Radiohead\In Rainbows\01 15 Step.flac'));
+    });
+
+    testWidgets('peer card shows no queue position until the profile loads',
+        (WidgetTester tester) async {
+      Future<void> pumpCard(SlskdUserInfo? info) => tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: SlskdBrowsePeerCard(
+                  username: 'AudioPhile99',
+                  userInfo: info,
+                  userStatus: null,
+                ),
+              ),
+            ),
+          );
+
+      await pumpCard(null);
+      expect(find.textContaining('Queue:'), findsNothing);
+      expect(find.text('Free Slot'), findsNothing);
+
+      await pumpCard(const SlskdUserInfo(description: '', queueLength: 3));
+      expect(find.text('Queue: #3'), findsOneWidget);
     });
   });
 }

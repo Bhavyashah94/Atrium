@@ -133,27 +133,30 @@ class SlskdBrowsePeerCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Row(
                     children: <Widget>[
-                      // Slot badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: hasFreeSlot
-                              ? colorScheme.tertiaryContainer
-                              : colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          hasFreeSlot ? 'Free Slot' : 'Queue: #$queueLen',
-                          style: textTheme.labelSmall?.copyWith(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
+                      // Slot badge, only once the profile has loaded: before
+                      // that the queue length is a default, not the peer's.
+                      if (userInfo != null) ...<Widget>[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
                             color: hasFreeSlot
-                                ? colorScheme.onTertiaryContainer
-                                : colorScheme.outline,
+                                ? colorScheme.tertiaryContainer
+                                : colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            hasFreeSlot ? 'Free Slot' : 'Queue: #$queueLen',
+                            style: textTheme.labelSmall?.copyWith(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: hasFreeSlot
+                                  ? colorScheme.onTertiaryContainer
+                                  : colorScheme.outline,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: Insets.xs),
+                        const SizedBox(width: Insets.xs),
+                      ],
                       if (totalFolders > 0 || totalFiles > 0)
                         Flexible(
                           child: Text(
