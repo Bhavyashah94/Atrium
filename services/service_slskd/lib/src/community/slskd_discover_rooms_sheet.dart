@@ -168,6 +168,14 @@ class _SlskdDiscoverRoomsSheetState extends ConsumerState<SlskdDiscoverRoomsShee
             Expanded(
               child: (!availableRoomsAsync.hasValue && !availableRoomsAsync.hasError)
                   ? const Center(child: ExpressiveProgressIndicator())
+                  // A failed load must not read as "No public rooms found".
+                  : !availableRoomsAsync.hasValue
+                      ? ErrorView(
+                          title: 'Could not load rooms',
+                          message: '${availableRoomsAsync.error}',
+                          onRetry: () =>
+                              ref.invalidate(slskdAvailableRoomsProvider(widget.instance)),
+                        )
                   : filteredRooms.isEmpty
                       ? Center(
                           child: Padding(

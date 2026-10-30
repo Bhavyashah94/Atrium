@@ -444,6 +444,13 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
       },
       child: (!convosAsync.hasValue && !convosAsync.hasError)
           ? const Center(child: ExpressiveProgressIndicator())
+          : !convosAsync.hasValue
+              ? _buildLoadError(
+                  title: 'Could not load direct messages',
+                  error: convosAsync.error,
+                  controller: _dmScrollController,
+                  onRetry: () => ref.invalidate(slskdConversationsProvider(widget.instance)),
+                )
           : filteredConvos.isEmpty
               ? ListView(
                   controller: _dmScrollController,
@@ -526,6 +533,24 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     );
   }
 
+  /// A list that failed to load, kept scrollable so pull-to-refresh still
+  /// works. Without it the failure would read as an empty list.
+  Widget _buildLoadError({
+    required String title,
+    required Object? error,
+    required ScrollController controller,
+    required VoidCallback onRetry,
+  }) {
+    return ListView(
+      controller: controller,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(Insets.md),
+      children: <Widget>[
+        ErrorView(title: title, message: '$error', onRetry: onRetry),
+      ],
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Tab 1: Chat Rooms View
   // ---------------------------------------------------------------------------
@@ -549,6 +574,13 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
       },
       child: (!joinedRoomsAsync.hasValue && !joinedRoomsAsync.hasError)
           ? const Center(child: ExpressiveProgressIndicator())
+          : !joinedRoomsAsync.hasValue
+              ? _buildLoadError(
+                  title: 'Could not load your rooms',
+                  error: joinedRoomsAsync.error,
+                  controller: _roomScrollController,
+                  onRetry: () => ref.invalidate(slskdJoinedRoomNamesProvider(widget.instance)),
+                )
           : filteredJoined.isEmpty
               ? ListView(
                   controller: _roomScrollController,

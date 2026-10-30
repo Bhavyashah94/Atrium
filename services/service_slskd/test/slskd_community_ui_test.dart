@@ -455,5 +455,44 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Message NewPeer...'), findsOneWidget);
     });
+
+    testWidgets('says the lists failed to load rather than that they are empty',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdActiveTabProvider(testInstance).overrideWith((ref) => 3),
+            slskdConversationsProvider(testInstance).overrideWith(
+              (ref) async => throw Exception('slskd is unreachable'),
+            ),
+            slskdJoinedRoomNamesProvider(testInstance).overrideWith(
+              (ref) async => throw Exception('slskd is unreachable'),
+            ),
+            slskdAvailableRoomsProvider(testInstance).overrideWith(
+              (ref) async => throw Exception('slskd is unreachable'),
+            ),
+          ],
+          child: const MaterialApp(home: SlskdHome(instance: testInstance)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Could not load direct messages'), findsOneWidget);
+      expect(find.text('No direct messages yet.'), findsNothing);
+
+      await tester.tap(find.text('Chat Rooms (0)'));
+      await tester.pumpAndSettle();
+      expect(find.text('Could not load your rooms'), findsOneWidget);
+      expect(find.text('No chat rooms joined yet.'), findsNothing);
+
+      await tester.tap(find.byTooltip('Discover public rooms'));
+      await tester.pumpAndSettle();
+      expect(find.text('Could not load rooms'), findsOneWidget);
+      expect(find.text('No public rooms found.'), findsNothing);
+    });
   });
 }
