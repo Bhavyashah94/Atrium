@@ -181,6 +181,24 @@ class _SlskdLogsViewState extends ConsumerState<SlskdLogsView> {
         ref.watch(slskdSelectedHistoricalLogProvider(widget.instance));
     final logFilesAsync = ref.watch(slskdLogFilesProvider(widget.instance));
 
+    // slskd rotates its log files. When a refresh no longer lists the one
+    // being viewed, fall back to the live stream rather than keep asking
+    // for a file that is gone.
+    ref.listen<AsyncValue<List<SlskdDiskFile>>>(
+      slskdLogFilesProvider(widget.instance),
+      (_, AsyncValue<List<SlskdDiskFile>> next) {
+        final List<SlskdDiskFile>? files = next.value;
+        final String? selected =
+            ref.read(slskdSelectedHistoricalLogProvider(widget.instance));
+        if (files != null &&
+            selected != null &&
+            !files.any((SlskdDiskFile f) => f.name == selected)) {
+          ref.read(slskdSelectedHistoricalLogProvider(widget.instance).notifier).state =
+              null;
+        }
+      },
+    );
+
     final selectedSeverity =
         ref.watch(slskdLogSeverityFilterProvider(widget.instance));
     final filteredLogsAsync =
@@ -222,7 +240,11 @@ class _SlskdLogsViewState extends ConsumerState<SlskdLogsView> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String?>(
-                          value: selectedHistoricalLog,
+                          // Exactly one item must match the value, so a file
+                          // that is no longer listed cannot be passed in.
+                          value: files.any((f) => f.name == selectedHistoricalLog)
+                              ? selectedHistoricalLog
+                              : null,
                           isExpanded: true,
                           icon: const Icon(Icons.arrow_drop_down_rounded),
                           items: [

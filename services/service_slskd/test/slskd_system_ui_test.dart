@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:service_slskd/service_slskd.dart';
 import 'package:service_slskd/src/system/slskd_daemon_card.dart';
 import 'package:service_slskd/src/system/slskd_disk_files_sheet.dart';
+import 'package:service_slskd/src/system/slskd_logs_view.dart';
 import 'package:service_slskd/src/system/slskd_options_sheet.dart';
 import 'package:service_slskd/src/system/slskd_share_contents_sheet.dart';
 import 'package:service_slskd/src/tabs/slskd_system_tab.dart';
@@ -543,6 +544,51 @@ void main() {
 
       await pumpCard(true);
       expect(find.text('Update Available'), findsOneWidget);
+    });
+
+    testWidgets('falls back to the live log when the open file is rotated away',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
+
+      List<SlskdDiskFile> files = const <SlskdDiskFile>[
+        SlskdDiskFile(name: 'slskd-20261029.log', fullName: '/app/logs/slskd-20261029.log', length: 1200),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdSelectedHistoricalLogProvider(testInstance).overrideWith(
+              (ref) => 'slskd-20261029.log',
+            ),
+            slskdLogFilesProvider(testInstance).overrideWith((ref) async => files),
+            slskdLogFileContentProvider((testInstance, 'slskd-20261029.log')).overrideWith(
+              (ref) async => 'an old line',
+            ),
+            slskdLogsProvider(testInstance).overrideWith((ref) => mockLogs),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: ListView(children: const <Widget>[SlskdLogsView(instance: testInstance)]),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('an old line'), findsOneWidget);
+
+      // slskd rotated the file away.
+      files = const <SlskdDiskFile>[
+        SlskdDiskFile(name: 'slskd-20261030.log', fullName: '/app/logs/slskd-20261030.log', length: 800),
+      ];
+      ProviderScope.containerOf(tester.element(find.byType(SlskdLogsView)))
+          .invalidate(slskdLogFilesProvider(testInstance));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('an old line'), findsNothing);
+      expect(find.text('Live Stream (In-Memory)'), findsOneWidget);
     });
   });
 }
