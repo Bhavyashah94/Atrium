@@ -122,13 +122,15 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     }
   }
 
-  Future<void> _sendRoomMessage(String roomName, String message) async {
+  /// Whether the message went out, so the composer only clears on success.
+  Future<bool> _sendRoomMessage(String roomName, String message) async {
     try {
       final api = await ref.read(slskdApiProvider(widget.instance).future);
       await api.sendRoomMessage(roomName, message);
-      if (!mounted) return;
+      if (!mounted) return true;
       ref.invalidate(slskdRoomMessagesProvider((widget.instance, roomName)));
       ref.invalidate(slskdRoomDetailProvider((widget.instance, roomName)));
+      return true;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -138,6 +140,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
           ),
         );
       }
+      return false;
     }
   }
 
@@ -169,13 +172,15 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
     }
   }
 
-  Future<void> _sendDirectMessage(String username, String message) async {
+  /// Whether the message went out, so the composer only clears on success.
+  Future<bool> _sendDirectMessage(String username, String message) async {
     try {
       final api = await ref.read(slskdApiProvider(widget.instance).future);
       await api.sendPrivateMessage(username, message);
-      if (!mounted) return;
+      if (!mounted) return true;
       ref.invalidate(slskdConversationMessagesProvider((widget.instance, username)));
       ref.invalidate(slskdConversationsProvider(widget.instance));
+      return true;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -185,6 +190,7 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
           ),
         );
       }
+      return false;
     }
   }
 

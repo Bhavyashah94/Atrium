@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_slskd/service_slskd.dart';
 import 'package:service_slskd/src/browse/slskd_user_bio_sheet.dart';
+import 'package:service_slskd/src/community/slskd_chat_composer.dart';
 import 'package:service_slskd/src/community/slskd_room_members_sheet.dart';
 
 final String? _fontDir = () {
@@ -493,6 +494,36 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Could not load rooms'), findsOneWidget);
       expect(find.text('No public rooms found.'), findsNothing);
+    });
+
+    testWidgets('composer keeps the message when sending fails', (WidgetTester tester) async {
+      bool succeed = false;
+      final List<String> sent = <String>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SlskdChatComposer(
+              onSend: (String text) async {
+                sent.add(text);
+                return succeed;
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), 'hello there');
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.send_rounded));
+      await tester.pumpAndSettle();
+      expect(sent, <String>['hello there']);
+      expect(find.text('hello there'), findsOneWidget);
+
+      succeed = true;
+      await tester.tap(find.byIcon(Icons.send_rounded));
+      await tester.pumpAndSettle();
+      expect(sent, <String>['hello there', 'hello there']);
+      expect(find.text('hello there'), findsNothing);
     });
   });
 }

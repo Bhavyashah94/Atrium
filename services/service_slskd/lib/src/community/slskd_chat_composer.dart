@@ -10,7 +10,9 @@ class SlskdChatComposer extends StatefulWidget {
     super.key,
   });
 
-  final ValueChanged<String> onSend;
+  /// Sends [text] and reports whether it went out. The field is cleared only
+  /// on success, so a failed send keeps what was typed.
+  final Future<bool> Function(String text) onSend;
   final String hintText;
   final bool autofocus;
 
@@ -21,6 +23,7 @@ class SlskdChatComposer extends StatefulWidget {
 class _SlskdChatComposerState extends State<SlskdChatComposer> {
   final TextEditingController _controller = TextEditingController();
   bool _canSend = false;
+  bool _sending = false;
 
   @override
   void initState() {
@@ -39,11 +42,14 @@ class _SlskdChatComposerState extends State<SlskdChatComposer> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final text = _controller.text.trim();
-    if (text.isEmpty) return;
-    widget.onSend(text);
-    _controller.clear();
+    if (text.isEmpty || _sending) return;
+    setState(() => _sending = true);
+    final bool sent = await widget.onSend(text);
+    if (!mounted) return;
+    setState(() => _sending = false);
+    if (sent) _controller.clear();
   }
 
   @override
@@ -95,7 +101,7 @@ class _SlskdChatComposerState extends State<SlskdChatComposer> {
             const SizedBox(width: Insets.xs),
             IconButton.filled(
               icon: const Icon(Icons.send_rounded, size: 18),
-              onPressed: _canSend ? _submit : null,
+              onPressed: _canSend && !_sending ? _submit : null,
               style: IconButton.styleFrom(
                 backgroundColor: _canSend ? colorScheme.primary : colorScheme.surfaceContainerHighest,
                 foregroundColor: _canSend ? colorScheme.onPrimary : colorScheme.outline,
