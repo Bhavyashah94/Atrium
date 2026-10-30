@@ -35,9 +35,12 @@ class _SlskdDaemonCardState extends ConsumerState<SlskdDaemonCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            version.isUpdateAvailable == true
-                ? 'Update available: ${version.latest}'
-                : 'slskd is up to date (${version.current})',
+            switch (version.isUpdateAvailable) {
+              true => 'Update available: ${version.latest}',
+              false => 'slskd is up to date (${version.current})',
+              // slskd did not find out, for example with version checks off.
+              null => 'slskd could not tell whether an update is available',
+            },
           ),
         ),
       );
@@ -153,7 +156,11 @@ class _SlskdDaemonCardState extends ConsumerState<SlskdDaemonCard> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'Up to date',
+                                  // Unknown is not up to date: slskd reports
+                                  // null until it has checked.
+                                  widget.version.isUpdateAvailable == false
+                                      ? 'Up to date'
+                                      : 'Check for updates',
                                   style: textTheme.labelSmall?.copyWith(
                                     color: colorScheme.onSurfaceVariant,
                                     fontWeight: FontWeight.bold,

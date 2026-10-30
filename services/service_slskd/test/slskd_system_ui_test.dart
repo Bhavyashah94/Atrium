@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_slskd/service_slskd.dart';
+import 'package:service_slskd/src/system/slskd_daemon_card.dart';
 import 'package:service_slskd/src/system/slskd_disk_files_sheet.dart';
 import 'package:service_slskd/src/system/slskd_options_sheet.dart';
 import 'package:service_slskd/src/system/slskd_share_contents_sheet.dart';
@@ -513,6 +514,35 @@ void main() {
       expect(find.text('Run GC'), findsOneWidget);
       expect(find.text('Ping'), findsOneWidget);
       await capture(tester, repaintKey, 'slskd_system_options_diagnostics.png');
+    });
+
+    testWidgets('daemon card does not call an unknown update status up to date',
+        (WidgetTester tester) async {
+      Future<void> pumpCard(bool? updateAvailable) => tester.pumpWidget(
+            ProviderScope(
+              child: MaterialApp(
+                home: Scaffold(
+                  body: SlskdDaemonCard(
+                    instance: testInstance,
+                    version: SlskdVersionState(
+                      current: '0.26.2.0',
+                      isUpdateAvailable: updateAvailable,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+
+      await pumpCard(null);
+      expect(find.text('Up to date'), findsNothing);
+      expect(find.text('Check for updates'), findsOneWidget);
+
+      await pumpCard(false);
+      expect(find.text('Up to date'), findsOneWidget);
+
+      await pumpCard(true);
+      expect(find.text('Update Available'), findsOneWidget);
     });
   });
 }
