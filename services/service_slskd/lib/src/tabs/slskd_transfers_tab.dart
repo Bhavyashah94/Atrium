@@ -781,14 +781,14 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
               a.transfer.category != TransferCategory.inProgress) {
             return 1;
           }
-          final speedComp = b.transfer.averageSpeed.compareTo(a.transfer.averageSpeed);
+          final speedComp = b.transfer.liveSpeed.compareTo(a.transfer.liveSpeed);
           if (speedComp != 0) return speedComp;
           return a.transfer.filename.toLowerCase().compareTo(b.transfer.filename.toLowerCase());
         });
         break;
       case SlskdTransferSort.speed:
         items.sort((a, b) {
-          final comp = b.transfer.averageSpeed.compareTo(a.transfer.averageSpeed);
+          final comp = b.transfer.liveSpeed.compareTo(a.transfer.liveSpeed);
           if (comp != 0) return comp;
           return a.transfer.filename.toLowerCase().compareTo(b.transfer.filename.toLowerCase());
         });
@@ -857,7 +857,7 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
             if (b.category == TransferCategory.inProgress && a.category != TransferCategory.inProgress) {
               return 1;
             }
-            final speedComp = b.averageSpeed.compareTo(a.averageSpeed);
+            final speedComp = b.liveSpeed.compareTo(a.liveSpeed);
             if (speedComp != 0) return speedComp;
             return a.filename.toLowerCase().compareTo(b.filename.toLowerCase());
           });
@@ -897,14 +897,14 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
           );
           if (aActive && !bActive) return -1;
           if (bActive && !aActive) return 1;
-          final speedComp = b.user.averageSpeed.compareTo(a.user.averageSpeed);
+          final speedComp = b.user.liveSpeed.compareTo(a.user.liveSpeed);
           if (speedComp != 0) return speedComp;
           return a.user.username.toLowerCase().compareTo(b.user.username.toLowerCase());
         });
         break;
       case SlskdTransferSort.speed:
         result.sort((a, b) {
-          final comp = b.user.averageSpeed.compareTo(a.user.averageSpeed);
+          final comp = b.user.liveSpeed.compareTo(a.user.liveSpeed);
           if (comp != 0) return comp;
           return a.user.username.toLowerCase().compareTo(b.user.username.toLowerCase());
         });

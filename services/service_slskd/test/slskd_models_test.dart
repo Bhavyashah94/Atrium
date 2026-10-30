@@ -620,4 +620,39 @@ void main() {
       );
     });
   });
+
+  group('Transfer live speed', () {
+    SlskdTransfer transfer(String state, double speed) => SlskdTransfer(
+          id: state,
+          username: 'peer',
+          direction: TransferDirection.download,
+          filename: 'a.flac',
+          size: 100,
+          state: state,
+          requestedAt: DateTime(2026),
+          averageSpeed: speed,
+        );
+
+    test('counts only transfers that are running', () {
+      expect(transfer('Completed, Succeeded', 5000).liveSpeed, 0);
+      expect(transfer('Completed, Errored', 5000).liveSpeed, 0);
+      expect(transfer('InProgress', 1000).liveSpeed, 1000);
+      expect(transfer('InProgress', double.nan).liveSpeed, 0);
+
+      final SlskdUserTransfers user = SlskdUserTransfers(
+        username: 'peer',
+        directories: <SlskdDirectoryTransfers>[
+          SlskdDirectoryTransfers(
+            directory: 'Album',
+            fileCount: 2,
+            files: <SlskdTransfer>[
+              transfer('Completed, Succeeded', 5000),
+              transfer('InProgress', 1000),
+            ],
+          ),
+        ],
+      );
+      expect(user.liveSpeed, 1000);
+    });
+  });
 }

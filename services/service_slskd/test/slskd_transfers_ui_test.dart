@@ -586,5 +586,63 @@ void main() {
       expect(find.text('VinylCollector'), findsOneWidget);
       await _capture(tester, repaintKey, 'slskd_transfers_light.png');
     });
+
+    testWidgets('fastest speed ranks running transfers above finished ones', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
+
+      SlskdUserTransfers peer(String name, String state, double speed) => SlskdUserTransfers(
+            username: name,
+            directories: <SlskdDirectoryTransfers>[
+              SlskdDirectoryTransfers(
+                directory: 'Album',
+                fileCount: 1,
+                files: <SlskdTransfer>[
+                  SlskdTransfer(
+                    id: '$name-1',
+                    username: name,
+                    direction: TransferDirection.download,
+                    filename: r'Album\01.flac',
+                    size: 30000000,
+                    state: state,
+                    requestedAt: DateTime(2026),
+                    bytesTransferred: 10000000,
+                    averageSpeed: speed,
+                  ),
+                ],
+              ),
+            ],
+          );
+
+      // The finished peer keeps a high final average; the running one is slower.
+      final List<SlskdUserTransfers> downloads = <SlskdUserTransfers>[
+        peer('FinishedPeer', 'Completed, Succeeded', 9000000),
+        peer('RunningPeer', 'InProgress', 1000000),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdDownloadsProvider(testInstance).overrideWith((ref) => downloads),
+            slskdUploadsProvider(testInstance).overrideWith((ref) => const []),
+          ],
+          child: const MaterialApp(home: SlskdHome(instance: testInstance)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Sort & Filter'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Fastest Speed'));
+      await tester.pump();
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getTopLeft(find.text('RunningPeer')).dy,
+        lessThan(tester.getTopLeft(find.text('FinishedPeer')).dy),
+      );
+    });
   });
 }

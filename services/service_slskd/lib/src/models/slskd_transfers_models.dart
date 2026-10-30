@@ -104,6 +104,13 @@ class SlskdUserTransfers {
 
   double get averageSpeed =>
       directories.fold<double>(0.0, (sum, dir) => sum + dir.averageSpeed);
+
+  /// Combined speed of the transfers running right now; see
+  /// [SlskdTransfer.liveSpeed].
+  double get liveSpeed => directories.fold<double>(
+        0.0,
+        (sum, dir) => sum + dir.files.fold<double>(0.0, (s, f) => s + f.liveSpeed),
+      );
 }
 
 class SlskdDirectoryTransfers {
@@ -247,6 +254,14 @@ class SlskdTransfer {
 
   Duration? get elapsedTime =>
       startedAt == null ? null : (endedAt ?? DateTime.now()).difference(startedAt!);
+
+  /// The speed of a transfer that is running, else 0. slskd keeps the final
+  /// average on finished and failed transfers, which says nothing about now.
+  double get liveSpeed => category == TransferCategory.inProgress &&
+          averageSpeed.isFinite &&
+          averageSpeed > 0
+      ? averageSpeed
+      : 0.0;
 
   Duration? get remainingTime {
     if (!averageSpeed.isFinite || averageSpeed <= 0 || bytesRemaining <= 0) return null;
