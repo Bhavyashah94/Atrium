@@ -960,6 +960,9 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
             icon: const Icon(Icons.folder_shared_outlined),
             onPressed: () {
               ref.read(slskdBrowseUsernameProvider(widget.instance).notifier).state = username;
+              // Start at this peer's root, not inside the last peer's folder.
+              ref.read(slskdBrowsePathSegmentsProvider(widget.instance).notifier).state =
+                  const <String>[];
               ref.read(slskdActiveTabProvider(widget.instance).notifier).state = 2; // Jump to Browse tab
             },
           ),

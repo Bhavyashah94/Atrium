@@ -525,5 +525,47 @@ void main() {
       expect(sent, <String>['hello there', 'hello there']);
       expect(find.text('hello there'), findsNothing);
     });
+
+    testWidgets('browsing a peer from a chat starts at their root folder', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdActiveTabProvider(testInstance).overrideWith((ref) => 3),
+            slskdActiveConversationUsernameProvider(testInstance).overrideWith(
+              (ref) => 'AudioPhile99',
+            ),
+            // Browse is still inside another peer's folder.
+            slskdBrowseUsernameProvider(testInstance).overrideWith((ref) => 'OtherPeer'),
+            slskdBrowsePathSegmentsProvider(testInstance).overrideWith(
+              (ref) => const <String>['Music', 'Rock'],
+            ),
+            slskdUserDirectoriesProvider((testInstance, 'OtherPeer')).overrideWith(
+              (ref) => const <SlskdDirectory>[],
+            ),
+            slskdConversationsProvider(testInstance).overrideWith((ref) => mockConversations),
+            slskdConversationMessagesProvider((testInstance, 'AudioPhile99')).overrideWith(
+              (ref) => mockDmMessages,
+            ),
+            slskdUserDirectoriesProvider((testInstance, 'AudioPhile99')).overrideWith(
+              (ref) => const <SlskdDirectory>[],
+            ),
+          ],
+          child: const MaterialApp(home: SlskdHome(instance: testInstance)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Browse AudioPhile99 shares'));
+      await tester.pump();
+
+      final ProviderContainer container =
+          ProviderScope.containerOf(tester.element(find.byType(SlskdHome)));
+      expect(container.read(slskdBrowsePathSegmentsProvider(testInstance)), isEmpty);
+      expect(container.read(slskdBrowseUsernameProvider(testInstance)), 'AudioPhile99');
+    });
   });
 }
