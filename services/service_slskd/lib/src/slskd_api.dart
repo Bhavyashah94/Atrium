@@ -593,15 +593,13 @@ class SlskdApi {
   // ---------------------------------------------------------------------------
 
   /// Retrieves the entire file share tree of the specified remote [username].
+  ///
+  /// A 404 is not swallowed: slskd sends it when the peer is offline, and the
+  /// Browse tab has to say so rather than show an empty share.
   Future<List<SlskdDirectory>> browseUser(String username) async {
-    try {
-      final encodedUser = Uri.encodeComponent(username);
-      final Response<dynamic> response = await _dio.get<dynamic>('api/v0/users/$encodedUser/browse');
-      return _parseDirectoryList(response.data);
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return const <SlskdDirectory>[];
-      rethrow;
-    }
+    final encodedUser = Uri.encodeComponent(username);
+    final Response<dynamic> response = await _dio.get<dynamic>('api/v0/users/$encodedUser/browse');
+    return _parseDirectoryList(response.data);
   }
 
   /// Retrieves the status of the current browse operation for [username], if any (0.0 to 1.0 or 0 to 100).

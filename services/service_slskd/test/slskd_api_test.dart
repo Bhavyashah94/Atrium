@@ -195,6 +195,21 @@ void main() {
               );
             }
 
+            // slskd answers 404 when the peer is offline.
+            if (options.path == 'api/v0/users/offlinePeer/browse') {
+              return handler.reject(
+                DioException(
+                  requestOptions: options,
+                  type: DioExceptionType.badResponse,
+                  response: Response(
+                    requestOptions: options,
+                    statusCode: 404,
+                    data: 'User offlinePeer appears to be offline',
+                  ),
+                ),
+              );
+            }
+
             if (options.path == 'api/v0/users/peerA/browse') {
               return handler.resolve(
                 Response(
@@ -822,6 +837,12 @@ void main() {
       final dirs = await api.browseUser('peerA');
       expect(lastPath, 'api/v0/users/peerA/browse');
       expect(dirs.first.name, 'FLAC\\Radiohead');
+
+      // An offline peer is an error, not an empty share.
+      await expectLater(
+        api.browseUser('offlinePeer'),
+        throwsA(isA<DioException>()),
+      );
 
       final info = await api.getUserInfo('peerA');
       expect(lastPath, 'api/v0/users/peerA/info');
