@@ -36,6 +36,25 @@ class BrowseNode {
     return list;
   }
 
+  /// The files a folder download can request: locked folders and locked
+  /// files are left out, since the peer refuses them.
+  List<SlskdSearchFile> getDownloadableFilesRecursive() {
+    if (isLocked) return const <SlskdSearchFile>[];
+    final List<SlskdSearchFile> list =
+        files.where((SlskdSearchFile f) => !f.isLocked).toList();
+    for (final child in subfolders.values) {
+      list.addAll(child.getDownloadableFilesRecursive());
+    }
+    return list;
+  }
+
+  void _lockDescendants() {
+    for (final child in subfolders.values) {
+      if (isLocked) child.isLocked = true;
+      child._lockDescendants();
+    }
+  }
+
   /// Builds a complete hierarchical tree from slskd's flat list of [SlskdDirectory].
   static BrowseNode buildTree(List<SlskdDirectory> directories) {
     final root = BrowseNode(segment: 'Root', fullPath: '');
@@ -69,6 +88,9 @@ class BrowseNode {
       current.files.sort((a, b) => a.filename.compareTo(b.filename));
     }
 
+    // A locked folder can arrive after its subfolders, so pass the lock down
+    // once the whole tree exists.
+    root._lockDescendants();
     return root;
   }
 }

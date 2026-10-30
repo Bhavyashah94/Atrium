@@ -134,7 +134,9 @@ class _SlskdSearchTabState extends ConsumerState<SlskdSearchTab> {
           options: EnqueueDownloadBatchOptions(
             externalId: '${group.username}_${DateTime.now().millisecondsSinceEpoch}_${group.albumTitle.hashCode.abs()}',
           ),
+          // The peer refuses locked files, so leave them out of the batch.
           files: group.files
+              .where((f) => !f.isLocked)
               .map(
                 (f) => EnqueueDownloadBatchItem(
                   filename: f.filename,

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:core_models/core_models.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -453,6 +454,56 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Peer Library Explorer'), findsOneWidget);
+    });
+
+    testWidgets('folder download leaves out locked subfolders', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1179, 2556);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.reset);
+
+      final List<String> requested = <String>[];
+      final Dio dio = Dio(BaseOptions(baseUrl: 'http://localhost:5030/'));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            if (options.path == 'api/v0/transfers/downloads/batches') {
+              final List<dynamic> files = (options.data as Map)['files'] as List<dynamic>;
+              requested.addAll(files.map((dynamic f) => (f as Map)['filename'] as String));
+            }
+            return handler.resolve(
+              Response<dynamic>(requestOptions: options, statusCode: 200, data: <String, dynamic>{}),
+            );
+          },
+        ),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdActiveTabProvider(testInstance).overrideWith((ref) => 2),
+            slskdBrowseUsernameProvider(testInstance).overrideWith((ref) => 'AudioPhile99'),
+            slskdUserDirectoriesProvider((testInstance, 'AudioPhile99')).overrideWith(
+              (ref) => mockDirectories,
+            ),
+            slskdUserInfoProvider((testInstance, 'AudioPhile99')).overrideWith(
+              (ref) => mockUserInfo,
+            ),
+            slskdUserStatusProvider((testInstance, 'AudioPhile99')).overrideWith(
+              (ref) => mockUserStatus,
+            ),
+            slskdApiProvider(testInstance).overrideWith((ref) async => SlskdApi(dio)),
+          ],
+          child: const MaterialApp(home: SlskdHome(instance: testInstance)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Download folder (Music)'));
+      await tester.pumpAndSettle();
+
+      expect(requested, isNotEmpty);
+      expect(requested, isNot(contains(r'Music\VIP Locked Archive\Exclusive_Master.flac')));
+      expect(requested, contains(r'Music\Rock\Radiohead\In Rainbows\01 15 Step.flac'));
     });
   });
 }

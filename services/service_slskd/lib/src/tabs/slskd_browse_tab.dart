@@ -89,8 +89,13 @@ class _SlskdBrowseTabState extends ConsumerState<SlskdBrowseTab> {
   }
 
   Future<void> _downloadFolder(String username, BrowseNode node) async {
-    final files = node.getAllFilesRecursive();
-    if (files.isEmpty) return;
+    final files = node.getDownloadableFilesRecursive();
+    if (files.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Nothing in "${node.segment}" can be downloaded')),
+      );
+      return;
+    }
 
     try {
       final api = await ref.read(slskdApiProvider(widget.instance).future);

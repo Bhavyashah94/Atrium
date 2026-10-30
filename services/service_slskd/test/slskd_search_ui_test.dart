@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:core_models/core_models.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -440,6 +441,84 @@ void main() {
       expect(find.text('Search for "Daft Punk" failed'), findsOneWidget);
       expect(find.text('Stop Search'), findsNothing);
       await tester.pumpAndSettle();
+    });
+
+    testWidgets('album download leaves out locked tracks', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1179, 2556);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.reset);
+
+      final List<String> requested = <String>[];
+      final Dio dio = Dio(BaseOptions(baseUrl: 'http://localhost:5030/'));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            if (options.path == 'api/v0/transfers/downloads/batches') {
+              final List<dynamic> files = (options.data as Map)['files'] as List<dynamic>;
+              requested.addAll(files.map((dynamic f) => (f as Map)['filename'] as String));
+            }
+            return handler.resolve(
+              Response<dynamic>(requestOptions: options, statusCode: 200, data: <String, dynamic>{}),
+            );
+          },
+        ),
+      );
+
+      final responses = <SlskdSearchResponse>[
+        const SlskdSearchResponse(
+          username: 'AudioPhile99',
+          fileCount: 1,
+          lockedFileCount: 1,
+          hasFreeUploadSlot: true,
+          queueLength: 0,
+          uploadSpeed: 2800000,
+          token: 101,
+          files: <SlskdSearchFile>[
+            SlskdSearchFile(
+              filename: r'Music\Daft Punk\Discovery\01 - One More Time.flac',
+              size: 38500000,
+              extension: 'flac',
+            ),
+          ],
+          lockedFiles: <SlskdSearchFile>[
+            SlskdSearchFile(
+              filename: r'Music\Daft Punk\Discovery\02 - Aerodynamic.flac',
+              size: 24200000,
+              extension: 'flac',
+              isLocked: true,
+            ),
+          ],
+        ),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            slskdActiveTabProvider(testInstance).overrideWith((ref) => 1),
+            slskdSearchesProvider(testInstance).overrideWith((ref) => mockSearches),
+            slskdSearchResponsesProvider((testInstance, 'search-1')).overrideWith(
+              (ref) => responses,
+            ),
+            slskdApiProvider(testInstance).overrideWith((ref) async => SlskdApi(dio)),
+          ],
+          child: const MaterialApp(home: SlskdHome(instance: testInstance)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Show locked files, so the album holds one of each.
+      await tester.tap(find.byTooltip('Sort & Filter Results'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hide Locked Files'));
+      await tester.pump();
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+      expect(find.text('02 - Aerodynamic.flac'), findsOneWidget);
+
+      await tester.tap(find.text('Download Album'));
+      await tester.pumpAndSettle();
+
+      expect(requested, <String>[r'Music\Daft Punk\Discovery\01 - One More Time.flac']);
     });
   });
 }

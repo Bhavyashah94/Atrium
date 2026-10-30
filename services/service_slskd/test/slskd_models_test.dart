@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:service_slskd/service_slskd.dart';
+import 'package:service_slskd/src/browse/slskd_browse_models_ui.dart';
 import 'package:service_slskd/src/searches/slskd_search_models_ui.dart';
 
 void main() {
@@ -590,6 +591,33 @@ void main() {
         ],
       );
       expect(album.qualityBadge, 'M4A 320k');
+    });
+  });
+
+  group('BrowseNode', () {
+    test('locks a subfolder listed before its locked parent', () {
+      final BrowseNode root = BrowseNode.buildTree(const <SlskdDirectory>[
+        SlskdDirectory(
+          name: r'Vault\Inner',
+          files: <SlskdSearchFile>[
+            SlskdSearchFile(filename: r'Vault\Inner\a.flac', size: 1, extension: 'flac'),
+          ],
+        ),
+        SlskdDirectory(name: 'Vault', isLocked: true),
+        SlskdDirectory(
+          name: 'Open',
+          files: <SlskdSearchFile>[
+            SlskdSearchFile(filename: r'Open\b.flac', size: 1, extension: 'flac'),
+            SlskdSearchFile(filename: r'Open\c.flac', size: 1, extension: 'flac', isLocked: true),
+          ],
+        ),
+      ]);
+
+      expect(root.subfolders['Vault']!.subfolders['Inner']!.isLocked, isTrue);
+      expect(
+        root.getDownloadableFilesRecursive().map((SlskdSearchFile f) => f.filename),
+        <String>[r'Open\b.flac'],
+      );
     });
   });
 }
