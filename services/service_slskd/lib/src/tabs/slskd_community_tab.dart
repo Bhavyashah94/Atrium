@@ -820,14 +820,18 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
                     );
                   }
 
+                  // Reversed so the feed opens on the newest message and a
+                  // sent message lands in view. slskd lists oldest first.
                   return ListView.builder(
+                    reverse: true,
                     keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.symmetric(
                       horizontal: Insets.md,
                       vertical: Insets.sm,
                     ),
                     itemCount: messages.length,
-                    itemBuilder: (BuildContext context, int index) {
+                    itemBuilder: (BuildContext context, int reversedIndex) {
+                      final int index = messages.length - 1 - reversedIndex;
                       final msg = messages[index];
                       return SlskdChatBubble.room(
                         key: ValueKey(
@@ -1027,14 +1031,18 @@ class _SlskdCommunityTabState extends ConsumerState<SlskdCommunityTab>
                     );
                   }
 
+                  // Reversed so the thread opens on the newest message and a
+                  // sent message lands in view. slskd lists oldest first.
                   return ListView.builder(
+                    reverse: true,
                     keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.symmetric(
                       horizontal: Insets.md,
                       vertical: Insets.sm,
                     ),
                     itemCount: messages.length,
-                    itemBuilder: (BuildContext context, int index) {
+                    itemBuilder: (BuildContext context, int reversedIndex) {
+                      final int index = messages.length - 1 - reversedIndex;
                       final msg = messages[index];
                       return SlskdChatBubble.direct(
                         key: ValueKey('dm_${msg.id}_$index'),

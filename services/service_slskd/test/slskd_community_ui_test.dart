@@ -550,6 +550,68 @@ void main() {
       expect(find.text('second message'), findsOneWidget);
     });
 
+    testWidgets('chats open on the newest message', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
+
+      // slskd lists messages oldest first; 60 is far more than one screen.
+      final List<SlskdPrivateMessage> longThread = <SlskdPrivateMessage>[
+        for (int i = 0; i < 60; i++)
+          SlskdPrivateMessage(
+            id: i,
+            username: 'AudioPhile99',
+            timestamp: DateTime(2026, 10, 24, 19).add(Duration(minutes: i)),
+            direction: i.isEven ? MessageDirection.inbound : MessageDirection.outbound,
+            message: 'dm number $i',
+          ),
+      ];
+      final List<SlskdRoomMessage> longRoom = <SlskdRoomMessage>[
+        for (int i = 0; i < 60; i++)
+          SlskdRoomMessage(
+            timestamp: DateTime(2026, 10, 24, 18).add(Duration(minutes: i)),
+            username: 'SynthWave99',
+            message: 'room line $i',
+            roomName: 'electronic',
+          ),
+      ];
+
+      Future<void> open({String? convo, String? room}) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            key: UniqueKey(),
+            overrides: [
+              slskdActiveTabProvider(testInstance).overrideWith((ref) => 3),
+              slskdActiveConversationUsernameProvider(testInstance).overrideWith((ref) => convo),
+              slskdActiveRoomNameProvider(testInstance).overrideWith((ref) => room),
+              slskdJoinedRoomNamesProvider(testInstance).overrideWith((ref) => mockJoinedRooms),
+              slskdAvailableRoomsProvider(testInstance).overrideWith((ref) => mockAvailableRooms),
+              slskdConversationsProvider(testInstance).overrideWith((ref) => mockConversations),
+              slskdConversationMessagesProvider((testInstance, 'AudioPhile99')).overrideWith(
+                (ref) => longThread,
+              ),
+              slskdRoomMessagesProvider((testInstance, 'electronic')).overrideWith(
+                (ref) => longRoom,
+              ),
+              slskdRoomUsersProvider((testInstance, 'electronic')).overrideWith(
+                (ref) => mockRoomUsers,
+              ),
+            ],
+            child: const MaterialApp(home: SlskdHome(instance: testInstance)),
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      await open(convo: 'AudioPhile99');
+      expect(find.text('dm number 59'), findsOneWidget);
+      expect(find.text('dm number 0'), findsNothing);
+
+      await open(room: 'electronic');
+      expect(find.text('room line 59'), findsOneWidget);
+      expect(find.text('room line 0'), findsNothing);
+    });
+
     testWidgets('browsing a peer from a chat starts at their root folder', (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.625;
