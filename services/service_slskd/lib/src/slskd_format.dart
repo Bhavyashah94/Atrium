@@ -23,9 +23,6 @@ String slskdFormatBytes(num bytes) {
 /// Formats transfer speed (e.g., '1.5 MB/s').
 String slskdFormatRate(num bytesPerSecond) => '${slskdFormatBytes(bytesPerSecond)}/s';
 
-/// Formats transfer speed (alias for [slskdFormatRate]).
-String slskdFormatSpeed(num bytesPerSecond) => slskdFormatRate(bytesPerSecond);
-
 /// Formats a duration into short human format ('45s', '3m 20s', '2h 5m').
 String slskdFormatDuration(Duration d) {
   if (d.inSeconds <= 0) return '0s';

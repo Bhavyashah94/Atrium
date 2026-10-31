@@ -114,7 +114,10 @@ class _SlskdTransfersTabState extends ConsumerState<SlskdTransfersTab> {
               ref.refresh(slskdDownloadsProvider(widget.instance).future),
               ref.refresh(slskdUploadsProvider(widget.instance).future),
             ]);
-          } catch (_) {}
+          } catch (_) {
+            // A failed refresh needs no snackbar: the providers hold the
+            // error and the tab shows it in its error state.
+          }
         },
         child: CustomScrollView(
           controller: _scrollController,
